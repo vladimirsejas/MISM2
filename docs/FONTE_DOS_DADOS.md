@@ -7,11 +7,12 @@ reduzida**) do Estado de São Paulo, baixadas do DATASUS com o
 `pysus`, de 2013 a 2025. Filtros (os mesmos em todos os cânceres):
 
 - mulher: `SEXO == "3"`;
-- moradora do Estado de SP: `MUNIC_RES` começando com `35` (a cidade
-  de residência vem desse código; Rio Claro = `354390`). Este é o filtro
-  do `baixar_sih_sp.py`. **Desde 10/2026** a carga também aceita
-  moradoras de outros estados (`OUTRO_ESTADO`) e o Estado conta o
-  atendimento em SP; as cidades seguem contadas por residência;
+- residência: **não filtra mais** (desde 10/2026). O Estado conta o
+  atendimento em SP, inclusive moradoras de outros estados, que a carga
+  grava como `OUTRO_ESTADO`. A cidade de residência vem de `MUNIC_RES`
+  (Rio Claro = `354390`) e as cidades seguem contadas por residência.
+  Os CSVs baixados antes de 10/2026 (exceto o colorretal) só tinham
+  moradoras de SP (`MUNIC_RES` começando com `35`);
 - câncer pelo diagnóstico principal (`DIAG_PRINC`): mama `C50`, colo
   do útero `C53`, colorretal `C18`–`C20`, ovário `C56`, pulmão `C34`,
   tireoide `C73`, pele não melanoma `C44`.
@@ -49,8 +50,10 @@ projeto** — o autor já sabia disso antes da conferência.
 Para refazer a conferência: `py etl\completude_meses.py` (lê os CSVs)
 e `py -3.12 etl\baixar_sih_sp.py` (consulta o DATASUS; o `pysus` não
 funciona no Python 3.14). O `baixar_sih_sp.py` só troca os CSVs se
-vierem os 156 meses — com a fonte como está, ele nunca troca: serve
-de conferência e de registro.
+vierem os 156 meses; com a fonte como está isso nunca acontece, então
+use `--aceitar-lacunas-da-fonte`: ele troca pelos meses que existem, mas
+só se o único problema for "a fonte não lista o mês" (erro de download
+de verdade continua barrando). Os atuais vão para `dados\_backup_<data>\`.
 
 ## Como o Escudo lida com isso
 

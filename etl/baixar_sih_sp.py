@@ -23,19 +23,25 @@ import carga_todas_bases as carga
 #
 #   - baixa cada arquivo mensal do SIH/RD de SP UMA vez e tira dele os
 #     7 cânceres (156 downloads, não 7 x 156);
-#   - usa os MESMOS filtros dos scripts antigos: SEXO == "3",
-#     MUNIC_RES começando com "35" (moradora de SP) e DIAG_PRINC
-#     começando com o CID do câncer. Os CIDs são lidos dos CSVs atuais
-#     (os que foram usados de verdade) e mostrados antes de começar;
+#   - filtra por SEXO == "3" e DIAG_PRINC começando com o CID do câncer.
+#     NÃO filtra mais a residência (decisão do autor, 10/2026: o Estado
+#     conta o ATENDIMENTO em SP, então moradoras de outros estados
+#     atendidas em hospitais de SP entram; a carga as grava como
+#     OUTRO_ESTADO). Os CIDs são lidos dos CSVs atuais (os que foram
+#     usados de verdade) e mostrados antes de começar;
 #   - tenta de novo quando falha (TENTATIVAS, com espera crescente) e
 #     NUNCA pula em silêncio: o que falhar é listado no fim;
 #   - retoma de onde parou: cada mês pronto fica em
 #     dados\_download_sih_sp\<ano>_<mes>\ ; rodar de novo pula esses;
 #   - só troca os CSVs de dados\cancer_*_sp\ se TODOS os meses vierem,
-#     e antes guarda os atuais em dados\_backup_<data>\ .
+#     e antes guarda os atuais em dados\_backup_<data>\ . Como o DATASUS
+#     não oferece 35 dos 156 meses (docs/FONTE_DOS_DADOS.md), isso nunca
+#     acontece; com --aceitar-lacunas-da-fonte o script troca os CSVs
+#     pelos meses que EXISTEM, mas só se o único problema for "a fonte
+#     não lista o mês" (erro de download de verdade continua barrando).
 #
 # Uso (no Windows, da pasta do projeto, com internet):
-#     py etl\baixar_sih_sp.py
+#     py -3.12 etl\baixar_sih_sp.py --aceitar-lacunas-da-fonte
 # Pode levar horas (cada mês de SP é grande). Se parar, rode de novo.
 # Depois: py etl\completude_meses.py (tudo 12/12?) e
 #         py etl\carga_todas_bases.py
@@ -45,12 +51,15 @@ ANOS = list(range(2013, 2026))
 MESES = list(range(1, 13))
 ESTADO = "SP"
 VALOR_FEMININO = "3"
-PREFIXO_SP = "35"
+# marcador do motivo "a fonte não tem este mês" (distingue de erro de download)
+FALTA_NA_FONTE = "o DATASUS/pysus não listou arquivo para este mês"
 TENTATIVAS = 4
 ESPERA_INICIAL = 10  # segundos; dobra a cada tentativa
 
 BASE_DADOS = Path(carga.BASE_DADOS)
-PASTA_MESES = BASE_DADOS / "_download_sih_sp"
+# pasta nova (não "_download_sih_sp"): os meses baixados na regra antiga já
+# vinham filtrados por residência em SP e seriam pulados como "prontos".
+PASTA_MESES = BASE_DADOS / "_download_sih_sp_atendimento"
 
 # pasta estadual -> (código do câncer, CIDs se não der para ler do CSV
 # atual). Os CIDs de mama, colo do útero e colorretal são os dos
@@ -95,7 +104,7 @@ def definir_filtros():
 
 
 def filtrar(df, cids):
-    """As mesmas regras dos scripts antigos."""
+    """Mulher + CID do câncer. A residência não filtra: atendimento em SP."""
     df = df.copy()
     df.columns = [str(c).strip().upper() for c in df.columns]
     faltando = {"DIAG_PRINC", "MUNIC_RES", "SEXO"} - set(df.columns)
@@ -103,9 +112,7 @@ def filtrar(df, cids):
         raise RuntimeError(f"arquivo sem as colunas {sorted(faltando)}")
     cid = df["DIAG_PRINC"].astype("string").fillna("").str.strip().str.upper()
     sexo = df["SEXO"].astype("string").fillna("").str.strip()
-    municipio = (df["MUNIC_RES"].astype("string").fillna("").str.strip()
-                 .str.replace(".0", "", regex=False).str.zfill(6))
-    mascara = (cid.str[:3].isin(cids) & (sexo == VALOR_FEMININO) & municipio.str.startswith(PREFIXO_SP))
+    mascara = cid.str[:3].isin(cids) & (sexo == VALOR_FEMININO)
     return df.loc[mascara]
 
 
@@ -209,7 +216,7 @@ async def baixar(filtros, pysus_cls=None):
                 print(f"  nomes listados: {', '.join(nome_do_arquivo(a) for a in (arquivos or [])[:15])}")
             for mes in faltam:
                 if mes not in por_mes:
-                    falhas[(ano, mes)] = "o DATASUS/pysus não listou arquivo para este mês"
+                    falhas[(ano, mes)] = FALTA_NA_FONTE
                     print(f"  {ano}/{mes:02d}: NÃO LISTADO pelo DATASUS")
                     continue
                 partes = []
@@ -245,12 +252,14 @@ async def baixar(filtros, pysus_cls=None):
 # ---------- consolidação ----------
 
 def consolidar(filtros):
-    """Junta os meses e troca os CSVs de dados\\cancer_*_sp\\, guardando
-    os atuais numa pasta de backup (fora das pastas da carga, que
-    exige um CSV só por pasta)."""
+    """Junta os meses PRONTOS e troca os CSVs de dados\\cancer_*_sp\\,
+    guardando os atuais numa pasta de backup (fora das pastas da carga,
+    que exige um CSV só por pasta). Com a fonte completa são os 156
+    meses; com lacunas da fonte, os que existem."""
     backup = BASE_DADOS / f"_backup_{datetime.now():%Y%m%d_%H%M}"
     for pasta_cancer, (codigo, _, _) in filtros.items():
-        partes = [pd.read_parquet(pasta_do_mes(a, m) / f"{codigo}.parquet") for a in ANOS for m in MESES]
+        partes = [pd.read_parquet(pasta_do_mes(a, m) / f"{codigo}.parquet")
+                  for a in ANOS for m in MESES if mes_pronto(a, m)]
         df = pd.concat(partes, ignore_index=True)
         destino = BASE_DADOS / pasta_cancer
         if destino.is_dir():
@@ -269,10 +278,10 @@ def consolidar(filtros):
     return backup
 
 
-def main(pysus_cls=None):
-    print("BAIXAR SIH/SUS DE SP -- 7 cânceres, 2013 a 2025 (mulheres residentes em SP)")
+def main(pysus_cls=None, aceitar_lacunas=False):
+    print("BAIXAR SIH/SUS DE SP -- 7 cânceres, 2013 a 2025 (atendimento em SP, inclusive moradoras de outros estados)")
     filtros = definir_filtros()
-    print("\nFiltros (os mesmos dos scripts antigos: SEXO 3, MUNIC_RES 35..., DIAG_PRINC):")
+    print("\nFiltros (SEXO 3 e DIAG_PRINC; sem filtro de residência):")
     for pasta, (codigo, cids, origem) in filtros.items():
         print(f"  {codigo:18} CID {', '.join(cids):14} ({origem})")
 
@@ -282,14 +291,23 @@ def main(pysus_cls=None):
     prontos = sum(mes_pronto(a, m) for a in ANOS for m in MESES)
     print("\n" + "=" * 70)
     print(f"MESES PRONTOS: {prontos} de {total}")
-    if prontos < total:
+    so_lacunas_da_fonte = bool(falhas) and all(m == FALTA_NA_FONTE for m in falhas.values())
+    if prontos < total and not (aceitar_lacunas and so_lacunas_da_fonte):
         print("\nFALTAM (os CSVs atuais NÃO foram trocados):")
         for (ano, mes), motivo in sorted(falhas.items()):
             print(f"  {ano}/{mes:02d}: {motivo.splitlines()[0]}")
-        print("\nRode de novo: os meses prontos são pulados. Se um mês falhar sempre com o MESMO erro,")
-        print("me mande esta lista -- aí o problema não é a internet.")
+        if so_lacunas_da_fonte:
+            print("\nTodos os que faltam são meses que a FONTE não lista. Para trocar os CSVs pelos meses que")
+            print("existem, rode com: py -3.12 etl\\baixar_sih_sp.py --aceitar-lacunas-da-fonte")
+        else:
+            print("\nRode de novo: os meses prontos são pulados. Se um mês falhar sempre com o MESMO erro,")
+            print("me mande esta lista -- aí o problema não é a internet.")
         return 1
-    print("\nTodos os meses vieram. Trocando os CSVs (os atuais vão para backup)...")
+    if prontos < total:
+        print(f"\nA fonte não oferece {total - prontos} dos {total} meses (confirmado). "
+              f"Trocando os CSVs pelos {prontos} que existem (os atuais vão para backup)...")
+    else:
+        print("\nTodos os meses vieram. Trocando os CSVs (os atuais vão para backup)...")
     backup = consolidar(filtros)
     print(f"\nCSVs antigos guardados em {backup}")
     print("Próximos passos: py etl\\completude_meses.py  (tudo 12/12?)  e  py etl\\carga_todas_bases.py")
@@ -298,4 +316,4 @@ def main(pysus_cls=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(aceitar_lacunas="--aceitar-lacunas-da-fonte" in sys.argv))

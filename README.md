@@ -66,8 +66,10 @@ Os CSVs ficam em `dados\cancer_<tipo>_sp\` (um CSV por pasta). A carga:
   os meses que o DATASUS não oferece (ver `docs\FONTE_DOS_DADOS.md`).
 
 Para conferir quais meses existem nos arquivos: `py etl\completude_meses.py`.
-Para baixar de novo do DATASUS: `py -3.12 etl\baixar_sih_sp.py` (o
-`pysus` não funciona no Python 3.14).
+Para baixar de novo do DATASUS: `py -3.12 etl\baixar_sih_sp.py
+--aceitar-lacunas-da-fonte` (o `pysus` não funciona no Python 3.14). Sem
+filtro de residência: o Estado conta o atendimento em SP, inclusive
+moradoras de outros estados. Pode levar horas e retoma de onde parou.
 
 ### Painel novo e inteligência central
 

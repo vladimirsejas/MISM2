@@ -11,8 +11,8 @@ import completude_meses as cm
 # TESTE do baixar_sih_sp.py com um DATASUS SIMULADO (sem internet):
 #   - 2024/06 não é listado na 1ª rodada (como os buracos reais);
 #   - 2024/03 falha 2 vezes antes de baixar (tem que tentar de novo);
-#   - cada mês traz homens, moradoras de outro estado e outros CIDs,
-#     que os filtros têm que descartar.
+#   - cada mês traz homens e outros CIDs (os filtros descartam) e
+#     moradoras de outro estado (ENTRAM: o Estado conta o atendimento em SP).
 # 1ª rodada: 11 de 12 meses, NÃO troca os CSVs. 2ª rodada (mês volta):
 # pula os 11 prontos, baixa só o que falta, troca os CSVs com backup,
 # e a completude dá 12/12.
@@ -98,16 +98,35 @@ def main():
     print("[OK] CSV antigo guardado no backup, fora da pasta da carga")
 
     novo = pd.read_csv(base / "cancer_mama_sp" / "cancer_mama_mulheres_sp_2024_2024.csv", dtype=str)
-    assert len(novo) == 12 and set(novo["SEXO"]) == {"3"} and set(novo["MUNIC_RES"]) == {"354390"}
+    assert len(novo) == 24 and set(novo["SEXO"]) == {"3"} and set(novo["MUNIC_RES"]) == {"354390", "330455"}
     assert set(novo["DIAG_PRINC"]) == {"C509"}
     colo = pd.read_csv(base / "cancer_colorretal_sp" / "cancer_colorretal_mulheres_sp_2024_2024.csv", dtype=str)
-    assert set(colo["DIAG_PRINC"]) == {"C189", "C200"} and len(colo) == 24
-    print("[OK] filtros: só mulheres, só moradoras de SP, só o CID do câncer (colorretal C18+C20)")
+    assert set(colo["DIAG_PRINC"]) == {"C189", "C200"} and len(colo) == 48
+    print("[OK] filtros: só mulheres e o CID do câncer; moradoras de outro estado (RJ) ENTRAM")
 
     cm.carga.BASE_DADOS = str(base)
     situ = cm.situacao_dos_meses(cm.contar_por_mes(str(base / "cancer_mama_sp" / "cancer_mama_mulheres_sp_2024_2024.csv")))
     assert all(v == "X" for v in situ[ANO].values()), situ
     print("[OK] completude_meses lê o CSV novo: 12/12")
+    # --- lacunas da fonte: sem a opção nada troca; com a opção troca pelos meses que existem ---
+    def nova_base():
+        base2 = Path(tempfile.mkdtemp())
+        b.BASE_DADOS, b.PASTA_MESES = base2, base2 / "_download_sih_sp_atendimento"
+        b.carga.BASE_DADOS = str(base2)
+        return base2
+
+    base2 = nova_base()
+    esconder.add(6)
+    assert b.main(PySUSFalso) == 1 and not list(base2.glob("cancer_mama_sp/*.csv"))
+    assert b.main(PySUSFalso, aceitar_lacunas=True) == 0
+    csv2 = pd.read_csv(base2 / "cancer_mama_sp" / "cancer_mama_mulheres_sp_2024_2024.csv", dtype=str)
+    assert len(csv2) == 22 and "06" not in set(csv2["MES_CMPT"].str.zfill(2)), len(csv2)
+    print("[OK] fonte sem 2024/06: sem a opção nada troca; com --aceitar-lacunas-da-fonte troca pelos 11 meses que existem")
+
+    base3 = nova_base()
+    falhas_restantes[3] = 99  # erro de download de verdade, não lacuna da fonte
+    assert b.main(PySUSFalso, aceitar_lacunas=True) == 1 and not list(base3.glob("cancer_mama_sp/*.csv"))
+    print("[OK] erro de download de verdade continua barrando, mesmo com a opção")
     print("\nTodas as checagens do baixar_sih_sp passaram.")
 
 

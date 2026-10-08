@@ -243,9 +243,12 @@ Estado atual:
   residência mantido, `OUTRO_ESTADO` fora do catálogo e do seletor de
   cidades; `validar_banco.py` mostra a coluna `outro_estado`). Antes elas
   eram descartadas -- por isso o colorretal (94.005 registros, 2.664 de
-  fora) ficava de fora do banco. Pendente: conferir que os 7 cânceres
-  seguem a mesma regra (as outras 6 bases e `etl/baixar_sih_sp.py`
-  nasceram sob a regra de moradoras de SP) e rodar a carga no Windows.
+  fora) ficava de fora do banco. `baixar_sih_sp.py` não filtra mais a
+  residência e tem `--aceitar-lacunas-da-fonte` (troca os CSVs pelos
+  meses que o DATASUS oferece; erro de download de verdade continua
+  barrando; usa a pasta `_download_sih_sp_atendimento`). Pendente: as
+  outras 6 bases (menos colorretal) ainda são só moradoras de SP --
+  rodar o download no Windows (horas, retoma de onde parou) e a carga.
 - **Contagem em dobro de Rio Claro: confirmada e corrigida.** No
   banco real havia 1.668 internações de Rio Claro com origem
   RIO_CLARO e as mesmas 1.668 com origem SP (a pasta estadual já traz
