@@ -44,6 +44,7 @@ from inteligencia import (
     lista_hospitais,
     ficha_hospital,
     leitura_hospital,
+    leitura_hospital_anos,
     nome_uf,
     CENTROS_UF,
     leitura_ponta_projecao,
@@ -800,6 +801,26 @@ if aba == "Investigar":
                               else f"No Estado: {formatar_numero(ficha['estado']['pct_urgencia'], 1)}%."))
             h4.metric("Permanência média", f"{formatar_numero(ficha['permanencia'], 1)} dias",
                       help=f"No Estado: {formatar_numero(ficha['estado']['permanencia'], 1)} dias")
+            pergunta(f"Quantas internações {ficha['hospital']} registrou em cada ano?", "estado",
+                     "este hospital, 7 cânceres somados · anos com meses ausentes na fonte na escala de 12 meses")
+            anos_h = ficha["por_ano"]
+            fig = go.Figure()
+            for coluna, nome_barra, cor in (("cidade", f"Moradoras de {ficha['municipio']}", CINZA),
+                                            ("outra_cidade", "Outras cidades de SP", "#8db8ec"),
+                                            ("fora", "Outros estados", AZUL)):
+                fig.add_trace(go.Bar(
+                    x=anos_h["ano"], y=anos_h[coluna], name=nome_barra, marker_color=cor,
+                    customdata=anos_h[["registrado", "meses"]].fillna(12).values,
+                    hovertemplate=nome_barra + " em %{x}: %{y:.0f} (escala de 12 meses)"
+                                  "<br>registrado: %{customdata[0]:.0f} internações em %{customdata[1]:.0f} meses"
+                                  "<extra></extra>"))
+            fig.update_layout(barmode="stack", legend={"orientation": "h", "y": -0.2})
+            fig.update_xaxes(dtick=1)
+            estilizar(fig, altura=340)
+            fig.update_layout(showlegend=True)
+            st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
+            leitura("O que o gráfico mostra", leitura_hospital_anos(ficha))
+
             st.dataframe(pd.DataFrame({
                 "Câncer": ficha["cancer"]["doenca"],
                 "Internações": [formatar_numero(v) for v in ficha["cancer"]["internacoes"]],

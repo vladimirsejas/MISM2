@@ -30,11 +30,28 @@ def banco():
     return c
 
 
-def add(c, n, tipo, municipio, codigo, uf, hospital, cnes, dias, car, obitos=0):
+def add(c, n, tipo, municipio, codigo, uf, hospital, cnes, dias, car, obitos=0, ano=2024):
     for i in range(n):
         c.execute("INSERT INTO internacoes VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                  (tipo, "SP", municipio, codigo, 2024, 1 + i % 12, 1 if i < obitos else 0, 100.0, dias, uf,
+                  (tipo, "SP", municipio, codigo, ano, 1 + i % 12, 1 if i < obitos else 0, 100.0, dias, uf,
                    hospital, cnes, car))
+
+
+def hospital_x(ano_extra):
+    """Hospital X (CNES 3333333, Barretos): 2024 tem 24 internações, 2 por mês
+    (12 da cidade, 8 de Jaú, 4 de MG). `ano_extra` diz o que existe em 2023:
+    'x3' = 3 internações dele nos meses 1 a 3 (a fonte só tem 3 meses de 2023);
+    'outro' = só um outro hospital, com os 12 meses (X ainda não aparecia)."""
+    c = banco()
+    add(c, 12, "MAMA", "BARRETOS", 3505500, "SP", "350550", "3333333", 2, "01")
+    add(c, 8, "MAMA", "JAU", 3525300, "SP", "350550", "3333333", 2, "01")
+    add(c, 4, "MAMA", "OUTRO_ESTADO", 3106200, "MG", "350550", "3333333", 2, "01")
+    if ano_extra == "x3":
+        add(c, 3, "MAMA", "BARRETOS", 3505500, "SP", "350550", "3333333", 2, "01", ano=2023)
+    else:
+        add(c, 12, "MAMA", "SAO_PAULO", 3550308, "SP", "355030", "2077590", 2, "01", ano=2023)
+    c.commit()
+    return c
 
 
 def aprox(a, b, tol=0.05):
@@ -95,6 +112,32 @@ def main():
     grande = " ".join(ti.leitura_hospital(dict(a, internacoes=500))).lower()
     assert "leia com cautela" not in grande
     print("[OK] frases: citam os números, avisam que não mede qualidade e pedem cautela com poucas internações")
+
+    # ---- por ano: ano com meses ausentes vai para a escala de 12 meses ----
+    x = ti.ficha_hospital(ti.carregar_hospitais(hospital_x("x3")), "3333333")
+    por_ano = x["por_ano"].set_index("ano")
+    assert list(por_ano.index) == [2023, 2024]
+    assert (por_ano.loc[2023, "registrado"], por_ano.loc[2023, "meses"]) == (3, 3)
+    assert aprox(por_ano.loc[2023, "ajustado"], 12.0) and aprox(por_ano.loc[2023, "cidade"], 12.0)
+    assert aprox(por_ano.loc[2024, "ajustado"], 24.0) and aprox(por_ano.loc[2024, "cidade"], 12.0)
+    assert aprox(por_ano.loc[2024, "outra_cidade"], 8.0) and aprox(por_ano.loc[2024, "fora"], 4.0)
+    assert aprox(por_ano.loc[2023, "fora"], 0.0)
+    texto_anos = " ".join(ti.leitura_hospital_anos(x)).lower()
+    assert "12 internações em 2023 e 24 em 2024" in texto_anos and "ponto mais alto foi 24 em 2024" in texto_anos
+    assert "0,0% em 2023 e 16,7% em 2024" in texto_anos
+    assert "anos com meses ausentes na fonte (2023)" in texto_anos and "média dos meses disponíveis" in texto_anos
+    print("[OK] por ano: 2023 (3 meses na fonte) vai de 3 para 12 internações; 2024 tem 24 (12 + 8 + 4); parcela de fora 0% -> 16,7%")
+
+    # ---- hospital que só aparece depois: ano sem registro não vira queda nem zero explicado ----
+    y = ti.ficha_hospital(ti.carregar_hospitais(hospital_x("outro")), "3333333")
+    por_ano = y["por_ano"].set_index("ano")
+    assert por_ano.loc[2023, "registrado"] == 0 and aprox(por_ano.loc[2024, "ajustado"], 24.0)
+    texto_y = " ".join(ti.leitura_hospital_anos(y)).lower()
+    assert "primeiro ano com internações registradas foi 2024" in texto_y or "só há um ano" in texto_y
+    assert "anos com meses ausentes" not in texto_y  # 2023 tem os 12 meses
+    for proibido in ("porque", "devido", "por causa", "em razão", "r$", "abriu", "fechou"):
+        assert proibido not in texto_anos + texto_y, proibido
+    print("[OK] hospital sem internações em 2023: o ano aparece com zero registrado, sem inventar causa")
 
     # ---- banco antigo, sem a coluna do código IBGE, ou sem nenhum hospital ----
     sem_codigo = sqlite3.connect(":memory:")

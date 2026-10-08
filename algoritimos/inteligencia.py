@@ -1334,7 +1334,7 @@ def resumo_fluxo(fluxo, cancer=None):
 # (casos mais graves, hospital de referência), então não mede qualidade.
 
 SQL_HOSPITAL = """
-SELECT cnes, tipo_cancer, municipio_hospital,
+SELECT cnes, tipo_cancer, ano, municipio_hospital,
        CASE WHEN municipio = 'OUTRO_ESTADO' THEN 'fora'
             WHEN codigo_ibge IS NULL THEN 'sem_info'
             WHEN substr(CAST(codigo_ibge AS TEXT), 1, 6) = municipio_hospital THEN 'cidade'
@@ -1346,7 +1346,7 @@ SELECT cnes, tipo_cancer, municipio_hospital,
        COALESCE(SUM(CASE WHEN TRIM(COALESCE(car_int, '')) <> '' THEN 1 ELSE 0 END), 0) AS com_carater
 FROM internacoes
 WHERE origem = ? AND cnes IS NOT NULL AND TRIM(cnes) <> ''
-GROUP BY cnes, tipo_cancer, municipio_hospital, procedencia
+GROUP BY cnes, tipo_cancer, ano, municipio_hospital, procedencia
 """
 
 SQL_HOSPITAL_UF = """
@@ -1375,7 +1375,8 @@ def carregar_hospitais(conexao, uf_referencia="SP"):
     base["cnes"] = base["cnes"].astype(str).str.strip().str.zfill(7)
     ufs["cnes"] = ufs["cnes"].astype(str).str.strip().str.zfill(7)
     base["municipio_hospital"] = base["municipio_hospital"].fillna("?")
-    return {"base": base, "ufs": ufs, "nomes": _nomes_municipios(conexao), "hospitais": _nomes_hospitais(conexao)}
+    return {"base": base, "ufs": ufs, "nomes": _nomes_municipios(conexao), "hospitais": _nomes_hospitais(conexao),
+            "meses": meses_por_ano(conexao, uf_referencia)}
 
 
 def lista_hospitais(dados):
@@ -1404,6 +1405,29 @@ def _indicadores_hospital(base):
         "permanencia": float(base["dias_permanencia"].sum()) / n if n else 0.0,
         "pct_urgencia": _pct(int(base["urgencia"].sum()), com_carater) if com_carater else None,
     }
+
+
+def internacoes_por_ano_hospital(dados, meu):
+    """Por ano: internações registradas, na escala de 12 meses (média dos
+    meses que a fonte oferece x 12, a mesma regra do resto do Escudo) e por
+    procedência (moradoras da cidade do hospital, outras cidades de SP,
+    outros estados). Os meses do ano vêm do Estado, não do hospital."""
+    meses = dados.get("meses") or {}
+    anos = sorted(set(meses) | {int(a) for a in meu["ano"].unique()})
+    linhas = []
+    for ano in anos:
+        do_ano = meu[meu["ano"] == ano]
+        m = meses.get(ano)
+        fator = MESES_NO_ANO / m if m else 1.0
+        por_proc = do_ano.groupby("procedencia")["internacoes"].sum()
+        registrado = int(do_ano["internacoes"].sum())
+        linhas.append({
+            "ano": ano, "meses": m, "registrado": registrado, "ajustado": registrado * fator,
+            "cidade": int(por_proc.get("cidade", 0)) * fator,
+            "outra_cidade": int(por_proc.get("outra_cidade", 0)) * fator,
+            "fora": int(por_proc.get("fora", 0)) * fator,
+        })
+    return pd.DataFrame(linhas, columns=["ano", "meses", "registrado", "ajustado", "cidade", "outra_cidade", "fora"])
 
 
 def ficha_hospital(dados, cnes):
@@ -1437,7 +1461,37 @@ def ficha_hospital(dados, cnes):
             "pct": [_pct(v, n) for v in por_cancer.values],
         }),
         "estado": _indicadores_hospital(base),
+        "por_ano": internacoes_por_ano_hospital(dados, meu),
     }
+
+
+def leitura_hospital_anos(ficha):
+    """Frases do gráfico por ano. Descreve; não explica abertura, fechamento
+    ou mudança de volume."""
+    anos = ficha["por_ano"]
+    com = anos[anos["registrado"] > 0]
+    if len(com) < 2:
+        return ["Só há um ano com internações registradas: não dá para ver mudança ao longo do tempo."]
+    primeiro, ultimo = com.iloc[0], com.iloc[-1]
+    pico = com.loc[com["ajustado"].idxmax()]
+    frases = [f"Na escala de 12 meses, o hospital registrou {formatar_numero(primeiro['ajustado'])} internações em "
+              f"{int(primeiro['ano'])} e {formatar_numero(ultimo['ajustado'])} em {int(ultimo['ano'])}; "
+              f"o ponto mais alto foi {formatar_numero(pico['ajustado'])} em {int(pico['ano'])}."]
+    if int(primeiro["ano"]) > int(anos["ano"].min()):
+        frases.append(f"O primeiro ano com internações registradas foi {int(primeiro['ano'])}.")
+    pa, pb = (100 * primeiro["fora"] / primeiro["ajustado"] if primeiro["ajustado"] else 0.0,
+              100 * ultimo["fora"] / ultimo["ajustado"] if ultimo["ajustado"] else 0.0)
+    if pa or pb:
+        frases.append(f"A parcela de mulheres de outros estados foi {formatar_numero(pa, 1)}% em {int(primeiro['ano'])} "
+                      f"e {formatar_numero(pb, 1)}% em {int(ultimo['ano'])}.")
+    incompletos = [int(a) for a, m in zip(anos["ano"], anos["meses"]) if m and m < MESES_NO_ANO]
+    if incompletos:
+        quais = (", ".join(str(a) for a in incompletos) if len(incompletos) <= 4
+                 else f"{len(incompletos)} dos {len(anos)} anos")
+        frases.append("Anos com meses ausentes na fonte (" + quais
+                      + ") estão na escala de 12 meses, pela média dos meses disponíveis; o valor registrado aparece "
+                      "ao passar o mouse. Ano sem barra não tem internação registrada, o que não prova que não houve atendimento.")
+    return frases
 
 
 def leitura_hospital(ficha):
