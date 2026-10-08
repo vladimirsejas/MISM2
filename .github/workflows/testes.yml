@@ -27,7 +27,9 @@ jobs:
         run: python teste_apoio.py
       - name: Fluxo de pacientes (mulheres de outros estados atendidas em SP)
         working-directory: algoritimos
-        run: python teste_fluxo.py
+        run: |
+          python teste_fluxo.py
+          python teste_hospital.py
       - name: Comparar cidades (sem população)
         working-directory: algoritimos
         run: python teste_comparar.py

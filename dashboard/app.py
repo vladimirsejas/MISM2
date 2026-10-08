@@ -40,6 +40,10 @@ from inteligencia import (
     pontos_mapa_fluxo,
     hospitais_fluxo,
     leitura_hospitais,
+    carregar_hospitais,
+    lista_hospitais,
+    ficha_hospital,
+    leitura_hospital,
     nome_uf,
     CENTROS_UF,
     leitura_ponta_projecao,
@@ -173,6 +177,15 @@ def fluxo_cidade(origem, codigo_ibge):
     conn = sqlite3.connect(BANCO)
     try:
         return fluxo_da_cidade(conn, origem, codigo_ibge, UF_REFERENCIA)
+    finally:
+        conn.close()
+
+
+@st.cache_data
+def hospitais_dados():
+    conn = sqlite3.connect(BANCO)
+    try:
+        return carregar_hospitais(conn, UF_REFERENCIA)
     finally:
         conn.close()
 
@@ -763,6 +776,36 @@ if aba == "Investigar":
                 tabela_h = tabela_h.drop(columns="Município")
             st.dataframe(tabela_h, use_container_width=True, hide_index=True)
         leitura("O que a tabela mostra", leitura_hospitais(fluxo, hosp))
+
+        pergunta("Como é o atendimento em um hospital específico?", "estado",
+                 "um hospital por vez, 7 cânceres somados, todas as pacientes do hospital (de qualquer lugar), 2013–2025")
+        dados_h = hospitais_dados()
+        if dados_h is None:
+            st.info("O banco ainda não guarda o CNES e a residência de cada internação. Rode a carga de novo "
+                    "(py etl\\carga_todas_bases.py) para consultar um hospital.")
+        else:
+            todos_h = lista_hospitais(dados_h)
+            rotulos = [f"{h.hospital} · {h.municipio} ({formatar_numero(h.internacoes)} internações)"
+                       for h in todos_h.itertuples()]
+            escolhido = st.selectbox("Escolha um hospital (pode digitar o nome)", rotulos, index=0, key="hospital_perfil",
+                                     help="Do que mais interna para o que menos. Vale para os 7 cânceres.")
+            ficha = ficha_hospital(dados_h, todos_h.iloc[rotulos.index(escolhido)]["cnes"])
+            h1, h2, h3, h4 = st.columns(4)
+            h1.metric("Internações", formatar_numero(ficha["internacoes"]))
+            h2.metric("De outros estados", f"{formatar_numero(ficha['pct_fora'], 1)}%",
+                      help=f"{formatar_numero(ficha['procedencia']['fora'])} internações de mulheres que moram em outros estados")
+            h3.metric("Urgência", "—" if ficha["pct_urgencia"] is None else f"{formatar_numero(ficha['pct_urgencia'], 1)}%",
+                      help="Parcela das internações em que o caráter foi informado como urgência. "
+                           + ("" if ficha["estado"]["pct_urgencia"] is None
+                              else f"No Estado: {formatar_numero(ficha['estado']['pct_urgencia'], 1)}%."))
+            h4.metric("Permanência média", f"{formatar_numero(ficha['permanencia'], 1)} dias",
+                      help=f"No Estado: {formatar_numero(ficha['estado']['permanencia'], 1)} dias")
+            st.dataframe(pd.DataFrame({
+                "Câncer": ficha["cancer"]["doenca"],
+                "Internações": [formatar_numero(v) for v in ficha["cancer"]["internacoes"]],
+                "Parcela": [f"{formatar_numero(v, 1)}%" for v in ficha["cancer"]["pct"]],
+            }), use_container_width=True, hide_index=True)
+            leitura("O que a ficha mostra", leitura_hospital(ficha))
 
         pergunta("A parcela de mulheres de fora está crescendo?", "estado", "todas as cidades de SP, 7 cânceres somados")
         st.markdown('<div class="escudo-dica">Parcela = internações de mulheres de outros estados ÷ todas as '
