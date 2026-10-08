@@ -779,18 +779,26 @@ if aba == "Investigar":
         leitura("O que a tabela mostra", leitura_hospitais(fluxo, hosp))
 
         pergunta("Como é o atendimento em um hospital específico?", "estado",
-                 "um hospital por vez, 7 cânceres somados, todas as pacientes do hospital (de qualquer lugar), 2013–2025")
+                 "um hospital por vez, todas as pacientes do hospital (de qualquer lugar), 2013–2025")
         dados_h = hospitais_dados()
         if dados_h is None:
             st.info("O banco ainda não guarda o CNES e a residência de cada internação. Rode a carga de novo "
                     "(py etl\\carga_todas_bases.py) para consultar um hospital.")
         else:
-            todos_h = lista_hospitais(dados_h)
+            codigos_h = sorted(dados_h["base"]["tipo_cancer"].unique(), key=nome_doenca)
+            nomes_h = ["Todos os cânceres"] + [nome_doenca(c) for c in codigos_h]
+            col_c, col_h = st.columns([1, 2])
+            nome_c = col_c.selectbox("Câncer", nomes_h, index=0, key="hospital_cancer",
+                                     help="Limita a lista, os números, o gráfico e a referência do Estado a um câncer.")
+            cancer_h = None if nome_c == nomes_h[0] else codigos_h[nomes_h.index(nome_c) - 1]
+            todos_h = lista_hospitais(dados_h, cancer_h)
             rotulos = [f"{h.hospital} · {h.municipio} ({formatar_numero(h.internacoes)} internações)"
                        for h in todos_h.itertuples()]
-            escolhido = st.selectbox("Escolha um hospital (pode digitar o nome)", rotulos, index=0, key="hospital_perfil",
-                                     help="Do que mais interna para o que menos. Vale para os 7 cânceres.")
-            ficha = ficha_hospital(dados_h, todos_h.iloc[rotulos.index(escolhido)]["cnes"])
+            escolhido = col_h.selectbox("Escolha um hospital (pode digitar o nome)", rotulos, index=0,
+                                        key=f"hospital_perfil_{cancer_h or 'todos'}",
+                                        help="Do que mais interna para o que menos.")
+            ficha = ficha_hospital(dados_h, todos_h.iloc[rotulos.index(escolhido)]["cnes"], cancer_h)
+            assunto_h = nome_doenca(cancer_h).lower() if cancer_h else "7 cânceres somados"
             h1, h2, h3, h4 = st.columns(4)
             h1.metric("Internações", formatar_numero(ficha["internacoes"]))
             h2.metric("De outros estados", f"{formatar_numero(ficha['pct_fora'], 1)}%",
@@ -802,7 +810,7 @@ if aba == "Investigar":
             h4.metric("Permanência média", f"{formatar_numero(ficha['permanencia'], 1)} dias",
                       help=f"No Estado: {formatar_numero(ficha['estado']['permanencia'], 1)} dias")
             pergunta(f"Quantas internações {ficha['hospital']} registrou em cada ano?", "estado",
-                     "este hospital, 7 cânceres somados · anos com meses ausentes na fonte na escala de 12 meses")
+                     f"este hospital, {assunto_h} · anos com meses ausentes na fonte na escala de 12 meses")
             anos_h = ficha["por_ano"]
             fig = go.Figure()
             for coluna, nome_barra, cor in (("cidade", f"Moradoras de {ficha['municipio']}", CINZA),
@@ -821,11 +829,12 @@ if aba == "Investigar":
             st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
             leitura("O que o gráfico mostra", leitura_hospital_anos(ficha))
 
-            st.dataframe(pd.DataFrame({
-                "Câncer": ficha["cancer"]["doenca"],
-                "Internações": [formatar_numero(v) for v in ficha["cancer"]["internacoes"]],
-                "Parcela": [f"{formatar_numero(v, 1)}%" for v in ficha["cancer"]["pct"]],
-            }), use_container_width=True, hide_index=True)
+            if cancer_h is None:  # com um câncer escolhido, a tabela teria uma linha só
+                st.dataframe(pd.DataFrame({
+                    "Câncer": ficha["cancer"]["doenca"],
+                    "Internações": [formatar_numero(v) for v in ficha["cancer"]["internacoes"]],
+                    "Parcela": [f"{formatar_numero(v, 1)}%" for v in ficha["cancer"]["pct"]],
+                }), use_container_width=True, hide_index=True)
             leitura("O que a ficha mostra", leitura_hospital(ficha))
 
         pergunta("A parcela de mulheres de fora está crescendo?", "estado", "todas as cidades de SP, 7 cânceres somados")

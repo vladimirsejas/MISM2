@@ -4,6 +4,7 @@ import time
 from collections import deque
 
 import pandas as pd
+import streamlit
 
 # =====================================
 # TESTE DE ACEITAÇÃO DO PAINEL (combinado com o autor, 09/2026)
@@ -308,6 +309,58 @@ def main():
     finally:
         configuracao_geografica.listar_municipios_disponiveis = lista_original
         inteligencia.porte_das_cidades = porte_original
+
+    # ---- H. ficha de um hospital (aba Investigar): escolher o câncer muda a lista e a ficha ----
+    def hospitais_falsos():
+        linhas, ufs = [], []
+        for cnes, cidade, mun, n_mama, n_colo in (("2090236", "350550", "BARRETOS", 20, 6), ("2077590", "355030", "SAO_PAULO", 8, 0)):
+            for tipo, n in (("MAMA", n_mama), ("COLO_UTERO", n_colo)):
+                if not n:
+                    continue
+                for ano in range(2013, 2026):
+                    for proc, parte in (("cidade", n), ("outra_cidade", n // 2), ("fora", n // 4)):
+                        linhas.append((cnes, tipo, ano, cidade, proc, parte, 0, 3 * parte, parte // 2, parte))
+                ufs.append((cnes, tipo, "MG", 4 * n))
+        base = pd.DataFrame(linhas, columns=["cnes", "tipo_cancer", "ano", "municipio_hospital", "procedencia",
+                                             "internacoes", "obitos", "dias_permanencia", "urgencia", "com_carater"])
+        return {"base": base, "ufs": pd.DataFrame(ufs, columns=["cnes", "tipo_cancer", "uf_residencia", "internacoes"]),
+                "nomes": {"350550": "Barretos", "355030": "São Paulo"},
+                "hospitais": {"2090236": "FUNDACAO PIO XII BARRETOS"}, "meses": MESES_NA_FONTE}
+
+    # o bloco do hospital mora dentro do fluxo: sem fluxo (banco antigo) ele nem aparece
+    # a tabela do fluxo ("Em quais cânceres a parcela de fora é maior?") também tem coluna "Câncer"
+    TABELA_CANCERES_HOSPITAL = {"Câncer", "Internações", "Parcela"}
+    hospitais_original, fluxo_original = inteligencia.carregar_hospitais, inteligencia.carregar_fluxo
+    cidade_original = inteligencia.fluxo_da_cidade
+    inteligencia.carregar_hospitais = lambda conn, uf="SP": hospitais_falsos()
+    inteligencia.carregar_fluxo = lambda conn, uf="SP": fluxo_falso()
+    inteligencia.fluxo_da_cidade = lambda conn, o, cod, uf="SP": None
+    streamlit.cache_data.clear()  # a carga do hospital e do fluxo ficam em cache entre cenários
+    try:
+        at = abrir()
+        at.session_state["aba"] = "Investigar"
+        at.run()
+        textos = " ".join(str(m.value) for m in at.markdown)
+        caixas = {s.label: list(s.options) for s in at.selectbox}
+        checar("H. hospital: abre sem erro e oferece o seletor de câncer e o de hospital",
+               not erros(at) and "Câncer" in caixas and "Todos os cânceres" in caixas["Câncer"]
+               and "Escolha um hospital (pode digitar o nome)" in caixas)
+        checar("H. hospital (todos os cânceres): lista pelo nome ou pelo CNES, com gráfico por ano e tabela de cânceres",
+               caixas["Escolha um hospital (pode digitar o nome)"][0].startswith("FUNDACAO PIO XII BARRETOS")
+               and any(o.startswith("CNES 2077590") for o in caixas["Escolha um hospital (pode digitar o nome)"])
+               and "Quantas internações FUNDACAO PIO XII BARRETOS registrou em cada ano?" in textos
+               and any(set(d.value.columns) == TABELA_CANCERES_HOSPITAL for d in at.dataframe))
+        at.selectbox(key="hospital_cancer").select("Colo do útero").run()
+        textos = " ".join(str(m.value) for m in at.markdown)
+        caixas = {s.label: list(s.options) for s in at.selectbox}
+        checar("H. hospital (colo do útero): só entra quem internou colo, a ficha vale só para ele e some a tabela de cânceres",
+               not erros(at) and len(caixas["Escolha um hospital (pode digitar o nome)"]) == 1
+               and "câncer de colo do útero" in textos and "colo do útero" in textos.lower()
+               and not any(set(d.value.columns) == TABELA_CANCERES_HOSPITAL for d in at.dataframe))
+    finally:
+        inteligencia.carregar_hospitais, inteligencia.carregar_fluxo = hospitais_original, fluxo_original
+        inteligencia.fluxo_da_cidade = cidade_original
+        streamlit.cache_data.clear()
 
     print(f"\n({time.time() - inicio:.0f} s)")
     if falhas:

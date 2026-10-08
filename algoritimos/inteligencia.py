@@ -1350,10 +1350,10 @@ GROUP BY cnes, tipo_cancer, ano, municipio_hospital, procedencia
 """
 
 SQL_HOSPITAL_UF = """
-SELECT cnes, uf_residencia, COUNT(*) AS internacoes
+SELECT cnes, tipo_cancer, uf_residencia, COUNT(*) AS internacoes
 FROM internacoes
 WHERE origem = ? AND municipio = 'OUTRO_ESTADO' AND cnes IS NOT NULL AND TRIM(cnes) <> ''
-GROUP BY cnes, uf_residencia
+GROUP BY cnes, tipo_cancer, uf_residencia
 """
 
 
@@ -1379,10 +1379,16 @@ def carregar_hospitais(conexao, uf_referencia="SP"):
             "meses": meses_por_ano(conexao, uf_referencia)}
 
 
-def lista_hospitais(dados):
-    """Todos os hospitais, do que mais interna para o que menos: cnes,
-    hospital (nome ou 'CNES 0000000'), municipio, internacoes."""
+def _da_base(dados, cancer):
     base = dados["base"]
+    return base[base["tipo_cancer"] == cancer] if cancer else base
+
+
+def lista_hospitais(dados, cancer=None):
+    """Os hospitais, do que mais interna para o que menos: cnes, hospital
+    (nome ou 'CNES 0000000'), municipio, internacoes. `cancer` limita a um
+    câncer (só entram os hospitais que internaram esse câncer)."""
+    base = _da_base(dados, cancer)
     total = base.groupby("cnes")["internacoes"].sum().sort_values(ascending=False)
     cidade = (base.groupby(["cnes", "municipio_hospital"])["internacoes"].sum().reset_index()
               .sort_values("internacoes", ascending=False).drop_duplicates("cnes").set_index("cnes")["municipio_hospital"])
@@ -1430,11 +1436,12 @@ def internacoes_por_ano_hospital(dados, meu):
     return pd.DataFrame(linhas, columns=["ano", "meses", "registrado", "ajustado", "cidade", "outra_cidade", "fora"])
 
 
-def ficha_hospital(dados, cnes):
+def ficha_hospital(dados, cnes, cancer=None):
     """O perfil de um hospital: de onde vêm as pacientes, quais cânceres,
     urgência, permanência e óbitos na internação, com a referência do
-    Estado. None se o CNES não existe."""
-    base = dados["base"]
+    Estado. `cancer` limita tudo a um câncer, inclusive a referência do
+    Estado. None se o hospital não internou (esse câncer)."""
+    base = _da_base(dados, cancer)
     meu = base[base["cnes"] == cnes]
     if meu.empty:
         return None
@@ -1443,12 +1450,15 @@ def ficha_hospital(dados, cnes):
     por_proc = meu.groupby("procedencia")["internacoes"].sum()
     procedencia = {chave: int(por_proc.get(chave, 0)) for chave in ("cidade", "outra_cidade", "fora", "sem_info")}
     ufs = dados["ufs"]
-    ufs = ufs[ufs["cnes"] == cnes].sort_values("internacoes", ascending=False)
+    if cancer:
+        ufs = ufs[ufs["tipo_cancer"] == cancer]
+    ufs = ufs[ufs["cnes"] == cnes].groupby("uf_residencia", as_index=False)["internacoes"].sum()
+    ufs = ufs.sort_values("internacoes", ascending=False)
     por_cancer = meu.groupby("tipo_cancer")["internacoes"].sum().sort_values(ascending=False)
-    lista = lista_hospitais(dados)
+    lista = lista_hospitais(dados, cancer)
     linha = lista[lista["cnes"] == cnes].iloc[0]
     return {
-        "cnes": cnes, "hospital": linha["hospital"], "municipio": linha["municipio"],
+        "cnes": cnes, "hospital": linha["hospital"], "municipio": linha["municipio"], "tipo_cancer": cancer,
         "tem_nome": cnes in (dados.get("hospitais") or {}),
         **ind,
         "procedencia": procedencia,
@@ -1499,8 +1509,9 @@ def leitura_hospital(ficha):
     if not ficha:
         return ["Hospital sem internações registradas."]
     n, p = ficha["internacoes"], ficha["procedencia"]
-    frases = [f"{ficha['hospital']} ({ficha['municipio']}) registrou {formatar_numero(n)} internações por câncer "
-              f"feminino entre 2013 e 2025."]
+    assunto = cancer_de(ficha["tipo_cancer"]) if ficha.get("tipo_cancer") else "câncer feminino"
+    frases = [f"{ficha['hospital']} ({ficha['municipio']}) registrou {formatar_numero(n)} internações por {assunto} "
+              f"entre 2013 e 2025."]
     partes = [f"{formatar_numero(_pct(p['cidade'], n), 1)}% de moradoras de {ficha['municipio']}",
               f"{formatar_numero(_pct(p['outra_cidade'], n), 1)}% de outras cidades de SP",
               f"{formatar_numero(ficha['pct_fora'], 1)}% de outros estados"]
@@ -1508,7 +1519,7 @@ def leitura_hospital(ficha):
     if ficha["ufs"]:
         frases.append("Os estados que mais enviam para este hospital: "
                       + ", ".join(f"{nome} ({formatar_numero(v)})" for nome, v in ficha["ufs"][:3]) + ".")
-    if len(ficha["cancer"]):
+    if len(ficha["cancer"]) > 1:
         top = ficha["cancer"].iloc[0]
         frases.append(f"O câncer com mais internações é {top['doenca'].lower()} "
                       f"({formatar_numero(top['pct'], 1)}%).")

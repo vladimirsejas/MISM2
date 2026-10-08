@@ -113,6 +113,26 @@ def main():
     assert "leia com cautela" not in grande
     print("[OK] frases: citam os números, avisam que não mede qualidade e pedem cautela com poucas internações")
 
+    # ---- por câncer: lista, ficha e referência do Estado valem só para o câncer escolhido ----
+    colo = ti.lista_hospitais(dados, "COLO_UTERO")
+    assert list(colo["cnes"]) == ["2090236"] and list(colo["internacoes"]) == [6]  # B não internou colo
+    assert list(ti.lista_hospitais(dados, "MAMA")["internacoes"]) == [20, 4]
+    assert ti.ficha_hospital(dados, "2077590", "COLO_UTERO") is None
+    am = ti.ficha_hospital(dados, "2090236", "MAMA")
+    assert am["internacoes"] == 20 and am["tipo_cancer"] == "MAMA" and len(am["cancer"]) == 1
+    assert am["procedencia"] == {"cidade": 10, "outra_cidade": 6, "fora": 4, "sem_info": 0}
+    assert am["ufs"] == [("Minas Gerais", 4)]  # o GO era do colo
+    assert aprox(am["permanencia"], 68 / 20) and aprox(am["pct_urgencia"], 50.0)
+    assert am["estado"]["internacoes"] == 24 and aprox(am["estado"]["permanencia"], 72 / 24)
+    assert aprox(am["estado"]["pct_urgencia"], 100 * 12 / 22)  # 10 + 2 de urgência, 22 com caráter informado
+    ac = ti.ficha_hospital(dados, "2090236", "COLO_UTERO")
+    assert ac["internacoes"] == 6 and ac["ufs"] == [("Goiás", 1)] and aprox(ac["pct_fora"], 100 / 6)
+    assert aprox(ac["estado"]["permanencia"], 16 / 6)
+    assert ti.ficha_hospital(dados, "2090236")["internacoes"] == 26  # sem filtro, igual a antes
+    texto_m = " ".join(ti.leitura_hospital(am)).lower()
+    assert "registrou 20 internações por câncer de mama" in texto_m and "câncer com mais internações" not in texto_m
+    print("[OK] por câncer: mama 20 (10 + 6 + 4) com 50% de urgência e MG 4; colo 6 com GO 1; hospital B não tem colo")
+
     # ---- por ano: ano com meses ausentes vai para a escala de 12 meses ----
     x = ti.ficha_hospital(ti.carregar_hospitais(hospital_x("x3")), "3333333")
     por_ano = x["por_ano"].set_index("ano")
