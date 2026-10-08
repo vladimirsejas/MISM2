@@ -28,6 +28,9 @@ jobs:
       - name: Fluxo de pacientes (mulheres de outros estados atendidas em SP)
         working-directory: algoritimos
         run: python teste_fluxo.py
+      - name: Comparar cidades (sem população)
+        working-directory: algoritimos
+        run: python teste_comparar.py
       - name: Conversa (fora do painel)
         working-directory: algoritimos
         run: python teste_conversa.py

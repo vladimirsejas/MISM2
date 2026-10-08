@@ -24,6 +24,7 @@ from inteligencia import (
     carregar_faixas,
     carregar_fluxo,
     carregar_serie,
+    cidades_parecidas,
     comparar_faixas,
     confiabilidade,
     destaques_cancer,
@@ -38,15 +39,20 @@ from inteligencia import (
     leitura_fluxo,
     leitura_ponta_projecao,
     ligacoes_fluxo,
+    mix_comparacao,
     nome_doenca,
     projetar,
+    perfil_cidade,
     por_cancer_fluxo,
+    porte_das_cidades,
     leitura_aparece,
+    leitura_comparacao,
     quando_aparece,
     radar_futuro,
     resumo_doencas,
     resumo_fluxo,
     tabela_aparece_para_tela,
+    tabela_comparacao,
     ritmo_estadual_na_escala,
     serie_doenca,
     tendencia_no_periodo,
@@ -135,6 +141,15 @@ def faixas_municipio(origem):
     conn = sqlite3.connect(BANCO)
     try:
         return carregar_faixas(conn, origem, UF_REFERENCIA)
+    finally:
+        conn.close()
+
+
+@st.cache_data
+def porte_cidades():
+    conn = sqlite3.connect(BANCO)
+    try:
+        return porte_das_cidades(conn, UF_REFERENCIA)
     finally:
         conn.close()
 
@@ -762,8 +777,8 @@ if aba == "Investigar":
     st.markdown('<div class="escudo-dica">Do que mais cresce para o que menos cresce. Uma linha por câncer.</div>',
                 unsafe_allow_html=True)
     aparece = quando_aparece(serie)
-    st.dataframe(tabela_aparece_para_tela(aparece), use_container_width=True, hide_index=True)
-    leitura("O que a tabela mostra", leitura_aparece(aparece, anos_incompletos(serie), ano_fim))
+    st.dataframe(tabela_aparece_para_tela(aparece, ano_ini), use_container_width=True, hide_index=True)
+    leitura("O que a tabela mostra", leitura_aparece(aparece, anos_incompletos(serie), ano_fim, ano_ini))
 
     pergunta(f"A idade das mulheres internadas por {cancer_de(doenca)} mudou?", "cidade",
              f"moradoras de {html.escape(nome_cidade)}")
@@ -789,10 +804,43 @@ if aba == "Investigar":
                 + ["A faixa de 50 a 69 anos é a do rastreamento de câncer de mama recomendado pelo INCA."
                    if doenca == "MAMA" else "Percentual de cada faixa dentro de cada período."])
 
-    pergunta("Comparar cidades")
-    st.markdown('<div class="escudo-info">Para dizer quais cidades estão acima do padrão é preciso dividir pela '
-                'população feminina de cada uma (internações por 100 mil mulheres). A população do IBGE ainda '
-                'não está no banco — é a próxima etapa desta área.</div>', unsafe_allow_html=True)
+    pergunta(f"Como {nome_cidade} se compara com outra cidade?", "cidade",
+             f"moradoras de {html.escape(nome_cidade)} e da cidade escolhida abaixo")
+    st.markdown('<div class="escudo-dica">A comparação usa proporções e médias, que não dependem do tamanho da '
+                'cidade. Internações por 100 mil mulheres ainda dependem da população do IBGE, que não está no '
+                'banco.</div>', unsafe_allow_html=True)
+    opcoes = [m for m in lista_municipios if m["origem"] != ORIGEM]
+    if not opcoes:
+        st.info("Só há uma cidade com dados no banco.")
+    else:
+        parecidas = cidades_parecidas(porte_cidades(), ORIGEM, 1)
+        indice_outra = next((i for i, m in enumerate(opcoes) if parecidas and m["origem"] == parecidas[0]), 0)
+        outro_nome = st.selectbox(f"Comparar {nome_cidade} com", [m["nome"] for m in opcoes], index=indice_outra,
+                                  key=f"comparar_com_{ORIGEM}",
+                                  help="A sugestão é a cidade com número de internações mais parecido.")
+        outra = next(m for m in opcoes if m["nome"] == outro_nome)
+        perfil_a, perfil_b = perfil_cidade(serie), perfil_cidade(serie_municipio(outra["origem"]))
+        if perfil_a is None or perfil_b is None:
+            st.info(f"{outro_nome} não tem internações registradas para comparar.")
+        else:
+            st.dataframe(tabela_comparacao(perfil_a, perfil_b, nome_cidade, outro_nome),
+                         use_container_width=True, hide_index=True)
+            mix = mix_comparacao(perfil_a, perfil_b, nome_cidade, outro_nome)
+            ordem = list(mix[mix["cidade"] == nome_cidade].sort_values("pct")["doenca"])
+            fig = go.Figure()
+            for cidade_barra, cor in ((outro_nome, CINZA), (nome_cidade, AZUL)):
+                parte = mix[mix["cidade"] == cidade_barra].set_index("doenca").reindex(ordem)
+                fig.add_trace(go.Bar(
+                    y=ordem, x=parte["pct"], name=cidade_barra, orientation="h", marker={"color": cor, "line": {"width": 0}},
+                    text=[f"{formatar_numero(v, 1)}%" for v in parte["pct"]], textposition="outside", cliponaxis=False,
+                    hovertemplate="%{y}: %{x:.1f}% das internações<extra>" + cidade_barra + "</extra>"))
+            fig.update_layout(barmode="group", bargap=0.3, bargroupgap=0.08)
+            fig.update_xaxes(ticksuffix="%", rangemode="tozero")
+            estilizar(fig, altura=120 + 56 * len(ordem))
+            st.markdown('<div class="escudo-dica">Parcela de cada câncer nas internações da cidade (cada cidade soma '
+                        '100%).</div>', unsafe_allow_html=True)
+            st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
+            leitura("O que a comparação mostra", leitura_comparacao(perfil_a, perfil_b, nome_cidade, outro_nome))
 
     st.download_button(
         "Baixar a série anual desta cidade (CSV)",

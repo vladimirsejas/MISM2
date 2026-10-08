@@ -278,6 +278,37 @@ def main():
     finally:
         inteligencia.carregar_fluxo, inteligencia.fluxo_da_cidade = fluxo_original, cidade_original
 
+    # ---- G. comparar cidades (aba Investigar): com uma cidade só avisa; com duas compara ----
+    at = abrir()
+    at.session_state["aba"] = "Investigar"
+    at.run()
+    textos = " ".join(str(m.value) for m in at.markdown)
+    info = " ".join(str(i.value) for i in at.info)
+    checar("G. uma cidade só no banco: a comparação avisa e não quebra",
+           not erros(at) and "Só há uma cidade com dados no banco" in info
+           and "Como Rio Claro se compara com outra cidade?" in textos)
+    lista_original = configuracao_geografica.listar_municipios_disponiveis
+    porte_original = inteligencia.porte_das_cidades
+    configuracao_geografica.listar_municipios_disponiveis = lambda: [
+        {"origem": "RIO_CLARO", "nome": "Rio Claro", "codigo_ibge": 3543907, "uf": "SP"},
+        {"origem": "CAMPINAS", "nome": "Campinas", "codigo_ibge": 3509502, "uf": "SP"}]
+    inteligencia.porte_das_cidades = lambda conn, uf="SP": {"RIO_CLARO": 1668, "CAMPINAS": 3656}
+    try:
+        at = abrir()
+        at.session_state["aba"] = "Investigar"
+        at.run()
+        textos = " ".join(str(m.value) for m in at.markdown)
+        caixas = {s.label: list(s.options) for s in at.selectbox}
+        checar("G. duas cidades: abre sem erro e oferece Campinas para comparar",
+               not erros(at) and caixas.get("Comparar Rio Claro com") == ["Campinas"])
+        checar("G. duas cidades: mostra a comparação e a leitura",
+               "O que a comparação mostra" in textos and "não é comparável" in textos
+               and any("Letalidade hospitalar" in str(c) for c in at.dataframe[-1].value.columns.tolist() + at.dataframe[-1].value["Indicador"].tolist())
+               if at.dataframe else False)
+    finally:
+        configuracao_geografica.listar_municipios_disponiveis = lista_original
+        inteligencia.porte_das_cidades = porte_original
+
     print(f"\n({time.time() - inicio:.0f} s)")
     if falhas:
         print(f"{len(falhas)} checagem(ns) falharam.")

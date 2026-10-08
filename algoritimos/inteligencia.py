@@ -719,12 +719,11 @@ def quando_aparece(serie):
     return pd.DataFrame(linhas)
 
 
-def tabela_aparece_para_tela(aparece):
+def tabela_aparece_para_tela(aparece, ano_inicio=None):
     """A tabela de `quando_aparece` em linguagem simples, do câncer que mais
-    cresce para o que menos cresce. "Primeiro ano" e "anos com internação" só
-    entram quando algum câncer NÃO apareceu em todos os anos: se todos
-    apareceram sempre (cidades grandes), essas colunas seriam iguais em todas
-    as linhas e não dizem nada."""
+    cresce para o que menos cresce. Uma coluna "Observação" só entra quando
+    algum câncer NÃO apareceu em todos os anos (ou só começou depois), e só
+    fica preenchida para ele: colunas iguais em todas as linhas não dizem nada."""
     t = aparece.sort_values("ritmo_anual_pct", ascending=False)
     tabela = pd.DataFrame({
         "Câncer": t["doenca"].values,
@@ -732,13 +731,21 @@ def tabela_aparece_para_tela(aparece):
         "Ano com mais internações": t["ano_de_pico"].values,
         "Internações naquele ano": [formatar_numero(v) for v in t["internacoes_no_pico"]],
     })
-    if (t["persistencia"] != "todos os anos").any():
-        tabela["Anos com internação"] = t["anos_com_internacao"].values
-        tabela["Primeiro ano"] = t["primeiro_ano"].values
+    base = int(ano_inicio) if ano_inicio else int(t["primeiro_ano"].min())  # 1º ano da série
+    observacoes = []
+    for r in t.itertuples():
+        partes = []
+        if r.persistencia != "todos os anos":
+            partes.append(f"internações em {r.anos_com_internacao.replace(' de ', ' dos ')} anos")
+        if r.primeiro_ano and int(r.primeiro_ano) > base:
+            partes.append(f"desde {int(r.primeiro_ano)}")
+        observacoes.append(", ".join(partes))
+    if any(observacoes):  # só aparece quando algum câncer foge do normal
+        tabela["Observação"] = observacoes
     return tabela
 
 
-def leitura_aparece(aparece, incompletos=None, ano_fim=None):
+def leitura_aparece(aparece, incompletos=None, ano_fim=None, ano_inicio=None):
     """Frases da tabela "qual câncer cresce mais rápido e quando foi o ponto mais alto".
     Descreve; o ritmo não é previsão e não explica causa."""
     if aparece.empty:
@@ -756,22 +763,143 @@ def leitura_aparece(aparece, incompletos=None, ano_fim=None):
     ultimo = int(ano_fim) if ano_fim else int(max(t["ano_de_pico"]))
     recentes = int((t["ano_de_pico"] >= ultimo - 1).sum())
     plural = "cânceres" if len(t) > 1 else "câncer"
-    frases.append(f"Em {recentes} de {len(t)} {plural} o ano com mais internações foi {ultimo - 1} ou {ultimo}"
-                  + (": ainda estão no ponto mais alto." if recentes == len(t) and len(t) > 1
-                     else ": ainda está no ponto mais alto." if recentes == len(t) else "."))
+    if recentes == 0:
+        frases.append(f"Nenhum câncer teve o ano com mais internações em {ultimo - 1} ou {ultimo}.")
+    else:
+        frases.append(f"Em {recentes} de {len(t)} {plural} o ano com mais internações foi {ultimo - 1} ou {ultimo}"
+                      + (": ainda estão no ponto mais alto." if recentes == len(t) and len(t) > 1
+                         else ": ainda está no ponto mais alto." if recentes == len(t) else "."))
     raros = t[t["persistencia"] != "todos os anos"]
+    base = int(ano_inicio) if ano_inicio else int(t["primeiro_ano"].min())
     if raros.empty:
-        frases.append("Todos os cânceres tiveram internações em todos os anos do período; por isso a tabela não "
-                      "mostra primeiro ano nem anos com internação.")
+        frases.append("Todos os cânceres tiveram internações em todos os anos do período.")
     else:
         frases.append("Poucos casos por ano, leia com cuidado: " + "; ".join(
-            f"{r.doenca} apareceu em {r.anos_com_internacao.replace(' de ', ' dos ')} anos, desde {r.primeiro_ano}"
+            f"{r.doenca} teve internações em {r.anos_com_internacao.replace(' de ', ' dos ')} anos"
+            + (f", desde {int(r.primeiro_ano)}" if int(r.primeiro_ano) > base else "")
             for r in raros.itertuples()) + ".")
     frases.append("Crescimento por ano = quanto as internações sobem (ou caem) em média a cada ano, pela tendência "
                   "do período, em % da média. Não é previsão.")
     if incompletos:
         frases.append("Nos anos em que a fonte não tem todos os meses, o número é estimado para 12 meses "
                       "(média mensal x 12).")
+    return frases
+
+
+# =====================================
+# COMPARAR CIDADES (sem população: proporções e médias)
+# =====================================
+#
+# Número absoluto de internações não compara cidades (a maior tem mais
+# mulheres). Enquanto a população do IBGE não está no banco, a comparação usa
+# o que não depende do tamanho: parcela de cada câncer, letalidade hospitalar,
+# permanência média e ritmo de crescimento. Descreve diferenças; não explica.
+
+SQL_PORTE = ("SELECT municipio, COUNT(*) FROM internacoes "
+             "WHERE origem = ? AND municipio <> 'OUTRO_ESTADO' GROUP BY municipio")
+
+
+def porte_das_cidades(conexao, uf_referencia="SP"):
+    """{cidade: internações no período}, só para sugerir uma cidade de porte parecido."""
+    try:
+        return {m: int(n) for m, n in conexao.execute(SQL_PORTE, (uf_referencia,)).fetchall()}
+    except Exception:
+        return {}
+
+
+def cidades_parecidas(porte, origem, n=5):
+    """As n cidades com número de internações mais próximo (em proporção), sem a própria."""
+    base = porte.get(origem)
+    if not base:
+        return []
+    outras = [(o, v) for o, v in porte.items() if o != origem and v > 0]
+    outras.sort(key=lambda par: abs(math.log(par[1] / base)))
+    return [o for o, _ in outras[:n]]
+
+
+def perfil_cidade(serie):
+    """Os indicadores da cidade que não dependem do tamanho, ou None sem internações."""
+    resumo = resumo_doencas(serie)
+    if resumo.empty:
+        return None
+    n = float(resumo["internacoes"].sum())
+    por_ano = serie[serie["grupo"] == GRUPO_MUNICIPIO].groupby("ano", as_index=False)["internacoes"].sum()
+    mix = resumo[["tipo_cancer", "doenca", "internacoes"]].copy()
+    mix["pct"] = 100.0 * mix["internacoes"] / n
+    return {
+        "internacoes": int(n),
+        "letalidade": 100.0 * float(resumo["obitos"].sum()) / n,
+        "permanencia": float(resumo["dias_permanencia"].sum()) / n,
+        "ritmo": float(ritmo_anual_pct(por_ano)),
+        "mix": mix,
+        "principal": mix.iloc[0]["doenca"], "pct_principal": float(mix.iloc[0]["pct"]),
+        "poucos_casos": bool(por_ano["internacoes"].mean() < MEDIA_PEQUENA),
+    }
+
+
+def tabela_comparacao(a, b, nome_a, nome_b):
+    """Uma linha por indicador, uma coluna por cidade."""
+    def sinal(v):
+        return f"{'+' if v > 0 else ''}{formatar_numero(v, 1)}%"
+    linhas = [
+        ("Câncer com mais internações", f"{a['principal']} ({formatar_numero(a['pct_principal'], 1)}%)",
+         f"{b['principal']} ({formatar_numero(b['pct_principal'], 1)}%)"),
+        ("Letalidade hospitalar (óbitos ÷ internações)", f"{formatar_numero(a['letalidade'], 1)}%",
+         f"{formatar_numero(b['letalidade'], 1)}%"),
+        ("Permanência média por internação", f"{formatar_numero(a['permanencia'], 1)} dias",
+         f"{formatar_numero(b['permanencia'], 1)} dias"),
+        ("Crescimento das internações por ano", sinal(a["ritmo"]), sinal(b["ritmo"])),
+        ("Internações no período (não compara tamanhos)", formatar_numero(a["internacoes"]),
+         formatar_numero(b["internacoes"])),
+    ]
+    return pd.DataFrame(linhas, columns=["Indicador", nome_a, nome_b])
+
+
+def mix_comparacao(a, b, nome_a, nome_b):
+    """Parcela de cada câncer nas internações de cada cidade (0 onde não há)."""
+    codigos = list(dict.fromkeys(list(a["mix"]["tipo_cancer"]) + list(b["mix"]["tipo_cancer"])))
+    linhas = []
+    for codigo in codigos:
+        for nome, p in ((nome_a, a), (nome_b, b)):
+            achada = p["mix"][p["mix"]["tipo_cancer"] == codigo]
+            linhas.append({"tipo_cancer": codigo, "doenca": nome_doenca(codigo), "cidade": nome,
+                           "pct": float(achada["pct"].iloc[0]) if not achada.empty else 0.0})
+    return pd.DataFrame(linhas)
+
+
+def leitura_comparacao(a, b, nome_a, nome_b):
+    """Frases da comparação. Descreve as diferenças; nunca atribui causa."""
+    frases = [f"Sem a população de cada cidade o tamanho não é comparável: {nome_a} teve "
+              f"{formatar_numero(a['internacoes'])} internações no período e {nome_b}, "
+              f"{formatar_numero(b['internacoes'])}. Por isso a comparação usa proporções e médias."]
+    dif = a["letalidade"] - b["letalidade"]
+    if abs(dif) < 0.5:
+        frases.append(f"A letalidade hospitalar é parecida: {formatar_numero(a['letalidade'], 1)}% em {nome_a} e "
+                      f"{formatar_numero(b['letalidade'], 1)}% em {nome_b}.")
+    else:
+        maior, menor, pm, pn = ((nome_a, nome_b, a, b) if dif > 0 else (nome_b, nome_a, b, a))
+        frases.append(f"A letalidade hospitalar é maior em {maior} ({formatar_numero(pm['letalidade'], 1)}%) do que em "
+                      f"{menor} ({formatar_numero(pn['letalidade'], 1)}%).")
+    dif = a["permanencia"] - b["permanencia"]
+    if abs(dif) < 0.3:
+        frases.append(f"A permanência média é parecida: {formatar_numero(a['permanencia'], 1)} e "
+                      f"{formatar_numero(b['permanencia'], 1)} dias.")
+    else:
+        maior, menor, pm, pn = ((nome_a, nome_b, a, b) if dif > 0 else (nome_b, nome_a, b, a))
+        frases.append(f"A permanência média é maior em {maior} ({formatar_numero(pm['permanencia'], 1)} dias) do que em "
+                      f"{menor} ({formatar_numero(pn['permanencia'], 1)}).")
+    if a["principal"] == b["principal"]:
+        frases.append(f"Nas duas cidades o câncer com mais internações é {a['principal'].lower()} "
+                      f"({formatar_numero(a['pct_principal'], 1)}% e {formatar_numero(b['pct_principal'], 1)}%).")
+    else:
+        frases.append(f"O câncer com mais internações é {a['principal'].lower()} em {nome_a} e "
+                      f"{b['principal'].lower()} em {nome_b}.")
+    frases.append(f"As internações crescem {formatar_numero(a['ritmo'], 1)}% ao ano em {nome_a} e "
+                  f"{formatar_numero(b['ritmo'], 1)}% em {nome_b}.")
+    pequenas = [n for n, p in ((nome_a, a), (nome_b, b)) if p["poucos_casos"]]
+    if pequenas:
+        frases.append(f"{' e '.join(pequenas)} tem poucas internações por ano: diferenças pequenas podem ser acaso.")
+    frases.append("Descreve as diferenças; não explica o motivo delas. Conta internações, não pessoas.")
     return frases
 
 

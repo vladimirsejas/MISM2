@@ -63,8 +63,15 @@ regras novas (meses da fonte, fonte única), e podia divergir do painel.
 `configuracao_geografica.py`. Ideias antigas (vulnerabilidade, score,
 perfil) só voltam como função nova em `inteligencia.py`.
 
-**Pendência:** comparação entre municípios depende da população do IBGE
-(gráfico de funil, cidades semelhantes).
+**Pendência:** taxa por 100 mil mulheres e ranking entre municípios dependem da
+população do IBGE (gráfico de funil, cidades semelhantes). **Comparar cidades
+(10/2026, primeira versão, sem população):** na aba Investigar, a cidade escolhida
+x outra (sugestão: a de número de internações mais parecido), só com o que não
+depende do tamanho: parcela de cada câncer, letalidade hospitalar, permanência
+média e ritmo de crescimento (`perfil_cidade`, `tabela_comparacao`,
+`mix_comparacao`, `leitura_comparacao`, `cidades_parecidas`; teste
+`algoritimos/teste_comparar.py`). Número absoluto aparece avisando que não compara
+tamanhos.
 
 ## Painel novo (09/2026) — decisões combinadas com o autor
 
