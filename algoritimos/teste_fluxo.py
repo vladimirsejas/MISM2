@@ -27,6 +27,8 @@ def banco():
     c.execute("CREATE TABLE internacoes (tipo_cancer TEXT, origem TEXT, municipio TEXT, ano INT, mes INT, "
               "obito INT, valor_total REAL, dias_permanencia INT, uf_residencia TEXT, "
               "municipio_hospital TEXT, cnes TEXT, car_int TEXT)")
+    c.execute("CREATE TABLE hospitais (cnes TEXT PRIMARY KEY, nome TEXT NOT NULL, fonte TEXT, consultado_em TEXT)")
+    c.execute("INSERT INTO hospitais VALUES ('2090236', 'FUNDACAO PIO XII BARRETOS', 'teste', '2026-10-08')")
     return c
 
 
@@ -95,6 +97,27 @@ def main():
     assert par[("Goiás", "Barretos")] == 6
     assert par[("Outros estados", "Outros municípios de SP")] == 2
     print("[OK] ligações do gráfico somam 32; o que passa do limite vira 'Outros'")
+
+    # ---- hospitais: nome da tabela `hospitais`; sem nome, o número do CNES ----
+    hosp = ti.hospitais_fluxo(fluxo, "MAMA")
+    assert list(hosp["cnes"]) == ["2090236", "2071234", "2082888"], list(hosp["cnes"])
+    assert list(hosp["hospital"]) == ["FUNDACAO PIO XII BARRETOS", "CNES 2071234", "CNES 2082888"]
+    assert list(hosp["tem_nome"]) == [True, False, False]
+    assert list(hosp["municipio"]) == ["Barretos", "São Paulo", "Rio Claro"]
+    assert list(hosp["internacoes"]) == [26, 4, 2] and aprox(hosp.iloc[0]["pct"], 81.25)
+    todos_h = ti.hospitais_fluxo(fluxo)
+    assert (todos_h.iloc[0]["internacoes"], todos_h.iloc[0]["cnes"]) == (31, "2090236")
+    assert len(ti.hospitais_fluxo(fluxo, "MAMA", n=2)) == 2
+    texto_h = " ".join(ti.leitura_hospitais(fluxo, hosp, "MAMA")).lower()
+    assert "fundacao pio xii barretos (barretos)" in texto_h and "3 hospitais" in texto_h
+    assert "py etl\\criar_tabela_hospitais.py" in texto_h and "internações, não pessoas" in texto_h
+    for proibido in ("porque", "devido", "por causa", "em razão", "r$"):
+        assert proibido not in texto_h, proibido
+    sem_tabela = dict(fluxo, hospitais={})
+    assert not ti.hospitais_fluxo(sem_tabela, "MAMA")["tem_nome"].any()
+    sem_cnes = dict(fluxo, fora=fluxo["fora"].assign(cnes=None))
+    assert ti.hospitais_fluxo(sem_cnes).empty and "CNES" in ti.leitura_hospitais(sem_cnes, ti.hospitais_fluxo(sem_cnes))[0]
+    print("[OK] hospitais: nome da tabela ou 'CNES 0000000'; município certo; 81,3% no primeiro; sem tabela/CNES não quebra")
 
     # ---- pontos do mapa ----
     pontos, sem_pos = ti.pontos_mapa_fluxo(mama)

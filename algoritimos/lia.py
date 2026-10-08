@@ -12,6 +12,7 @@ from inteligencia import (
     destaques_cancer,
     ficha_cancer,
     formatar_numero,
+    hospitais_fluxo,
     leitura_cidade,
     leitura_faixas,
     leitura_ponta_projecao,
@@ -330,6 +331,11 @@ def fluxo(ctx):
                 f"Os estados que mais enviam: "
                 + ", ".join(f"{u.estado} ({formatar_numero(u.pct, 1)}%)" for u in ufs.itertuples())
                 + f". {formatar_numero(c['pct'], 1)}% foram atendidas em {c['destino']}.")
+        if isinstance(ctx.fluxo, dict):
+            hospitais = hospitais_fluxo(ctx.fluxo, n=1)
+            if not hospitais.empty and hospitais.iloc[0]["tem_nome"]:
+                fala += (f" O hospital que mais recebe é {hospitais.iloc[0]['hospital']} "
+                         f"({formatar_numero(hospitais.iloc[0]['pct'], 1)}% das internações de fora).")
         numeros = [f"{u.estado}: {formatar_numero(u.internacoes)} internações ({formatar_numero(u.pct, 1)}%)"
                    for u in r["ufs"].head(5).itertuples()]
     if ctx.fluxo_cidade:

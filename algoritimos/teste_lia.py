@@ -127,13 +127,21 @@ fluxo_falso = {"internacoes_fora": 80, "internacoes_total": 800, "pct_fora": 10.
 import lia as _lia
 _original = _lia.resumo_fluxo
 _lia.resumo_fluxo = lambda f, c=None: fluxo_falso
+_original_h = _lia.hospitais_fluxo
+_lia.hospitais_fluxo = lambda f, cancer=None, n=10: pd.DataFrame(
+    {"hospital": ["FUNDACAO PIO XII BARRETOS"], "tem_nome": [True], "pct": [81.3]})
 try:
-    r = responder(Contexto(serie=serie, cidade="Rio Claro", faixas=faixas, fluxo=object()), caminho("fluxo"))
+    r = responder(Contexto(serie=serie, cidade="Rio Claro", faixas=faixas, fluxo={}), caminho("fluxo"))
+    r_sem_hospital = responder(Contexto(serie=serie, cidade="Rio Claro", faixas=faixas, fluxo=object()), caminho("fluxo"))
 finally:
     _lia.resumo_fluxo = _original
+    _lia.hospitais_fluxo = _original_h
 checar("F. com o fluxo: cita estados e destino, vai para Investigar, descreve sem atribuir causa",
        "Minas Gerais" in r.fala and "Barretos" in r.fala and r.destino == {"aba": "Investigar"}
        and "internações, não pessoas" in r.fala and "porque" not in r.fala.lower() and "R$" not in r.fala)
+checar("F. a Lia cita o hospital que mais recebe (pelo nome); sem o nome carregado, não cita",
+       "O hospital que mais recebe é FUNDACAO PIO XII BARRETOS" in r.fala
+       and "O hospital que mais recebe" not in r_sem_hospital.fala)
 
 print()
 if falhas:

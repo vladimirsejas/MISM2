@@ -46,6 +46,7 @@ jobs:
           python teste_investigar_2025.py
           python teste_baixar_sih_sp.py
           python teste_carga_fluxo.py
+          python teste_criar_tabela_hospitais.py
       - name: Painel (clica em tudo)
         run: python dashboard/teste_painel.py
       - name: Lâmina de apoio (clica em tudo)

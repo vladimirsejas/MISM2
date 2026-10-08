@@ -38,6 +38,8 @@ from inteligencia import (
     leitura_faixas,
     leitura_fluxo,
     pontos_mapa_fluxo,
+    hospitais_fluxo,
+    leitura_hospitais,
     nome_uf,
     CENTROS_UF,
     leitura_ponta_projecao,
@@ -746,6 +748,21 @@ if aba == "Investigar":
         fig.update_layout(showlegend=False)
         st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
         leitura("O que o gráfico mostra", leitura_fluxo(r_fluxo, None))
+
+        pergunta("Quais hospitais de SP mais atendem mulheres de outros estados?", "estado",
+                 "os 10 hospitais com mais internações de mulheres de fora, 7 cânceres somados")
+        hosp = hospitais_fluxo(fluxo, n=10)
+        if not hosp.empty:
+            tabela_h = pd.DataFrame({
+                "Hospital": hosp["hospital"],
+                "Município": hosp["municipio"],
+                "Internações de fora": [formatar_numero(v) for v in hosp["internacoes"]],
+                "Parcela das de fora": [f"{formatar_numero(v, 1)}%" for v in hosp["pct"]],
+            })
+            if tabela_h["Município"].nunique() == 1:  # coluna igual em todas as linhas não informa
+                tabela_h = tabela_h.drop(columns="Município")
+            st.dataframe(tabela_h, use_container_width=True, hide_index=True)
+        leitura("O que a tabela mostra", leitura_hospitais(fluxo, hosp))
 
         pergunta("A parcela de mulheres de fora está crescendo?", "estado", "todas as cidades de SP, 7 cânceres somados")
         st.markdown('<div class="escudo-dica">Parcela = internações de mulheres de outros estados ÷ todas as '

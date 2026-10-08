@@ -1240,6 +1240,16 @@ def _nomes_municipios(conexao):
         return {}
 
 
+def _nomes_hospitais(conexao):
+    """CNES (7 dígitos) -> nome, da tabela `hospitais` (etl/criar_tabela_hospitais.py).
+    Vazio se o banco ainda não tem a tabela: o painel então mostra o número."""
+    try:
+        return {str(c).strip().zfill(7): str(n) for c, n in conexao.execute(
+            "SELECT cnes, nome FROM hospitais WHERE nome IS NOT NULL AND TRIM(nome) <> ''").fetchall()}
+    except Exception:
+        return {}
+
+
 def nome_do_hospital_municipio(nomes, codigo6):
     return nomes.get(str(codigo6), f"município {codigo6}")
 
@@ -1260,6 +1270,7 @@ def carregar_fluxo(conexao, uf_referencia="SP"):
     fora["uf_residencia"] = fora["uf_residencia"].fillna("?")
     fora["municipio_hospital"] = fora["municipio_hospital"].fillna("?")
     return {"fora": fora, "total": total, "nomes": _nomes_municipios(conexao),
+            "hospitais": _nomes_hospitais(conexao),
             "meses": meses_por_ano(conexao, uf_referencia)}
 
 
@@ -1312,6 +1323,54 @@ def resumo_fluxo(fluxo, cancer=None):
         "permanencia_total": dias_total / n_total if n_total else 0.0,
         "n_ufs": len(ufs), "ufs": ufs, "destinos": destinos, "concentracao": concentracao,
     }
+
+
+def hospitais_fluxo(fluxo, cancer=None, n=10):
+    """Os hospitais de SP que mais atendem mulheres de outros estados.
+    `hospital` é o nome (tabela `hospitais`) ou 'CNES 0000000' se o nome
+    ainda não foi carregado; `tem_nome` diz qual dos dois."""
+    colunas = ["cnes", "hospital", "tem_nome", "municipio", "internacoes", "pct"]
+    fora, _ = _filtrar_cancer(fluxo, cancer)
+    n_fora = int(fora["internacoes"].sum())
+    com = fora[fora["cnes"].notna() & (fora["cnes"].astype(str).str.strip() != "")]
+    if com.empty:
+        return pd.DataFrame(columns=colunas)
+    total = com.groupby("cnes")["internacoes"].sum().sort_values(ascending=False)
+    topo = total.head(n)
+    cidade = (com.groupby(["cnes", "municipio_hospital"])["internacoes"].sum().reset_index()
+              .sort_values("internacoes", ascending=False).drop_duplicates("cnes").set_index("cnes")["municipio_hospital"])
+    nomes = fluxo.get("hospitais") or {}
+    codigos = [str(c).strip().zfill(7) for c in topo.index]
+    return pd.DataFrame({
+        "cnes": codigos,
+        "hospital": [nomes.get(c, f"CNES {c}") for c in codigos],
+        "tem_nome": [c in nomes for c in codigos],
+        "municipio": [nome_do_hospital_municipio(fluxo["nomes"], cidade[c]) for c in topo.index],
+        "internacoes": topo.values.astype(int),
+        "pct": [_pct(v, n_fora) for v in topo.values],
+    })
+
+
+def leitura_hospitais(fluxo, hospitais, cancer=None):
+    """Frases sobre os hospitais que mais atendem mulheres de fora. Só descreve."""
+    if hospitais is None or hospitais.empty:
+        return ["As internações de mulheres de outros estados não trazem o número do hospital (CNES)."]
+    primeiro = hospitais.iloc[0]
+    frases = [f"{primeiro['hospital']} ({primeiro['municipio']}) registrou {formatar_numero(primeiro['internacoes'])} "
+              f"internações de mulheres de outros estados: {formatar_numero(primeiro['pct'], 1)}% das internações de fora."]
+    if len(hospitais) >= 3:
+        frases.append(f"Os 3 hospitais que mais atendem reúnem "
+                      f"{formatar_numero(hospitais['pct'].head(3).sum(), 1)}% das internações de fora.")
+    fora, _ = _filtrar_cancer(fluxo, cancer)
+    n_hosp = int(fora["cnes"].dropna().nunique())
+    if n_hosp:
+        frases.append(f"No total, {formatar_numero(n_hosp)} hospital{'is' if n_hosp != 1 else ''} de SP "
+                      f"atendeu{'ram' if n_hosp != 1 else ''} mulheres de outros estados.")
+    if not hospitais["tem_nome"].all():
+        frases.append("Onde aparece só o número do CNES, o nome ainda não foi carregado "
+                      "(rode py etl\\criar_tabela_hospitais.py).")
+    frases.append("Conta internações, não pessoas. Descreve onde foram atendidas; não explica o motivo.")
+    return frases
 
 
 def evolucao_fluxo(fluxo, cancer=None):
