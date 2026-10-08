@@ -37,6 +37,9 @@ from inteligencia import (
     leitura_evolucao_fluxo,
     leitura_faixas,
     leitura_fluxo,
+    pontos_mapa_fluxo,
+    nome_uf,
+    CENTROS_UF,
     leitura_ponta_projecao,
     ligacoes_fluxo,
     mix_comparacao,
@@ -671,6 +674,53 @@ if aba == "Investigar":
         f3.metric("Dias de leito", formatar_numero(r_fluxo["dias_fora"]),
                   help=f"{formatar_numero(r_fluxo['pct_dias_fora'], 1)}% de todos os dias de internação")
         f4.metric("Estados de origem", formatar_numero(r_fluxo["n_ufs"]))
+
+        pergunta("Em quais estados elas moram?", "estado",
+                 "todas as cidades de SP, 7 cânceres somados · cada bolha é um estado de origem")
+        st.markdown('<div class="escudo-dica">Como ler: quanto maior a bolha, mais internações de mulheres '
+                    'daquele estado. Os estados estão na posição aproximada (centro de cada um), sem fronteiras; '
+                    'cinza é estado sem internação de fora. Mostra de onde elas vêm, não o caminho que fizeram.</div>', unsafe_allow_html=True)
+        pontos, sem_posicao = pontos_mapa_fluxo(r_fluxo)
+        if pontos.empty:
+            st.info("Não há estados de origem para mostrar no mapa.")
+        else:
+            maior = float(pontos["internacoes"].max())
+            sem_fluxo = [u for u in CENTROS_UF if u not in set(pontos["uf"]) and u != "SP"]
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(  # estados sem internação de fora: só a sigla, para desenhar o mapa
+                x=[CENTROS_UF[u][1] for u in sem_fluxo], y=[CENTROS_UF[u][0] for u in sem_fluxo],
+                mode="markers+text", text=sem_fluxo, textposition="middle center",
+                textfont={"size": 9, "color": "#8a93a3"},
+                marker={"size": 22, "color": "#eef0f4", "line": {"width": 1, "color": "#d5d9e0"}},
+                hovertext=[f"{nome_uf(u)}: nenhuma internação de fora registrada" for u in sem_fluxo],
+                hoverinfo="text", showlegend=False))
+            fig.add_trace(go.Scatter(
+                x=pontos["lon"], y=pontos["lat"], mode="markers+text",
+                text=pontos["uf"], textposition="middle center", textfont={"size": 10, "color": "#ffffff"},
+                marker={"size": 20 + 56 * (pontos["internacoes"] / maior) ** 0.5, "color": AZUL,
+                        "opacity": 0.85, "line": {"width": 1, "color": "#ffffff"}},
+                hovertext=[f"{e}: {formatar_numero(n)} internações ({formatar_numero(q, 1)}% das de fora)"
+                           for e, n, q in zip(pontos["estado"], pontos["internacoes"], pontos["pct"])],
+                hoverinfo="text", showlegend=False))
+            fig.add_trace(go.Scatter(
+                x=[CENTROS_UF["SP"][1]], y=[CENTROS_UF["SP"][0]], mode="markers+text", text=["SP"],
+                textposition="bottom center", textfont={"size": 10, "color": "#c0392b"},
+                marker={"size": 14, "color": "#c0392b", "symbol": "diamond", "line": {"width": 1, "color": "#ffffff"}},
+                hovertext=["Estado de São Paulo (onde estão os hospitais)"], hoverinfo="text", showlegend=False))
+            fig.update_xaxes(visible=False, range=[-76, -32])
+            fig.update_yaxes(visible=False, range=[-35, 6], scaleanchor="x", scaleratio=1)
+            estilizar(fig, altura=560)
+            fig.update_layout(showlegend=False, margin={"l": 0, "r": 0, "t": 10, "b": 0})
+            st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
+            topo = pontos.iloc[0]
+            frases = [f"{topo['estado']} é o estado com mais internações de mulheres de fora "
+                      f"({formatar_numero(topo['internacoes'])}, {formatar_numero(topo['pct'], 1)}% das de fora); "
+                      f"ao todo são {formatar_numero(len(pontos))} estados de origem.",
+                      "O losango vermelho marca o Estado de São Paulo, onde ficam os hospitais."]
+            if sem_posicao:
+                frases.append(f"{formatar_numero(sem_posicao)} internações vêm de residência sem posição no mapa "
+                              "e não aparecem nas bolhas.")
+            leitura("O que o mapa mostra", frases)
 
         st.markdown('<div class="escudo-dica">Como ler: cada faixa liga o estado onde a mulher mora (à esquerda) '
                     'ao município do hospital de SP onde foi internada (à direita). A largura é o número de '

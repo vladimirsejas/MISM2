@@ -1195,6 +1195,28 @@ GROUP BY tipo_cancer, ano
 SQL_NOMES_MUNICIPIOS = "SELECT substr(CAST(codigo_ibge AS TEXT), 1, 6), nome FROM municipios"
 
 
+# Centro aproximado de cada estado (latitude, longitude), só para posicionar
+# a bolha no mapa do fluxo: não é fronteira nem medida.
+CENTROS_UF = {
+    "AC": (-9.0, -70.5), "AL": (-9.6, -36.6), "AM": (-4.2, -64.7), "AP": (1.4, -51.8), "BA": (-12.5, -41.7),
+    "CE": (-5.2, -39.3), "DF": (-15.8, -47.8), "ES": (-19.6, -40.7), "GO": (-15.9, -49.6), "MA": (-5.1, -45.3),
+    "MG": (-18.5, -44.6), "MS": (-20.5, -54.5), "MT": (-12.9, -55.9), "PA": (-3.9, -52.5), "PB": (-7.1, -36.8),
+    "PE": (-8.4, -37.9), "PI": (-7.7, -42.7), "PR": (-24.6, -51.6), "RJ": (-22.2, -42.7), "RN": (-5.8, -36.6),
+    "RO": (-10.9, -62.8), "RR": (2.1, -61.4), "RS": (-29.7, -53.2), "SC": (-27.2, -50.5), "SE": (-10.6, -37.4),
+    "SP": (-22.3, -48.7), "TO": (-10.2, -48.3),
+}
+
+
+def pontos_mapa_fluxo(resumo):
+    """Uma linha por estado de origem, com a posição no mapa. Estado sem
+    posição conhecida fica de fora (e é contado em `sem_posicao`)."""
+    ufs = resumo["ufs"]
+    achados = ufs[ufs["uf"].isin(CENTROS_UF)].copy()
+    achados["lat"] = [CENTROS_UF[u][0] for u in achados["uf"]]
+    achados["lon"] = [CENTROS_UF[u][1] for u in achados["uf"]]
+    return achados.reset_index(drop=True), int(ufs.loc[~ufs["uf"].isin(CENTROS_UF), "internacoes"].sum())
+
+
 def nome_uf(sigla):
     return NOMES_UF.get(sigla, str(sigla))
 

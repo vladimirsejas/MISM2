@@ -1,5 +1,7 @@
 import sqlite3
 
+import pandas as pd
+
 import inteligencia as ti
 
 # =====================================
@@ -93,6 +95,16 @@ def main():
     assert par[("Goiás", "Barretos")] == 6
     assert par[("Outros estados", "Outros municípios de SP")] == 2
     print("[OK] ligações do gráfico somam 32; o que passa do limite vira 'Outros'")
+
+    # ---- pontos do mapa ----
+    pontos, sem_pos = ti.pontos_mapa_fluxo(mama)
+    assert list(pontos["uf"]) == ["MG", "GO", "PA"] and list(pontos["internacoes"]) == [24, 6, 2] and sem_pos == 0
+    assert all(-35 < la < 6 and -75 < lo < -33 for la, lo in zip(pontos["lat"], pontos["lon"]))
+    estranho = dict(mama, ufs=pd.DataFrame({"uf": ["MG", "XX"], "estado": ["Minas Gerais", "XX"],
+                                            "internacoes": [5, 3], "pct": [62.5, 37.5]}))
+    pontos, sem_pos = ti.pontos_mapa_fluxo(estranho)
+    assert list(pontos["uf"]) == ["MG"] and sem_pos == 3
+    print("[OK] mapa: uma bolha por estado de origem; sigla desconhecida fica de fora e é contada")
 
     # ---- por câncer ----
     pc = ti.por_cancer_fluxo(fluxo)
