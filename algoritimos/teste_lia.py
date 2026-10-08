@@ -117,6 +117,24 @@ checar("E. projeção sem promessa ('deve ficar' não aparece; 'a tendência apo
 r = responder(ctx_m, sobre("MAMA", "evolucao"))
 checar("E. a Lia avisa os anos incompletos ao falar de evolução", "não oferece todos os meses" in r.fala)
 
+# ---- F. fluxo de mulheres de outros estados ----
+r = responder(ctx, caminho("fluxo"))
+checar("F. sem o fluxo no banco, a Lia diz que ainda não sabe e manda rodar a carga",
+       "carga" in r.fala and r.expressao == "cautelosa" and r.destino == {"aba": "Investigar"})
+ufs_f = pd.DataFrame({"uf": ["MG", "GO"], "estado": ["Minas Gerais", "Goiás"], "internacoes": [60, 20], "pct": [75.0, 25.0]})
+fluxo_falso = {"internacoes_fora": 80, "internacoes_total": 800, "pct_fora": 10.0, "n_ufs": 2, "ufs": ufs_f,
+               "concentracao": {"destino": "Barretos", "pct": 88.0, "hospitais": 2, "n_para_90": 2}}
+import lia as _lia
+_original = _lia.resumo_fluxo
+_lia.resumo_fluxo = lambda f, c=None: fluxo_falso
+try:
+    r = responder(Contexto(serie=serie, cidade="Rio Claro", faixas=faixas, fluxo=object()), caminho("fluxo"))
+finally:
+    _lia.resumo_fluxo = _original
+checar("F. com o fluxo: cita estados e destino, vai para Investigar, descreve sem atribuir causa",
+       "Minas Gerais" in r.fala and "Barretos" in r.fala and r.destino == {"aba": "Investigar"}
+       and "internações, não pessoas" in r.fala and "porque" not in r.fala.lower() and "R$" not in r.fala)
+
 print()
 if falhas:
     print(f"{len(falhas)} checagem(ns) falharam.")

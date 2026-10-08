@@ -12,6 +12,7 @@ from inteligencia import (
     destaques_cancer,
     ficha_cancer,
     formatar_numero,
+    leitura_cidade,
     leitura_faixas,
     leitura_ponta_projecao,
     MEDIA_PEQUENA,
@@ -19,6 +20,7 @@ from inteligencia import (
     pressao_projetada,
     radar_futuro,
     resumo_doencas,
+    resumo_fluxo,
     serie_doenca,
     testar_projecao,
 )
@@ -57,6 +59,8 @@ class Contexto:
     cidade: str
     faixas: object = None      # DataFrame de inteligencia.carregar_faixas (opcional)
     duplicados: tuple = ()
+    fluxo: object = None          # inteligencia.carregar_fluxo (None: banco antigo, sem o fluxo)
+    fluxo_cidade: object = None   # inteligencia.fluxo_da_cidade
 
 
 # ---------- ações (o que um botão faz) ----------
@@ -81,6 +85,7 @@ CAMINHOS = [
     ("Onde podemos ter problema?", "atencao"),
     ("Valores hospitalares", "valores"),
     ("Comparar com São Paulo", "estado"),
+    ("Mulheres de outros estados", "fluxo"),
     ("Olhar para frente", "futuro"),
     ("Anos fora do padrão", "fora_padrao"),
     ("Os dados estão completos?", "completude"),
@@ -296,6 +301,48 @@ def estado(ctx):
         destino={"aba": "Evolução", "cancer": topo, "camadas": {"ver_estado": True}},
         numeros=[f"{nome_doenca(c)}: {formatar_numero(comp['ritmo_municipio'], 1)}% x "
                  f"{formatar_numero(comp['ritmo_estado'] or 0, 1)}% ao ano no Estado" for _, c, comp in linhas],
+    )
+
+
+def fluxo(ctx):
+    """De onde vêm as mulheres de outros estados atendidas em SP e onde as
+    moradoras da cidade se tratam. Só descreve (nada de causa); usa as
+    mesmas frases do painel, para a Lia nunca dizer outra coisa."""
+    if ctx.fluxo is None:
+        return Resposta(
+            fala=("Ainda não consigo mostrar este fluxo: o banco foi carregado sem o município do hospital e o "
+                  "estado de residência. Quando a carga for rodada de novo (py etl\\carga_todas_bases.py), eu passo "
+                  "a mostrar de onde vêm as mulheres de outros estados atendidas em SP."),
+            expressao="cautelosa",
+            botoes=[("Como esses dados funcionam?", caminho("metodo"))],
+            destino={"aba": "Investigar"},
+        )
+    r = resumo_fluxo(ctx.fluxo)
+    if not r["internacoes_fora"]:
+        fala = "Não há internações de mulheres de outros estados registradas nos hospitais de SP."
+        numeros = []
+    else:
+        c = r["concentracao"]
+        ufs = r["ufs"].head(3)
+        fala = (f"Em todo o Estado de SP, **{formatar_numero(r['pct_fora'], 1)}%** das internações por câncer "
+                f"feminino são de mulheres que moram em outros estados "
+                f"({formatar_numero(r['internacoes_fora'])} de {formatar_numero(r['internacoes_total'])}). "
+                f"Os estados que mais enviam: "
+                + ", ".join(f"{u.estado} ({formatar_numero(u.pct, 1)}%)" for u in ufs.itertuples())
+                + f". {formatar_numero(c['pct'], 1)}% foram atendidas em {c['destino']}.")
+        numeros = [f"{u.estado}: {formatar_numero(u.internacoes)} internações ({formatar_numero(u.pct, 1)}%)"
+                   for u in r["ufs"].head(5).itertuples()]
+    if ctx.fluxo_cidade:
+        fala += f"\n\nSobre {ctx.cidade}: " + " ".join(leitura_cidade(ctx.fluxo_cidade, ctx.cidade)[:2])
+    fala += ("\n\nIsso conta internações, não pessoas, e só enxerga hospitais de SP. Eu descrevo o fluxo; "
+             "o motivo dele precisa ser investigado.")
+    return Resposta(
+        fala=fala,
+        expressao="atenta" if r["internacoes_fora"] else "explicando",
+        botoes=[("Comparar com São Paulo", caminho("estado")), ("Os dados estão completos?", caminho("completude")),
+                ("Como esses dados funcionam?", caminho("metodo"))],
+        destino={"aba": "Investigar"},
+        numeros=numeros,
     )
 
 
@@ -547,7 +594,7 @@ ACOES = {"evolucao": _evolucao, "obitos": _obitos, "valores": _valores, "tempo":
          "estado": _estado_cancer, "projecao": _projecao, "porque": _porque}
 
 CAMINHOS_FUNCOES = {"completude": completude, "mais_aparece": mais_aparece, "aumentando": aumentando, "atencao": atencao,
-                    "valores": valores, "estado": estado, "fora_padrao": fora_padrao, "metodo": metodo}
+                    "valores": valores, "estado": estado, "fluxo": fluxo, "fora_padrao": fora_padrao, "metodo": metodo}
 
 
 def responder(ctx, acao):

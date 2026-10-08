@@ -339,7 +339,8 @@ doenca = st.session_state["doenca"]
 nome = nome_doenca(doenca)
 
 ctx_lia = Contexto(serie=serie, cidade=nome_cidade, faixas=faixas_municipio(ORIGEM),
-                   duplicados=tuple(duplicados_municipio(ORIGEM)))
+                   duplicados=tuple(duplicados_municipio(ORIGEM)),
+                   fluxo=fluxo_geral(), fluxo_cidade=fluxo_cidade(ORIGEM, cidade["codigo_ibge"]))
 st.session_state.setdefault("lia", {"cidade": None, "atual": None, "pilha": []})
 lia_estado = st.session_state["lia"]
 if lia_estado["cidade"] != ORIGEM:  # trocou de cidade: a Lia recomeça
