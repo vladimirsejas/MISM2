@@ -2,7 +2,8 @@ import os
 import sqlite3
 
 
-BANCO = r"C:\projetoescudofeminino2\banco\escudo_feminino.db"
+RAIZ_PROJETO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BANCO = os.path.join(RAIZ_PROJETO, "banco", "escudo_feminino.db")
 
 MUNICIPIO_PADRAO = "RIO_CLARO"
 UF_REFERENCIA = "SP"

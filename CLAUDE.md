@@ -275,8 +275,12 @@ Estado atual:
 
 ## Notas de contexto do domínio
 
-- Banco de dados: `banco/escudo_feminino.db` (SQLite). Caminho hardcoded
-  em alguns scripts como `C:\projetoescudofeminino2\banco\...` — isso é
-  esperado, o projeto roda no Windows do autor.
+- Banco de dados: `banco/escudo_feminino.db` (SQLite). O caminho é
+  calculado a partir da pasta do projeto (`RAIZ_PROJETO`), não fixo: o
+  projeto pode ficar em qualquer pasta (hoje `C:\MISM2`). Painel e
+  `algoritimos/` leem o `BANCO` de `configuracao_geografica.py`; os
+  scripts de `etl/` calculam o mesmo caminho. O banco e a pasta `dados\`
+  não vão para o GitHub: ao mudar o projeto de pasta, levar `banco\` e
+  `dados\` junto (ou rodar a carga de novo).
 - `pysus` só funciona no Python 3.12 do autor (`py -3.12`); o `py`
   padrão dele é 3.14.

@@ -5,7 +5,7 @@ import pandas as pd
 # CONEXÃO
 # =====================================
 
-BANCO = r"C:\projetoescudofeminino2\banco\escudo_feminino.db"
+from configuracao_geografica import BANCO  # único lugar que define onde está o banco
 
 conn = sqlite3.connect(BANCO)
 

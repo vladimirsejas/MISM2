@@ -8,7 +8,7 @@ import streamlit as st
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "algoritimos"))
 
-from configuracao_geografica import listar_municipios_disponiveis, obter_municipio, UF_REFERENCIA
+from configuracao_geografica import BANCO, listar_municipios_disponiveis, obter_municipio, UF_REFERENCIA
 from lia import INICIO, Contexto, responder as lia_responder
 from passeio import PARADAS, parada as passeio_parada
 from lia_rosto import img as rosto_lia
@@ -59,7 +59,6 @@ from inteligencia import (
 # O painel antigo continua no histórico do git (commit 273fbe5).
 # ============================================================
 
-BANCO = r"C:\projetoescudofeminino2\banco\escudo_feminino.db"
 
 st.set_page_config(
     page_title="Escudo Feminino",

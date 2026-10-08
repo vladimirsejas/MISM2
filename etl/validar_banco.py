@@ -1,3 +1,4 @@
+import os
 import sqlite3
 
 import pandas as pd
@@ -11,7 +12,8 @@ import pandas as pd
 # Uso: py etl\validar_banco.py
 # =====================================
 
-BANCO = r"C:\projetoescudofeminino2\banco\escudo_feminino.db"
+RAIZ_PROJETO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BANCO = os.path.join(RAIZ_PROJETO, "banco", "escudo_feminino.db")
 CANCERES = ["COLORRETAL", "COLO_UTERO", "MAMA", "OVARIO", "PELE_NAO_MELANOMA", "PULMAO", "TIREOIDE"]
 
 conexao = sqlite3.connect(BANCO)

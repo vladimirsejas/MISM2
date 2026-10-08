@@ -1,3 +1,4 @@
+import os
 import json
 import re
 import sqlite3
@@ -5,7 +6,8 @@ import unicodedata
 import gzip
 from urllib.request import Request, urlopen
 
-BANCO = r"C:\projetoescudofeminino2\banco\escudo_feminino.db"
+RAIZ_PROJETO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BANCO = os.path.join(RAIZ_PROJETO, "banco", "escudo_feminino.db")
 URL_IBGE = "https://servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios"
 
 

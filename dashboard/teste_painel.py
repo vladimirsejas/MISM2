@@ -30,6 +30,10 @@ RAIZ = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
 sys.path.insert(0, os.path.join(RAIZ, "algoritimos"))
 sys.path.insert(0, os.path.join(RAIZ, "dashboard"))
 
+# O app abre uma conexão com o banco mesmo aqui (os dados vêm do CSV); sem banco\ a pasta
+# pode não existir (CI, máquina nova) e o sqlite3 não cria pasta.
+os.makedirs(os.path.join(RAIZ, "banco"), exist_ok=True)
+
 import configuracao_geografica  # noqa: E402
 import conversa  # noqa: E402
 import inteligencia  # noqa: E402
@@ -222,7 +226,7 @@ def main():
     try:
         at.run()  # banco não mudou: continua o cache (os 7)
         igual = list(next(r for r in at.radio if r.label == "Câncer em foco").options) == antes
-        banco_app = r"C:\projetoescudofeminino2\banco\escudo_feminino.db"
+        banco_app = os.path.join(RAIZ, "banco", "escudo_feminino.db")
         if os.path.exists(banco_app):
             os.utime(banco_app, (time.time() + 60, time.time() + 60))  # "nova carga"
         at.run()

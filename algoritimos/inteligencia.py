@@ -24,7 +24,7 @@ import pandas as pd
 #   - Detectar um comportamento fora do padrão NÃO explica a causa.
 # =====================================
 
-BANCO = r"C:\projetoescudofeminino2\banco\escudo_feminino.db"
+from configuracao_geografica import BANCO  # único lugar que define onde está o banco
 
 GRUPO_MUNICIPIO = "MUNICIPIO"
 GRUPO_ESTADO = "SP"

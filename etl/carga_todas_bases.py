@@ -4,8 +4,9 @@ import shutil
 import sqlite3
 import pandas as pd
 
-BASE_DADOS = r"C:\projetoescudofeminino2\dados"
-BANCO = r"C:\projetoescudofeminino2\banco\escudo_feminino.db"
+RAIZ_PROJETO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DADOS = os.path.join(RAIZ_PROJETO, "dados")
+BANCO = os.path.join(RAIZ_PROJETO, "banco", "escudo_feminino.db")
 
 # Só os arquivos ESTADUAIS entram no banco. Cada um traz as
 # internações de todas as moradoras de SP, já com o município de
