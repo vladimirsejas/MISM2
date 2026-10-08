@@ -1,4 +1,13 @@
-# Escudo Feminino
+# MISM2 — Monitoramento Inteligente da Saúde da Mulher
+
+> **Novo nome do projeto:** o projeto, antes chamado **Escudo Feminino**,
+> passou a se chamar **MISM2** — *Monitoramento Inteligente da Saúde da
+> Mulher*. Ele é o **complemento do projeto MISM**:
+> https://github.com/KaueFLima/MISM
+>
+> "Escudo Feminino" continua aparecendo neste README e no código como o
+> nome do painel/sistema (arquivos, pastas e o atalho `Abrir Escudo
+> Feminino.bat`); só o nome do projeto mudou.
 
 > **Aviso: este README é informativo, não é diretriz.** Ele é o
 > último passo do nosso trabalho: só recebe o registro do que já foi
