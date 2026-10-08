@@ -234,7 +234,7 @@ tela = tabela_aparece_para_tela(aparece, 2013)
 checar("I. tabela 'cresce mais rápido': uma coluna 'Observação' só quando algum câncer foge do normal, e só preenchida para ele",
        list(tela.columns) == ["Câncer", "Crescimento por ano", "Ano com mais internações", "Internações naquele ano",
                               "Observação"]
-       and tela.iloc[0]["Observação"] == "internações em 10 dos 13 anos, desde 2015")
+       and tela.iloc[0]["Observação"] == "só em 10 de 13 anos, desde 2015")
 sempre = pd.concat([serie([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17], cancer="MAMA"),
                     serie([9, 9, 9, 8, 8, 8, 7, 7, 7, 6, 6, 6, 5], cancer="OVARIO")], ignore_index=True)
 ap2 = quando_aparece(sempre)

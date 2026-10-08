@@ -736,7 +736,7 @@ def tabela_aparece_para_tela(aparece, ano_inicio=None):
     for r in t.itertuples():
         partes = []
         if r.persistencia != "todos os anos":
-            partes.append(f"internações em {r.anos_com_internacao.replace(' de ', ' dos ')} anos")
+            partes.append(f"só em {r.anos_com_internacao} anos")
         if r.primeiro_ano and int(r.primeiro_ano) > base:
             partes.append(f"desde {int(r.primeiro_ano)}")
         observacoes.append(", ".join(partes))
