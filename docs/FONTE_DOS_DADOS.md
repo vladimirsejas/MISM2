@@ -8,7 +8,10 @@ reduzida**) do Estado de São Paulo, baixadas do DATASUS com o
 
 - mulher: `SEXO == "3"`;
 - moradora do Estado de SP: `MUNIC_RES` começando com `35` (a cidade
-  de residência vem desse código; Rio Claro = `354390`);
+  de residência vem desse código; Rio Claro = `354390`). Este é o filtro
+  do `baixar_sih_sp.py`. **Desde 10/2026** a carga também aceita
+  moradoras de outros estados (`OUTRO_ESTADO`) e o Estado conta o
+  atendimento em SP; as cidades seguem contadas por residência;
 - câncer pelo diagnóstico principal (`DIAG_PRINC`): mama `C50`, colo
   do útero `C53`, colorretal `C18`–`C20`, ovário `C56`, pulmão `C34`,
   tireoide `C73`, pele não melanoma `C44`.

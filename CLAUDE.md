@@ -236,6 +236,16 @@ Estado atual:
   o aviso "2025 em investigação" voltou. Para decidir 2025 de vez:
   `py etl\investigar_2025.py` (ANO_CMPT x DT_INTER, IDENT, N_AIH,
   MES_CMPT nos CSVs brutos) -- falta rodar no Windows.
+- **Escopo do Estado: atendimento em SP (autor, 10/2026).** O Estado do
+  Escudo conta as internações nos hospitais de SP, inclusive de mulheres
+  que moram em outro estado; a cidade continua por residência. A carga
+  grava essas linhas com `municipio = 'OUTRO_ESTADO'` (código IBGE de
+  residência mantido, `OUTRO_ESTADO` fora do catálogo e do seletor de
+  cidades; `validar_banco.py` mostra a coluna `outro_estado`). Antes elas
+  eram descartadas -- por isso o colorretal (94.005 registros, 2.664 de
+  fora) ficava de fora do banco. Pendente: conferir que os 7 cânceres
+  seguem a mesma regra (as outras 6 bases e `etl/baixar_sih_sp.py`
+  nasceram sob a regra de moradoras de SP) e rodar a carga no Windows.
 - **Contagem em dobro de Rio Claro: confirmada e corrigida.** No
   banco real havia 1.668 internações de Rio Claro com origem
   RIO_CLARO e as mesmas 1.668 com origem SP (a pasta estadual já traz

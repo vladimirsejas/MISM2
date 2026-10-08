@@ -50,12 +50,13 @@ def main():
     else:
         raise AssertionError("Código de SP desconhecido deveria falhar")
 
-    # moradoras de outros estados ficam de fora, em qualquer quantidade
-    # (a base de colorretal de SP de 94.005 registros tinha várias)
-    fora, _ = resolver_municipios(
+    # moradoras de outros estados ENTRAM como OUTRO_ESTADO (o Escudo conta o
+    # atendimento em SP), em qualquer quantidade, com o código de residência mantido
+    fora, codigos_fora = resolver_municipios(
         pd.DataFrame({"MUNIC_RES": ["3543907", "3106200", "3304557"]}), "SP", catalogo
     )
-    assert fora.tolist()[0] == "RIO_CLARO" and fora.isna().tolist() == [False, True, True]
+    assert fora.tolist() == ["RIO_CLARO", "OUTRO_ESTADO", "OUTRO_ESTADO"], fora.tolist()
+    assert codigos_fora.tolist() == [3543907, 3106200, 3304557]
 
     print("Todas as checagens da carga territorial passaram.")
 

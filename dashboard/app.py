@@ -780,7 +780,8 @@ if aba == "Método":
   é zero e ano incompleto não é ano normal: para comparar anos, o Escudo usa a média dos meses disponíveis × 12
   (marcador vazado no gráfico); os totais do período são o que foi registrado.
 - **Linha cinza (Estado de SP):** a série do Estado redimensionada para o tamanho de {nome_cidade}. Compara o
-  *ritmo*, não o volume.
+  *ritmo*, não o volume. O Estado conta o **atendimento nos hospitais de SP**, e por isso inclui mulheres que
+  moram em outros estados; a cidade conta as **moradoras** de {nome_cidade}.
 - **Fora do padrão:** o ano ficou longe do esperado pela tendência dos *outros* anos, além da oscilação normal
   e com diferença de pelo menos 3 internações. Aponta onde olhar; não explica a causa.
 - **Projeção de tendência:** a reta histórica prolongada, com a faixa onde o valor deve cair em 9 de cada 10

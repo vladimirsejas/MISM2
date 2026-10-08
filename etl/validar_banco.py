@@ -21,12 +21,13 @@ conexao = sqlite3.connect(BANCO)
 print("\nTOTAL DE REGISTROS\n")
 print(pd.read_sql("SELECT COUNT(*) AS total FROM internacoes", conexao))
 
-print("\nINTERNAÇÕES POR CÂNCER (Estado e Rio Claro)\n")
+print("\nINTERNAÇÕES POR CÂNCER (Estado, Rio Claro e moradoras de outro estado)\n")
 por_cancer = pd.read_sql(
     """
     SELECT tipo_cancer,
            COUNT(*) AS estado,
            SUM(CASE WHEN municipio = 'RIO_CLARO' THEN 1 ELSE 0 END) AS rio_claro,
+           SUM(CASE WHEN municipio = 'OUTRO_ESTADO' THEN 1 ELSE 0 END) AS outro_estado,
            MIN(ano) AS primeiro_ano, MAX(ano) AS ultimo_ano
     FROM internacoes
     GROUP BY tipo_cancer
@@ -37,7 +38,7 @@ por_cancer = pd.read_sql(
 print(por_cancer.to_string(index=False))
 
 print("\nMUNICÍPIOS COM INTERNAÇÕES:",
-      conexao.execute("SELECT COUNT(DISTINCT municipio) FROM internacoes").fetchone()[0])
+      conexao.execute("SELECT COUNT(DISTINCT municipio) FROM internacoes WHERE municipio <> 'OUTRO_ESTADO'").fetchone()[0])
 
 colunas = [linha[1] for linha in conexao.execute("PRAGMA table_info(internacoes)")]
 if "mes" in colunas:

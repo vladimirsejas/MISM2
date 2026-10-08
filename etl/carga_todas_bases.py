@@ -36,6 +36,13 @@ COLUNAS_OBRIGATORIAS = ["ANO_CMPT", "IDADE", "DIAS_PERM", "MORTE", "VAL_TOT"]
 # problema é o catálogo ou o arquivo, não uns poucos registros.
 TOLERANCIA_DESCONHECIDOS = 0.01
 
+# O Escudo conta o ATENDIMENTO em SP (internações nos hospitais do Estado),
+# não só as moradoras de SP. Quem mora em outro estado entra com este
+# rótulo no lugar do município; o código IBGE de residência é mantido.
+# Não está no catálogo `municipios`, então não aparece no seletor de
+# cidades, mas conta no Estado (origem = 'SP').
+OUTRO_ESTADO = "OUTRO_ESTADO"
+
 CANDIDATOS_CODIGO_MUNICIPIO = [
     "MUNIC_RES",
     "MUNIC_RESID",
@@ -238,14 +245,15 @@ def resolver_municipios(df, origem, catalogo, tolerancia=TOLERANCIA_DESCONHECIDO
     )
 
     # Moradoras de outros estados (código que não começa com 35): o
-    # Escudo é sobre moradoras de SP, então ficam de fora -- em qualquer
-    # quantidade. Era isso que derrubava a base de colorretal de SP na
-    # versão de 94.005 registros (a "corrigida" tem 91.341: só SP; ver
-    # docs/BASES_ORIGINAIS_2013_2025.md).
+    # Escudo conta o atendimento em SP, então elas ENTRAM, com o rótulo
+    # OUTRO_ESTADO, em qualquer quantidade (decisão do autor, 10/2026;
+    # antes ficavam de fora -- era o que separava a base de colorretal
+    # de 94.005 registros da de 91.341).
     fora_de_sp = codigos.map(lambda c: c is not None and not str(c).startswith("35"))
     if fora_de_sp.any():
+        municipios = municipios.mask(fora_de_sp, OUTRO_ESTADO)
         print(f"AVISO: {int(fora_de_sp.sum())} registros de moradoras de outros estados "
-              "ficam de fora (o Escudo é sobre moradoras de SP).")
+              f"entram como {OUTRO_ESTADO} (o Escudo conta o atendimento em SP).")
 
     desconhecidos = municipios.isna() & ~fora_de_sp
 
