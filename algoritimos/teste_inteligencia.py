@@ -229,6 +229,26 @@ linha = aparece.iloc[0]
 checar("I. quando aparece: primeiro ano 2015, pico 2025, 10 de 13 anos",
        linha["primeiro_ano"] == 2015 and linha["ano_de_pico"] == 2025 and linha["anos_com_internacao"] == "10 de 13")
 
+from inteligencia import leitura_aparece, tabela_aparece_para_tela
+tela = tabela_aparece_para_tela(aparece)
+checar("I. tabela 'cresce mais rápido': colunas simples e histórico só quando algum câncer não aparece sempre",
+       list(tela.columns) == ["Câncer", "Crescimento por ano", "Ano com mais internações", "Internações naquele ano",
+                              "Anos com internação", "Primeiro ano"])
+sempre = pd.concat([serie([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17], cancer="MAMA"),
+                    serie([9, 9, 9, 8, 8, 8, 7, 7, 7, 6, 6, 6, 5], cancer="OVARIO")], ignore_index=True)
+ap2 = quando_aparece(sempre)
+tela2 = tabela_aparece_para_tela(ap2)
+checar("I. tabela: se todos aparecem sempre, some primeiro ano/anos com internação; mais rápido em cima",
+       list(tela2.columns) == ["Câncer", "Crescimento por ano", "Ano com mais internações", "Internações naquele ano"]
+       and tela2.iloc[0]["Câncer"] == "Mama" and tela2.iloc[0]["Crescimento por ano"].startswith("+"))
+txt = " ".join(leitura_aparece(ap2, {2018: 6}, 2025)).lower()
+checar("I. leitura: mais rápido, queda, pico recente e aviso de meses estimados; sem causa nem R$",
+       "mama é o que mais cresce" in txt and "com tendência de queda: ovário" in txt
+       and "todos os cânceres tiveram internações em todos os anos" in txt and "estimado para 12 meses" in txt
+       and "não é previsão" in txt and not any(p in txt for p in ("porque", "devido", "r$")))
+checar("I. leitura: o 'ponto mais alto' conta a partir do último ano dos dados (2024 ou 2025), com plural certo",
+       "em 1 de 2 cânceres o ano com mais internações foi 2024 ou 2025" in txt)
+
 faixas = pd.DataFrame([
     ("MAMA", ano, faixa, n) for ano in range(2013, 2025)
     for faixa, n in (("até 39 anos", 10), ("40 a 49", 10), ("50 a 69", 10 if ano < 2019 else 30), ("70 ou mais", 10))

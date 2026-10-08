@@ -270,6 +270,9 @@ def main():
         checar("F. fluxo: números (3 estados de origem; 2 de outros estados em Rio Claro)",
                rotulos.get("Estados de origem") == "3" and rotulos.get("De outros estados") == "2"
                and "Internações de fora de SP" in rotulos)
+        checar("F. fluxo: cada bloco diz se é do Estado ou da cidade",
+               textos.count("Todo o Estado de São Paulo") >= 3 and "📍 Rio Claro" in textos
+               and "não muda quando você troca de cidade" in textos)
         checar("F. fluxo: a leitura cita Minas Gerais, Barretos e o aviso de que conta internações",
                "Minas Gerais" in textos and "Barretos" in textos and "internações, não pessoas" in textos)
     finally:

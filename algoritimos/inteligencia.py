@@ -719,6 +719,62 @@ def quando_aparece(serie):
     return pd.DataFrame(linhas)
 
 
+def tabela_aparece_para_tela(aparece):
+    """A tabela de `quando_aparece` em linguagem simples, do câncer que mais
+    cresce para o que menos cresce. "Primeiro ano" e "anos com internação" só
+    entram quando algum câncer NÃO apareceu em todos os anos: se todos
+    apareceram sempre (cidades grandes), essas colunas seriam iguais em todas
+    as linhas e não dizem nada."""
+    t = aparece.sort_values("ritmo_anual_pct", ascending=False)
+    tabela = pd.DataFrame({
+        "Câncer": t["doenca"].values,
+        "Crescimento por ano": [f"{'+' if v > 0 else ''}{formatar_numero(v, 1)}%" for v in t["ritmo_anual_pct"]],
+        "Ano com mais internações": t["ano_de_pico"].values,
+        "Internações naquele ano": [formatar_numero(v) for v in t["internacoes_no_pico"]],
+    })
+    if (t["persistencia"] != "todos os anos").any():
+        tabela["Anos com internação"] = t["anos_com_internacao"].values
+        tabela["Primeiro ano"] = t["primeiro_ano"].values
+    return tabela
+
+
+def leitura_aparece(aparece, incompletos=None, ano_fim=None):
+    """Frases da tabela "qual câncer cresce mais rápido e quando foi o ponto mais alto".
+    Descreve; o ritmo não é previsão e não explica causa."""
+    if aparece.empty:
+        return ["Sem internações para mostrar."]
+    t = aparece.sort_values("ritmo_anual_pct", ascending=False)
+    rapido, lento = t.iloc[0], t.iloc[-1]
+    frases = []
+    if len(t) > 1:
+        frases.append(f"{rapido['doenca']} é o que mais cresce ({'+' if rapido['ritmo_anual_pct'] > 0 else ''}"
+                      f"{formatar_numero(rapido['ritmo_anual_pct'], 1)}% ao ano) e {lento['doenca']} é o que menos "
+                      f"cresce ({'+' if lento['ritmo_anual_pct'] > 0 else ''}{formatar_numero(lento['ritmo_anual_pct'], 1)}% ao ano).")
+    caindo = list(t[t["ritmo_anual_pct"] < 0]["doenca"])
+    if caindo:
+        frases.append("Com tendência de queda: " + ", ".join(caindo) + ".")
+    ultimo = int(ano_fim) if ano_fim else int(max(t["ano_de_pico"]))
+    recentes = int((t["ano_de_pico"] >= ultimo - 1).sum())
+    plural = "cânceres" if len(t) > 1 else "câncer"
+    frases.append(f"Em {recentes} de {len(t)} {plural} o ano com mais internações foi {ultimo - 1} ou {ultimo}"
+                  + (": ainda estão no ponto mais alto." if recentes == len(t) and len(t) > 1
+                     else ": ainda está no ponto mais alto." if recentes == len(t) else "."))
+    raros = t[t["persistencia"] != "todos os anos"]
+    if raros.empty:
+        frases.append("Todos os cânceres tiveram internações em todos os anos do período; por isso a tabela não "
+                      "mostra primeiro ano nem anos com internação.")
+    else:
+        frases.append("Poucos casos por ano, leia com cuidado: " + "; ".join(
+            f"{r.doenca} apareceu em {r.anos_com_internacao.replace(' de ', ' dos ')} anos, desde {r.primeiro_ano}"
+            for r in raros.itertuples()) + ".")
+    frases.append("Crescimento por ano = quanto as internações sobem (ou caem) em média a cada ano, pela tendência "
+                  "do período, em % da média. Não é previsão.")
+    if incompletos:
+        frases.append("Nos anos em que a fonte não tem todos os meses, o número é estimado para 12 meses "
+                      "(média mensal x 12).")
+    return frases
+
+
 # Faixas escolhidas pelas diretrizes: 50-69 é a faixa do rastreamento
 # de câncer de mama recomendado pelo INCA.
 FAIXAS = [("até 39 anos", 0, 39), ("40 a 49", 40, 49), ("50 a 69", 50, 69), ("70 ou mais", 70, 200)]
@@ -1255,7 +1311,7 @@ def leitura_cidade(info, nome_cidade):
             f"{formatar_numero(_pct(info['outros_estados'], a), 1)}% de outros estados.")
         if not info["outros_estados"]:
             frases.append(f"Nenhuma internação de mulher de outro estado foi registrada em {nome_cidade}: "
-                          "elas se concentram em poucos municípios (veja o gráfico acima).")
+                          "elas se concentram em poucos municípios do Estado (veja o gráfico do Estado, acima).")
     else:
         frases.append(f"Nenhuma internação foi registrada em hospitais de {nome_cidade}.")
     m = info["moradoras"]

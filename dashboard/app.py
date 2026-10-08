@@ -1,3 +1,4 @@
+import html
 import os
 import sqlite3
 import sys
@@ -40,10 +41,12 @@ from inteligencia import (
     nome_doenca,
     projetar,
     por_cancer_fluxo,
+    leitura_aparece,
     quando_aparece,
     radar_futuro,
     resumo_doencas,
     resumo_fluxo,
+    tabela_aparece_para_tela,
     ritmo_estadual_na_escala,
     serie_doenca,
     tendencia_no_periodo,
@@ -168,8 +171,21 @@ def reais(valor, compacto=False):
     return f"R$ {formatar_numero(valor)}"
 
 
-def pergunta(texto):
+def selo_escopo(tipo, detalhe=""):
+    """Diz de quem são os números do bloco: "estado" (todas as cidades de SP, não muda
+    quando se troca de município) ou "cidade" (a escolhida no topo)."""
+    if tipo == "estado":
+        rotulo, padrao = "🌎 Todo o Estado de São Paulo", "não muda quando você troca de cidade"
+    else:
+        rotulo, padrao = f"📍 {html.escape(nome_cidade)}", "muda quando você troca de cidade"
+    st.markdown(f'<div class="escudo-escopo {tipo}">{rotulo} <small>· {detalhe or padrao}</small></div>',
+                unsafe_allow_html=True)
+
+
+def pergunta(texto, escopo=None, detalhe=""):
     st.markdown(f'<div class="escudo-pergunta">{texto}</div>', unsafe_allow_html=True)
+    if escopo:
+        selo_escopo(escopo, detalhe)
 
 
 def leitura(titulo, frases):
@@ -431,7 +447,7 @@ MEDIDAS = {
 if aba == "Panorama":
     medida = seletor(st, "Medir por", "medida", list(MEDIDAS), horizontal=True)
     coluna, titulo, formato = MEDIDAS[medida]
-    pergunta(titulo.format(c=nome_cidade))
+    pergunta(titulo.format(c=nome_cidade), "cidade", f"só moradoras de {html.escape(nome_cidade)}")
     st.markdown('<div class="escudo-dica">Total no período. Clique numa barra para pôr aquele câncer em foco.'
                 + (' Valor hospitalar registrado = o que as AIHs registraram no SIH/SUS; não é o orçamento '
                    'do município nem o custo total do tratamento.' if coluna == "valor_total" else "")
@@ -475,7 +491,8 @@ if aba == "Panorama":
     seletor(st, "Câncer em foco", "doenca", codigos, format_func=nome_doenca, horizontal=True)
     ficha = ficha_cancer(serie, doenca)
 
-    pergunta(f"O que chama atenção no {cancer_de(doenca)}?")
+    pergunta(f"O que chama atenção no {cancer_de(doenca)}?", "cidade",
+             f"moradoras de {html.escape(nome_cidade)}; o Estado entra só como comparação")
     k1, k2, k3, k4 = st.columns(4)
     k1.metric("Internações", formatar_numero(ficha["internacoes"]),
               help=f"{formatar_numero(ficha['pct_internacoes'], 1)}% das internações por câncer acompanhadas")
@@ -499,7 +516,8 @@ if aba == "Panorama":
 mun = serie_doenca(serie, doenca)
 
 if aba == "Evolução":
-    pergunta(f"Como as internações por {cancer_de(doenca)} mudaram de {ano_ini} a {ano_fim}?")
+    pergunta(f"Como as internações por {cancer_de(doenca)} mudaram de {ano_ini} a {ano_fim}?", "cidade",
+             f"moradoras de {html.escape(nome_cidade)}; a linha cinza é o Estado de SP, só para comparar o ritmo")
     st.markdown(f'<div class="escudo-dica">Câncer em foco: {nome}. Troque na aba Panorama.</div>',
                 unsafe_allow_html=True)
 
@@ -617,10 +635,11 @@ if aba == "Evolução":
 
 if aba == "Investigar":
     # ---- fluxo: mulheres de outros estados atendidas em SP (pedido do autor, 10/2026) ----
-    pergunta("De onde vêm as mulheres de outros estados atendidas em São Paulo?")
+    pergunta("De onde vêm as mulheres de outros estados atendidas em São Paulo?", "estado",
+             "todas as cidades de SP, 7 cânceres somados, 2013–2025 · não muda quando você troca de cidade")
     st.markdown('<div class="escudo-dica">Internações de mulheres que moram em outros estados, registradas em '
-                'hospitais de SP, nos 7 cânceres acompanhados. Conta internações (uma mulher pode ter várias) '
-                'e só enxerga hospitais de SP.</div>', unsafe_allow_html=True)
+                'hospitais de SP. Conta internações (uma mulher pode ter várias) e só enxerga hospitais de SP.'
+                '</div>', unsafe_allow_html=True)
     fluxo = fluxo_geral()
     if fluxo is None:
         st.info("O banco ainda não guarda onde cada mulher foi atendida. Rode a carga de novo "
@@ -637,6 +656,9 @@ if aba == "Investigar":
                   help=f"{formatar_numero(r_fluxo['pct_dias_fora'], 1)}% de todos os dias de internação")
         f4.metric("Estados de origem", formatar_numero(r_fluxo["n_ufs"]))
 
+        st.markdown('<div class="escudo-dica">Como ler: cada faixa liga o estado onde a mulher mora (à esquerda) '
+                    'ao município do hospital de SP onde foi internada (à direita). A largura é o número de '
+                    'internações.</div>', unsafe_allow_html=True)
         lig = ligacoes_fluxo(fluxo)
         origens = list(dict.fromkeys(lig["origem"]))
         destinos_s = list(dict.fromkeys(lig["destino"]))
@@ -659,7 +681,9 @@ if aba == "Investigar":
         st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
         leitura("O que o gráfico mostra", leitura_fluxo(r_fluxo, None))
 
-        pergunta("A parcela de mulheres de fora está crescendo?")
+        pergunta("A parcela de mulheres de fora está crescendo?", "estado", "todas as cidades de SP, 7 cânceres somados")
+        st.markdown('<div class="escudo-dica">Parcela = internações de mulheres de outros estados ÷ todas as '
+                    'internações registradas em hospitais de SP naquele ano.</div>', unsafe_allow_html=True)
         fig = go.Figure(go.Scatter(
             x=e_fluxo["ano"], y=e_fluxo["pct_fora"], mode="lines+markers",
             line={"color": AZUL, "width": 3}, marker={"size": 8, "color": AZUL},
@@ -674,7 +698,7 @@ if aba == "Investigar":
         st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
         leitura("O que o gráfico mostra", leitura_evolucao_fluxo(e_fluxo))
 
-        pergunta("Em quais cânceres a parcela de fora é maior?")
+        pergunta("Em quais cânceres a parcela de fora é maior?", "estado", "uma linha por câncer, no Estado inteiro")
         pc = por_cancer_fluxo(fluxo)
         st.dataframe(pc.assign(
             pct_fora=[f"{formatar_numero(v, 1)}%" for v in pc["pct_fora"]],
@@ -685,7 +709,9 @@ if aba == "Investigar":
             "pct_fora": "Parcela de fora", "estado_principal": "Estado que mais envia",
             "destino_principal": "Município que mais atende"}), use_container_width=True, hide_index=True)
 
-        pergunta(f"Quem é atendida nos hospitais de {nome_cidade}, e para onde vão as moradoras?")
+        pergunta(f"Quem é atendida nos hospitais de {nome_cidade}, e para onde vão as moradoras?", "cidade",
+                 f"só hospitais de {html.escape(nome_cidade)} e só moradoras de {html.escape(nome_cidade)}, "
+                 "7 cânceres somados")
         info_cidade = fluxo_cidade(ORIGEM, cidade["codigo_ibge"])
         if info_cidade is None:
             st.info("Sem o município do hospital no banco não dá para ver o fluxo da cidade.")
@@ -698,7 +724,8 @@ if aba == "Investigar":
             leitura("O que mostra", leitura_cidade(info_cidade, nome_cidade))
         st.markdown("---")
 
-    pergunta(f"Em que anos algum câncer saiu do padrão em {nome_cidade}?")
+    pergunta(f"Em que anos algum câncer saiu do padrão em {nome_cidade}?", "cidade",
+             f"moradoras de {html.escape(nome_cidade)}")
     st.markdown('<div class="escudo-dica">Todos os cânceres de uma vez. "Esperado" = tendência calculada com os '
                 'outros anos. Detectar não explica a causa.</div>', unsafe_allow_html=True)
     fora_todos = anos_fora_todos(serie)
@@ -730,17 +757,16 @@ if aba == "Investigar":
             st.caption(f"{contagem.index[0]} aparece para {contagem.iloc[0]} cânceres ao mesmo tempo — quando "
                        f"vários mudam juntos, vale checar o registro antes de concluir.")
 
-    pergunta("Quando cada câncer aparece?")
-    st.markdown('<div class="escudo-dica">Primeiro ano com internação, persistência (em quantos anos aparece), '
-                'ano de pico e ritmo médio de crescimento.</div>', unsafe_allow_html=True)
+    pergunta("Qual câncer cresce mais rápido, e quando foi o ponto mais alto?", "cidade",
+             f"moradoras de {html.escape(nome_cidade)}, {ano_ini}–{ano_fim}")
+    st.markdown('<div class="escudo-dica">Do que mais cresce para o que menos cresce. Uma linha por câncer.</div>',
+                unsafe_allow_html=True)
     aparece = quando_aparece(serie)
-    aparece["ritmo_anual_pct"] = [f"{formatar_numero(v, 1)}%" for v in aparece["ritmo_anual_pct"]]
-    st.dataframe(aparece.rename(columns={
-        "doenca": "Câncer", "primeiro_ano": "Primeiro ano", "anos_com_internacao": "Anos com internação",
-        "persistencia": "Persistência", "ano_de_pico": "Ano de pico", "internacoes_no_pico": "Internações no pico",
-        "ritmo_anual_pct": "Ritmo ao ano"}), use_container_width=True, hide_index=True)
+    st.dataframe(tabela_aparece_para_tela(aparece), use_container_width=True, hide_index=True)
+    leitura("O que a tabela mostra", leitura_aparece(aparece, anos_incompletos(serie), ano_fim))
 
-    pergunta(f"A idade das mulheres internadas por {cancer_de(doenca)} mudou?")
+    pergunta(f"A idade das mulheres internadas por {cancer_de(doenca)} mudou?", "cidade",
+             f"moradoras de {html.escape(nome_cidade)}")
     faixas = faixas_municipio(ORIGEM)
     tabela_faixas, periodos = comparar_faixas(faixas, doenca)
     if periodos is None:
@@ -783,7 +809,8 @@ if aba == "Investigar":
 if aba == "Planejamento":
     lista = radar(ORIGEM)
     ano_h = lista[0]["ano"] if lista else ano_fim + 3
-    pergunta(f"Se nada mudar, onde {nome_cidade} pode ter problema até {ano_h}?")
+    pergunta(f"Se nada mudar, onde {nome_cidade} pode ter problema até {ano_h}?", "cidade",
+             f"moradoras de {html.escape(nome_cidade)}; o Estado entra só como comparação")
     st.markdown('<div class="escudo-dica">O radar junta, para cada câncer, o que já aconteceu e para onde a tendência '
                 'aponta. Alerta = cresce, a tendência passou no teste de acerto e há um agravante (cresce mais que o '
                 'Estado, letalidade acima do Estado, mais dias de leito pela frente ou o maior volume). Não define '
@@ -832,7 +859,7 @@ if aba == "Planejamento":
 
     pontos_q = [r for r in lista if r["letalidade_relativa"] is not None]
     if pontos_q:
-        pergunta("Crescimento x gravidade: onde fica cada câncer?")
+        pergunta("Crescimento x gravidade: onde fica cada câncer?", "cidade", f"moradoras de {html.escape(nome_cidade)}")
         COR_NIVEL = {"alerta": LARANJA, "observar": "#7565a8", "estavel": CINZA}
         fig = go.Figure(go.Scatter(
             x=[r["crescimento"] for r in pontos_q], y=[r["letalidade_relativa"] for r in pontos_q],

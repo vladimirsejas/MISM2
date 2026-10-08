@@ -19,6 +19,10 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; color: #292541; letter-spacing:
 .escudo-sub { color: #625d72; font-size: 1.02rem; max-width: 760px; }
 .escudo-pergunta { font-family: 'Manrope', sans-serif; color: #292541; font-size: 1.35rem; font-weight: 700; margin: 26px 0 2px; }
 .escudo-dica { color: #8a8599; font-size: .88rem; margin-bottom: 4px; }
+.escudo-escopo { display: inline-block; font-size: .82rem; font-weight: 700; border-radius: 999px; padding: 4px 13px; margin: 4px 0 8px; }
+.escudo-escopo small { font-weight: 500; font-size: 1em; opacity: .9; }
+.escudo-escopo.estado { background: #efe9fb; color: #5b3fa8; border: 1px solid #ddd2f5; }
+.escudo-escopo.cidade { background: #e6f0fd; color: #1f5fb5; border: 1px solid #cfe1fa; }
 .escudo-leitura { background: #fff; border: 1px solid #ebe8f2; border-radius: 16px; padding: 14px 20px; margin-top: 6px; color: #3d3852; }
 .escudo-leitura li { margin: 5px 0; }
 .escudo-alerta { background: #fff7ef; border: 1px solid #f6d9c2; border-radius: 16px; padding: 12px 18px; margin-top: 10px; color: #6b3d1e; font-size: .93rem; }

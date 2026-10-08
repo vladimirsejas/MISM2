@@ -77,6 +77,12 @@ poucas portas de entrada, não cinco sistemas. Regras:
 - **Cada informação tem uma casa só** no painel; não repetir números
   em várias telas.
 - **Todo gráfico = pergunta (título) + gráfico + leitura em texto.**
+- **Toda pergunta diz de quem são os números (decisão do autor, 10/2026).**
+  `pergunta(texto, escopo, detalhe)` põe um selo: roxo "🌎 Todo o Estado de
+  São Paulo" (não muda ao trocar de cidade) ou azul "📍 <cidade>" (muda).
+  Motivo: com "Campinas" no topo, o gráfico do Estado parecia de Campinas.
+  Pergunta nova sem escopo declarado não entra. Tabelas só mostram colunas
+  que informam (sem colunas iguais em todas as linhas) e levam leitura.
 - **A inteligência calcula, o Gemini explica.** Nunca atribuir
   causa; detectar ≠ explicar.
 - **Nada de orçamento em reais.** O Escudo aponta o que merece
