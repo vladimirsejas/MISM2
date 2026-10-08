@@ -41,6 +41,13 @@ print("\nMUNICÍPIOS COM INTERNAÇÕES:",
       conexao.execute("SELECT COUNT(DISTINCT municipio) FROM internacoes WHERE municipio <> 'OUTRO_ESTADO'").fetchone()[0])
 
 colunas = [linha[1] for linha in conexao.execute("PRAGMA table_info(internacoes)")]
+if "municipio_hospital" in colunas:
+    com_hospital = conexao.execute("SELECT COUNT(*) FROM internacoes WHERE municipio_hospital IS NOT NULL").fetchone()[0]
+    total_linhas = conexao.execute("SELECT COUNT(*) FROM internacoes").fetchone()[0]
+    print(f"FLUXO: município do hospital gravado em {com_hospital} de {total_linhas} linhas "
+          f"({100 * com_hospital / max(total_linhas, 1):.1f}%)")
+else:
+    print("FLUXO: não (banco de uma carga anterior ao fluxo -- rode py etl\\carga_todas_bases.py)")
 if "mes" in colunas:
     com_mes = conexao.execute("SELECT COUNT(*) FROM internacoes WHERE mes IS NOT NULL").fetchone()[0]
     print("MÊS GRAVADO:", "sim" if com_mes else "não (a carga não achou MES_CMPT)")

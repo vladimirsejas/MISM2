@@ -962,3 +962,312 @@ def radar_futuro(serie, horizonte=3):
     ordem = {n: i for i, n in enumerate(NIVEIS_RADAR)}
     return sorted(linhas, key=lambda l: (ordem[l["nivel"]], -len(l["sinais"]), -l["internacoes"]))
 
+
+
+# =====================================
+# FLUXO DE PACIENTES: quem vem de outros estados se tratar em SP
+# =====================================
+#
+# Pergunta do gestor: quantas mulheres de outros estados a rede de SP
+# atende, de onde vêm, para onde vão em SP, quanto leito ocupam e se
+# isso cresce. Vale também para a cidade: quem é atendido nos hospitais
+# dela e para onde vão as moradoras.
+#
+# O que os números significam: contam INTERNAÇÕES (uma mulher pode ter
+# várias) e só enxergam hospitais de SP -- quem se trata em outro estado
+# não aparece. Descrevem o fluxo; não explicam o motivo dele.
+
+OUTRO_ESTADO = "OUTRO_ESTADO"  # mesmo rótulo da carga (etl/carga_todas_bases.py)
+
+NOMES_UF = {
+    "AC": "Acre", "AL": "Alagoas", "AM": "Amazonas", "AP": "Amapá", "BA": "Bahia",
+    "CE": "Ceará", "DF": "Distrito Federal", "ES": "Espírito Santo", "GO": "Goiás",
+    "MA": "Maranhão", "MG": "Minas Gerais", "MS": "Mato Grosso do Sul", "MT": "Mato Grosso",
+    "PA": "Pará", "PB": "Paraíba", "PE": "Pernambuco", "PI": "Piauí", "PR": "Paraná",
+    "RJ": "Rio de Janeiro", "RN": "Rio Grande do Norte", "RO": "Rondônia", "RR": "Roraima",
+    "RS": "Rio Grande do Sul", "SC": "Santa Catarina", "SE": "Sergipe", "SP": "São Paulo",
+    "TO": "Tocantins",
+}
+
+SQL_FLUXO_FORA = """
+SELECT tipo_cancer, ano, uf_residencia, municipio_hospital, cnes,
+       COUNT(*) AS internacoes,
+       COALESCE(SUM(obito), 0) AS obitos,
+       COALESCE(SUM(dias_permanencia), 0) AS dias_permanencia
+FROM internacoes
+WHERE origem = ? AND municipio = 'OUTRO_ESTADO'
+GROUP BY tipo_cancer, ano, uf_residencia, municipio_hospital, cnes
+"""
+
+SQL_FLUXO_TOTAL = """
+SELECT tipo_cancer, ano,
+       COUNT(*) AS internacoes,
+       COALESCE(SUM(dias_permanencia), 0) AS dias_permanencia
+FROM internacoes
+WHERE origem = ?
+GROUP BY tipo_cancer, ano
+"""
+
+SQL_NOMES_MUNICIPIOS = "SELECT substr(CAST(codigo_ibge AS TEXT), 1, 6), nome FROM municipios"
+
+
+def nome_uf(sigla):
+    return NOMES_UF.get(sigla, str(sigla))
+
+
+def _pct(parte, todo):
+    return 100.0 * parte / todo if todo else 0.0
+
+
+def _banco_tem_fluxo(conexao):
+    try:
+        colunas = {linha[1] for linha in conexao.execute("PRAGMA table_info(internacoes)")}
+    except Exception:
+        return False
+    return {"uf_residencia", "municipio_hospital"} <= colunas
+
+
+def _nomes_municipios(conexao):
+    try:
+        return {str(c): str(n) for c, n in conexao.execute(SQL_NOMES_MUNICIPIOS).fetchall()}
+    except Exception:
+        return {}
+
+
+def nome_do_hospital_municipio(nomes, codigo6):
+    return nomes.get(str(codigo6), f"município {codigo6}")
+
+
+def carregar_fluxo(conexao, uf_referencia="SP"):
+    """Dados do fluxo de mulheres de outros estados atendidas em SP, ou
+    None se o banco foi carregado antes do fluxo (sem município do
+    hospital) ou não tem nenhuma mulher de fora."""
+    if not _banco_tem_fluxo(conexao):
+        return None
+    try:
+        fora = pd.read_sql(SQL_FLUXO_FORA, conexao, params=(uf_referencia,))
+        total = pd.read_sql(SQL_FLUXO_TOTAL, conexao, params=(uf_referencia,))
+    except Exception:
+        return None
+    if fora.empty or fora["municipio_hospital"].isna().all():
+        return None
+    fora["uf_residencia"] = fora["uf_residencia"].fillna("?")
+    fora["municipio_hospital"] = fora["municipio_hospital"].fillna("?")
+    return {"fora": fora, "total": total, "nomes": _nomes_municipios(conexao),
+            "meses": meses_por_ano(conexao, uf_referencia)}
+
+
+def _filtrar_cancer(fluxo, cancer):
+    fora, total = fluxo["fora"], fluxo["total"]
+    if cancer:
+        fora, total = fora[fora["tipo_cancer"] == cancer], total[total["tipo_cancer"] == cancer]
+    return fora, total
+
+
+def resumo_fluxo(fluxo, cancer=None):
+    """Totais, estados de origem, municípios de destino e concentração.
+    `cancer=None` soma os 7 cânceres."""
+    fora, total = _filtrar_cancer(fluxo, cancer)
+    n_fora, n_total = int(fora["internacoes"].sum()), int(total["internacoes"].sum())
+    dias_fora, dias_total = int(fora["dias_permanencia"].sum()), int(total["dias_permanencia"].sum())
+
+    por_uf = fora.groupby("uf_residencia")["internacoes"].sum().sort_values(ascending=False)
+    ufs = pd.DataFrame({
+        "uf": por_uf.index,
+        "estado": [nome_uf(u) for u in por_uf.index],
+        "internacoes": por_uf.values.astype(int),
+        "pct": [_pct(v, n_fora) for v in por_uf.values],
+    })
+
+    por_destino = fora.groupby("municipio_hospital").agg(
+        internacoes=("internacoes", "sum"), hospitais=("cnes", "nunique")
+    ).sort_values("internacoes", ascending=False)
+    destinos = pd.DataFrame({
+        "codigo": por_destino.index,
+        "municipio": [nome_do_hospital_municipio(fluxo["nomes"], c) for c in por_destino.index],
+        "internacoes": por_destino["internacoes"].values.astype(int),
+        "pct": [_pct(v, n_fora) for v in por_destino["internacoes"].values],
+        "hospitais": por_destino["hospitais"].values.astype(int),
+    })
+
+    concentracao = None
+    if not destinos.empty:
+        acumulado = destinos["pct"].cumsum()
+        concentracao = {
+            "destino": destinos.iloc[0]["municipio"],
+            "pct": float(destinos.iloc[0]["pct"]),
+            "hospitais": int(destinos.iloc[0]["hospitais"]),
+            "n_para_90": int((acumulado < 90).sum()) + 1,
+        }
+    return {
+        "internacoes_fora": n_fora, "internacoes_total": n_total, "pct_fora": _pct(n_fora, n_total),
+        "dias_fora": dias_fora, "dias_total": dias_total, "pct_dias_fora": _pct(dias_fora, dias_total),
+        "permanencia_fora": dias_fora / n_fora if n_fora else 0.0,
+        "permanencia_total": dias_total / n_total if n_total else 0.0,
+        "n_ufs": len(ufs), "ufs": ufs, "destinos": destinos, "concentracao": concentracao,
+    }
+
+
+def evolucao_fluxo(fluxo, cancer=None):
+    """Por ano: internações de fora, total e a parcela de fora. A parcela
+    compara os MESMOS meses (numerador e denominador), então um ano com
+    meses ausentes na fonte não a distorce; `fora_ajustado` põe o número
+    absoluto na escala de 12 meses, como o resto do Escudo."""
+    fora, total = _filtrar_cancer(fluxo, cancer)
+    fora_ano = fora.groupby("ano")["internacoes"].sum()
+    total_ano = total.groupby("ano")["internacoes"].sum()
+    anos = sorted(int(a) for a in total_ano.index)
+    meses = fluxo.get("meses") or {}
+    linhas = []
+    for ano in anos:
+        n_fora, n_total = int(fora_ano.get(ano, 0)), int(total_ano.get(ano, 0))
+        m = meses.get(ano)
+        linhas.append({
+            "ano": ano, "fora": n_fora, "total": n_total, "pct_fora": _pct(n_fora, n_total),
+            "meses": m, "fora_ajustado": n_fora * MESES_NO_ANO / m if m else float(n_fora),
+        })
+    return pd.DataFrame(linhas, columns=["ano", "fora", "total", "pct_fora", "meses", "fora_ajustado"])
+
+
+def ligacoes_fluxo(fluxo, cancer=None, n_ufs=8, n_destinos=6):
+    """Ligações estado de origem -> município do hospital, para o gráfico de
+    fluxo. O que passa do limite vira "Outros estados" / "Outros municípios"."""
+    fora, _ = _filtrar_cancer(fluxo, cancer)
+    cruz = fora.groupby(["uf_residencia", "municipio_hospital"])["internacoes"].sum().reset_index()
+    top_ufs = list(cruz.groupby("uf_residencia")["internacoes"].sum().nlargest(n_ufs).index)
+    top_dest = list(cruz.groupby("municipio_hospital")["internacoes"].sum().nlargest(n_destinos).index)
+    cruz["origem"] = [nome_uf(u) if u in top_ufs else "Outros estados" for u in cruz["uf_residencia"]]
+    cruz["destino"] = [nome_do_hospital_municipio(fluxo["nomes"], d) if d in top_dest else "Outros municípios de SP"
+                       for d in cruz["municipio_hospital"]]
+    ligacoes = cruz.groupby(["origem", "destino"], as_index=False)["internacoes"].sum()
+    return ligacoes.rename(columns={"internacoes": "valor"}).sort_values("valor", ascending=False,
+                                                                       ignore_index=True)
+
+
+def por_cancer_fluxo(fluxo):
+    """Uma linha por câncer: quanto vem de fora, de onde e para onde."""
+    linhas = []
+    for cancer in sorted(fluxo["total"]["tipo_cancer"].unique()):
+        r = resumo_fluxo(fluxo, cancer)
+        linhas.append({
+            "tipo_cancer": cancer, "doenca": nome_doenca(cancer),
+            "internacoes_fora": r["internacoes_fora"], "internacoes_total": r["internacoes_total"],
+            "pct_fora": r["pct_fora"],
+            "estado_principal": r["ufs"].iloc[0]["estado"] if not r["ufs"].empty else "-",
+            "destino_principal": r["destinos"].iloc[0]["municipio"] if not r["destinos"].empty else "-",
+        })
+    return pd.DataFrame(linhas).sort_values("pct_fora", ascending=False, ignore_index=True)
+
+
+def leitura_fluxo(resumo, evolucao):
+    """Frases do que o fluxo mostra. Só descreve: nunca atribui causa."""
+    n, t = resumo["internacoes_fora"], resumo["internacoes_total"]
+    if n == 0:
+        return ["Nenhuma internação de mulher de outro estado foi registrada nesta seleção."]
+    frases = [f"Em hospitais de SP foram registradas {formatar_numero(n)} internações de mulheres que moram em "
+              f"outros estados: {formatar_numero(resumo['pct_fora'], 1)}% das {formatar_numero(t)} internações."]
+    ufs = resumo["ufs"].head(3)
+    if len(ufs) >= 2:
+        partes = [f"{r.estado} ({formatar_numero(r.pct, 1)}%)" for r in ufs.itertuples()]
+        frases.append("Os estados que mais enviam: " + ", ".join(partes[:-1]) + f" e {partes[-1]}"
+                      + f", entre {resumo['n_ufs']} estados de origem.")
+    elif len(ufs) == 1:
+        frases.append(f"Todas vêm de {ufs.iloc[0]['estado']}.")
+    c = resumo["concentracao"]
+    if c:
+        hosp = f" (em {c['hospitais']} hospital{'is' if c['hospitais'] != 1 else ''})" if c["hospitais"] else ""
+        frases.append(f"{formatar_numero(c['pct'], 1)}% foram atendidas em {c['destino']}{hosp}; "
+                      f"{c['n_para_90']} município{'s' if c['n_para_90'] != 1 else ''} reúne"
+                      f"{'m' if c['n_para_90'] != 1 else ''} 90% delas.")
+    if resumo["dias_fora"]:
+        frases.append(f"Ocuparam {formatar_numero(resumo['dias_fora'])} dias de leito "
+                      f"({formatar_numero(resumo['pct_dias_fora'], 1)}% do total), com média de "
+                      f"{formatar_numero(resumo['permanencia_fora'], 1)} dias por internação "
+                      f"(todas as internações: {formatar_numero(resumo['permanencia_total'], 1)}).")
+    if evolucao is not None and len(evolucao) >= 2:
+        a, b = evolucao.iloc[0], evolucao.iloc[-1]
+        frases.append(f"A parcela de mulheres de fora foi {formatar_numero(a['pct_fora'], 1)}% em {int(a['ano'])} "
+                      f"e {formatar_numero(b['pct_fora'], 1)}% em {int(b['ano'])}.")
+    frases.append("Conta internações, não pessoas, e só enxerga hospitais de SP: quem se trata em outro estado "
+                  "não aparece. Descreve o fluxo; não explica o motivo dele.")
+    return frases
+
+
+def leitura_evolucao_fluxo(evolucao):
+    """Frases do gráfico da parcela de mulheres de fora ao longo dos anos."""
+    if evolucao is None or len(evolucao) < 2:
+        return ["Poucos anos para comparar."]
+    primeiro, ultimo = evolucao.iloc[0], evolucao.iloc[-1]
+    pico = evolucao.loc[evolucao["pct_fora"].idxmax()]
+    frases = [f"A parcela foi {formatar_numero(primeiro['pct_fora'], 1)}% em {int(primeiro['ano'])} e "
+              f"{formatar_numero(ultimo['pct_fora'], 1)}% em {int(ultimo['ano'])}; "
+              f"o ponto mais alto foi {formatar_numero(pico['pct_fora'], 1)}% em {int(pico['ano'])}."]
+    incompletos = [int(a) for a, m in zip(evolucao["ano"], evolucao["meses"]) if m and m < MESES_NO_ANO]
+    if incompletos:
+        frases.append("A parcela compara os mesmos meses de cada ano (os de fora e o total), então os anos com "
+                      "meses ausentes na fonte não a distorcem.")
+    return frases
+
+
+def fluxo_da_cidade(conexao, origem, codigo_ibge, uf_referencia="SP"):
+    """Para a cidade escolhida: quem é atendido nos hospitais dela (moradoras,
+    outras cidades de SP, outros estados) e onde as moradoras são atendidas.
+    None se o banco ainda não guarda o município do hospital."""
+    if not _banco_tem_fluxo(conexao):
+        return None
+    cod6 = str(codigo_ibge)[:6]
+    try:
+        quem = dict(conexao.execute(
+            "SELECT CASE WHEN municipio = ? THEN 'da_cidade' WHEN municipio = 'OUTRO_ESTADO' "
+            "THEN 'outros_estados' ELSE 'outras_cidades' END, COUNT(*) FROM internacoes "
+            "WHERE origem = ? AND municipio_hospital = ? GROUP BY 1", (origem, uf_referencia, cod6)).fetchall())
+        onde = conexao.execute(
+            "SELECT municipio_hospital, COUNT(*) FROM internacoes WHERE origem = ? AND municipio = ? "
+            "GROUP BY 1 ORDER BY 2 DESC", (uf_referencia, origem)).fetchall()
+    except Exception:
+        return None
+    nomes = _nomes_municipios(conexao)
+    com_hospital = [(c, int(n)) for c, n in onde if c is not None]
+    moradoras = sum(n for _, n in com_hospital)
+    na_cidade = sum(n for c, n in com_hospital if c == cod6)
+    destinos = [(nome_do_hospital_municipio(nomes, c), n) for c, n in com_hospital if c != cod6]
+    return {
+        "atendimentos": sum(quem.values()),
+        "da_cidade": int(quem.get("da_cidade", 0)),
+        "outras_cidades": int(quem.get("outras_cidades", 0)),
+        "outros_estados": int(quem.get("outros_estados", 0)),
+        "moradoras": moradoras, "moradoras_na_cidade": na_cidade,
+        "moradoras_fora": moradoras - na_cidade, "destinos": destinos[:5],
+    }
+
+
+def leitura_cidade(info, nome_cidade):
+    """Frases sobre o fluxo da cidade. Só descreve."""
+    if not info or (not info["atendimentos"] and not info["moradoras"]):
+        return [f"Não há internações registradas em hospitais de {nome_cidade} nem de moradoras da cidade."]
+    frases = []
+    a = info["atendimentos"]
+    if a:
+        frases.append(
+            f"Nos hospitais de {nome_cidade} foram registradas {formatar_numero(a)} internações: "
+            f"{formatar_numero(_pct(info['da_cidade'], a), 1)}% de moradoras da cidade, "
+            f"{formatar_numero(_pct(info['outras_cidades'], a), 1)}% de outras cidades de SP e "
+            f"{formatar_numero(_pct(info['outros_estados'], a), 1)}% de outros estados.")
+        if not info["outros_estados"]:
+            frases.append(f"Nenhuma internação de mulher de outro estado foi registrada em {nome_cidade}: "
+                          "elas se concentram em poucos municípios (veja o gráfico acima).")
+    else:
+        frases.append(f"Nenhuma internação foi registrada em hospitais de {nome_cidade}.")
+    m = info["moradoras"]
+    if m:
+        frases.append(
+            f"Das {formatar_numero(m)} internações de moradoras de {nome_cidade}, "
+            f"{formatar_numero(_pct(info['moradoras_na_cidade'], m), 1)}% foram na própria cidade e "
+            f"{formatar_numero(info['moradoras_fora'])} em hospitais de outras cidades de SP"
+            + (": " + ", ".join(f"{nome} ({formatar_numero(n)})" for nome, n in info["destinos"][:3])
+               if info["destinos"] else "") + ".")
+    saldo = info["outras_cidades"] + info["outros_estados"] - info["moradoras_fora"]
+    frases.append(f"Saldo da cidade: {'+' if saldo > 0 else ''}{formatar_numero(saldo)} "
+                  f"(internações de quem mora fora, atendidas aqui, menos moradoras atendidas fora). "
+                  "Conta internações e só enxerga hospitais de SP.")
+    return frases

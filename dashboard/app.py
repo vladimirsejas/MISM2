@@ -21,20 +21,29 @@ from inteligencia import (
     cancer_de,
     canceres_com_duplicidade,
     carregar_faixas,
+    carregar_fluxo,
     carregar_serie,
     comparar_faixas,
     confiabilidade,
     destaques_cancer,
     ficha_cancer,
+    fluxo_da_cidade,
     formatar_numero,
+    evolucao_fluxo,
+    leitura_cidade,
     leitura_evolucao,
+    leitura_evolucao_fluxo,
     leitura_faixas,
+    leitura_fluxo,
     leitura_ponta_projecao,
+    ligacoes_fluxo,
     nome_doenca,
     projetar,
+    por_cancer_fluxo,
     quando_aparece,
     radar_futuro,
     resumo_doencas,
+    resumo_fluxo,
     ritmo_estadual_na_escala,
     serie_doenca,
     tendencia_no_periodo,
@@ -123,6 +132,24 @@ def faixas_municipio(origem):
     conn = sqlite3.connect(BANCO)
     try:
         return carregar_faixas(conn, origem, UF_REFERENCIA)
+    finally:
+        conn.close()
+
+
+@st.cache_data
+def fluxo_geral():
+    conn = sqlite3.connect(BANCO)
+    try:
+        return carregar_fluxo(conn, UF_REFERENCIA)
+    finally:
+        conn.close()
+
+
+@st.cache_data
+def fluxo_cidade(origem, codigo_ibge):
+    conn = sqlite3.connect(BANCO)
+    try:
+        return fluxo_da_cidade(conn, origem, codigo_ibge, UF_REFERENCIA)
     finally:
         conn.close()
 
@@ -589,6 +616,88 @@ if aba == "Evolução":
 # ============================================================
 
 if aba == "Investigar":
+    # ---- fluxo: mulheres de outros estados atendidas em SP (pedido do autor, 10/2026) ----
+    pergunta("De onde vêm as mulheres de outros estados atendidas em São Paulo?")
+    st.markdown('<div class="escudo-dica">Internações de mulheres que moram em outros estados, registradas em '
+                'hospitais de SP, nos 7 cânceres acompanhados. Conta internações (uma mulher pode ter várias) '
+                'e só enxerga hospitais de SP.</div>', unsafe_allow_html=True)
+    fluxo = fluxo_geral()
+    if fluxo is None:
+        st.info("O banco ainda não guarda onde cada mulher foi atendida. Rode a carga de novo "
+                "(py etl\\carga_todas_bases.py) para ver o fluxo.")
+    else:
+        r_fluxo = resumo_fluxo(fluxo)
+        e_fluxo = evolucao_fluxo(fluxo)
+        f1, f2, f3, f4 = st.columns(4)
+        f1.metric("Internações de fora de SP", formatar_numero(r_fluxo["internacoes_fora"]),
+                  help=f"{formatar_numero(r_fluxo['pct_fora'], 1)}% das "
+                       f"{formatar_numero(r_fluxo['internacoes_total'])} internações registradas em hospitais de SP")
+        f2.metric("Parcela do total", f"{formatar_numero(r_fluxo['pct_fora'], 1)}%")
+        f3.metric("Dias de leito", formatar_numero(r_fluxo["dias_fora"]),
+                  help=f"{formatar_numero(r_fluxo['pct_dias_fora'], 1)}% de todos os dias de internação")
+        f4.metric("Estados de origem", formatar_numero(r_fluxo["n_ufs"]))
+
+        lig = ligacoes_fluxo(fluxo)
+        origens = list(dict.fromkeys(lig["origem"]))
+        destinos_s = list(dict.fromkeys(lig["destino"]))
+        tot_o = lig.groupby("origem")["valor"].sum()
+        tot_d = lig.groupby("destino")["valor"].sum()
+        fig = go.Figure(go.Sankey(
+            arrangement="snap",
+            node={"label": [f"{o} ({formatar_numero(tot_o[o])})" for o in origens]
+                           + [f"{d} ({formatar_numero(tot_d[d])})" for d in destinos_s],
+                  "color": [CINZA] * len(origens) + [AZUL] * len(destinos_s),
+                  "pad": 22, "thickness": 18, "line": {"width": 0}},
+            link={"source": [origens.index(o) for o in lig["origem"]],
+                  "target": [len(origens) + destinos_s.index(d) for d in lig["destino"]],
+                  "value": list(lig["valor"]),
+                  "color": "rgba(42,120,214,0.22)",
+                  "hovertemplate": "%{source.label} → %{target.label}<br>%{value} internações<extra></extra>"},
+        ))
+        estilizar(fig, altura=max(460, 120 + 44 * max(len(origens), len(destinos_s))))
+        fig.update_layout(showlegend=False)
+        st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
+        leitura("O que o gráfico mostra", leitura_fluxo(r_fluxo, None))
+
+        pergunta("A parcela de mulheres de fora está crescendo?")
+        fig = go.Figure(go.Scatter(
+            x=e_fluxo["ano"], y=e_fluxo["pct_fora"], mode="lines+markers",
+            line={"color": AZUL, "width": 3}, marker={"size": 8, "color": AZUL},
+            customdata=e_fluxo[["fora", "total"]].values,
+            hovertemplate="%{x}: %{y:.1f}% (%{customdata[0]} de %{customdata[1]} internações)<extra></extra>",
+            showlegend=False,
+        ))
+        fig.update_yaxes(ticksuffix="%", rangemode="tozero")
+        fig.update_xaxes(dtick=1)
+        estilizar(fig, altura=300)
+        fig.update_layout(showlegend=False)
+        st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
+        leitura("O que o gráfico mostra", leitura_evolucao_fluxo(e_fluxo))
+
+        pergunta("Em quais cânceres a parcela de fora é maior?")
+        pc = por_cancer_fluxo(fluxo)
+        st.dataframe(pc.assign(
+            pct_fora=[f"{formatar_numero(v, 1)}%" for v in pc["pct_fora"]],
+            internacoes_fora=[formatar_numero(v) for v in pc["internacoes_fora"]],
+            internacoes_total=[formatar_numero(v) for v in pc["internacoes_total"]],
+        ).drop(columns="tipo_cancer").rename(columns={
+            "doenca": "Câncer", "internacoes_fora": "Internações de fora", "internacoes_total": "Total de internações",
+            "pct_fora": "Parcela de fora", "estado_principal": "Estado que mais envia",
+            "destino_principal": "Município que mais atende"}), use_container_width=True, hide_index=True)
+
+        pergunta(f"Quem é atendida nos hospitais de {nome_cidade}, e para onde vão as moradoras?")
+        info_cidade = fluxo_cidade(ORIGEM, cidade["codigo_ibge"])
+        if info_cidade is None:
+            st.info("Sem o município do hospital no banco não dá para ver o fluxo da cidade.")
+        else:
+            g1, g2, g3 = st.columns(3)
+            g1.metric(f"Internações em hospitais de {nome_cidade}", formatar_numero(info_cidade["atendimentos"]))
+            g2.metric("De outros estados", formatar_numero(info_cidade["outros_estados"]))
+            g3.metric("Moradoras atendidas fora da cidade", formatar_numero(info_cidade["moradoras_fora"]),
+                      help=f"de {formatar_numero(info_cidade['moradoras'])} internações de moradoras de {nome_cidade}")
+            leitura("O que mostra", leitura_cidade(info_cidade, nome_cidade))
+        st.markdown("---")
+
     pergunta(f"Em que anos algum câncer saiu do padrão em {nome_cidade}?")
     st.markdown('<div class="escudo-dica">Todos os cânceres de uma vez. "Esperado" = tendência calculada com os '
                 'outros anos. Detectar não explica a causa.</div>', unsafe_allow_html=True)

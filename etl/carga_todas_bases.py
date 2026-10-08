@@ -72,6 +72,36 @@ def limpar_codigo(valor):
     return None
 
 
+# UF pelos 2 primeiros dígitos do código IBGE do município
+UFS_IBGE = {
+    "11": "RO", "12": "AC", "13": "AM", "14": "RR", "15": "PA", "16": "AP", "17": "TO",
+    "21": "MA", "22": "PI", "23": "CE", "24": "RN", "25": "PB", "26": "PE", "27": "AL",
+    "28": "SE", "29": "BA", "31": "MG", "32": "ES", "33": "RJ", "35": "SP", "41": "PR",
+    "42": "SC", "43": "RS", "50": "MS", "51": "MT", "52": "GO", "53": "DF",
+}
+
+
+def uf_do_codigo(codigo):
+    return None if codigo is None else UFS_IBGE.get(str(codigo)[:2])
+
+
+def codigo_hospital(valor):
+    """Município do hospital (MUNIC_MOV) com 6 dígitos, como no SIH; None se inválido."""
+    codigo = limpar_codigo(valor)
+    return None if codigo is None else str(codigo)[:6]
+
+
+def texto_ou_none(valor, largura=None):
+    if pd.isna(valor):
+        return None
+    texto = str(valor).strip()
+    if texto.endswith(".0"):
+        texto = texto[:-2]
+    if not texto:
+        return None
+    return texto.zfill(largura) if largura else texto
+
+
 def encontrar_coluna_codigo(df):
     colunas = {str(c).strip().upper(): c for c in df.columns}
 
@@ -237,7 +267,9 @@ def resolver_municipios(df, origem, catalogo, tolerancia=TOLERANCIA_DESCONHECIDO
             f"Colunas encontradas: {list(df.columns)}"
         )
 
-    codigos = df[coluna].map(limpar_codigo)
+    # lista (e não .map): com um único código inválido o .map devolve
+    # decimais (354390.0) e NENHUM código acharia o catálogo
+    codigos = pd.Series([limpar_codigo(v) for v in df[coluna]], index=df.index, dtype=object)
 
     municipios = codigos.map(
         lambda codigo: catalogo.get(str(codigo))
@@ -326,8 +358,20 @@ def ler_pasta(pasta, catalogo):
         "idade": df["IDADE"],
         "dias_permanencia": df["DIAS_PERM"],
         "obito": df["MORTE"],
-        "valor_total": df["VAL_TOT"]
+        "valor_total": df["VAL_TOT"],
+        # fluxo de pacientes (decisão do autor, 10/2026): de onde a paciente vem
+        # e onde foi atendida. Sem identificar ninguém: CEP, nascimento e número
+        # da AIH NÃO entram no banco.
+        "uf_residencia": [uf_do_codigo(c) for c in codigos],
+        "municipio_hospital": ([codigo_hospital(v) for v in df["MUNIC_MOV"]]
+                               if "MUNIC_MOV" in df else [None] * len(df)),
+        "cnes": ([texto_ou_none(v, 7) for v in df["CNES"]] if "CNES" in df else [None] * len(df)),
+        "car_int": ([texto_ou_none(v, 2) for v in df["CAR_INT"]] if "CAR_INT" in df else [None] * len(df)),
     })
+    ausentes = [c for c in ("MUNIC_MOV", "CNES", "CAR_INT") if c not in df.columns]
+    if ausentes:
+        print(f"AVISO: o arquivo não tem {', '.join(ausentes)}: o fluxo por hospital fica indisponível "
+              "para este câncer.")
 
     return dados[dados["municipio"].notna()]
 

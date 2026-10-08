@@ -74,6 +74,19 @@ def preparar_dados():
     conversa.registrar_pergunta = lambda *a: None
 
 
+def fluxo_falso():
+    """Fluxo de mulheres de outros estados (MG, GO e PA) atendidas em Barretos e São Paulo."""
+    linhas = [(c, ano, uf, hosp, "2090236", n, 0, 3 * n)
+              for c in CODIGOS.values() for ano in range(2013, 2026)
+              for uf, hosp, n in (("MG", "350550", 6), ("GO", "350550", 3), ("PA", "355030", 1))]
+    fora = pd.DataFrame(linhas, columns=["tipo_cancer", "ano", "uf_residencia", "municipio_hospital", "cnes",
+                                         "internacoes", "obitos", "dias_permanencia"])
+    total = pd.DataFrame([(c, ano, 100, 300) for c in CODIGOS.values() for ano in range(2013, 2026)],
+                         columns=["tipo_cancer", "ano", "internacoes", "dias_permanencia"])
+    return {"fora": fora, "total": total, "nomes": {"350550": "Barretos", "355030": "São Paulo"},
+            "meses": MESES_NA_FONTE}
+
+
 def abrir():
     at = AppTest.from_file(os.path.join(RAIZ, "dashboard", "app.py"), default_timeout=120)
     at.run()
@@ -235,6 +248,32 @@ def main():
         checar("E. banco mudou: o painel lê de novo, sem reiniciar", not erros(at) and depois == ["Mama"])
     finally:
         inteligencia.carregar_serie = serie_original
+
+    # ---- F. fluxo de mulheres de outros estados (aba Investigar) ----
+    # Sem dados de fluxo (banco só com a carga antiga) a seção avisa e não quebra: é o que as abas
+    # do cenário D já mostraram, com o banco vazio. Aqui, com dados de fluxo:
+    fluxo_original, cidade_original = inteligencia.carregar_fluxo, inteligencia.fluxo_da_cidade
+    inteligencia.carregar_fluxo = lambda conn, uf="SP": fluxo_falso()
+    inteligencia.fluxo_da_cidade = lambda conn, o, cod, uf="SP": {
+        "atendimentos": 142, "da_cidade": 140, "outras_cidades": 0, "outros_estados": 2, "moradoras": 150,
+        "moradoras_na_cidade": 140, "moradoras_fora": 10, "destinos": [("Campinas", 10)]}
+    try:
+        at = abrir()
+        at.session_state["aba"] = "Investigar"
+        at.run()
+        textos = " ".join(str(m.value) for m in at.markdown)
+        rotulos = {m.label: m.value for m in at.metric}
+        checar("F. fluxo: a aba Investigar abre sem erro", not erros(at))
+        checar("F. fluxo: perguntas do fluxo e da cidade aparecem",
+               "De onde vêm as mulheres de outros estados atendidas em São Paulo?" in textos
+               and "Quem é atendida nos hospitais de Rio Claro" in textos)
+        checar("F. fluxo: números (3 estados de origem; 2 de outros estados em Rio Claro)",
+               rotulos.get("Estados de origem") == "3" and rotulos.get("De outros estados") == "2"
+               and "Internações de fora de SP" in rotulos)
+        checar("F. fluxo: a leitura cita Minas Gerais, Barretos e o aviso de que conta internações",
+               "Minas Gerais" in textos and "Barretos" in textos and "internações, não pessoas" in textos)
+    finally:
+        inteligencia.carregar_fluxo, inteligencia.fluxo_da_cidade = fluxo_original, cidade_original
 
     print(f"\n({time.time() - inicio:.0f} s)")
     if falhas:

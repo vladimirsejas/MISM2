@@ -246,9 +246,31 @@ Estado atual:
   fora) ficava de fora do banco. `baixar_sih_sp.py` não filtra mais a
   residência e tem `--aceitar-lacunas-da-fonte` (troca os CSVs pelos
   meses que o DATASUS oferece; erro de download de verdade continua
-  barrando; usa a pasta `_download_sih_sp_atendimento`). Pendente: as
-  outras 6 bases (menos colorretal) ainda são só moradoras de SP --
-  rodar o download no Windows (horas, retoma de onde parou) e a carga.
+  barrando; usa a pasta `_download_sih_sp_atendimento`). **Feito em
+  08/10/2026:** os 7 cânceres foram baixados e carregados com a regra
+  nova (464.340 registros; 17.991 de outros estados; Rio Claro 1.668,
+  igual ao de antes). Os CSVs não vão para o GitHub (têm CEP, nascimento
+  e nº da AIH; o `.gitignore` já bloqueia).
+- **Fluxo de pacientes (10/2026, pedido do autor: "mulheres de outros
+  estados vindo se tratar em SP é importantíssimo para gestores").** A
+  carga guarda `uf_residencia`, `municipio_hospital` (MUNIC_MOV, que
+  confere: cada CNES tem um único município), `cnes` e `car_int`
+  (nunca CEP, nascimento ou nº da AIH; a correção dos códigos inválidos
+  também entrou aqui). `inteligencia.py`: `carregar_fluxo`,
+  `resumo_fluxo`, `evolucao_fluxo`, `ligacoes_fluxo`, `por_cancer_fluxo`,
+  `leitura_fluxo`, `fluxo_da_cidade`, `leitura_cidade` (só descrevem; nada
+  de causa; contam internações, não pessoas, e só enxergam hospitais de
+  SP). Painel: seção no topo da aba **Investigar** (gráfico de fluxo
+  estado -> município do hospital, parcela por ano, tabela por câncer e
+  o bloco "quem é atendida nos hospitais da cidade e para onde vão as
+  moradoras"). Banco de carga antiga (sem as colunas): a seção avisa para
+  rodar a carga, sem quebrar. **Precisa rodar a carga de novo no Windows**
+  (`py etl\carga_todas_bases.py`) para o banco ganhar as colunas. Testes:
+  `algoritimos/teste_fluxo.py`, `etl/teste_carga_fluxo.py` e o cenário F
+  de `dashboard/teste_painel.py`. Ainda NÃO está na Lia (caminho novo na
+  árvore) nem tem aba própria; decidir com o autor. Na mama: 89% das
+  moradoras de Rio Claro se tratam na cidade (saldo +35) e 87% das
+  mulheres de outros estados são atendidas em Barretos.
 - **Contagem em dobro de Rio Claro: confirmada e corrigida.** No
   banco real havia 1.668 internações de Rio Claro com origem
   RIO_CLARO e as mesmas 1.668 com origem SP (a pasta estadual já traz
