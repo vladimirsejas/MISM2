@@ -160,43 +160,6 @@ Para orientação e denúncia de violência contra a mulher, Ligue 180. Em situa
 """, unsafe_allow_html=True)
 
 cnes, aviso_cnes = carregar_cnes_local()
-st.subheader("Mapa aproximado dos estabelecimentos do CNES")
-coords, aviso_coords = carregar_coordenadas()
-if aviso_cnes:
-    st.warning(aviso_cnes)
-if not cnes.empty and not coords.empty and "CEP" in cnes.columns:
-    cnes["_cep_mapa"] = cnes["CEP"].fillna("").str.replace(r"\D", "", regex=True)
-    mapa_df = cnes.merge(coords, left_on="_cep_mapa", right_on="_cep", how="inner")
-    mapa_df = mapa_df.drop_duplicates(subset=["CNES"]) if "CNES" in mapa_df else mapa_df.drop_duplicates()
-    if not mapa_df.empty:
-        st.caption(
-            f"{len(mapa_df)} estabelecimentos associados a coordenadas por CEP, usando {coords.attrs.get('arquivo', 'arquivo local')}. "
-            "A posição é aproximada pelo CEP, não uma confirmação da porta de entrada da unidade."
-        )
-        nome_filtro = st.text_input("Filtrar pontos por nome, endereço ou CNES", key="rede_filtro_mapa").strip().casefold()
-        if nome_filtro:
-            mascara = pd.Series(False, index=mapa_df.index)
-            for col in ("Nome", "CNES", "CEP"):
-                if col in mapa_df:
-                    mascara |= mapa_df[col].fillna("").astype(str).str.casefold().str.contains(nome_filtro, na=False)
-            mapa_df = mapa_df.loc[mascara]
-        if not mapa_df.empty:
-            hover = "Nome" if "Nome" in mapa_df else ("CNES" if "CNES" in mapa_df else None)
-            fig = px.scatter_map(mapa_df, lat="_lat", lon="_lon", hover_name=hover,
-                                 zoom=11, height=470)
-            fig.update_layout(map_style="open-street-map", margin={"r":0,"t":0,"l":0,"b":0})
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("Nenhum estabelecimento corresponde ao filtro.")
-    else:
-        st.info("Não encontrei estabelecimentos com CEP compatível com o arquivo local de coordenadas.")
-elif aviso_coords:
-    st.info(aviso_coords)
-elif "CEP" not in cnes.columns:
-    st.info("O CNES carregado não tem uma coluna CEP reconhecida; não é seguro posicionar as unidades no mapa.")
-else:
-    st.info("Não há coordenadas compatíveis para associar ao CNES.")
-
 st.subheader("Estabelecimentos do CNES em Rio Claro")
 if aviso_cnes:
     pass
