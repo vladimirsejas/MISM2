@@ -96,7 +96,8 @@ a.apoio-botao:hover { background: #1f5fae; }
 </style>
 """, unsafe_allow_html=True)
 
-ABAS = list(apoio.LAMINAS.values())
+# Primeiro as entradas mais úteis para quem procura atendimento; depois, os recursos de referência.
+ABAS = [apoio.LAMINAS[k] for k in ("caminho", "rio_claro", "hospitais", "carretas", "barretos", "sobre")]
 ROTULO = apoio.NOME_CAMINHO
 TODOS = {"barretos": "Todos os temas", "hospitais": "Todas as regiões", "carretas": "Todas as carretas"}
 PADROES = {"ap_aba": ABAS[0], "ap_caminho": "mama", "ap_item": None, "ap_etapa": apoio.ETAPAS[0][0],
@@ -367,31 +368,46 @@ with col_titulo:
                 'Um guia de onde procurar, não orientação médica.</div>', unsafe_allow_html=True)
 with col_link:
     botao_inicio(st, "topo")
-    st.caption(f"Informações conferidas em {apoio.CONFERIDO}. Confirme antes de ir.")
+    st.caption("Cada cartão informa sua fonte e data de conferência. Itens marcados “a confirmar” precisam ser verificados antes de usar.")
 
-# Boas-vindas da Lia no centro (primeiro acesso), como no painel.
+# Mostradores: deixam explícito o tamanho do catálogo e o que ainda exige conferência.
+pendentes = sum(bool(i["confirmar"]) for i in apoio.ITENS)
+m1, m2, m3 = st.columns(3)
+m1.metric("Caminhos de orientação", len(apoio.CAMINHOS))
+m2.metric("Informações cadastradas", len(apoio.ITENS))
+m3.metric("Pedem confirmação", pendentes)
+
+# Entrada guiada: poucas escolhas principais; o catálogo completo continua nas abas abaixo.
 if not st.session_state.get("ap_boas_vindas_fechada"):
     inicio = apoio.responder(INICIO)
     c_rosto, c_fala = st.columns([1, 4.6])
     with c_rosto:
         st.markdown(rosto("acolhedora", 150), unsafe_allow_html=True)
     with c_fala, balao("centro"):
-        st.markdown(f'<div class="lia-nome">Lia <span>· pesquisadora do Escudo Feminino</span></div>'
-                    f'<div class="lia-fala-grande">{inicio.fala.replace("**", "")}</div>', unsafe_allow_html=True)
-        colunas = st.columns(2)
-        for n, (c, rotulo, dentro, _) in enumerate(apoio.CAMINHOS):
-            colunas[n % 2].button(f"{rotulo} · {dentro}", key=f"bv_ap_{c}", on_click=lia_clicar,
-                                  args=(apoio.caminho(c),), use_container_width=True)
-        st.caption("Recursos:")
-        r1, r2 = st.columns(2)
-        r1.button("Hospitais no Estado", key="bv_ap_hospitais", on_click=lia_clicar,
+        st.markdown('<div class="lia-nome">Lia <span>· pesquisadora do Escudo Feminino</span></div>'
+                    '<div class="lia-fala-grande">Vamos por partes. Escolha o que mais se parece com a sua situação; você pode voltar e mudar de caminho.</div>',
+                    unsafe_allow_html=True)
+        st.markdown("**Comece por aqui**")
+        a1, a2, a3 = st.columns(3)
+        a1.button("Prevenção e exames", key="bv_ap_prevencao", help="Mamografia, Papanicolau, vacina e prevenção.",
+                  on_click=lia_clicar, args=(apoio.caminho("mama"),), use_container_width=True)
+        a2.button("Exame alterado ou diagnóstico", key="bv_ap_diagnostico",
+                  help="Entender o próximo passo depois de um resultado alterado.", on_click=lia_clicar,
+                  args=(apoio.caminho("diagnostico"),), use_container_width=True)
+        a3.button("Não sei por onde começar", key="bv_ap_ajuda", help="A Lia ajuda a identificar o próximo passo.",
+                  on_click=lia_clicar, args=(apoio.caminho("ajuda"),), use_container_width=True)
+        st.markdown("**Atalhos de atendimento e referência**")
+        r1, r2, r3 = st.columns(3)
+        r1.button("Serviços em Rio Claro", key="bv_ap_rioclaro", on_click=lia_clicar,
+                  args=(apoio.lamina("rio_claro"),), use_container_width=True)
+        r2.button("Hospitais de referência", key="bv_ap_hospitais", on_click=lia_clicar,
                   args=(apoio.lamina("hospitais"),), use_container_width=True)
-        r2.button("Carretas: onde estão agora", key="bv_ap_carretas", on_click=lia_clicar,
+        r3.button("Carretas da mamografia", key="bv_ap_carretas", on_click=lia_clicar,
                   args=(apoio.lamina("carretas"),), use_container_width=True)
-        st.button("Prefiro explorar sozinha", key="bv_fechar_apoio",
+        st.button("Ver todas as áreas abaixo", key="bv_fechar_apoio",
                   on_click=lambda: st.session_state.update(ap_boas_vindas_fechada=True))
 
-aba = seletor(st, "Lâmina", "ap_aba", ABAS, horizontal=True, label_visibility="collapsed")
+aba = seletor(st, "Área de apoio", "ap_aba", ABAS, horizontal=True, label_visibility="collapsed")
 
 
 # ============================================================
@@ -400,8 +416,8 @@ aba = seletor(st, "Lâmina", "ap_aba", ABAS, horizontal=True, label_visibility="
 
 if aba == apoio.LAMINAS["caminho"]:
     pergunta("O que você precisa?")
-    dica("Oito portas para a mulher andar pela rede de saúde. Hospitais e Carretas têm lâmina própria (abas acima). "
-         "Não sabe por onde começar? Use <b>Preciso de ajuda</b>.")
+    dica("Escolha uma necessidade abaixo. As portas tratam de prevenção, diagnóstico, encaminhamento, tratamento e direitos. "
+         "Hospitais, Carretas e os serviços de Rio Claro ficam em áreas próprias. Se estiver em dúvida, escolha <b>Preciso de ajuda</b>.")
     codigos = [c for c, _, _, _ in apoio.CAMINHOS]
     onde_clicar("Clique numa porta. Depois, em cada cartão, clique no botão azul <b>Abrir a página oficial</b>.")
     with pilulas("caminho"):
