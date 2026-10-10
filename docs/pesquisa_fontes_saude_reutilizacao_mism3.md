@@ -82,6 +82,43 @@ Avaliar disponibilidade e definição antes de implementar:
 
 Para o MISM3, priorizar catálogo de serviços e estrutura de indicadores de gestão. Para o MISM2, preservar a análise de internações SIH/SUS e usar SISCAN, SIM, SIA e protocolos como fontes complementares claramente separadas.
 
+## 6. Serviços concretos e direitos de acesso (atualização de 09/10/2026)
+
+Esta seção prioriza caminhos de acesso e direitos úteis à saúde da mulher. Não é uma coleção de notícias nem substitui o catálogo de serviços do MISM3. No MISM2, essas referências servem para contextualizar a linha de cuidado e formular perguntas para a gestão; não devem ser tratadas como prova de que a pessoa conseguiu atendimento.
+
+### Acesso local em Rio Claro
+
+- **Agendamento na rede municipal (Cadu):** telefone/WhatsApp **0800 019 0505**. A publicação municipal de 07/10/2026 confirma que consultas para solicitar mamografia e Papanicolau podem ser agendadas diretamente na unidade de saúde ou pelo Cadu. O exame depende de solicitação de profissional de saúde. O comunicado não deve ser usado como garantia permanente de ausência de fila; disponibilidade e regras podem mudar.
+  - Referência oficial que confirma o canal: https://rioclaro.sp.gov.br/fundacao-de-saude/outubro-rosa-reforca-importancia-de-exames-preventivos/
+  - Página de referência da central: https://rioclaro.sp.gov.br/fundacao-de-saude/nova-central-para-agendamento-de-consultas-comeca-a-operar-na-2a-feira-em-rc/
+- **Endereços das unidades municipais:** https://www.saude-rioclaro.org.br/enderecos.html
+- **Protocolos municipais:** https://www.saude-rioclaro.org.br/protocolos.htm
+- **Protocolo municipal de câncer de mama:** https://www.saude-rioclaro.org.br/protocolos/Protocolo%20de%20CA%20de%20mama.pdf
+- **Protocolo municipal de câncer do colo do útero:** https://www.saude-rioclaro.org.br/uac/Protocolo%20do%20Cancer%20Colo%20utero%20QRcode.pdf
+- **Revisão de 2026 do protocolo de colo do útero:** https://www.saude-rioclaro.org.br/protocolos/Protocolo%20CA%20colo%20do%20utero%202026.pdf
+
+### Direitos e caminhos nacionais
+
+- **Tratamento oncológico pelo SUS — Lei nº 12.732/2012:** https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2012/lei/l12732.htm
+  - Estabelece o direito ao primeiro tratamento de neoplasia maligna comprovada em até 60 dias a partir do diagnóstico em laudo patológico, ou em prazo menor quando a necessidade terapêutica estiver registrada.
+  - A lei também prevê prazo máximo de 30 dias para exames necessários à elucidação diagnóstica quando a principal hipótese for neoplasia maligna e houver solicitação médica fundamentada.
+  - Esses prazos são direitos legais, não uma afirmação de que o prazo esteja sendo cumprido localmente. O MISM2 não pode inferir cumprimento ou descumprimento sem dados adequados.
+- **Onde tratar câncer pelo SUS (INCA):** https://www.gov.br/inca/pt-br/assuntos/cancer/tratamento
+  - Referência para localizar a rede habilitada; antes de orientar uma pessoa, é necessário confirmar o serviço de referência e o fluxo de encaminhamento aplicável a Rio Claro.
+- **SISCAN — exames e produção relacionados a mama e colo do útero:** https://datasus.saude.gov.br/acesso-a-informacao/sistema-de-informacao-do-cancer-siscan-colo-do-utero-e-mama/
+  - Fonte para análise de exames/procedimentos, não um canal de agendamento para pacientes.
+- **INCA — detecção precoce do câncer de mama:** https://www.gov.br/inca/pt-br/assuntos/gestor-e-profissional-de-saude/controle-do-cancer-de-mama/acoes/deteccao-precoce
+  - A orientação nacional atualizada em 2025 prioriza mamografia de rastreamento a cada dois anos para mulheres de 50 a 74 anos. Para mulheres de 40 a 49 anos e acima de 74, a possibilidade de exame deve ser discutida com profissional de saúde, considerando riscos e benefícios.
+  - **Atenção à divergência de comunicação:** a página municipal publicada em outubro de 2026 afirma que mulheres a partir de 40 anos têm direito ao rastreamento. Não reproduzir essa frase no MISM2 como regra nacional universal. Diferenciar a orientação local de acesso da recomendação nacional para rastreamento de rotina e encaminhar dúvidas individuais à equipe de saúde.
+
+### Como aproveitar sem transformar o MISM2 em catálogo de notícias
+
+1. Na interpretação dos resultados, indicar o protocolo municipal pertinente como referência de linha de cuidado.
+2. Em uma eventual seção de orientação, oferecer somente links estáveis de serviço/direitos e registrar a data da última verificação.
+3. Separar **disponibilidade anunciada**, **solicitação/agendamento**, **exame realizado**, **diagnóstico**, **encaminhamento** e **internação**. São etapas diferentes e não devem ser tratadas como equivalentes.
+4. Não afirmar que há vaga, fila zerada ou atendimento garantido com base em uma notícia isolada.
+5. Antes de apresentar um link como caminho de atendimento atual, conferir se a página e o canal continuam ativos. Os links de notícias servem apenas como evidência datada de uma informação operacional, não como substitutos da página do serviço.
+
 ## Fontes
 - Fundação Municipal de Saúde de Rio Claro: https://www.saude-rioclaro.org.br/protocolos.htm
 - DATASUS, SISCAN: https://datasus.saude.gov.br/acesso-a-informacao/sistema-de-informacao-do-cancer-siscan-colo-do-utero-e-mama/
