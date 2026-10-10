@@ -95,7 +95,7 @@ def carregar_estabelecimentos(
     try:
         dados = pd.read_csv(
             caminho, sep=separador, encoding="latin-1", dtype=str,
-            usecols=colunas_utilizadas, engine="python",
+            usecols=colunas_utilizadas, low_memory=False, engine="c",
         )
     except Exception as erro:
         vazio = pd.DataFrame()
