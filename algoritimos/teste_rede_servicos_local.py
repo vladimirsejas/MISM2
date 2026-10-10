@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from rede_servicos_local import carregar_estabelecimentos, resumir_rede_local
+from algoritimos.rede_servicos_local import carregar_estabelecimentos, resumir_rede_local
 
 
 class TesteRedeServicosLocal(unittest.TestCase):
