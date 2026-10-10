@@ -92,7 +92,8 @@ def _item(id, caminho, lamina, onde, titulo, resumo, fonte, link, para_quem=None
     tambem_caminhos: outras portas onde o item aparece em cartão curto."""
     return {"id": id, "caminho": caminho, "lamina": lamina, "onde": onde, "titulo": titulo, "resumo": resumo,
             "para_quem": para_quem, "como": como, "levar": levar, "contato": contato, "fonte": fonte,
-            "link": link, "confirmar": confirmar, "cuidado": cuidado, "grupo": grupo, "tambem": list(tambem),\n            "conferido": conferido or CONFERIDO,
+            "link": link, "confirmar": confirmar, "cuidado": cuidado, "grupo": grupo, "tambem": list(tambem),
+            "conferido": conferido or CONFERIDO,
             "tambem_caminhos": list(tambem_caminhos)}
 
 
