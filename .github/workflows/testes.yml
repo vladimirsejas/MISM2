@@ -30,6 +30,9 @@ jobs:
         run: |
           python teste_fluxo.py
           python teste_hospital.py
+      - name: Unidades de saúde da cidade (CNES)
+        working-directory: algoritimos
+        run: python teste_unidades_saude.py
       - name: Comparar cidades (sem população)
         working-directory: algoritimos
         run: python teste_comparar.py
@@ -53,3 +56,5 @@ jobs:
         run: python dashboard/teste_painel.py
       - name: Lâmina de apoio (clica em tudo)
         run: python dashboard/teste_apoio_tela.py
+      - name: Página Onde ser atendida (clica em tudo)
+        run: python dashboard/teste_onde_atendida_tela.py

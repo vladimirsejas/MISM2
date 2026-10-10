@@ -153,6 +153,22 @@ Estado atual:
   devolviam o valor antigo; por isso cada widget tem chave atrelada
   ao valor (`chave_widget`) e o estado real fica em chaves próprias
   (`definir`). Não voltar a usar `key="doenca"` direto.
+- **Onde ser atendida (10/2026, substituiu a "Rede local" do ChatGPT).** Pergunta
+  nova: "onde, na minha cidade, uma mulher procura atendimento?".
+  `algoritimos/unidades_saude.py` lê o CNES (`banco\cnes\tbEstabelecimento*.csv`,
+  fora do GitHub) em pedaços e devolve só as unidades ATIVAS da cidade: município pelo
+  ENDEREÇO (CO_IBGE; o gestor só como plano B, e a página avisa), tipo em palavras
+  (não o código), grupos (Posto ou UBS / Exames e especialistas / Hospitais /
+  Urgência / Saúde mental / Outros), natureza pública x sem fins x privada, endereço,
+  telefone, mapa (só coordenada que cai na cidade) e link de busca no mapa. A página
+  (`dashboard/pages/onde_ser_atendida.py`, link "Onde ser atendida" no topo do painel)
+  cruza com o banco: o selo "internações por câncer" do hospital é o que o SIH registrou
+  (não mede qualidade). Cadastro não é vaga nem serviço aberto, e a página diz isso;
+  nunca ranqueia unidades. Dos arquivos da pasta `banco\` só o `tbEstabelecimento` é
+  usado: o CSV de CEP (o CNES já traz latitude/longitude) e os PDFs (cras, creas...) não.
+  Conferir as colunas do arquivo real: `py algoritimos\unidades_saude.py`. Testes:
+  `algoritimos/teste_unidades_saude.py` e `dashboard/teste_onde_atendida_tela.py`
+  (CNES sintético; **não foi testado com o arquivo real**, que a nuvem não alcança).
 - **Apoio à mulher — "Encontre um caminho" (09/2026, pedido do autor):**
   outras lâminas, de APOIO, separadas do estudo da doença
   (`dashboard/pages/apoio.py`, aberta pelo botão vermelho "Apoio à mulher" no topo do

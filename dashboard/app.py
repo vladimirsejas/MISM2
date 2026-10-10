@@ -277,6 +277,12 @@ with col_cidade:
             st.page_link("pages/apoio.py", label="Apoio à mulher")
         except Exception:  # Streamlit antigo, sem page_link
             st.markdown('<a href="/apoio" target="_self">Apoio à mulher</a>', unsafe_allow_html=True)
+        # Onde ser atendida (dashboard/pages/onde_ser_atendida.py): unidades de saúde da
+        # cidade pelo CNES. Link discreto (a página substitui a antiga "Rede local").
+        try:
+            st.page_link("pages/onde_ser_atendida.py", label="Onde ser atendida")
+        except Exception:  # Streamlit antigo, sem page_link
+            st.markdown('<a href="/onde_ser_atendida" target="_self">Onde ser atendida</a>', unsafe_allow_html=True)
 cidade = next(m for m in lista_municipios if m["nome"] == nome_cidade)
 ORIGEM = cidade["origem"]
 
