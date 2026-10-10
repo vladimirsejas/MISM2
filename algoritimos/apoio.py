@@ -1253,10 +1253,11 @@ def responder_grupo(lam, g):
 def responder_sobre():
     pendentes = [i["titulo"] for i in ITENS if i["confirmar"]]
     return Resposta(
-        fala=(f"Juntei estas informações em {CONFERIDO}, a partir de páginas oficiais: Secretaria da Saúde e "
-              "Secretaria da Mulher do Estado de SP, FOSP, INCA, Ministério da Saúde e das Mulheres, Defensoria "
+        fala=(f"A pesquisa-base foi reunida em {CONFERIDO}, e alguns itens receberam atualização posterior. "
+              "Cada cartão informa sua própria data registrada e traz o link da fonte oficial: Secretaria da Saúde "
+              "e Secretaria da Mulher do Estado de SP, FOSP, INCA, Ministério da Saúde e das Mulheres, Defensoria "
               "Pública, Poupatempo, Fundação Municipal de Saúde e Prefeitura de Rio Claro, prefeituras de outras "
-              "cidades e os próprios hospitais. Cada item traz a página oficial. "
+              "cidades e os próprios hospitais. "
               f"{len(pendentes)} de {len(ITENS)} itens ainda pedem confirmação na própria página: estão marcados. "
               "Isto é um guia de onde procurar, não orientação médica nem garantia de vaga."),
         expressao="pensativa",
