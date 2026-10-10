@@ -182,9 +182,9 @@ if not cnes.empty and not coords.empty and "CEP" in cnes.columns:
             mapa_df = mapa_df.loc[mascara]
         if not mapa_df.empty:
             hover = "Nome" if "Nome" in mapa_df else ("CNES" if "CNES" in mapa_df else None)
-            fig = px.scatter_mapbox(mapa_df, lat="_lat", lon="_lon", hover_name=hover,
-                                    zoom=11, height=470)
-            fig.update_layout(mapbox_style="open-street-map", margin={"r":0,"t":0,"l":0,"b":0})
+            fig = px.scatter_map(mapa_df, lat="_lat", lon="_lon", hover_name=hover,
+                                 zoom=11, height=470)
+            fig.update_layout(map_style="open-street-map", margin={"r":0,"t":0,"l":0,"b":0})
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("Nenhum estabelecimento corresponde ao filtro.")
