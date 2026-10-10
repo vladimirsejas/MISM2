@@ -140,7 +140,7 @@ def carregar_coordenadas():
             )
         df["_lat"] = pd.to_numeric(df[lat].str.replace(",", ".", regex=False), errors="coerce")
         df["_lon"] = pd.to_numeric(df[lon].str.replace(",", ".", regex=False), errors="coerce")
-        df["_cep"] = df[cep].fillna("").str.replace(r"\\D", "", regex=True)
+        df["_cep"] = df[cep].fillna("").str.replace(r"\D", "", regex=True)
         df = df[
             df["_cep"].str.len().eq(8)
             & df["_lat"].between(-90, 90)
@@ -163,7 +163,7 @@ coords, aviso_coords = carregar_coordenadas()
 if aviso_cnes:
     st.warning(aviso_cnes)
 if not cnes.empty and not coords.empty and "CEP" in cnes.columns:
-    cnes["_cep_mapa"] = cnes["CEP"].fillna("").str.replace(r"\\D", "", regex=True)
+    cnes["_cep_mapa"] = cnes["CEP"].fillna("").str.replace(r"\D", "", regex=True)
     mapa_df = cnes.merge(coords, left_on="_cep_mapa", right_on="_cep", how="inner")
     mapa_df = mapa_df.drop_duplicates(subset=["CNES"]) if "CNES" in mapa_df else mapa_df.drop_duplicates()
     if not mapa_df.empty:
