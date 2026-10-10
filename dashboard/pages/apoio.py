@@ -536,7 +536,7 @@ if aba == apoio.LAMINAS["sobre"]:
 - **O que é:** um guia de onde procurar ajuda, montado a partir de páginas oficiais: portal da Saúde do Estado
   de SP, Poupatempo, rede oncológica da FOSP, Ministério da Saúde, Fundação Municipal de Saúde de Rio Claro,
   prefeituras de Campinas, Ribeirão Preto, São José do Rio Preto e Piracicaba e Hospital de Amor.
-- **Quando:** conferido em {apoio.CONFERIDO}. Regras, endereços, telefones e itinerários mudam.
+- **Data de conferência:** cada cartão mostra a data registrada para aquele item. A pesquisa-base foi reunida em {apoio.CONFERIDO}; itens atualizados depois têm data própria. Regras, endereços, telefones e itinerários podem mudar.
 - **O que ainda falta confirmar:** a pesquisa foi feita pela busca na web, com trechos das páginas oficiais.
   Quando o detalhe veio de página antiga, de reportagem ou não pôde ser aberto por inteiro, o item está marcado
   "a confirmar".
