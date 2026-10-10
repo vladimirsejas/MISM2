@@ -225,7 +225,7 @@ def cartao(i):
         + (f'<div class="acao">Atenção: {e(i["cuidado"])}</div>' if i["cuidado"] else "")
         + (f'<div class="acao">A confirmar: {e(i["confirmar"])}</div>' if i["confirmar"] else "")
         + f'<a class="apoio-botao" href="{e(i["link"])}" target="_blank" rel="noopener">Abrir a página oficial ↗</a>'
-        f'<div class="apoio-fonte">Fonte: {e(i["fonte"])} · conferido em {apoio.CONFERIDO}</div></div>',
+        f'<div class="apoio-fonte">Fonte: {e(i["fonte"])} · conferido em {i.get("conferido", apoio.CONFERIDO)}</div></div>',
         unsafe_allow_html=True,
     )
 
