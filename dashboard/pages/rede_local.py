@@ -18,7 +18,9 @@ ROOT = Path(__file__).resolve().parents[2]
 PASTA_BANCO = ROOT / "banco"
 PASTA_CNES = PASTA_BANCO / "cnes"
 PASTA_CEP = PASTA_BANCO / "cep_Rio_Claro"
+# O CNES pode armazenar o código municipal sem o dígito verificador (6 dígitos).
 CODIGO_MUNICIPIO = "3543907"
+CODIGOS_MUNICIPIO = {"3543907", "354390"}
 
 st.set_page_config(
     page_title="Escudo Feminino · Rede local",
@@ -107,7 +109,7 @@ def carregar_cnes_local():
         df = pd.read_csv(path, sep=sep, encoding="latin-1", dtype=str,
                          usecols=usecols, low_memory=False, engine="c")
         codigos = df[col_mun].fillna("").str.replace(r"\D", "", regex=True)
-        df = df.loc[codigos == CODIGO_MUNICIPIO].copy().rename(columns=renomear)
+        df = df.loc[codigos.str.lstrip("0").isin(CODIGOS_MUNICIPIO)].copy().rename(columns=renomear)
         if "CNES" in df:
             df = df.drop_duplicates(subset=["CNES"])
         else:
