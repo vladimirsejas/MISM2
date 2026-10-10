@@ -120,7 +120,7 @@ def carregar_cnes_local():
 def carregar_coordenadas():
     arquivos = sorted(PASTA_CEP.glob("*.csv"), key=lambda p: p.stat().st_mtime, reverse=True)
     if not arquivos:
-        return pd.DataFrame(), "Arquivo de endereços/coordenadas não encontrado."
+        return pd.DataFrame(), "Arquivo local de coordenadas por CEP não encontrado."
     path = arquivos[0]
     try:
         df = pd.read_csv(path, sep=detectar_separador(path), encoding="utf-8-sig",
@@ -128,60 +128,76 @@ def carregar_coordenadas():
         df.columns = [str(c).strip() for c in df.columns]
         lat = achar(df.columns, ["latitude", "lat", "LATITUDE_GOOGLE", "LAT"])
         lon = achar(df.columns, ["longitude", "lon", "lng", "LONGITUDE_GOOGLE", "LONG"])
-        nome = achar(df.columns, ["nome", "nome_unidade", "unidade", "endereco", "logradouro"])
+        cep = achar(df.columns, ["CEP", "CO_CEP", "COD_CEP", "CEP_NORMALIZADO"])
         if not lat or not lon:
             return pd.DataFrame(), (
                 f"O arquivo {path.name} foi localizado, mas não reconheci as colunas de latitude/longitude."
             )
+        if not cep:
+            return pd.DataFrame(), (
+                f"O arquivo {path.name} não tem uma coluna CEP reconhecida. "
+                "Para evitar um mapa enganoso, não vou desenhar esses pontos como se fossem unidades de saúde."
+            )
         df["_lat"] = pd.to_numeric(df[lat].str.replace(",", ".", regex=False), errors="coerce")
         df["_lon"] = pd.to_numeric(df[lon].str.replace(",", ".", regex=False), errors="coerce")
-        df = df.dropna(subset=["_lat", "_lon"])
-        df = df[df["_lat"].between(-90, 90) & df["_lon"].between(-180, 180)].copy()
-        df["_nome_mapa"] = df[nome].fillna("Local sem nome") if nome else "Local sem nome"
+        df["_cep"] = df[cep].fillna("").str.replace(r"\\D", "", regex=True)
+        df = df[
+            df["_cep"].str.len().eq(8)
+            & df["_lat"].between(-90, 90)
+            & df["_lon"].between(-180, 180)
+        ].copy()
+        df = df.drop_duplicates(subset=["_cep"], keep="first")
         df.attrs["arquivo"] = path.name
-        return df, None
+        return df[["_cep", "_lat", "_lon"]], None
     except Exception as exc:
         return pd.DataFrame(), f"Não consegui ler o arquivo de coordenadas: {exc}"
-
-st.subheader("Encontre o próximo serviço")
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.markdown('<div class="rede-card"><h3>Saúde da mulher</h3><p>Comece pela UBS/USF do seu território para prevenção, consultas e encaminhamentos.</p><a href="https://rioclaro.sp.gov.br/unidades-basicas-de-saude/" target="_blank">Consultar unidades e contatos oficiais ↗</a></div>', unsafe_allow_html=True)
-with c2:
-    st.markdown('<div class="rede-card"><h3>Assistência social</h3><p>CRAS: proteção social básica e orientação. A unidade de referência depende do território.</p><a href="https://rioclaro.sp.gov.br/centro-ref-assistencia-social/" target="_blank">Consultar CRAS e territórios ↗</a></div>', unsafe_allow_html=True)
-with c3:
-    st.markdown('<div class="rede-card"><h3>Violência e proteção</h3><p>CREAS orienta pessoas e famílias em situações de violência e violação de direitos.</p><a href="https://rioclaro.sp.gov.br/desenvolvimento-social/creas-tem-novo-local-de-funcionamento/" target="_blank">Consultar informações oficiais do CREAS ↗</a></div>', unsafe_allow_html=True)
 
 st.markdown("""
 <div class="rede-note"><b>Risco imediato:</b> ligue 190 (Polícia Militar). Em emergência médica, 192 (SAMU).
 Para orientação e denúncia de violência contra a mulher, Ligue 180. Em situação de perigo, não espere uma resposta do painel.</div>
 """, unsafe_allow_html=True)
 
-st.subheader("Mapa de endereços georreferenciados")
-coords, aviso_coords = carregar_coordenadas()
-if not coords.empty:
-    st.caption(f"Fonte local: {coords.attrs.get('arquivo', 'CSV de coordenadas')}. Os pontos são os registros que possuem coordenadas válidas; confirme o endereço antes de se deslocar.")
-    nome_filtro = st.text_input("Filtrar pontos por nome ou endereço", key="rede_filtro_mapa").strip().casefold()
-    mapa_df = coords
-    if nome_filtro:
-        mascara = mapa_df["_nome_mapa"].astype(str).str.casefold().str.contains(nome_filtro, na=False)
-        mapa_df = mapa_df.loc[mascara]
-    if not mapa_df.empty:
-        fig = px.scatter_mapbox(mapa_df, lat="_lat", lon="_lon", hover_name="_nome_mapa",
-                                zoom=11, height=470)
-        fig.update_layout(mapbox_style="open-street-map", margin={"r":0,"t":0,"l":0,"b":0})
-        st.plotly_chart(fig, use_container_width=True)
-        st.dataframe(mapa_df.drop(columns=["_lat", "_lon", "_nome_mapa"], errors="ignore"),
-                     use_container_width=True, hide_index=True)
-    else:
-        st.info("Nenhum ponto corresponde ao filtro.")
-else:
-    st.info(aviso_coords or "Sem coordenadas válidas para exibir no mapa.")
-
-st.subheader("Estabelecimentos do CNES em Rio Claro")
 cnes, aviso_cnes = carregar_cnes_local()
+st.subheader("Mapa aproximado dos estabelecimentos do CNES")
+coords, aviso_coords = carregar_coordenadas()
 if aviso_cnes:
     st.warning(aviso_cnes)
+if not cnes.empty and not coords.empty and "CEP" in cnes.columns:
+    cnes["_cep_mapa"] = cnes["CEP"].fillna("").str.replace(r"\\D", "", regex=True)
+    mapa_df = cnes.merge(coords, left_on="_cep_mapa", right_on="_cep", how="inner")
+    mapa_df = mapa_df.drop_duplicates(subset=["CNES"]) if "CNES" in mapa_df else mapa_df.drop_duplicates()
+    if not mapa_df.empty:
+        st.caption(
+            f"{len(mapa_df)} estabelecimentos associados a coordenadas por CEP, usando {coords.attrs.get('arquivo', 'arquivo local')}. "
+            "A posição é aproximada pelo CEP, não uma confirmação da porta de entrada da unidade."
+        )
+        nome_filtro = st.text_input("Filtrar pontos por nome, endereço ou CNES", key="rede_filtro_mapa").strip().casefold()
+        if nome_filtro:
+            mascara = pd.Series(False, index=mapa_df.index)
+            for col in ("Nome", "CNES", "CEP"):
+                if col in mapa_df:
+                    mascara |= mapa_df[col].fillna("").astype(str).str.casefold().str.contains(nome_filtro, na=False)
+            mapa_df = mapa_df.loc[mascara]
+        if not mapa_df.empty:
+            hover = "Nome" if "Nome" in mapa_df else ("CNES" if "CNES" in mapa_df else None)
+            fig = px.scatter_mapbox(mapa_df, lat="_lat", lon="_lon", hover_name=hover,
+                                    zoom=11, height=470)
+            fig.update_layout(mapbox_style="open-street-map", margin={"r":0,"t":0,"l":0,"b":0})
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("Nenhum estabelecimento corresponde ao filtro.")
+    else:
+        st.info("Não encontrei estabelecimentos com CEP compatível com o arquivo local de coordenadas.")
+elif aviso_coords:
+    st.info(aviso_coords)
+elif "CEP" not in cnes.columns:
+    st.info("O CNES carregado não tem uma coluna CEP reconhecida; não é seguro posicionar as unidades no mapa.")
+else:
+    st.info("Não há coordenadas compatíveis para associar ao CNES.")
+
+st.subheader("Estabelecimentos do CNES em Rio Claro")
+if aviso_cnes:
+    pass
 elif cnes.empty:
     st.info("O arquivo foi lido, mas não retornou estabelecimentos para o código municipal configurado.")
 else:
@@ -201,8 +217,8 @@ else:
             if col in cnes:
                 mascara |= cnes[col].fillna("").str.casefold().str.contains(busca, na=False)
         cnes = cnes[mascara]
-    st.dataframe(cnes, use_container_width=True, hide_index=True)
-    st.download_button("Baixar recorte exibido (CSV)", cnes.to_csv(index=False).encode("utf-8-sig"),
+    st.dataframe(cnes.drop(columns=["_cep_mapa"], errors="ignore"), use_container_width=True, hide_index=True)
+    st.download_button("Baixar recorte exibido (CSV)", cnes.drop(columns=["_cep_mapa"], errors="ignore").to_csv(index=False).encode("utf-8-sig"),
                        file_name="cnes_rio_claro_filtrado.csv", mime="text/csv")
 
 st.subheader("Documentos locais de referência")
