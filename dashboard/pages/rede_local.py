@@ -65,7 +65,7 @@ def detectar_separador(path):
 def ler_cabecalho(path):
     try:
         return list(pd.read_csv(path, sep=detectar_separador(path), encoding="latin-1",
-                                dtype=str, nrows=0, engine="python").columns)
+                                dtype=str, nrows=0, engine="c").columns)
     except Exception:
         return []
 
@@ -105,7 +105,7 @@ def carregar_cnes_local():
             renomear[col] = saida
     try:
         df = pd.read_csv(path, sep=sep, encoding="latin-1", dtype=str,
-                         usecols=usecols, low_memory=False, engine="python")
+                         usecols=usecols, low_memory=False, engine="c")
         codigos = df[col_mun].fillna("").str.replace(r"\D", "", regex=True)
         df = df.loc[codigos == CODIGO_MUNICIPIO].copy().rename(columns=renomear)
         if "CNES" in df:
@@ -124,7 +124,7 @@ def carregar_coordenadas():
     path = arquivos[0]
     try:
         df = pd.read_csv(path, sep=detectar_separador(path), encoding="utf-8-sig",
-                         dtype=str, low_memory=False, engine="python")
+                         dtype=str, low_memory=False, engine="c")
         df.columns = [str(c).strip() for c in df.columns]
         lat = achar(df.columns, ["latitude", "lat", "LATITUDE_GOOGLE", "LAT"])
         lon = achar(df.columns, ["longitude", "lon", "lng", "LONGITUDE_GOOGLE", "LONG"])
