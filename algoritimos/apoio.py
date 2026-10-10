@@ -83,7 +83,7 @@ FLUXO_REDE = [
 
 
 def _item(id, caminho, lamina, onde, titulo, resumo, fonte, link, para_quem=None, como=None, levar=None,
-          contato=None, confirmar=None, cuidado=None, grupo=None, tambem=(), tambem_caminhos=()):
+          contato=None, confirmar=None, cuidado=None, grupo=None, tambem=(), tambem_caminhos=(), conferido=None):
     """caminho=None: item que não é passo da jornada da mulher (ensino,
     pesquisa, a região no Estado) -- mora só na lâmina dele. grupo: o
     tema (Barretos) ou a região (Hospitais no Estado) do item na lâmina.
@@ -92,7 +92,7 @@ def _item(id, caminho, lamina, onde, titulo, resumo, fonte, link, para_quem=None
     tambem_caminhos: outras portas onde o item aparece em cartão curto."""
     return {"id": id, "caminho": caminho, "lamina": lamina, "onde": onde, "titulo": titulo, "resumo": resumo,
             "para_quem": para_quem, "como": como, "levar": levar, "contato": contato, "fonte": fonte,
-            "link": link, "confirmar": confirmar, "cuidado": cuidado, "grupo": grupo, "tambem": list(tambem),
+            "link": link, "confirmar": confirmar, "cuidado": cuidado, "grupo": grupo, "tambem": list(tambem),\n            "conferido": conferido or CONFERIDO,
             "tambem_caminhos": list(tambem_caminhos)}
 
 
@@ -327,6 +327,17 @@ ITENS = [
                "mensagens e pedir medida protetiva de urgência no mesmo formulário."),
 
     # ================ LÂMINA RIO CLARO (a cidade do trabalho) ================
+    _item("rc_cadu_agendamento", "mama", "rio_claro", "Rio Claro",
+          "Agendamento de consulta e exames pelo Cadu",
+          "telefone e WhatsApp gratuitos para agendar consulta e solicitar mamografia ou Papanicolau",
+          "Fundação Municipal de Saúde de Rio Claro (publicação de 07/10/2026)",
+          "https://rioclaro.sp.gov.br/fundacao-de-saude/nova-central-para-agendamento-de-consultas-comeca-a-operar-na-2a-feira-em-rc/",
+          para_quem="Moradoras e moradores que precisam agendar consulta na rede municipal; para mamografia e Papanicolau, é necessário passar por profissional de saúde.",
+          como="Ligue ou envie mensagem pelo WhatsApp para 0800 019 0505. A publicação municipal de 07/10/2026 informa que consultas para solicitar mamografia e Papanicolau podem ser agendadas pelo Cadu ou diretamente na unidade de saúde. O exame depende de solicitação de profissional.",
+          contato="Cadu: 0800 019 0505 (telefone/WhatsApp).",
+          confirmar="Canal confirmado em publicação municipal de 07/10/2026; confirme o funcionamento e as regras atuais antes de depender do serviço.",
+          tambem_caminhos=["colo"],
+          conferido="09/10/2026"),
     _item("rc_unidades", "colo", "rio_claro", "Rio Claro",
           "Unidades de Saúde da Família (USF) e UBS",
           "a porta de entrada: preventivo do colo do útero, exame das mamas e pré-natal",
