@@ -379,7 +379,6 @@ m3.metric("Pedem confirmação", pendentes)
 
 # Entrada guiada: poucas escolhas principais; o catálogo completo continua nas abas abaixo.
 if not st.session_state.get("ap_boas_vindas_fechada"):
-    inicio = apoio.responder(INICIO)
     c_rosto, c_fala = st.columns([1, 4.6])
     with c_rosto:
         st.markdown(rosto("acolhedora", 150), unsafe_allow_html=True)
@@ -396,18 +395,31 @@ if not st.session_state.get("ap_boas_vindas_fechada"):
                   args=(apoio.caminho("diagnostico"),), use_container_width=True)
         a3.button("Não sei por onde começar", key="bv_ap_ajuda", help="A Lia ajuda a identificar o próximo passo.",
                   on_click=lia_clicar, args=(apoio.caminho("ajuda"),), use_container_width=True)
-        st.markdown("**Atalhos de atendimento e referência**")
-        r1, r2, r3 = st.columns(3)
-        r1.button("Serviços em Rio Claro", key="bv_ap_rioclaro", on_click=lia_clicar,
-                  args=(apoio.lamina("rio_claro"),), use_container_width=True)
-        r2.button("Hospitais de referência", key="bv_ap_hospitais", on_click=lia_clicar,
-                  args=(apoio.lamina("hospitais"),), use_container_width=True)
-        r3.button("Carretas da mamografia", key="bv_ap_carretas", on_click=lia_clicar,
-                  args=(apoio.lamina("carretas"),), use_container_width=True)
         st.button("Ver todas as áreas abaixo", key="bv_fechar_apoio",
                   on_click=lambda: st.session_state.update(ap_boas_vindas_fechada=True))
 
-aba = seletor(st, "Área de apoio", "ap_aba", ABAS, horizontal=True, label_visibility="collapsed")
+# Navegação organizada em dois grupos: primeiro o que a mulher procura; depois os recursos de referência.
+def ir_aba(nome):
+    st.session_state["ap_aba"] = nome
+    st.session_state["ap_item"] = None
+
+st.markdown("**Atendimento e orientação**")
+n1, n2 = st.columns(2)
+for col, chave in ((n1, "caminho"), (n2, "rio_claro")):
+    nome = apoio.LAMINAS[chave]
+    col.button(nome, key=f"nav_apoio_{chave}", type="primary" if st.session_state["ap_aba"] == nome else "secondary",
+               on_click=ir_aba, args=(nome,), use_container_width=True)
+
+st.markdown("**Recursos de referência**")
+r1, r2, r3, r4 = st.columns(4)
+for col, chave in ((r1, "hospitais"), (r2, "carretas"), (r3, "barretos"), (r4, "sobre")):
+    nome = apoio.LAMINAS[chave]
+    rotulo = {"hospitais": "Hospitais no Estado", "carretas": "Carretas da mamografia",
+              "barretos": "Hospital de Amor", "sobre": "Sobre as informações"}[chave]
+    col.button(rotulo, key=f"nav_apoio_{chave}", type="primary" if st.session_state["ap_aba"] == nome else "secondary",
+               on_click=ir_aba, args=(nome,), use_container_width=True)
+
+aba = st.session_state["ap_aba"]
 
 
 # ============================================================
