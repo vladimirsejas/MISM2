@@ -111,6 +111,21 @@ Esta seção prioriza caminhos de acesso e direitos úteis à saúde da mulher. 
   - A orientação nacional atualizada em 2025 prioriza mamografia de rastreamento a cada dois anos para mulheres de 50 a 74 anos. Para mulheres de 40 a 49 anos e acima de 74, a possibilidade de exame deve ser discutida com profissional de saúde, considerando riscos e benefícios.
   - **Atenção à divergência de comunicação:** a página municipal publicada em outubro de 2026 afirma que mulheres a partir de 40 anos têm direito ao rastreamento. Não reproduzir essa frase no MISM2 como regra nacional universal. Diferenciar a orientação local de acesso da recomendação nacional para rastreamento de rotina e encaminhar dúvidas individuais à equipe de saúde.
 
+### Planejamento Municipal de Saúde 2026 — serviços e ações a acompanhar
+
+**Documento oficial:** [Programação Anual de Saúde (PAS) 2026 — PDF](https://saude-rioclaro.org.br/uac/PAS%202026-%20FINAL.pdf). É uma fonte de planejamento municipal, não uma lista de vagas disponíveis. As metas e ações abaixo foram identificadas no documento; antes de anunciar qualquer serviço ao público, confirmar a oferta efetiva, critérios de elegibilidade, unidade responsável e forma de acesso.
+
+- **Saúde sexual e reprodutiva:** a PAS prevê oferta de métodos contraceptivos na Atenção Primária, ações educativas, planejamento reprodutivo e continuidade da inserção de DIU. Menciona DIU no pós-parto imediato na maternidade, inserção em UBS e continuidade no CEAD, além de implantes contraceptivos (LARC/Implanon) e DIU Mirena para mulheres elegíveis, conforme protocolo.
+- **Pré-natal e puerpério:** prevê atualização dos protocolos, identificação e acompanhamento de gestantes, testagem para gravidez, exames em tempo oportuno e encaminhamento ao pré-natal de alto risco quando necessário.
+- **Rastreamento de câncer feminino:** a PAS descreve intensificação do exame preventivo do colo do útero para mulheres cadastradas de 25 a 64 anos e mamografia bienal para mulheres cadastradas de 50 a 69 anos, além de busca ativa, ampliação de coleta/vagas e campanhas. Isso registra a meta municipal de planejamento; não confirma que exista vaga imediata nem substitui avaliação individual.
+- **Testes e cuidado de ISTs:** prevê testes rápidos na Atenção Básica, ações de testagem em campanhas e territórios, tratamento e acompanhamento, com atenção especial à sífilis e ao pré-natal.
+- **Atenção a pessoas em situação de violência:** a PAS prevê articulação intersetorial e qualificação do protocolo de atenção integral à pessoa em situação de violência. O documento menciona elaboração de protocolos para violência sexual e aborto legal; portanto, não devemos afirmar que todos esses fluxos estejam concluídos apenas porque constam do planejamento.
+- **Acesso territorial e continuidade:** o plano prevê ampliar a cobertura da Estratégia Saúde da Família, qualificar cuidado de hipertensão/diabetes e fortalecer referência e contrarreferência. São metas de gestão úteis para acompanhar, não serviços novos já comprovadamente implantados.
+
+**Como usar no MISM2:** estes pontos ajudam a formular perguntas de gestão e a interpretar resultados de internações de câncer feminino. Exemplo: comparar a evolução de internações com a existência de ações de rastreamento documentadas, sem concluir que a ação causou a mudança. A PAS não fornece, por si só, resultados de execução ou cobertura efetiva.
+
+**Como compartilhar com o MISM3:** priorizar somente caminhos concretos que possam ser verificados para o público — unidades, agendamento, contracepção, pré-natal, exames, testagem, transporte de saúde e atendimento especializado. Os itens da PAS que ainda são metas devem permanecer identificados como “previsto no planejamento; oferta a confirmar”, não como benefício garantido.
+
 ### Como aproveitar sem transformar o MISM2 em catálogo de notícias
 
 1. Na interpretação dos resultados, indicar o protocolo municipal pertinente como referência de linha de cuidado.
