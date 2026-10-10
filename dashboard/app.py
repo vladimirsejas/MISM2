@@ -277,6 +277,7 @@ with col_cidade:
             st.page_link("pages/apoio.py", label="Apoio à mulher")
         except Exception:  # Streamlit antigo, sem page_link
             st.markdown('<a href="/apoio" target="_self">Apoio à mulher</a>', unsafe_allow_html=True)
+        st.page_link("pages/rede_local.py", label="Rede local")
 cidade = next(m for m in lista_municipios if m["nome"] == nome_cidade)
 ORIGEM = cidade["origem"]
 
