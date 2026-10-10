@@ -31,6 +31,17 @@ class TesteRedeServicosLocal(unittest.TestCase):
             self.assertTrue(dados.empty)
             self.assertIn("Nenhum arquivo", dados.attrs["aviso"])
 
+    def test_arquivo_sem_coluna_municipal_retorna_aviso(self):
+        with tempfile.TemporaryDirectory() as temporario:
+            pasta = Path(temporario)
+            (pasta / "tbEstabelecimento202608.csv").write_text(
+                "CO_CNES;NO_FANTASIA\\n123;Unidade A\\n",
+                encoding="latin-1",
+            )
+            dados = carregar_estabelecimentos(pasta)
+            self.assertTrue(dados.empty)
+            self.assertIn("coluna municipal", dados.attrs["aviso"])
+
     def test_resumo_vazio_nao_inventa_quantidades(self):
         resumo = resumir_rede_local(carregar_estabelecimentos("pasta_inexistente"))
         self.assertEqual(resumo["total_estabelecimentos"], 0)
