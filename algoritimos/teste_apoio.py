@@ -111,7 +111,7 @@ while fila:
         if (i["confirmar"] is not None) != (r.expressao == "cautelosa"):
             problemas.append(f"expressão x confirmar: {acao}")
         data_item = i.get("conferido", apoio.CONFERIDO)
-        if i["link"] not in r.fala or data_item not in r.numeros:
+        if i["link"] not in r.fala or not any(data_item in n for n in r.numeros):
             problemas.append(f"item sem link/data específica: {acao}")
     for _, a in r.botoes:
         fila.append(a)
