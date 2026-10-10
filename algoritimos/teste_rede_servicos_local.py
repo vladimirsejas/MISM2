@@ -35,7 +35,7 @@ class TesteRedeServicosLocal(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporario:
             pasta = Path(temporario)
             (pasta / "tbEstabelecimento202608.csv").write_text(
-                "CO_CNES;NO_FANTASIA\\n123;Unidade A\\n",
+                "CO_CNES;NO_FANTASIA\n123;Unidade A\n",
                 encoding="latin-1",
             )
             dados = carregar_estabelecimentos(pasta)
