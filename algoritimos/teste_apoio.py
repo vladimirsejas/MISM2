@@ -68,6 +68,11 @@ checar("caminho Seus direitos com TFD e reconstrução da mama",
        {"tfd", "reconstrucao_mamaria"} <= {i["id"] for i in apoio.itens(caminho="direitos")})
 checar("todo caminho tem pelo menos um item", all(apoio.itens(caminho=c) for c in apoio.NOME_CAMINHO))
 checar("Rio Claro tem lâmina com itens", len(apoio.itens(lamina="rio_claro")) >= 4)
+checar("Cadu de Rio Claro aparece como serviço de apoio à mulher",
+       "rc_cadu_agendamento" in apoio.POR_ID
+       and "0800 019 0505" in apoio.POR_ID["rc_cadu_agendamento"]["contato"]
+       and apoio.POR_ID["rc_cadu_agendamento"]["link"].startswith("https://")
+       and apoio.POR_ID["rc_cadu_agendamento"]["conferido"] == "09/10/2026")
 checar("Barretos tem lâmina com itens", len(apoio.itens(lamina="barretos")) >= 3)
 outras = {"Campinas", "Ribeirão Preto", "São José do Rio Preto"}
 checar("outras cidades entram só nos caminhos e na lista de hospitais (sem lâmina própria)",
