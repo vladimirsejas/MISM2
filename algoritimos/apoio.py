@@ -1196,7 +1196,7 @@ def responder_item(id):
         botoes=_voltar(i) + _proximo(i["caminho"]),
         destino={"aba": LAMINAS[i["lamina"]], "caminho": i["caminho"], "grupo": i["grupo"], "item": id,
                  "etapa": "violencia" if i["caminho"] == "ajuda" and i["lamina"] == "caminho" else None},
-        numeros=[f"Fonte: {i['fonte']}", f"Página: {i['link']}", f"Conferido em {CONFERIDO}"],
+        numeros=[f"Fonte: {i['fonte']}", f"Página: {i['link']}", f"Conferido em {i.get('conferido', CONFERIDO)}"],
     )
 
 
