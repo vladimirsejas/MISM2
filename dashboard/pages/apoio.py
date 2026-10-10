@@ -411,11 +411,16 @@ for col, chave in ((n1, "caminho"), (n2, "rio_claro")):
                on_click=ir_aba, args=(nome,), use_container_width=True)
 
 st.markdown("**Recursos de referência**")
-r1, r2, r3, r4 = st.columns(4)
-for col, chave in ((r1, "hospitais"), (r2, "carretas"), (r3, "barretos"), (r4, "sobre")):
+r1, r2 = st.columns(2)
+for col, chave in ((r1, "hospitais"), (r2, "carretas")):
     nome = apoio.LAMINAS[chave]
-    rotulo = {"hospitais": "Hospitais no Estado", "carretas": "Carretas da mamografia",
-              "barretos": "Hospital de Amor", "sobre": "Sobre as informações"}[chave]
+    rotulo = {"hospitais": "Hospitais no Estado", "carretas": "Carretas da mamografia"}[chave]
+    col.button(rotulo, key=f"nav_apoio_{chave}", type="primary" if st.session_state["ap_aba"] == nome else "secondary",
+               on_click=ir_aba, args=(nome,), use_container_width=True)
+r3, r4 = st.columns(2)
+for col, chave in ((r3, "barretos"), (r4, "sobre")):
+    nome = apoio.LAMINAS[chave]
+    rotulo = {"barretos": "Hospital de Amor", "sobre": "Sobre as informações"}[chave]
     col.button(rotulo, key=f"nav_apoio_{chave}", type="primary" if st.session_state["ap_aba"] == nome else "secondary",
                on_click=ir_aba, args=(nome,), use_container_width=True)
 
