@@ -283,6 +283,11 @@ with col_cidade:
             st.page_link("pages/onde_ser_atendida.py", label="Onde ser atendida")
         except Exception:  # Streamlit antigo, sem page_link
             st.markdown('<a href="/onde_ser_atendida" target="_self">Onde ser atendida</a>', unsafe_allow_html=True)
+        # Mapa geográfico do catálogo público de serviços e da integração CNES.
+        try:
+            st.page_link("pages/mapa_servicos.py", label="Mapa de serviços")
+        except Exception:  # Streamlit antigo, sem page_link
+            st.markdown('<a href="/mapa_servicos" target="_self">Mapa de serviços</a>', unsafe_allow_html=True)
 cidade = next(m for m in lista_municipios if m["nome"] == nome_cidade)
 ORIGEM = cidade["origem"]
 
