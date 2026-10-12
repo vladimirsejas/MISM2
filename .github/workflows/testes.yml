@@ -53,3 +53,5 @@ jobs:
         run: python dashboard/teste_painel.py
       - name: Lâmina de apoio (clica em tudo)
         run: python dashboard/teste_apoio_tela.py
+      - name: Geografia dos serviços públicos
+        run: python tests/test_geografia_servicos.py
