@@ -84,6 +84,25 @@ if localizados:
 else:
     st.info("Nenhum serviço desta busca tem localização suficientemente confiável para aparecer no mapa.")
 
+def resumir_horarios(servico):
+    linhas_horario = []
+    for item in servico.get("horarios_cnes", []):
+        partes = []
+        dia = item.get("DS_DIA_SEMANA") or item.get("CO_DIA_SEMANA")
+        if dia:
+            partes.append(dia)
+        inicio, fim = item.get("HR_INICIO"), item.get("HR_FIM")
+        if inicio or fim:
+            partes.append(f"{inicio or '?'}–{fim or '?'}")
+        turno = item.get("DS_TURNO_ATENDIMENTO") or item.get("CO_TURNO_ATENDIMENTO")
+        if turno:
+            partes.append(turno)
+        if partes:
+            linhas_horario.append(" ".join(partes))
+    resumo = "; ".join(dict.fromkeys(linhas_horario))
+    return resumo or servico.get("horario") or "Confirmar com o serviço"
+
+
 linhas = []
 for s in resultado:
     if s["precisao"] == "coordenada_da_fonte":
@@ -98,7 +117,7 @@ for s in resultado:
         "Endereço": s.get("endereco") or "Não informado",
         "CEP": s.get("cep") or "Não informado",
         "Telefone": s.get("telefone") or "Não informado",
-        "Horário": s.get("horario") or "Confirmar com o serviço",
+        "Horário": resumir_horarios(s),
         "Localização": situacao,
         "Verificado em": s.get("verificado_em") or "Data não informada",
         "Serviços declarados no CNES": "; ".join(
