@@ -58,3 +58,7 @@ jobs:
         run: python dashboard/teste_apoio_tela.py
       - name: Página Onde ser atendida (clica em tudo)
         run: python dashboard/teste_onde_atendida_tela.py
+      - name: Geografia dos serviços públicos
+        run: python tests/test_geografia_servicos.py
+      - name: Integração CNES geográfica
+        run: python tests/test_geografia_cnes.py

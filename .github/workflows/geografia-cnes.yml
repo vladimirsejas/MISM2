@@ -1,0 +1,25 @@
+name: Testes da geografia CNES
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - cnes-geografia-mism2-main
+
+jobs:
+  geografia-cnes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instala dependências
+        run: pip install -r requirements.txt pyarrow
+      - name: Verifica sintaxe dos módulos
+        run: python -m py_compile etl/geografia_cnes.py algoritimos/geografia_servicos.py dashboard/pages/mapa_servicos.py
+      - name: Testes da integração geográfica
+        run: |
+          python tests/test_geografia_servicos.py
+          python tests/test_geografia_cnes.py
