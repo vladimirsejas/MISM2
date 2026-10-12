@@ -13,6 +13,7 @@ from configuracao_geografica import BANCO, listar_municipios_disponiveis, obter_
 from lia import INICIO, Contexto, responder as lia_responder
 from passeio import PARADAS, parada as passeio_parada
 from lia_rosto import img as rosto_lia
+from simbolos_mism import simbolo as simbolo_mism
 from estilo import CSS
 from inteligencia import (
     ano_atipico_no_estado,
@@ -295,8 +296,12 @@ serie = serie_municipio(ORIGEM)
 resumo = resumo_doencas(serie) if not serie.empty else pd.DataFrame()
 
 with col_titulo:
-    st.markdown('<div class="escudo-marca">MISM2 · OBSERVATÓRIO DE SAÚDE DA MULHER</div>', unsafe_allow_html=True)
-    st.markdown('<div class="mism-assinatura">Monitoramento Inteligente da Saúde da Mulher</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="mism-identidade">{simbolo_mism("pesquisa", tamanho=38)}'
+        '<div><div class="escudo-marca">MISM2 · OBSERVATÓRIO DE SAÚDE DA MULHER</div>'
+        '<div class="mism-assinatura">Monitoramento Inteligente da Saúde da Mulher</div></div></div>',
+        unsafe_allow_html=True,
+    )
     st.markdown(f'<div class="escudo-titulo">Câncer em mulheres de {nome_cidade}</div>',
                 unsafe_allow_html=True)
     if not resumo.empty:
