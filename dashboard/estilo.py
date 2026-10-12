@@ -15,6 +15,12 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 .block-container { max-width: 1180px; padding-top: 3.2rem; padding-bottom: 4rem; }
 h1, h2, h3 { font-family: 'Manrope', sans-serif; color: #292541; letter-spacing: -0.02em; }
 .escudo-marca { color: #7565a8; font-size: .78rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.mism-assinatura { color: #6B2E6F; font-size: .94rem; font-weight: 600; letter-spacing: .015em; margin: 2px 0 12px; }
+.escudo-marca { color: #6B2E6F; letter-spacing: .16em; }
+/* Observatório: hierarquia editorial, sem alterar os componentes funcionais. */
+.escudo-titulo { font-size: clamp(1.8rem, 3vw, 2.35rem); line-height: 1.12; }
+.escudo-sub { line-height: 1.7; }
+hr { border-color: #e6dceb !important; }
 .escudo-titulo { font-family: 'Manrope', sans-serif; color: #292541; font-size: 2.1rem; font-weight: 700; line-height: 1.15; margin: 4px 0 6px; }
 .escudo-sub { color: #625d72; font-size: 1.02rem; max-width: 760px; }
 .escudo-pergunta { font-family: 'Manrope', sans-serif; color: #292541; font-size: 1.35rem; font-weight: 700; margin: 26px 0 2px; }
