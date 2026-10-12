@@ -1,4 +1,6 @@
 import base64
+import functools
+import os
 
 # ============================================================
 # O ROSTO DA LIA (ilustração vetorial, ver docs/LIA.md)
@@ -193,8 +195,31 @@ def svg(expressao="acolhedora"):
 </svg>'''
 
 
+PASTA_ILUSTRACOES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lia")
+
+
+@functools.lru_cache(maxsize=None)
+def _ilustracao(expressao):
+    """Ilustração (aquarela, estilo da faixa do MISM3) da expressão, em SVG com a imagem embutida e o
+    mesmo selo no canto. None se o arquivo não existir: aí vale o desenho vetorial de svg()."""
+    caminho = os.path.join(PASTA_ILUSTRACOES, f"{expressao}.webp")
+    if expressao not in EXPRESSOES or not os.path.exists(caminho):
+        return None
+    with open(caminho, "rb") as f:
+        foto = base64.b64encode(f.read()).decode("ascii")
+    rotulo = ROTULOS.get(expressao, "Lia")
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 200 200" '
+            f'role="img" aria-label="{rotulo}"><title>{rotulo}</title>'
+            '<clipPath id="corte"><circle cx="100" cy="100" r="98"/></clipPath>'
+            f'<g clip-path="url(#corte)"><image width="200" height="200" preserveAspectRatio="xMidYMid slice" '
+            f'xlink:href="data:image/webp;base64,{foto}" href="data:image/webp;base64,{foto}"/></g>'
+            '<circle cx="100" cy="100" r="97" fill="none" stroke="#d9c8e6" stroke-width="2"/>'
+            f'{_simbolo(EXPRESSOES[expressao]["simbolo"])}</svg>')
+
+
 def img(expressao="acolhedora", tamanho=96):
-    """<img> com o SVG embutido (funciona em st.markdown)."""
-    dados = base64.b64encode(svg(expressao).encode("utf-8")).decode("ascii")
+    """<img> com a Lia embutida (funciona em st.markdown): a ilustração, ou o desenho vetorial de reserva."""
+    figura = _ilustracao(expressao) or svg(expressao)
+    dados = base64.b64encode(figura.encode("utf-8")).decode("ascii")
     return (f'<img src="data:image/svg+xml;base64,{dados}" width="{tamanho}" height="{tamanho}" '
             f'alt="{ROTULOS.get(expressao, "Lia")}" style="display:block"/>')
