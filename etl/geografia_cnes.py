@@ -189,7 +189,10 @@ def anexar_relacoes(caminho: Path | None, estabelecimentos: list[dict],
             unidade = normalizar(linha.get("CO_UNIDADE"))
             cnes_esf = normalizar(linha.get("CO_CNES_ESF"))
             cnes = normalizar(linha.get("CO_CNES"))
-            destino = por_unidade.get(unidade) or por_cnes.get(cnes_esf) or por_cnes.get(cnes)
+            if tipo == "equipe" and cnes_esf:
+                destino = por_cnes.get(cnes_esf) or por_unidade.get(unidade) or por_cnes.get(cnes)
+            else:
+                destino = por_unidade.get(unidade) or por_cnes.get(cnes_esf) or por_cnes.get(cnes)
             if destino is None:
                 continue
             if tipo == "servico":
@@ -208,6 +211,9 @@ def anexar_relacoes(caminho: Path | None, estabelecimentos: list[dict],
                 campos = ("CO_DIA_SEMANA", "DS_DIA_SEMANA", "HR_INICIO", "HR_FIM",
                           "CO_TURNO_ATENDIMENTO", "DS_HORARIO", "HR_ATENDIMENTO")
                 item = {k: normalizar(linha.get(k)) for k in campos if normalizar(linha.get(k))}
+                turno = normalizar(linha.get("CO_TURNO_ATENDIMENTO"))
+                if turno and descricoes:
+                    item["DS_TURNO_ATENDIMENTO"] = descricoes.get(turno, "")
                 if item:
                     destino["horarios_cnes"].append(item)
             elif tipo == "equipe":
@@ -243,8 +249,10 @@ def montar_catalogo(pasta_cnes: Path, indice_cep: Path, saida: Path,
     descricoes = {"servicos": tipos, "classificacoes": classificacoes}
     rel_serv = anexar_relacoes(achar_arquivo(pasta_cnes, "rlEstabServClass"),
                                estabelecimentos, "servico", descricoes)
+    turnos = ler_tabela_pequena(achar_arquivo(pasta_cnes, "tbTurnoAtendimento"),
+                                "CO_TURNO_ATENDIMENTO", "DS_TURNO_ATENDIMENTO")
     rel_hor = anexar_relacoes(achar_arquivo(pasta_cnes, "tbEstabHorarioAtend"),
-                              estabelecimentos, "horario")
+                              estabelecimentos, "horario", turnos)
     rel_equipe = anexar_relacoes(achar_arquivo(pasta_cnes, "tbEquipe"),
                                  estabelecimentos, "equipe")
     rel_esf = anexar_relacoes(achar_arquivo(pasta_cnes, "rlEquipeNasfEsf"),
