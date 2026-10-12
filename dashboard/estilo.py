@@ -157,5 +157,59 @@ div[data-testid="stExpander"] { border-color: #e8deed; border-radius: 12px; }
   .block-container { padding: 1.25rem 1rem 2rem; }
   section[data-testid="stSidebar"] { min-width: 0; }
 }
+
+/* Direção editorial MISM2 — camada visual sem alterar a lógica do painel. */
+.mism-cabecalho-editorial {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap; padding: 0 0 1.05rem;
+    border-bottom: 1px solid #e5d7e9; margin-bottom: 1.15rem;
+}
+.mism-identidade { gap: 14px; margin-bottom: 0; }
+.mism-identidade > svg {
+    flex-basis: 42px; border-radius: 13px;
+    box-shadow: 0 4px 14px rgba(73, 36, 79, .10);
+}
+.mism-assinatura { color: #5d3a65; font-size: .9rem; }
+.mism-editorial-selo {
+    align-self: center; color: #806d86; font-size: .69rem; font-weight: 700;
+    letter-spacing: .14em; padding: .5rem 0 .5rem .9rem;
+    border-left: 2px solid #b79bc4;
+}
+.escudo-titulo {
+    font-size: clamp(2rem, 4vw, 3.25rem) !important;
+    line-height: 1.05 !important; letter-spacing: -.045em !important;
+    max-width: 900px; margin: .4rem 0 .35rem !important;
+    color: #39213f !important;
+}
+.mism-titulo-local {
+    color: #76687a; font-size: 1.02rem; margin: 0 0 1.15rem;
+}
+.mism-titulo-local strong { color: #6b2e6f; font-weight: 700; }
+.escudo-sub {
+    max-width: 920px; font-size: 1.02rem; line-height: 1.8;
+    padding: 1rem 1.15rem; margin: .5rem 0 1.3rem;
+    border-left: 3px solid #a58ab8; background: #f4eef7;
+    border-radius: 0 12px 12px 0; color: #514455;
+}
+div[data-testid="stRadio"]:has(input[value="Panorama"]) > div {
+    border-bottom: 1px solid #dfd0e4; gap: .35rem; padding-bottom: .55rem;
+}
+div[data-testid="stRadio"] label {
+    border-radius: 8px; padding: .35rem .65rem; transition: background .15s ease;
+}
+div[data-testid="stRadio"] label:hover { background: #f0e7f4; }
+div[data-testid="stMetric"] {
+    border-radius: 12px; border-top: 3px solid #b79bc4;
+    box-shadow: 0 4px 16px rgba(57, 33, 63, .035);
+}
+div[data-testid="stPlotlyChart"] { box-shadow: 0 5px 18px rgba(57, 33, 63, .035); }
+div[data-testid="stExpander"] summary { color: #513258; font-weight: 600; }
+@media (max-width: 700px) {
+    .mism-cabecalho-editorial { gap: .65rem; }
+    .mism-editorial-selo { border-left: 0; border-top: 1px solid #e5d7e9; padding: .55rem 0 0; }
+    .escudo-titulo { font-size: 2rem !important; }
+    .mism-identidade > svg { flex-basis: 36px; }
+}
+
 </style>
 """
