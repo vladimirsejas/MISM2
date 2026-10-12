@@ -169,7 +169,7 @@ def ler_estabelecimentos(caminho: Path, ceps_locais: set[str],
 
 
 def anexar_relacoes(caminho: Path | None, estabelecimentos: list[dict],
-                    tipo: str, descricoes: dict[str, dict[str, str]] | None = None) -> int:
+                    tipo: str, descricoes: dict[str, Any] | None = None) -> int:
     """Anexa relações por CO_UNIDADE; para ESF aceita também CO_CNES_ESF."""
     if caminho is None:
         return 0
