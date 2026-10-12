@@ -1,6 +1,7 @@
 import json
 import sys
 from pathlib import Path
+from urllib.parse import quote_plus
 
 import pandas as pd
 import streamlit as st
@@ -123,41 +124,69 @@ def resumir_horarios(servico):
     return resumo or servico.get("horario") or "Confirmar com o serviço"
 
 
-linhas = []
-for s in resultado:
-    if s["precisao"] == "coordenada_da_fonte":
-        situacao = "Coordenada cadastrada na fonte"
-    elif s["precisao"] == "aproximada_por_cep":
-        situacao = f"Centro aproximado do CEP (raio informado: {s['raio_m']} m)"
-    else:
-        situacao = "Sem posição confiável — disponível na lista"
-    linhas.append({
-        "Serviço": s.get("nome") or "Sem nome",
-        "Categoria": rotulos.get(s.get("tipo"), s.get("tipo") or "Não classificada"),
-        "Endereço": s.get("endereco") or "Não informado",
-        "CEP": s.get("cep") or "Não informado",
-        "Telefone": s.get("telefone") or "Não informado",
-        "Horário": resumir_horarios(s),
-        "Localização": situacao,
-        "Verificado em": s.get("verificado_em") or "Data não informada",
-        "Serviços declarados no CNES": "; ".join(
-            dict.fromkeys(x.get("descricao", "") for x in s.get("servicos_cnes", []) if x.get("descricao"))
-        ) or "Não detalhados",
-        "Equipes CNES": "; ".join(
-            dict.fromkeys(
-                x.get("NO_FANTASIA_ESF") or x.get("NO_REFERENCIA") or x.get("NO_EQUIPE")
-                or x.get("DS_EQUIPE") or x.get("DS_AREA_ESF") or x.get("DS_SEGMENTO_ESF") or ""
-                for x in s.get("equipes_cnes", [])
-                if x.get("NO_FANTASIA_ESF") or x.get("NO_REFERENCIA") or x.get("NO_EQUIPE")
-                or x.get("DS_EQUIPE") or x.get("DS_AREA_ESF") or x.get("DS_SEGMENTO_ESF")
-            )
-        ) or "Não informado",
-        "Fonte": s.get("fonte_url") or "",
-    })
-
 st.subheader("Lista de serviços")
-if linhas:
-    st.dataframe(pd.DataFrame(linhas), use_container_width=True, hide_index=True)
+st.caption(
+    "Abra cada resultado no Google Maps para consultar o endereço e traçar a rota. "
+    "Mesmo quando não há coordenada cadastrada, a busca usa o nome e o endereço disponíveis."
+)
+
+if resultado:
+    for i, s in enumerate(resultado, start=1):
+        nome = s.get("nome") or "Serviço sem nome"
+        endereco = s.get("endereco") or ""
+        cep = s.get("cep") or ""
+        categoria = rotulos.get(s.get("tipo"), s.get("tipo") or "Não classificada")
+        consulta_mapa = ", ".join(
+            parte for parte in (nome, endereco, cep, "Rio Claro, SP") if parte
+        )
+        url_mapa = "https://www.google.com/maps/search/?api=1&query=" + quote_plus(consulta_mapa)
+
+        if s["precisao"] == "coordenada_da_fonte":
+            situacao = "Coordenada cadastrada na fonte"
+        elif s["precisao"] == "aproximada_por_cep":
+            situacao = f"Localização aproximada pelo CEP (raio informado: {s['raio_m']} m)"
+        else:
+            situacao = "Sem coordenada confiável no catálogo"
+
+        with st.expander(f"{i}. {nome} · {categoria}"):
+            col_dados, col_mapa = st.columns([3, 1])
+            with col_dados:
+                st.write(f"**Endereço:** {endereco or 'Não informado'}")
+                st.write(f"**CEP:** {cep or 'Não informado'}")
+                st.write(f"**Telefone:** {s.get('telefone') or 'Não informado'}")
+                st.write(f"**Horário:** {resumir_horarios(s)}")
+                st.write(f"**Localização:** {situacao}")
+                servicos_cnes = "; ".join(
+                    dict.fromkeys(
+                        x.get("descricao", "") for x in s.get("servicos_cnes", [])
+                        if x.get("descricao")
+                    )
+                )
+                if servicos_cnes:
+                    st.write(f"**Serviços declarados no CNES:** {servicos_cnes}")
+                equipes_cnes = "; ".join(
+                    dict.fromkeys(
+                        x.get("NO_FANTASIA_ESF") or x.get("NO_REFERENCIA") or x.get("NO_EQUIPE")
+                        or x.get("DS_EQUIPE") or x.get("DS_AREA_ESF") or x.get("DS_SEGMENTO_ESF") or ""
+                        for x in s.get("equipes_cnes", [])
+                        if x.get("NO_FANTASIA_ESF") or x.get("NO_REFERENCIA") or x.get("NO_EQUIPE")
+                        or x.get("DS_EQUIPE") or x.get("DS_AREA_ESF") or x.get("DS_SEGMENTO_ESF")
+                    )
+                )
+                if equipes_cnes:
+                    st.write(f"**Equipes CNES:** {equipes_cnes}")
+                st.caption(
+                    f"Fonte: {s.get('fonte_url') or 'catálogo local'} · "
+                    f"Verificado em: {s.get('verificado_em') or 'data não informada'}"
+                )
+            with col_mapa:
+                st.markdown(
+                    f'<a href="{url_mapa}" target="_blank" rel="noopener noreferrer" '
+                    'style="display:block;text-align:center;padding:0.65rem 0.5rem;'
+                    'border-radius:0.5rem;background:#167d72;color:white;'
+                    'font-weight:600;text-decoration:none;">Abrir no Google Maps ↗</a>',
+                    unsafe_allow_html=True,
+                )
 else:
     st.info("Nenhum serviço corresponde aos filtros selecionados.")
 
