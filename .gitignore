@@ -27,6 +27,7 @@ dashboard/versao_no_ar.txt
 carga_resultado.txt
 
 # Dados brutos e derivados locais: nunca enviar o acervo nacional ao Git
+banco/
 banco/cnes/
 banco/cnes - Copia/
 banco/ibge/
