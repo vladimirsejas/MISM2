@@ -459,7 +459,6 @@ if aba == apoio.LAMINAS["rio_claro"]:
     dica(f"{apoio.CIDADE} faz parte da {apoio.REGIAO}. As referências de câncer da região são Rio Claro e "
          "Piracicaba, e o HC da Unicamp também atende a região (lâmina Hospitais no Estado).")
     onde_clicar("Em cada cartão, clique no botão azul <b>Abrir a página oficial</b>.")
-    st.page_link("pages/mapa_servicos.py", label="Abrir mapa de serviços públicos de Rio Claro")
     lista = apoio.itens(lamina="rio_claro")
     for c in [c for c, _, _, _ in apoio.CAMINHOS]:
         do_caminho = [i for i in lista if i["caminho"] == c]
