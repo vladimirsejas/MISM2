@@ -15,6 +15,17 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 .block-container { max-width: 1180px; padding-top: 3.2rem; padding-bottom: 4rem; }
 h1, h2, h3 { font-family: 'Manrope', sans-serif; color: #292541; letter-spacing: -0.02em; }
 .escudo-marca { color: #7565a8; font-size: .78rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.mism-assinatura { color: #6B2E6F; font-size: .94rem; font-weight: 600; letter-spacing: .015em; margin: 2px 0 12px; }
+.mism-identidade { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.mism-identidade > svg { flex: 0 0 38px; filter: drop-shadow(0 2px 2px rgba(75, 38, 81, .08)); }
+.mism-identidade .escudo-marca { margin-bottom: 4px; }
+.mism-identidade .mism-assinatura { margin: 0; line-height: 1.35; }
+
+.escudo-marca { color: #6B2E6F; letter-spacing: .16em; }
+/* Observatório: hierarquia editorial, sem alterar os componentes funcionais. */
+.escudo-titulo { font-size: clamp(1.8rem, 3vw, 2.35rem); line-height: 1.12; }
+.escudo-sub { line-height: 1.7; }
+hr { border-color: #e6dceb !important; }
 .escudo-titulo { font-family: 'Manrope', sans-serif; color: #292541; font-size: 2.1rem; font-weight: 700; line-height: 1.15; margin: 4px 0 6px; }
 .escudo-sub { color: #625d72; font-size: 1.02rem; max-width: 760px; }
 .escudo-pergunta { font-family: 'Manrope', sans-serif; color: #292541; font-size: 1.35rem; font-weight: 700; margin: 26px 0 2px; }
@@ -120,5 +131,85 @@ div[data-testid="stRadio"]:has(input[value="Panorama"]) > div { gap: 4px; border
     border-radius: 12px; font-weight: 700; }
 [class*="st-key-botao_inicio"] button:hover { background: #2a78d6; color: #ffffff; }
 [class*="st-key-botao_inicio"] button p { font-weight: 700; }
+
+/* Identidade do Observatório MISM2: editorial, leve e orientada à leitura */
+.stApp { background: #fbf9fc; }
+.block-container { max-width: 1320px; padding-top: 2rem; }
+div[data-testid="stVerticalBlockBorderWrapper"] { border-color: #e8deed; }
+div[data-testid="stMetric"] {
+    background: linear-gradient(180deg, #ffffff 0%, #fdfbfe 100%);
+    border: 1px solid #e8deed; border-radius: 14px; padding: 14px 16px;
+}
+div[data-testid="stMetricLabel"] { color: #6b6073; font-size: .84rem; }
+div[data-testid="stMetricValue"] { color: #49244f; font-family: 'Manrope', sans-serif; }
+div[data-testid="stMetricDelta"] { font-size: .78rem; }
+.stButton > button, [data-testid="stDownloadButton"] button {
+    border-radius: 10px; border-color: #d9c8e0; transition: background .15s ease, border-color .15s ease;
+}
+.stButton > button[kind="primary"] {
+    background: #6B2E6F; border-color: #6B2E6F; color: #fff;
+}
+.stButton > button[kind="primary"]:hover { background: #512354; border-color: #512354; }
+div[data-testid="stDataFrame"], div[data-testid="stTable"] { border: 1px solid #e8deed; border-radius: 12px; overflow: hidden; }
+div[data-testid="stPlotlyChart"] { background: #fff; border: 1px solid #eee7f1; border-radius: 14px; padding: 8px 8px 0; }
+div[data-testid="stExpander"] { border-color: #e8deed; border-radius: 12px; }
+@media (max-width: 900px) {
+  .block-container { padding: 1.25rem 1rem 2rem; }
+  section[data-testid="stSidebar"] { min-width: 0; }
+}
+
+/* Direção editorial MISM2 — camada visual sem alterar a lógica do painel. */
+.mism-cabecalho-editorial {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap; padding: 0 0 1.05rem;
+    border-bottom: 1px solid #e5d7e9; margin-bottom: 1.15rem;
+}
+.mism-identidade { gap: 14px; margin-bottom: 0; }
+.mism-identidade > svg {
+    flex-basis: 42px; border-radius: 13px;
+    box-shadow: 0 4px 14px rgba(73, 36, 79, .10);
+}
+.mism-assinatura { color: #5d3a65; font-size: .9rem; }
+.mism-editorial-selo {
+    align-self: center; color: #806d86; font-size: .69rem; font-weight: 700;
+    letter-spacing: .14em; padding: .5rem 0 .5rem .9rem;
+    border-left: 2px solid #b79bc4;
+}
+.escudo-titulo {
+    font-size: clamp(2rem, 4vw, 3.25rem) !important;
+    line-height: 1.05 !important; letter-spacing: -.045em !important;
+    max-width: 900px; margin: .4rem 0 .35rem !important;
+    color: #39213f !important;
+}
+.mism-titulo-local {
+    color: #76687a; font-size: 1.02rem; margin: 0 0 1.15rem;
+}
+.mism-titulo-local strong { color: #6b2e6f; font-weight: 700; }
+.escudo-sub {
+    max-width: 920px; font-size: 1.02rem; line-height: 1.8;
+    padding: 1rem 1.15rem; margin: .5rem 0 1.3rem;
+    border-left: 3px solid #a58ab8; background: #f4eef7;
+    border-radius: 0 12px 12px 0; color: #514455;
+}
+div[data-testid="stRadio"]:has(input[value="Panorama"]) > div {
+    border-bottom: 1px solid #dfd0e4; gap: .35rem; padding-bottom: .55rem;
+}
+div[data-testid="stRadio"] label {
+    border-radius: 8px; padding: .35rem .65rem; transition: background .15s ease;
+}
+div[data-testid="stRadio"] label:hover { background: #f0e7f4; }
+div[data-testid="stMetric"] {
+    border-radius: 12px; border-top: 3px solid #b79bc4;
+    box-shadow: 0 4px 16px rgba(57, 33, 63, .035);
+}
+div[data-testid="stPlotlyChart"] { box-shadow: 0 5px 18px rgba(57, 33, 63, .035); }
+div[data-testid="stExpander"] summary { color: #513258; font-weight: 600; }
+@media (max-width: 700px) {
+    .mism-cabecalho-editorial { gap: .65rem; }
+    .mism-editorial-selo { border-left: 0; border-top: 1px solid #e5d7e9; padding: .55rem 0 0; }
+    .escudo-titulo { font-size: 2rem !important; }
+    .mism-identidade > svg { flex-basis: 36px; }
+}
+
 </style>
 """

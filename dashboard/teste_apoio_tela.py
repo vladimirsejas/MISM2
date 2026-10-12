@@ -56,15 +56,17 @@ inicio = time.time()
 # ---------- A. boas-vindas ----------
 at = abrir()
 checar("A. abre sem erro", not erros(at))
-checar("A. boas-vindas no centro com os 8 caminhos",
-       all(botao(at, f"bv_ap_{c}") is not None for c in apoio.NOME_CAMINHO))
+checar("A. boas-vindas no centro com as 3 entradas principais",
+       all(botao(at, f"bv_ap_{c}") is not None for c in ("prevencao", "diagnostico", "ajuda")))
 checar("A. mesma Lia na lateral (rosto + nome)",
        any("lia-nome" in m.value for m in at.sidebar.markdown) and any("lia-rosto" in m.value for m in at.sidebar.markdown))
-for c in apoio.NOME_CAMINHO:
+for entrada, caminho in (("prevencao", "mama"), ("diagnostico", "diagnostico"), ("ajuda", "ajuda")):
     at = abrir()
-    botao(at, f"bv_ap_{c}").click().run()
-    checar(f"A. caminho {c} do centro", not erros(at) and at.session_state["ap_caminho"] == c
-           and at.session_state["ap_aba"] == apoio.LAMINAS["caminho"] and botao(at, f"bv_ap_{c}") is None)
+    botao(at, f"bv_ap_{entrada}").click().run()
+    checar(f"A. entrada {entrada} do centro", not erros(at)
+           and at.session_state["ap_caminho"] == caminho
+           and at.session_state["ap_aba"] == apoio.LAMINAS["caminho"]
+           and botao(at, f"bv_ap_{entrada}") is None)
 
 # ---------- B. Lia: todos os botões ----------
 at = abrir()
