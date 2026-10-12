@@ -22,12 +22,21 @@ PREFIXOS_NATUREZA_PUBLICA = ("1", "3")
 
 
 def detectar_encoding(caminho: Path) -> str:
-    with caminho.open("rb") as arquivo:
-        amostra = arquivo.read(1_000_000)
+    """Detecta UTF-8 validando o arquivo inteiro sem carregá-lo na memória."""
+    import codecs
+
+    decodificador = codecs.getincrementaldecoder("utf-8")()
     try:
-        amostra.decode("utf-8")
+        with caminho.open("rb") as arquivo:
+            while True:
+                bloco = arquivo.read(1_000_000)
+                if not bloco:
+                    break
+                decodificador.decode(bloco)
+            decodificador.decode(b"", final=True)
         return "utf-8-sig"
     except UnicodeDecodeError:
+        # CSVs CNES podem ter bytes Windows-1252 fora do primeiro megabyte.
         return "latin-1"
 
 
