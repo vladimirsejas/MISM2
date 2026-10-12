@@ -123,37 +123,52 @@ def _chave_texto(valor: Any) -> str:
 
 
 def combinar_catalogos(servicos_manuais: list[dict], servicos_cnes: list[dict]) -> list[dict]:
-    """Combina fontes sem duplicar CNES já registrado manualmente.
-
-    A chave preferida é o código CNES. Como alternativa, remove duplicata
-    apenas quando nome E endereço normalizados coincidem; nomes iguais com
-    endereços diferentes continuam separados.
-    """
+    """Combina fontes, enriquecendo o registro manual quando o CNES já existe."""
     resultado = [dict(item) for item in servicos_manuais]
-    codigos = {
-        re.sub(r"\D", "", str(item.get("cnes") or ""))
+    por_cnes = {
+        re.sub(r"\D", "", str(item.get("cnes") or "")): item
         for item in resultado
         if re.sub(r"\D", "", str(item.get("cnes") or ""))
     }
-    pares = {
-        (_chave_texto(item.get("nome")), _chave_texto(item.get("endereco")))
+    por_par = {
+        (_chave_texto(item.get("nome")), _chave_texto(item.get("endereco"))): item
         for item in resultado
         if _chave_texto(item.get("nome")) and _chave_texto(item.get("endereco"))
     }
+
+    def enriquecer(destino: dict, origem: dict) -> None:
+        # Não substitui informação manual já preenchida por dados CNES vazios.
+        for campo in ("cnes", "co_unidade", "lat", "lon", "cep", "telefone", "horario",
+                      "natureza_juridica", "tipo_unidade_codigo", "fonte_url"):
+            if destino.get(campo) in (None, "") and origem.get(campo) not in (None, ""):
+                destino[campo] = origem[campo]
+        for campo in ("servicos_cnes", "horarios_cnes", "equipes_cnes"):
+            existentes = list(destino.get(campo) or [])
+            chaves = {json.dumps(x, ensure_ascii=False, sort_keys=True) for x in existentes}
+            for item in origem.get(campo) or []:
+                chave = json.dumps(item, ensure_ascii=False, sort_keys=True)
+                if chave not in chaves:
+                    existentes.append(item)
+                    chaves.add(chave)
+            if existentes:
+                destino[campo] = existentes
+
     for item in servicos_cnes:
         codigo = re.sub(r"\D", "", str(item.get("cnes") or ""))
         par = (_chave_texto(item.get("nome")), _chave_texto(item.get("endereco")))
-        if codigo and codigo in codigos:
+        existente = por_cnes.get(codigo) if codigo else None
+        if existente is None and par[0] and par[1]:
+            existente = por_par.get(par)
+        if existente is not None:
+            enriquecer(existente, item)
             continue
-        if par[0] and par[1] and par in pares:
-            continue
-        resultado.append(dict(item))
+        novo = dict(item)
+        resultado.append(novo)
         if codigo:
-            codigos.add(codigo)
+            por_cnes[codigo] = novo
         if par[0] and par[1]:
-            pares.add(par)
+            por_par[par] = novo
     return resultado
-
 
 def filtrar_servicos(
     servicos: list[dict],
