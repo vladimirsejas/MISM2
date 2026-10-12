@@ -166,7 +166,7 @@ def filtrar_servicos(
     consulta = str(texto or "").strip().casefold()
     resultado = []
     for servico in servicos:
-        if tipos and servico.get("tipo") not in tipos:
+        if tipos is not None and servico.get("tipo") not in tipos:
             continue
         if somente_localizados and not servico.get("localizavel"):
             continue
