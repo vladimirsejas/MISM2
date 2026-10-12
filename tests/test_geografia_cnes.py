@@ -52,7 +52,7 @@ class TestGeografiaCnes(unittest.TestCase):
                 "NU_LATITUDE": "-22.41", "NU_LONGITUDE": "-47.56", "CO_TIPO_UNIDADE": "01",
             }
             privado = dict(base, CO_UNIDADE="3543901234568", CO_CNES="1234568",
-                           NO_FANTASIA="Clínica Privada", CO_NATUREZA_JUR="3999")
+                           NO_FANTASIA="Clínica Privada", CO_NATUREZA_JUR="2062")
             inativo = dict(base, CO_UNIDADE="3543901234569", CO_CNES="1234569",
                            NO_FANTASIA="Unidade Inativa", CO_MOTIVO_DESAB="12")
             escrever_csv(arquivo_estab, colunas, [base, privado, inativo])
