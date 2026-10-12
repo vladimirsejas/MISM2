@@ -169,7 +169,7 @@ def ler_estabelecimentos(caminho: Path, ceps_locais: set[str],
 
 
 def anexar_relacoes(caminho: Path | None, estabelecimentos: list[dict],
-                    tipo: str, descricoes: dict[str, str] | None = None) -> int:
+                    tipo: str, descricoes: dict[str, dict[str, str]] | None = None) -> int:
     """Anexa relações por CO_UNIDADE; para ESF aceita também CO_CNES_ESF."""
     if caminho is None:
         return 0
@@ -197,9 +197,9 @@ def anexar_relacoes(caminho: Path | None, estabelecimentos: list[dict],
                 cod_class = normalizar(linha.get("CO_CLASSIFICACAO_SERVICO"))
                 partes = []
                 if cod_servico:
-                    partes.append((descricoes or {}).get(cod_servico, f"Serviço {cod_servico}"))
+                    partes.append(((descricoes or {}).get("servicos", {})).get(cod_servico, f"Serviço {cod_servico}"))
                 if cod_class:
-                    partes.append((descricoes or {}).get(cod_class, f"Classificação {cod_class}"))
+                    partes.append(((descricoes or {}).get("classificacoes", {})).get(cod_class, f"Classificação {cod_class}"))
                 item = {"codigo_servico": cod_servico or None,
                         "codigo_classificacao": cod_class or None,
                         "descricao": " — ".join(dict.fromkeys(partes)) or "Serviço/classificação CNES"}
@@ -240,7 +240,7 @@ def montar_catalogo(pasta_cnes: Path, indice_cep: Path, saida: Path,
                                "CO_SERVICO_ESPECIALIZADO", "DS_SERVICO_ESPECIALIZADO")
     classificacoes = ler_tabela_pequena(achar_arquivo(pasta_cnes, "tbClassificacaoServico"),
                                         "CO_CLASSIFICACAO_SERVICO", "DS_CLASSIFICACAO_SERVICO")
-    descricoes = {**tipos, **classificacoes}
+    descricoes = {"servicos": tipos, "classificacoes": classificacoes}
     rel_serv = anexar_relacoes(achar_arquivo(pasta_cnes, "rlEstabServClass"),
                                estabelecimentos, "servico", descricoes)
     rel_hor = anexar_relacoes(achar_arquivo(pasta_cnes, "tbEstabHorarioAtend"),
