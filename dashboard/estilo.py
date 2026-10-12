@@ -147,5 +147,20 @@ h1, h2, h3, .escudo-pergunta { font-family: Georgia, 'Times New Roman', serif; f
 .regua-cel i.off { background: #f4eef6; outline: 1px solid #e3d9e8; }
 .regua-col span { display: block; margin-top: 4px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .62rem; color: #8a7a90; }
 .regua-leg { margin-top: 8px; font-size: .78rem; color: #8a7a90; }
+
+/* Lateral da Lia toda em lavanda: o passeio deixa o verde-água e entra na mesma família */
+section[data-testid="stSidebar"] { background: linear-gradient(180deg, #ebe3f4 0%, #f3eef8 100%); border-right: 1px solid #ded3e3; }
+section[data-testid="stSidebar"] > div { background: transparent; }
+[class*="st-key-passeiocard_"] { background: #ffffffb8; border: 1px solid #d9c8e6; border-left: 6px solid #5b2a55; }
+[class*="st-key-passeiocard_"] .passeio-topo { color: #5b2a55; }
+[class*="st-key-passeiocard_"] .passeio-pontos { color: #8d6bb0; }
+[class*="st-key-passeiocard_"] .passeio-titulo { color: #2a1730; font-family: Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 1.15rem; }
+[class*="st-key-passeiocard_"] p { color: #4a3a52; }
+[class*="st-key-passeiocard_"] .stButton button { border: 1px solid #d9c8e6; color: #5b2a55; }
+[class*="st-key-passeiocard_"] .stButton button:hover { background: #ece4f4; border-color: #5b2a55; color: #3c1a38; }
+[class*="st-key-passeiocard_"] [class*="st-key-pbtn_seguir"] button { background: #5b2a55; border-color: #5b2a55; color: #ffffff; }
+[class*="st-key-passeiocard_"] [class*="st-key-pbtn_seguir"] button:hover { background: #3c1a38; color: #ffffff; }
+[class*="st-key-passeiocard_"] .stButton button p { color: inherit; }
+[class*="st-key-passeiocard_"] [class*="st-key-pbtn_seguir"] button p { color: #ffffff; }
 </style>
 """
