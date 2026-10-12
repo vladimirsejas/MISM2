@@ -8,7 +8,7 @@ import streamlit as st
 RAIZ = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(RAIZ / "algoritimos"))
 
-from geografia_servicos import carregar_bases, preparar_servicos, filtrar_servicos  # noqa: E402
+from geografia_servicos import carregar_bases, preparar_servicos, filtrar_servicos, combinar_catalogos  # noqa: E402
 
 st.set_page_config(page_title="Mapa de serviços · MISM2", layout="wide")
 st.title("Serviços públicos de Rio Claro")
@@ -19,7 +19,16 @@ st.caption(
 
 try:
     catalogo, indice = carregar_bases()
-    servicos = preparar_servicos(catalogo["servicos"], indice["ceps"])
+    catalogo_cnes = []
+    arquivo_cnes = RAIZ / "banco" / "geografia_cnes" / "cnes_servicos_rioclaro.json"
+    if arquivo_cnes.exists():
+        dados_cnes = json.loads(arquivo_cnes.read_text(encoding="utf-8"))
+        catalogo_cnes = dados_cnes.get("servicos", [])
+        catalogo["meta"]["cnes_local"] = dados_cnes.get("meta", {})
+    servicos_unidos = combinar_catalogos(catalogo["servicos"], catalogo_cnes)
+    servicos = preparar_servicos(servicos_unidos, indice["ceps"])
+    if not arquivo_cnes.exists():
+        st.info("O catálogo CNES local ainda não foi gerado. Para acrescentar estabelecimentos, serviços e equipes dos CSVs já baixados, execute: python etl/geografia_cnes.py")
 except (OSError, ValueError, json.JSONDecodeError) as erro:
     st.error(f"Não foi possível carregar os dados geográficos: {erro}")
     st.stop()
@@ -92,6 +101,18 @@ for s in resultado:
         "Horário": s.get("horario") or "Confirmar com o serviço",
         "Localização": situacao,
         "Verificado em": s.get("verificado_em") or "Data não informada",
+        "Serviços declarados no CNES": "; ".join(
+            dict.fromkeys(x.get("descricao", "") for x in s.get("servicos_cnes", []) if x.get("descricao"))
+        ) or "Não detalhados",
+        "Equipes CNES": "; ".join(
+            dict.fromkeys(
+                x.get("NO_FANTASIA_ESF") or x.get("NO_REFERENCIA") or x.get("NO_EQUIPE")
+                or x.get("DS_EQUIPE") or x.get("DS_AREA_ESF") or x.get("DS_SEGMENTO_ESF") or ""
+                for x in s.get("equipes_cnes", [])
+                if x.get("NO_FANTASIA_ESF") or x.get("NO_REFERENCIA") or x.get("NO_EQUIPE")
+                or x.get("DS_EQUIPE") or x.get("DS_AREA_ESF") or x.get("DS_SEGMENTO_ESF")
+            )
+        ) or "Não informado",
         "Fonte": s.get("fonte_url") or "",
     })
 
