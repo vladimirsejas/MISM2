@@ -109,7 +109,7 @@ def _simbolo(tipo):
     """Pequeno selo no canto superior direito que reforça a expressão."""
     if tipo is None:
         return ""
-    base = '<circle cx="164" cy="38" r="21" fill="#fff" stroke="#d9cfe6" stroke-width="2"/>'
+    base = '<circle cx="164" cy="38" r="21" fill="#fffaf6" stroke="#d9c8e6" stroke-width="2"/>'
     desenhos = {
         "grafico": ('<rect x="153" y="40" width="5" height="9" rx="1" fill="#2a78d6"/>'
                     '<rect x="161" y="34" width="5" height="15" rx="1" fill="#2a78d6"/>'
@@ -124,21 +124,59 @@ def _simbolo(tipo):
     return base + desenhos[tipo]
 
 
+def _flor(cx, cy, r, petala="#f3bfb6", miolo="#e9a86a"):
+    """Flor de 5 pétalas, como as da faixa de mulheres do MISM3."""
+    import math
+    pet = "".join(
+        f'<ellipse cx="{cx + r * 0.62 * math.cos(a):.1f}" cy="{cy + r * 0.62 * math.sin(a):.1f}" '
+        f'rx="{r * 0.5:.1f}" ry="{r * 0.36:.1f}" transform="rotate({math.degrees(a):.0f} '
+        f'{cx + r * 0.62 * math.cos(a):.1f} {cy + r * 0.62 * math.sin(a):.1f})" fill="{petala}" '
+        f'stroke="#c9877b" stroke-width=".6" stroke-opacity=".6"/>'
+        for a in [i * 2 * math.pi / 5 - math.pi / 2 for i in range(5)])
+    return pet + f'<circle cx="{cx}" cy="{cy}" r="{r * 0.2:.1f}" fill="{miolo}"/>'
+
+
+def _folha(x, y, ang, comp=16, cor="#9fb38a"):
+    return (f'<path d="M0 0 Q{comp * 0.5:.1f} {-comp * 0.34:.1f} {comp} 0 Q{comp * 0.5:.1f} {comp * 0.34:.1f} 0 0 Z" '
+            f'transform="translate({x} {y}) rotate({ang})" fill="{cor}" stroke="#7d9569" stroke-width=".6" stroke-opacity=".7"/>')
+
+
+def _ramos():
+    """Folhagem e flores atrás e ao redor da Lia (o rosto não muda)."""
+    fundo = (_folha(22, 150, -70, 30) + _folha(30, 120, -40, 26) + _folha(176, 150, -110, 30)
+             + _folha(170, 118, -140, 26) + _folha(20, 96, -20, 20, "#b3c49f") + _folha(180, 94, -160, 20, "#b3c49f"))
+    flores_fundo = _flor(26, 134, 9, "#fbe3dd") + _flor(176, 136, 9, "#e8dcf3", "#d9a45a") + _flor(36, 160, 7, "#f3bfb6")
+    return fundo + flores_fundo
+
+
+def _flores_no_cabelo():
+    return (_folha(60, 52, -150, 14) + _folha(66, 46, -105, 12) + _flor(64, 56, 8, "#f3bfb6")
+            + _flor(76, 46, 6, "#fbe3dd") + _flor(56, 66, 5.5, "#e8dcf3", "#d9a45a"))
+
+
 def svg(expressao="acolhedora"):
     e = EXPRESSOES.get(expressao, EXPRESSOES["acolhedora"])
     sob_e, sob_d = e["sobrancelhas"]
     return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="{ROTULOS.get(expressao, 'Lia')}">
 <title>{ROTULOS.get(expressao, 'Lia')}</title>
-<circle cx="100" cy="100" r="98" fill="{FUNDO}"/>
+<defs>
+<radialGradient id="fundo" cx="30%" cy="22%" r="90%"><stop offset="0" stop-color="#fbeee6"/><stop offset=".55" stop-color="{FUNDO}"/><stop offset="1" stop-color="#e3d7f0"/></radialGradient>
+<radialGradient id="pele" cx="42%" cy="35%" r="75%"><stop offset="0" stop-color="#8a5636"/><stop offset=".7" stop-color="{PELE}"/><stop offset="1" stop-color="#65391f"/></radialGradient>
+<linearGradient id="blusa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d3566"/><stop offset="1" stop-color="{BLUSA}"/></linearGradient>
+<filter id="papel" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 .35  0 0 0 0 .2  0 0 0 0 .35  0 0 0 .09 0"/></filter>
+</defs>
+<circle cx="100" cy="100" r="98" fill="url(#fundo)"/>
 <clipPath id="corte"><circle cx="100" cy="100" r="98"/></clipPath>
 <g clip-path="url(#corte)">
-  <path d="M28 205 Q32 158 72 146 L128 146 Q168 158 172 205 Z" fill="{BLUSA}"/>
+  {_ramos()}
+  <path d="M28 205 Q32 158 72 146 L128 146 Q168 158 172 205 Z" fill="url(#blusa)" stroke="#3c1a38" stroke-width="1.2" stroke-opacity=".35"/>
+  {_flor(52, 176, 5, "#e8dcf3", "#d9a45a")}{_flor(146, 182, 5, "#e8dcf3", "#d9a45a")}{_flor(128, 166, 3.6, "#f3bfb6")}
   <path d="M84 146 L100 172 L116 146 Z" fill="{GOLA}"/>
   <rect x="88" y="124" width="24" height="26" rx="8" fill="{PELE_SOMBRA}"/>
   {_cabelo()}
   <ellipse cx="62" cy="98" rx="6" ry="9" fill="{PELE_SOMBRA}"/><ellipse cx="138" cy="98" rx="6" ry="9" fill="{PELE_SOMBRA}"/>
   <circle cx="62" cy="109" r="3" fill="#f4f1ec"/><circle cx="138" cy="109" r="3" fill="#f4f1ec"/>
-  <ellipse cx="100" cy="98" rx="37" ry="42" fill="{PELE}"/>
+  <ellipse cx="100" cy="98" rx="37" ry="42" fill="url(#pele)" stroke="#3b2013" stroke-width="1.3" stroke-opacity=".4"/>
   <path d="{sob_e}" stroke="#2b1c16" stroke-width="3.2" fill="none" stroke-linecap="round"/>
   <path d="{sob_d}" stroke="#2b1c16" stroke-width="3.2" fill="none" stroke-linecap="round"/>
   {_olhos(e["olhos"])}
@@ -148,6 +186,8 @@ def svg(expressao="acolhedora"):
   <path d="M100 98 Q97 108 100 110 Q103 111 106 109" stroke="{PELE_SOMBRA}" stroke-width="2.4" fill="none" stroke-linecap="round"/>
   <ellipse cx="80" cy="110" rx="6" ry="3.5" fill="#a25a44" opacity=".35"/><ellipse cx="120" cy="110" rx="6" ry="3.5" fill="#a25a44" opacity=".35"/>
   {e["boca"]}
+  {_flores_no_cabelo()}
+  <rect width="200" height="200" filter="url(#papel)"/>
 </g>
 {_simbolo(e["simbolo"])}
 </svg>'''
