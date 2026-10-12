@@ -25,3 +25,13 @@ dados/_backup_*/
 dashboard/versao_no_ar.txt
 
 carga_resultado.txt
+
+# Dados brutos e derivados locais: nunca enviar o acervo nacional ao Git
+banco/cnes/
+banco/cnes - Copia/
+banco/ibge/
+banco/mapa nacional/
+banco/documetacao/
+banco/unidades saude rio claro/
+banco/cep_Rio_Claro/
+banco/geografia_cnes/
