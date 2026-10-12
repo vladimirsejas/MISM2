@@ -7,7 +7,7 @@ Esta branch acrescenta uma primeira camada independente para consulta de serviç
 - `dados_geograficos/catalogo_servicos_rioclaro.json`: catálogo de serviços públicos, com 164 registros na origem consultada. Cada registro conserva sua fonte e data de verificação quando esses campos existem.
 - `dados_geograficos/indice_cep_rioclaro.json`: índice de 1.387 CEPs gerado a partir do CNEFE do IBGE/Censo 2022. Contém centros aproximados, raios de incerteza e referências territoriais, não endereços residenciais.
 - `algoritimos/geografia_servicos.py`: implementação independente para validar e resolver localizações.
-- `dashboard/pages/mapa_servicos.py`: página adicional de consulta e mapa no Streamlit.
+- `dashboard/pages/mapa_servicos.py`: página adicional de consulta e mapa no Streamlit, disponível pela navegação multipágina.
 - `tests/test_geografia_servicos.py`: testes da lógica de localização e filtros.
 
 ## Regras de segurança geográfica
