@@ -14,6 +14,7 @@ from lia import INICIO, Contexto, responder as lia_responder
 from passeio import PARADAS, parada as passeio_parada
 from lia_rosto import img as rosto_lia
 from estilo import CSS
+from identidade import regua_cobertura as regua_mism, simbolo as simbolo_mism
 from inteligencia import (
     ano_atipico_no_estado,
     anos_fora_do_padrao,
@@ -290,17 +291,20 @@ serie = serie_municipio(ORIGEM)
 resumo = resumo_doencas(serie) if not serie.empty else pd.DataFrame()
 
 with col_titulo:
-    st.markdown('<div class="escudo-marca">Escudo Feminino</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="escudo-titulo">Câncer em mulheres de {nome_cidade}</div>',
+    st.markdown(f'<div class="mism-marca">{simbolo_mism(40)}<div class="escudo-marca">Escudo Feminino'
+                f'<span> · MISM2 · observatório da saúde da mulher</span></div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="escudo-titulo">Câncer em mulheres de <em>{html.escape(nome_cidade)}</em></div>',
                 unsafe_allow_html=True)
     if not resumo.empty:
         ano_ini, ano_fim = int(serie["ano"].min()), int(serie["ano"].max())
         st.markdown(
-            f'<div class="escudo-sub">De {ano_ini} a {ano_fim}, mulheres que moram em {nome_cidade} '
-            f'tiveram <b>{formatar_numero(resumo["internacoes"].sum())} internações</b> no SUS pelos '
-            f'{len(resumo)} tipos de câncer acompanhados, com <b>{formatar_numero(resumo["obitos"].sum())} '
-            f'óbitos</b> durante a internação e <b>{reais(resumo["valor_total"].sum())}</b> em valores '
-            f'hospitalares registrados no SIH/SUS.</div>',
+            f'<div class="escudo-sub">De {ano_ini} a {ano_fim}, mulheres que moram em '
+            f'{html.escape(nome_cidade)}, nos {len(resumo)} tipos de câncer acompanhados (SIH/SUS):</div>'
+            f'<div class="mism-numeros">'
+            f'<div class="mism-grande"><b>{formatar_numero(resumo["internacoes"].sum())}</b><span>internações</span></div>'
+            f'<div><b>{formatar_numero(resumo["obitos"].sum())}</b><span>óbitos durante a internação</span></div>'
+            f'<div><b>{reais(resumo["valor_total"].sum())}</b><span>valor hospitalar registrado no SIH/SUS</span></div>'
+            f'</div>' + regua_mism(serie),
             unsafe_allow_html=True,
         )
 

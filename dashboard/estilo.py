@@ -120,5 +120,32 @@ div[data-testid="stRadio"]:has(input[value="Panorama"]) > div { gap: 4px; border
     border-radius: 12px; font-weight: 700; }
 [class*="st-key-botao_inicio"] button:hover { background: #2a78d6; color: #ffffff; }
 [class*="st-key-botao_inicio"] button p { font-weight: 700; }
+
+/* ---- Identidade do observatório (só aparência; widgets e chaves não mudam) ---- */
+.stApp { background: #faf6f2; }
+h1, h2, h3, .escudo-pergunta { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; color: #2a1730; letter-spacing: -.01em; }
+.escudo-pergunta { font-size: 1.5rem; border-bottom: 1px solid #2a1730; padding-bottom: 6px; }
+.mism-marca { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.mism-marca .escudo-marca { color: #5b2a55; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .74rem; }
+.mism-marca .escudo-marca span { color: #8a7a90; font-weight: 600; }
+.escudo-titulo { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; color: #2a1730;
+                 font-size: clamp(1.9rem, 2.6vw, 2.5rem); line-height: 1.1; letter-spacing: -.02em; margin: 10px 0 8px; }
+.escudo-titulo em { color: #5b2a55; }
+.escudo-sub { color: #6f6275; font-size: .98rem; max-width: 640px; margin-bottom: 4px; }
+.mism-numeros { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px 30px; margin: 6px 0 4px; }
+.mism-numeros div { display: flex; flex-direction: column; }
+.mism-numeros b { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; color: #2a1730; font-size: 1.7rem; line-height: 1.1; }
+.mism-numeros span { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .64rem; letter-spacing: .1em;
+                     text-transform: uppercase; color: #8a7a90; max-width: 170px; margin-top: 3px; }
+.mism-numeros .mism-grande b { font-size: clamp(3.2rem, 5vw, 4.4rem); line-height: .95; letter-spacing: -.04em; color: #5b2a55; }
+.regua { margin: 18px 0 6px; padding-top: 12px; border-top: 1px solid #ded3e3; max-width: 640px; }
+.regua-cols { display: flex; justify-content: space-between; gap: 4px; }
+.regua-col { text-align: center; }
+.regua-cel { display: grid; grid-template-columns: repeat(3, 6px); gap: 2px; justify-content: center; }
+.regua-cel i { width: 6px; height: 6px; border-radius: 1px; display: block; }
+.regua-cel i.on { background: #b79bd1; }
+.regua-cel i.off { background: #f4eef6; outline: 1px solid #e3d9e8; }
+.regua-col span { display: block; margin-top: 4px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .62rem; color: #8a7a90; }
+.regua-leg { margin-top: 8px; font-size: .78rem; color: #8a7a90; }
 </style>
 """
