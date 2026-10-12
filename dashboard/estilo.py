@@ -126,5 +126,31 @@ div[data-testid="stRadio"]:has(input[value="Panorama"]) > div { gap: 4px; border
     border-radius: 12px; font-weight: 700; }
 [class*="st-key-botao_inicio"] button:hover { background: #2a78d6; color: #ffffff; }
 [class*="st-key-botao_inicio"] button p { font-weight: 700; }
+
+/* Identidade do Observatório MISM2: editorial, leve e orientada à leitura */
+.stApp { background: #fbf9fc; }
+.block-container { max-width: 1320px; padding-top: 2rem; }
+div[data-testid="stVerticalBlockBorderWrapper"] { border-color: #e8deed; }
+div[data-testid="stMetric"] {
+    background: linear-gradient(180deg, #ffffff 0%, #fdfbfe 100%);
+    border: 1px solid #e8deed; border-radius: 14px; padding: 14px 16px;
+}
+div[data-testid="stMetricLabel"] { color: #6b6073; font-size: .84rem; }
+div[data-testid="stMetricValue"] { color: #49244f; font-family: 'Manrope', sans-serif; }
+div[data-testid="stMetricDelta"] { font-size: .78rem; }
+.stButton > button, [data-testid="stDownloadButton"] button {
+    border-radius: 10px; border-color: #d9c8e0; transition: background .15s ease, border-color .15s ease;
+}
+.stButton > button[kind="primary"] {
+    background: #6B2E6F; border-color: #6B2E6F; color: #fff;
+}
+.stButton > button[kind="primary"]:hover { background: #512354; border-color: #512354; }
+div[data-testid="stDataFrame"], div[data-testid="stTable"] { border: 1px solid #e8deed; border-radius: 12px; overflow: hidden; }
+div[data-testid="stPlotlyChart"] { background: #fff; border: 1px solid #eee7f1; border-radius: 14px; padding: 8px 8px 0; }
+div[data-testid="stExpander"] { border-color: #e8deed; border-radius: 12px; }
+@media (max-width: 900px) {
+  .block-container { padding: 1.25rem 1rem 2rem; }
+  section[data-testid="stSidebar"] { min-width: 0; }
+}
 </style>
 """
