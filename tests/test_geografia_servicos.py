@@ -48,12 +48,14 @@ class TestGeografiaServicos(unittest.TestCase):
     def test_combina_catalogos_sem_duplicar_cnes(self):
         manuais = [{"nome": "UBS Centro", "endereco": "Rua A", "cnes": "1234567", "tipo": "saude"}]
         cnes = [
-            {"nome": "Outro nome", "endereco": "Rua B", "cnes": "1234567", "tipo": "saude"},
+            {"nome": "Outro nome", "endereco": "Rua B", "cnes": "1234567", "tipo": "saude",
+             "servicos_cnes": [{"descricao": "Atenção Básica"}]},
             {"nome": "UBS Norte", "endereco": "Rua C", "cnes": "7654321", "tipo": "saude"},
         ]
         resultado = combinar_catalogos(manuais, cnes)
         self.assertEqual(len(resultado), 2)
         self.assertEqual(resultado[1]["cnes"], "7654321")
+        self.assertEqual(resultado[0]["servicos_cnes"][0]["descricao"], "Atenção Básica")
 
     def test_filtros_nao_alteram_catalogo(self):
         servicos = [
