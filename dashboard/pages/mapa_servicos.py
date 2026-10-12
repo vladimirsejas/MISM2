@@ -33,6 +33,26 @@ except (OSError, ValueError, json.JSONDecodeError) as erro:
     st.error(f"Não foi possível carregar os dados geográficos: {erro}")
     st.stop()
 
+# Deixa explícito no painel se o CNES foi carregado e qual é a cobertura real.
+meta_cnes = catalogo.get("meta", {}).get("cnes_local", {})
+if arquivo_cnes.exists() and meta_cnes:
+    st.subheader("Integração com o CNES")
+    st.caption(
+        f"Competência {meta_cnes.get('competencia_cnes', 'não informada')} · "
+        f"Catálogo local gerado em {meta_cnes.get('gerado_em', 'data não informada')}. "
+        "Os números abaixo refletem o arquivo CNES gerado neste computador."
+    )
+    cn1, cn2, cn3, cn4 = st.columns(4)
+    cn1.metric("Estabelecimentos CNES", meta_cnes.get("total_estabelecimentos", 0))
+    cn2.metric("Com coordenadas CNES", meta_cnes.get("total_com_coordenada_cnes", 0))
+    cn3.metric("Com serviços classificados", meta_cnes.get("total_com_servicos_classificados", 0))
+    cn4.metric("Com equipes cadastradas", meta_cnes.get("total_com_equipes", 0))
+elif not arquivo_cnes.exists():
+    st.warning(
+        "A integração CNES ainda não está ativa neste computador: o catálogo local "
+        "não foi encontrado. Os serviços da base principal continuam disponíveis."
+    )
+
 tipos_disponiveis = sorted({str(s.get("tipo") or "outros") for s in servicos})
 rotulos = {
     "mulher": "Apoio à mulher",
