@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import math
 import re
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -112,6 +113,46 @@ def preparar_servicos(servicos: list[dict], indice_ceps: dict) -> list[dict]:
         item.update(localizacao)
         preparados.append(item)
     return preparados
+
+
+
+def _chave_texto(valor: Any) -> str:
+    texto = unicodedata.normalize("NFKD", str(valor or ""))
+    texto = "".join(c for c in texto if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]", "", texto.casefold())
+
+
+def combinar_catalogos(servicos_manuais: list[dict], servicos_cnes: list[dict]) -> list[dict]:
+    """Combina fontes sem duplicar CNES já registrado manualmente.
+
+    A chave preferida é o código CNES. Como alternativa, remove duplicata
+    apenas quando nome E endereço normalizados coincidem; nomes iguais com
+    endereços diferentes continuam separados.
+    """
+    resultado = [dict(item) for item in servicos_manuais]
+    codigos = {
+        re.sub(r"\D", "", str(item.get("cnes") or ""))
+        for item in resultado
+        if re.sub(r"\D", "", str(item.get("cnes") or ""))
+    }
+    pares = {
+        (_chave_texto(item.get("nome")), _chave_texto(item.get("endereco")))
+        for item in resultado
+        if _chave_texto(item.get("nome")) and _chave_texto(item.get("endereco"))
+    }
+    for item in servicos_cnes:
+        codigo = re.sub(r"\D", "", str(item.get("cnes") or ""))
+        par = (_chave_texto(item.get("nome")), _chave_texto(item.get("endereco")))
+        if codigo and codigo in codigos:
+            continue
+        if par[0] and par[1] and par in pares:
+            continue
+        resultado.append(dict(item))
+        if codigo:
+            codigos.add(codigo)
+        if par[0] and par[1]:
+            pares.add(par)
+    return resultado
 
 
 def filtrar_servicos(
