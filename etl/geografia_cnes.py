@@ -63,7 +63,17 @@ def ler_tabela_pequena(caminho: Path | None, codigo: str, descricao: str) -> dic
 def ler_indice_cep(caminho: Path) -> tuple[set[str], dict[str, Any]]:
     if not caminho.exists():
         return set(), {}
-    dados = json.loads(caminho.read_text(encoding="utf-8"))
+    try:
+        texto = caminho.read_text(encoding="utf-8-sig")
+    except UnicodeDecodeError:
+        # Alguns índices locais foram salvos em ANSI/Windows-1252.
+        # O JSON contém dados auxiliares; preservar a leitura é melhor que
+        # interromper a geração do catálogo CNES.
+        texto = caminho.read_text(encoding="cp1252")
+    try:
+        dados = json.loads(texto)
+    except json.JSONDecodeError as erro:
+        raise ValueError(f"Índice de CEP inválido ({caminho}): {erro}") from erro
     ceps = dados.get("ceps", {})
     return set(ceps) if isinstance(ceps, dict) else set(), ceps if isinstance(ceps, dict) else {}
 
