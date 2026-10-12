@@ -16,6 +16,11 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 h1, h2, h3 { font-family: 'Manrope', sans-serif; color: #292541; letter-spacing: -0.02em; }
 .escudo-marca { color: #7565a8; font-size: .78rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
 .mism-assinatura { color: #6B2E6F; font-size: .94rem; font-weight: 600; letter-spacing: .015em; margin: 2px 0 12px; }
+.mism-identidade { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.mism-identidade > svg { flex: 0 0 38px; filter: drop-shadow(0 2px 2px rgba(75, 38, 81, .08)); }
+.mism-identidade .escudo-marca { margin-bottom: 4px; }
+.mism-identidade .mism-assinatura { margin: 0; line-height: 1.35; }
+
 .escudo-marca { color: #6B2E6F; letter-spacing: .16em; }
 /* Observatório: hierarquia editorial, sem alterar os componentes funcionais. */
 .escudo-titulo { font-size: clamp(1.8rem, 3vw, 2.35rem); line-height: 1.12; }
