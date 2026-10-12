@@ -6,6 +6,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RAIZ / "algoritimos"))
 
 from geografia_servicos import (  # noqa: E402
+    combinar_catalogos,
     coordenada_valida,
     filtrar_servicos,
     normalizar_cep,
@@ -39,6 +40,20 @@ class TestGeografiaServicos(unittest.TestCase):
         pos = resolver_localizacao({"cep": "00000000"}, {})
         self.assertFalse(pos["localizavel"])
         self.assertIsNone(pos["lat"])
+
+    def test_categorias_vazias_nao_mostram_tudo(self):
+        servicos = [{"nome": "UBS Centro", "tipo": "saude"}]
+        self.assertEqual(filtrar_servicos(servicos, tipos=set()), [])
+
+    def test_combina_catalogos_sem_duplicar_cnes(self):
+        manuais = [{"nome": "UBS Centro", "endereco": "Rua A", "cnes": "1234567", "tipo": "saude"}]
+        cnes = [
+            {"nome": "Outro nome", "endereco": "Rua B", "cnes": "1234567", "tipo": "saude"},
+            {"nome": "UBS Norte", "endereco": "Rua C", "cnes": "7654321", "tipo": "saude"},
+        ]
+        resultado = combinar_catalogos(manuais, cnes)
+        self.assertEqual(len(resultado), 2)
+        self.assertEqual(resultado[1]["cnes"], "7654321")
 
     def test_filtros_nao_alteram_catalogo(self):
         servicos = [
