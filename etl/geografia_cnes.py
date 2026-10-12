@@ -290,10 +290,11 @@ def montar_catalogo(pasta_cnes: Path, indice_cep: Path, saida: Path,
 
 
 def main() -> int:
-    raiz = Path(__file__).resolve().parents[2]
+    # geografia_cnes.py fica em <raiz>/etl; parents[1] é a raiz do repositório.
+    raiz = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--cnes-dir", type=Path, default=raiz / "banco" / "cnes",
-                        help="Pasta dos CSVs CNES nacionais já baixados.")
+    parser.add_argument("--cnes-dir", type=Path, default=None,
+                        help="Pasta dos CSVs CNES nacionais (detecta banco/cnes ou banco/cnes - Copia se omitida).")
     parser.add_argument("--indice-cep", type=Path,
                         default=raiz / "dados_geograficos" / "indice_cep_rioclaro.json")
     parser.add_argument("--saida", type=Path,
@@ -302,7 +303,11 @@ def main() -> int:
                         help="Inclui todas as naturezas jurídicas; por padrão ficam públicas e sem fins lucrativos.")
     args = parser.parse_args()
     try:
-        catalogo = montar_catalogo(args.cnes_dir, args.indice_cep, args.saida, args.incluir_privados)
+        pasta_cnes = args.cnes_dir
+        if pasta_cnes is None:
+            candidatas = [raiz / "banco" / "cnes", raiz / "banco" / "cnes - Copia"]
+            pasta_cnes = next((p for p in candidatas if achar_arquivo(p, "tbEstabelecimento") is not None), candidatas[0])
+        catalogo = montar_catalogo(pasta_cnes, args.indice_cep, args.saida, args.incluir_privados)
     except (OSError, ValueError, KeyError) as erro:
         print(f"ERRO: {erro}", file=sys.stderr)
         return 1
