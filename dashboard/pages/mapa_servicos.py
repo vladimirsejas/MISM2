@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 
@@ -66,7 +67,7 @@ if localizados:
         {"lat": s["lat"], "lon": s["lon"], "serviço": s["nome"]}
         for s in localizados
     ])
-    st.map(mapa, latitude="lat", longitude="lon", size=18, use_container_width=True)
+    st.map(mapa, latitude="lat", longitude="lon", use_container_width=True)
     st.caption(
         "O mapa usa apenas coordenadas dentro da área de referência de Rio Claro. "
         "A distância visual entre pontos não comprova cobertura nem tempo de deslocamento."
