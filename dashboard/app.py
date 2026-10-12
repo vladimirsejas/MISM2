@@ -295,7 +295,8 @@ serie = serie_municipio(ORIGEM)
 resumo = resumo_doencas(serie) if not serie.empty else pd.DataFrame()
 
 with col_titulo:
-    st.markdown('<div class="escudo-marca">Escudo Feminino</div>', unsafe_allow_html=True)
+    st.markdown('<div class="escudo-marca">MISM2 · OBSERVATÓRIO DE SAÚDE DA MULHER</div>', unsafe_allow_html=True)
+    st.markdown('<div class="mism-assinatura">Monitoramento Inteligente da Saúde da Mulher</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="escudo-titulo">Câncer em mulheres de {nome_cidade}</div>',
                 unsafe_allow_html=True)
     if not resumo.empty:
