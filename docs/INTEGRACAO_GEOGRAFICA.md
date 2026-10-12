@@ -28,3 +28,27 @@ Os dados de serviços podem envelhecer. A página orienta a confirmar endereço,
 ## Validação pendente
 
 Esta branch foi criada separada da branch principal para permitir revisão. Os testes unitários estão incluídos, mas precisam ser executados em ambiente Python local e a página deve ser aberta no Streamlit antes de integrar ou mesclar qualquer coisa. Nenhuma alteração foi feita em `main`.
+
+## Integração dos CSVs CNES já baixados
+
+O script `etl/geografia_cnes.py` processa os arquivos nacionais já presentes em `banco/cnes/` sem carregar a base inteira na memória. Por padrão, mantém estabelecimentos públicos e entidades sem fins lucrativos, filtra Rio Claro pelo código IBGE `354390` e também considera CEPs do índice local quando esse índice está disponível.
+
+Execute na raiz do repositório, com o ambiente Python do MISM2 ativado:
+
+```powershell
+python etl/geografia_cnes.py
+```
+
+A saída é gravada em `banco/geografia_cnes/cnes_servicos_rioclaro.json`. A página `dashboard/pages/mapa_servicos.py` detecta esse arquivo automaticamente e combina o resultado com os 164 registros manuais já existentes. O catálogo derivado e os dados brutos ficam ignorados pelo Git; não use `git add .` para incluir o acervo nacional.
+
+O ETL consulta apenas `tbEstabelecimento`, `rlEstabServClass`, `tbServicoEspecializado`, `tbClassificacaoServico`, `tbEstabHorarioAtend`, `tbEquipe` e `rlEquipeNasfEsf`. Ele não abre `tbDadosProfissionalSus`, `rlEstabEquipeProf` nem `rlCooperativa`, pois não são necessários para o catálogo público. O banco `banco/escudo_feminino.db`, os cálculos epidemiológicos e os fluxos da Lia não são modificados.
+
+Para rodar os testes da camada geográfica:
+
+```powershell
+python tests/test_geografia_servicos.py
+python tests/test_geografia_cnes.py
+```
+
+O CNES registra dados administrativos declarados pelos estabelecimentos; presença de um serviço, equipe ou horário no cadastro não garante disponibilidade atual. A página deve ser tratada como localizador com fonte, e não como confirmação de vaga ou atendimento.
+
