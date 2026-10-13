@@ -165,7 +165,7 @@ Estado atual:
   devolviam o valor antigo; por isso cada widget tem chave atrelada
   ao valor (`chave_widget`) e o estado real fica em chaves próprias
   (`definir`). Não voltar a usar `key="doenca"` direto.
-- **Onde ser atendida (10/2026, substituiu a "Rede local" do ChatGPT).** Pergunta
+- **Onde ser atendida (10/2026, substituiu a "Rede local" do ChatGPT).** **Unificada com o mapa (10/2026, decisão do autor: "menos que já seja o mais"):** uma página só, `dashboard/pages/onde_ser_atendida.py` + `algoritimos/onde_atendida.py` (teste `teste_onde_atendida.py`), que junta o CNES com o catálogo conferido de Rio Claro (`dados_geograficos/catalogo_servicos_rioclaro.json`, vindo do MISM3: telefone, horário, data de verificação e o apoio à mulher). A pessoa escolhe do que precisa (Posto de saúde, Exames e especialistas, Hospital, Urgência, Saúde mental, Apoio à mulher); cada lugar tem **Como chegar** (rota no Google Maps a partir de onde ela está) e **Ligar**. Sem o arquivo do CNES a página usa só o catálogo (nunca fica vazia). A página "Mapa de serviços" e o índice de CEP foram removidos (histórico do Git). Descrição original abaixo: Pergunta
   nova: "onde, na minha cidade, uma mulher procura atendimento?".
   `algoritimos/unidades_saude.py` lê o CNES (`banco\cnes\tbEstabelecimento*.csv`,
   fora do GitHub) em pedaços e devolve só as unidades ATIVAS da cidade: município pelo

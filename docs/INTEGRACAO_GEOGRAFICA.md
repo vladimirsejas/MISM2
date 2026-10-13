@@ -1,27 +1,19 @@
-# Integração geográfica — MISM2
+# Onde ser atendida: catálogo conferido + CNES
 
-Esta camada acrescenta uma primeira camada independente para consulta de serviços públicos de Rio Claro. Ela não modifica o banco de internações, os cálculos epidemiológicos, a Lia nem o painel analítico existente.
+A página **Onde ser atendida** (`dashboard/pages/onde_ser_atendida.py`) junta duas fontes numa lista só:
 
-## Arquivos adicionados
+- **CNES** (`algoritimos/unidades_saude.py`, arquivo em `banco\cnes`, fora do GitHub): cadastro oficial e completo das
+  unidades de saúde da cidade. Não traz horário e quase não traz telefone.
+- **Catálogo conferido** (`dados_geograficos/catalogo_servicos_rioclaro.json`, 164 registros de serviços públicos de Rio Claro
+  vindos do MISM3 em 12/10/2026): cada item tem fonte e data de verificação, e muitos têm telefone e horário. Daqui vêm os
+  dados extras das unidades de saúde e todo o **apoio à mulher** (Secretaria da Mulher, DDM, Patrulha Maria da Penha, Defensoria,
+  CRAS, CREAS e acolhimento). Creche, cursos, farmácia e convivência não entram (não são saúde da mulher).
 
-- `dados_geograficos/catalogo_servicos_rioclaro.json`: catálogo de serviços públicos, com 164 registros na origem consultada. Cada registro conserva sua fonte e data de verificação quando esses campos existem.
-- `dados_geograficos/indice_cep_rioclaro.json`: índice de 1.387 CEPs gerado a partir do CNEFE do IBGE/Censo 2022. Contém centros aproximados, raios de incerteza e referências territoriais, não endereços residenciais.
-- `algoritimos/geografia_servicos.py`: implementação independente para validar e resolver localizações.
-- `dashboard/pages/mapa_servicos.py`: página adicional de consulta e mapa no Streamlit, disponível pela navegação multipágina.
-- `tests/test_geografia_servicos.py`: testes da lógica de localização e filtros.
+Regras: a lógica de união está em `algoritimos/onde_atendida.py` (sem Streamlit; teste `algoritimos/teste_onde_atendida.py`).
+Unidade do CNES e do catálogo se cruzam pelo código CNES ou pelo nome; o telefone do CNES nunca é trocado, e só preenche
+telefone/horário que faltam. Sem o arquivo do CNES a página continua útil, só com o catálogo. Item "não conferido" aparece
+com ⚠. O botão **Como chegar** abre a rota no Google Maps a partir da posição de quem abre o link; **Ligar** usa o primeiro
+telefone. Mapa só com coordenada cadastrada na fonte e dentro de Rio Claro; nada de ponto inventado.
 
-## Regras de segurança geográfica
-
-1. Coordenadas precisam estar dentro de uma caixa de referência ampla para Rio Claro/SP.
-2. Coordenadas já registradas no serviço têm prioridade.
-3. O centro aproximado do CEP só é usado se o raio de incerteza for de até 800 metros.
-4. Sem localização confiável, o serviço permanece na lista, mas não recebe um ponto inventado.
-5. A página não solicita CEP da usuária; portanto, não precisa enviar uma localização pessoal para procurar os serviços.
-6. Distância em linha reta não é apresentada como tempo de viagem nem como cobertura efetiva.
-
-## Proveniência e limites
-
-O catálogo e o índice foram obtidos dos artefatos de dados públicos versionados no repositório MISM3 em 12/10/2026. A implementação desta branch é nova; não importa nem executa os scripts ou o frontend do MISM3. Os registros preservam as fontes originais disponíveis no catálogo. O índice geográfico usa CNEFE/IBGE, Censo Demográfico 2022, e deve ser tratado como referência aproximada, não como endereço exato.
-
-Os dados de serviços podem envelhecer. A página orienta a confirmar endereço, telefone e horário na fonte antes do deslocamento. O catálogo deve ser atualizado por conferência de suas fontes, não apenas pela data do arquivo.
-
+A página que existia à parte ("Mapa de serviços") e o índice de CEP aproximado (IBGE/CNEFE) foram removidos por responderem
+à mesma pergunta; estão no histórico do Git (commits de 12/10/2026). O catálogo envelhece: reconferir as fontes de tempos em tempos.
