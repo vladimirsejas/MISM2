@@ -25,6 +25,18 @@ dispensa cuidado normal: sempre validar a mudança — rodar `py_compile`,
 testar a lógica isoladamente quando possível, revisar o diff — antes do
 push, e nunca commitar segredos/credenciais).
 
+## Uma pasta só (decisão do autor, 10/2026)
+
+O autor usa **um único projeto: `C:\MISM2`**. Nunca sugerir nem criar outra
+pasta, clone ou cópia no notebook dele (já houve `MISM2_visual` e pastas
+duplicadas do ChatGPT, e foi uma bagunça). Fluxo de entrega: mudança pequena
+e testada -> `main` -> ele faz `git pull` em `C:\MISM2` e abre o
+`Abrir Escudo Feminino.bat`. A proteção é o histórico do Git (reverter um
+commit), não cópia de pasta. Antes de qualquer instrução para o notebook,
+pedir o estado real (`git branch --show-current` e `git status`): a
+`C:\MISM2` dele já esteve numa branch do ChatGPT (`cnes-geografia-mism2-main`)
+e o `git pull` não mostrava nada. O banco (`banco\`) nunca é tocado.
+
 ## Arquitetura territorial (código IBGE)
 
 O projeto está migrando de "Rio Claro fixo" para "município
