@@ -123,6 +123,16 @@ def main():
         assert df.empty and "município" in df.attrs["aviso"], df.attrs
         print("[OK] sem coluna de município: não chuta, explica")
 
+    # pacote do CNES aberto numa subpasta (BASE_DE_DADOS_CNES_AAAAMM): ainda acha o arquivo
+    with tempfile.TemporaryDirectory() as pasta:
+        sub = os.path.join(pasta, "BASE_DE_DADOS_CNES_202608")
+        os.makedirs(sub)
+        escrever(sub, "tbEstabelecimento202608.csv", CABECALHO, LINHAS)
+        df = us.carregar_unidades(pasta, "3543907")
+        assert not df.attrs["aviso"] and len(df) > 0, df.attrs
+        assert us.diagnosticar(pasta)["arquivo"] == "tbEstabelecimento202608.csv"
+        print("[OK] acha o arquivo em subpasta")
+
     # sem arquivo / pasta que não existe
     with tempfile.TemporaryDirectory() as pasta:
         df = us.carregar_unidades(pasta)

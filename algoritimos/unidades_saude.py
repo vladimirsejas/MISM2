@@ -241,12 +241,18 @@ def classificar_natureza(codigo):
 # ---------- leitura do arquivo ----------
 
 def achar_arquivo(pasta=PASTA_CNES):
-    """tbEstabelecimento*.csv mais recente (o nome traz o ano e mês), ou None."""
-    try:
-        nomes = [n for n in os.listdir(pasta) if n.lower().startswith("tbestabelecimento") and n.lower().endswith(".csv")]
-    except OSError:
+    """tbEstabelecimento*.csv mais recente (o nome traz o ano e mês), ou None. Procura na pasta e,
+    se não achar ali, nas subpastas (o pacote do CNES costuma abrir numa pasta como
+    BASE_DE_DADOS_CNES_AAAAMM)."""
+    if not os.path.isdir(pasta):
         return None
-    return os.path.join(pasta, sorted(nomes)[-1]) if nomes else None
+    achados = []
+    for raiz, subpastas, nomes in os.walk(pasta):
+        achados += [(n.lower(), os.path.join(raiz, n)) for n in nomes
+                    if n.lower().startswith("tbestabelecimento") and n.lower().endswith(".csv")]
+        if achados:  # o que está na própria pasta vale mais que o de subpastas
+            break
+    return sorted(achados)[-1][1] if achados else None
 
 
 def _codificacao(caminho):
