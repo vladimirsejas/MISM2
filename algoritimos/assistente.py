@@ -473,13 +473,15 @@ def _resposta_base(ctx, intencao, cancer, foco, ano, ia):
         return Resposta(
             fala=("O Escudo estuda dados para quem planeja e pesquisa. Para quem **procura cuidado**, a página **Apoio à mulher** "
                   "reúne o caminho: mamografia e preventivo pelo SUS, rede oncológica, regulação (\"fui encaminhada, e agora?\"), "
-                  "tratamento, carretas e direitos (transporte para tratamento, FGTS, INSS, reconstrução da mama). Cada item "
-                  "traz a fonte oficial e a data em que foi conferido."), expressao="acolhedora"), None, nota
+                  "tratamento, carretas, hospitais de câncer pelo SUS (lâmina **Hospitais no Estado**) e direitos (transporte para "
+                  "tratamento, FGTS, INSS, reconstrução da mama). Cada item traz a fonte oficial e a data em que foi conferido."),
+            expressao="acolhedora"), None, nota
     if intencao == "onde_atendida":
         return Resposta(
             fala=(f"Para saber **onde procurar atendimento** em {ctx.cidade} (postos de saúde, hospitais, UPA, exames e saúde "
                   "mental), use a página **Onde ser atendida**: tem endereço, telefone e como chegar. É um cadastro oficial (CNES): "
-                  "não garante vaga nem que o serviço esteja aberto naquele momento."), expressao="acolhedora"), None, nota
+                  "não garante vaga nem que o serviço esteja aberto naquele momento. Para **hospital especializado em câncer** (os de "
+                  "referência da região), veja na página **Apoio à mulher** a lâmina **Hospitais no Estado**."), expressao="acolhedora"), None, nota
     return lia_responder(ctx, INICIO), None, nota
 
 
@@ -580,8 +582,10 @@ def montar(ctx, e, pergunta, foco, perfil="TECNICO", ia=None):
                         botoes=[("Comparar com outra cidade", acao("comparar_cidades", None, pergunta)),
                                 ("Como esses dados funcionam?", caminho("metodo"))])
     nota = nota or (nota_foco if usado else None)
-    if e.nao_acompanhado:
+    if e.nao_acompanhado and intencao in SO_DADOS:  # nos textos fixos (sintoma, apoio...) o aviso só atrapalharia
         nota = (f"Ainda não acompanho o câncer de {e.nao_acompanhado}; mostro os que acompanho. " + (nota or "")).strip()
+    if e.origem == "comparar_canceres":
+        nota = ("Para comparar cânceres, mostro todos os que o Escudo acompanha, lado a lado. " + (nota or "")).strip()
     resp = _tornar(base, intencao=intencao, cancer=usado, links=list(LINKS.get(intencao, [])), **comum)
     if e.origem == "explicar" and intencao in EXPLICACAO_SIMPLES and base.fala:
         # "me explica isso melhor": a mesma resposta, com o que ela significa em palavras simples (texto fixo, sem a IA)

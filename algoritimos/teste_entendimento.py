@@ -198,6 +198,24 @@ def main():
     checar("3c. 'quais cidades têm mais câncer proporcionalmente?' cai em 'o que os dados não têm' (falta a população)",
            entender("quais as cidades que mais têm câncer de mama proporcionalmente?").intencao == "sem_dados")
 
+    # lacunas achadas no 2º teste com uma pessoa (17/10/2026): comparar cânceres, câncer não acompanhado junto de um acompanhado,
+    # hospital especializado em câncer
+    e = entender("Compare câncer de mama com o de colo do útero")
+    checar("3d. comparar dois cânceres: mostra todos lado a lado (assunto 'mais_aparece'), em vez de botões sem sentido",
+           (e.tipo, e.intencao, e.origem) == ("intencao", "mais_aparece", "comparar_canceres"))
+    e = entender("Compare CSA de mama com o de melanoma")
+    checar("3d. 'mama com melanoma': percebe que o melanoma não é acompanhado (e continua na comparação)",
+           (e.origem, e.nao_acompanhado, e.cancer) == ("comparar_canceres", "melanoma", "MAMA"))
+    checar("3d. comparar não sequestra o que é de outro assunto ('mama com o Estado', 'mama em 2020', sem verbo de comparar)",
+           entender("compare a mama em Rio Claro com o Estado").intencao == "estado"
+           and entender("compare mama com colo do útero em 2020").origem != "comparar_canceres"
+           and entender("quantas mulheres morrem de câncer de mama e de pulmão").origem != "comparar_canceres")
+    checar("3d. 'pele não melanoma' é o câncer que o Escudo acompanha, não um falso 'melanoma não acompanhado'",
+           ent.detectar_cancer("câncer de pele não melanoma está aumentando?") == (["PELE_NAO_MELANOMA"], None)
+           and ent.detectar_cancer("melanoma está aumentando?") == ([], "melanoma"))
+    checar("3d. 'hospital especializado em câncer' é pedido de cuidado (apoio), não pergunta de dados",
+           all(entender(f).intencao == "apoio" for f in ("hospital especializado em câncer", "quero contato de hospital especializado em câncer")))
+
     chamadas = []
 
     def gemini(valor):

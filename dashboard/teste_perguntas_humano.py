@@ -60,7 +60,7 @@ def main():
         at.button(key="caixa_enviar").click().run()
         if at.exception:
             print("  ERRO NO PAINEL:", "; ".join(str(e.value)[:200] for e in at.exception))
-            registros.append((texto, "ERRO", "", "", "-", ""))
+            registros.append((texto, "ERRO", "", "", "-", "", ""))
             continue
         a = at.session_state["lia"]["atual"]
         assunto = getattr(a, "intencao", None) or "-"
@@ -72,11 +72,18 @@ def main():
         botoes = [r for r, _ in getattr(a, "botoes", [])][:4]
         if tipo == "palpites" and botoes:
             print(f"  (ofereceu opções: {', '.join(botoes)})")
-        try:
-            veredito = input("  Foi o que você queria? [s/n/p/Enter]: ").strip().lower()[:1]
-        except (EOFError, KeyboardInterrupt):
-            veredito = ""
-        registros.append((texto, assunto, tipo, origem, ia, veredito or "-"))
+        veredito, comentario = "", ""
+        while True:
+            try:
+                digitado = input("  Foi o que você queria? [s/n/p/Enter]: ").strip()
+            except (EOFError, KeyboardInterrupt):
+                break
+            if digitado.lower() in ("s", "n", "p", ""):
+                veredito = digitado.lower()
+                break
+            comentario = (comentario + " " + digitado).strip()  # frase digitada no lugar do veredito: guarda como comentário
+            print("  (guardei como comentário; agora só s, n, p ou Enter)")
+        registros.append((texto, assunto, tipo, origem, ia, veredito or "-", comentario))
 
     if not registros:
         print("Nenhuma pergunta feita.")
@@ -85,8 +92,8 @@ def main():
     print("\n" + "=" * 70 + "\nRESUMO (copie daqui para baixo e cole no chat)\n" + "=" * 70)
     print(f"{len(registros)} perguntas: {contagem['s']} certas, {contagem['p']} em parte, {contagem['n']} erradas, "
           f"{contagem['-']} sem avaliar")
-    for i, (texto, assunto, tipo, origem, ia, v) in enumerate(registros, 1):
-        print(f"{i}. [{v}] \"{texto}\" -> {assunto} ({tipo}/{origem}, {ia})")
+    for i, (texto, assunto, tipo, origem, ia, v, comentario) in enumerate(registros, 1):
+        print(f"{i}. [{v}] \"{texto}\" -> {assunto} ({tipo}/{origem}, {ia})" + (f"\n     comentário: {comentario}" if comentario else ""))
 
 
 if __name__ == "__main__":

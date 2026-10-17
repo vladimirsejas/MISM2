@@ -233,7 +233,9 @@ INTENCOES = [
          "como evitar o câncer",
          "acabei de descobrir um câncer", "descobri que tenho câncer e agora", "qual o primeiro passo depois do diagnóstico",
          "recebi a notícia de que é câncer", "minha mãe acabou de ser diagnosticada", "qual o caminho depois de descobrir o câncer",
-         "como começar o tratamento", "por onde começo o tratamento do câncer", "fui diagnosticado com câncer"]},
+         "como começar o tratamento", "por onde começo o tratamento do câncer", "fui diagnosticado com câncer",
+         "hospital especializado em câncer", "hospital de referência para câncer", "contato de hospital oncológico",
+         "onde fazer o tratamento do câncer", "hospital de referência em oncologia"]},
     {"id": "sintoma",
      "descricao": "pessoa descrevendo sintoma ou pedindo diagnóstico pessoal (caroço, nódulo, sangramento, dor); o Escudo não faz diagnóstico",
      "frases": [
@@ -376,7 +378,7 @@ CANCERES = [  # a ordem importa: "colo retal" antes de "colo do útero"
     ("COLORRETAL", r"colorretal|colo ?retal|intestin\w*|\bretos?\b|retal|\bcolon\b|colonoscopia"),
     ("COLO_UTERO", r"colo( do| de| uterino)? ?uter\w*|\buter\w*|cervical|cervix|\bcolo\b|preventivo|papanicola\w*|\bhpv\b"),
     ("MAMA", r"\bmamas?\b|mamograf\w*|\bseios?\b|\bpeitos?\b|mamari\w*"),
-    ("PELE_NAO_MELANOMA", r"\bpele\b|cutane\w*"),
+    ("PELE_NAO_MELANOMA", r"\bpele( nao melanoma)?\b|cutane\w*|\bnao melanoma\b"),
     ("PULMAO", r"pulm\w+"),
     ("OVARIO", r"ovari\w*"),
     ("TIREOIDE", r"tir?eoid\w*|tiroid\w*"),
@@ -409,11 +411,10 @@ def detectar_cancer(pergunta, disponiveis=None):
         if c not in codigos and (disponiveis is None or c in disponiveis):
             codigos.append(c)
     nao = None
-    if not codigos:
-        for termo, nome in NAO_ACOMPANHADOS.items():
-            if re.search(r"(?<![a-z])" + termo + r"(?![a-z])", texto):
-                nao = nome
-                break
+    for termo, nome in NAO_ACOMPANHADOS.items():
+        if re.search(r"(?<![a-z])" + termo + r"(?![a-z])", restante):  # "pele não melanoma" já saiu do texto: não é melanoma
+            nao = nome
+            break
     return codigos, nao
 
 
@@ -472,7 +473,7 @@ class Entendimento:
     intencao: str = None
     cancer: str = None        # citado na pergunta (ou herdado, no seguimento)
     ano: int = None
-    origem: str = "regras"    # regras | seguimento | explicar | composta | gemini | gemini_sem_apoio (só o Gemini apontou: vira palpite)
+    origem: str = "regras"    # regras | seguimento | explicar | composta | comparar_canceres | gemini | gemini_sem_apoio (só o Gemini apontou: vira palpite)
     nota: float = 0.0
     palpites: list = field(default_factory=list)   # [(intenção, nota)] da maior para a menor
     risco: str = None
@@ -502,6 +503,17 @@ PALAVRAS_DE_EXPLICAR = set("""me eu a o e de do da que isso esse essa esses essa
     simples por favor pode poderia voce voces vc pra para um uma pouco explica explicar explique detalha detalhar detalhe repete
     repetir fala falar diz dizer conta contar quer significa nao entendi entender compreendi compreender ficou claro como assim
     resposta anterior disse falou sei em com ainda se tem tu""".split())
+
+
+COMPARA_CANCERES = re.compile(r"\b(compar\w*|diferenca\w*|versus|vs|contra)\b")
+PALAVRAS_DE_LUGAR = re.compile(r"\b(estado|sao paulo|sp|cidade|cidades|municipio|campinas|piracicaba|ribeirao)\b")
+
+
+def _pede_comparar_canceres(texto, base, ano):
+    """"Compare câncer de mama com o de colo do útero" / "mama com melanoma": comparar cânceres entre si (não cidades) é
+    olhar todos lado a lado. O lugar na frase ("com o Estado") tira a pergunta daqui."""
+    varios = base["varios_canceres"] or (base["cancer_citado"] and bool(base["nao_acompanhado"]))
+    return bool(varios and ano is None and COMPARA_CANCERES.search(texto) and not PALAVRAS_DE_LUGAR.search(texto))
 
 
 def _pede_explicacao(texto, nota_topo):
@@ -573,6 +585,8 @@ def compreender(pergunta, disponiveis=None, memoria=None, classificar=None, cida
         # "me explica isso melhor" depois de uma resposta de dados: explica a resposta anterior (a mesma, em palavras simples)
         return Entendimento("intencao", intencao=memoria["intencao"], origem="explicar",
                             **{**base, "cancer": memoria.get("cancer")})
+    if _pede_comparar_canceres(texto, base, ano):
+        return Entendimento("intencao", intencao="mais_aparece", origem="comparar_canceres", **base)
     nota_fora = notas.pop("fora")
     ordem = sorted(notas.items(), key=lambda kv: -kv[1])
     (primeira, n1), (_, n2) = ordem[0], ordem[1]

@@ -279,6 +279,25 @@ def main():
     checar("7c. outra falta de dado (raça) continua com a recusa geral, sem o texto da população",
            r2.intencao == "sem_dados" and r2.fala.startswith(asst.SEM_DADOS[:60]) and "proporcionalmente" not in r2.fala)
 
+    # ---- 7d. lacunas do 2º teste com uma pessoa ----
+    r = perguntar("Compare câncer de mama com o de colo do útero")
+    checar("7d. comparar dois cânceres: a Lia avisa que mostra todos lado a lado e responde com os números",
+           r.intencao == "mais_aparece" and r.fala.startswith("Para comparar cânceres") and "internaç" in r.fala.lower())
+    r = perguntar("Compare câncer de mama com o de melanoma")
+    checar("7d. melanoma não é acompanhado: a Lia diz isso e mostra os que acompanha",
+           "Ainda não acompanho o câncer de melanoma" in r.fala and r.intencao == "mais_aparece")
+    r = perguntar("estou com dor de cabeça e um caroço no seio")
+    checar("7d. sintoma não ganha o aviso de 'câncer não acompanhado' (texto fixo de segurança, sem ruído)",
+           r.intencao == "sintoma" and "Eu não faço diagnóstico" in r.fala and "Ainda não acompanho" not in r.fala)
+    r = perguntar("o câncer de pele não melanoma está aumentando?")
+    checar("7d. pele não melanoma é acompanhado: sem o falso aviso de melanoma", "Ainda não acompanho" not in r.fala)
+    r = perguntar("quero contato de hospital especializado em câncer")
+    checar("7d. hospital especializado em câncer: a Lia aponta a lâmina 'Hospitais no Estado' do Apoio à mulher",
+           r.intencao == "apoio" and "Hospitais no Estado" in r.fala)
+    r = perguntar("endereço de algum hospital de câncer")
+    checar("7d. endereço de hospital (cadastro da cidade) também aponta o 'Hospitais no Estado' para câncer",
+           "Hospitais no Estado" in r.fala and any(a == "pages/onde_ser_atendida.py" for _, a in r.links))
+
     # ---- 8. palpites e botões ----
     r = perguntar("me explica o negócio dos números do hospital das moças")
     ok_palpites = r.tipo in ("palpites", "fora")
