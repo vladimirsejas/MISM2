@@ -241,10 +241,17 @@ def main():
         # Medição que só o autor consegue fazer (precisa da chave): quantos "palpites" e "sem nada" o Gemini converte.
         # Só relata. Chama o Gemini uma vez por pergunta que as regras não entenderam sozinhas.
         import ia_linguagem
-        print("\nCOM O GEMINI DE VERDADE (segunda chance do entendimento):")
+        print("\nCOM O GEMINI DE VERDADE (segunda chance do entendimento; cada ponto é uma chamada, leva alguns minutos):")
+
+        def classificar_com_andamento(pergunta, opcoes, **kw):
+            print(".", end="", flush=True)
+            return ia_linguagem.classificar_pergunta(pergunta, opcoes, **kw)
+
         for conjunto in ("desenvolvimento", "teste", "final"):
             sem = medir_novo(gabarito, conjunto)
-            com = medir_novo(gabarito, conjunto, classificar=ia_linguagem.classificar_pergunta)
+            print(f"  [{conjunto}] consultando o Gemini ", end="", flush=True)
+            com = medir_novo(gabarito, conjunto, classificar=classificar_com_andamento)
+            print(" pronto")
             print(f"  [{conjunto}] entendeu direto: {sem['certo']} -> {com['certo']} de {sem['conteudo']}; "
                   f"errou: {sem['errado']} -> {com['errado']}; palpite com a certa: {sem['palpite']} -> {com['palpite']}; "
                   f"fora do assunto: {sem['fora_ok']} -> {com['fora_ok']} de {sem['fora']}")
