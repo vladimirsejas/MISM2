@@ -265,6 +265,33 @@ def main():
             print(f"  [{conjunto}] o Gemini concordou com a busca local em {com['gemini_direto']} perguntas (respondeu direto) e "
                   f"estava sozinho em {com['gemini_sem_apoio']} (virou palpite para a pessoa confirmar)")
 
+    if "--adversarial" in sys.argv:
+        # Perguntas escritas DEPOIS de ler o vocabulário, deliberadamente longe dele: NÃO são às cegas e não valem como
+        # nota de generalização. Servem para exercitar o caso em que o Gemini decide sozinho. Só relata.
+        adv = json.load(open(os.path.join(AQUI, "gabarito_adversarial.json"), encoding="utf-8"))
+        validos = {i["id"] for i in ent.INTENCOES} | {"fora", "saudacao", "risco"}
+        checar(f"5. adversarial: {len(adv)} perguntas, todas com intenção válida", all(g["esperado"] in validos for g in adv))
+        sem = medir_novo(adv, "adversarial")
+        print(f"\nADVERSARIAL (não é às cegas), só regras: {sem['conteudo']} de conteúdo: direto {sem['certo']}, errou {sem['errado']}, "
+              f"palpite com a certa {sem['palpite']}, sem nada {sem['sem_nada']}; fora do assunto {sem['fora_ok']}/{sem['fora']}")
+        for pergunta, esperado, obtido, _ in sem["erros"]:
+            print(f"  ERROU (só regras): \"{pergunta}\" -> {obtido}; esperado {esperado}")
+        if "--com-gemini" in sys.argv:
+            import ia_linguagem
+            print("  consultando o Gemini ", end="", flush=True)
+
+            def com_andamento(pergunta, opcoes, **kw):
+                print(".", end="", flush=True)
+                return ia_linguagem.classificar_pergunta(pergunta, opcoes, **kw)
+
+            com = medir_novo(adv, "adversarial", classificar=com_andamento)
+            print(" pronto")
+            print(f"  com o Gemini: direto {com['certo']}, errou {com['errado']}, palpite com a certa {com['palpite']}, "
+                  f"sem nada {com['sem_nada']}; fora do assunto {com['fora_ok']}/{com['fora']}; "
+                  f"Gemini com apoio da busca {com['gemini_direto']}, sozinho {com['gemini_sem_apoio']}")
+            for pergunta, esperado, obtido, origem in com["erros"]:
+                print(f"  ERROU: \"{pergunta}\" -> {obtido} (origem {origem}); esperado {esperado}")
+
     if falhas:
         print(f"\n{len(falhas)} checagem(ns) falharam.")
         raise SystemExit(1)
