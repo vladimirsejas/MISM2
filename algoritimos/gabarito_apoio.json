@@ -15,7 +15,6 @@
   "pergunta": "a carreta da mamografia vai passar em rio claro?",
   "tipo": "itens",
   "aceitaveis": [
-   "rc_carreta_hospital_de_amor",
    "carretas_estado"
   ],
   "conjunto": "desenvolvimento"
@@ -388,8 +387,7 @@
   "pergunta": "qnd e onde vai ter carreta de mamografia",
   "tipo": "itens",
   "aceitaveis": [
-   "carretas_estado",
-   "rc_carreta_hospital_de_amor"
+   "carretas_estado"
   ],
   "conjunto": "final"
  },
@@ -537,8 +535,7 @@
   "pergunta": "hospital de amor tem carreta?",
   "tipo": "itens",
   "aceitaveis": [
-   "ha_moveis",
-   "rc_carreta_hospital_de_amor"
+   "ha_moveis"
   ],
   "conjunto": "final"
  },

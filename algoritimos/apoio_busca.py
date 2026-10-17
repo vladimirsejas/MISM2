@@ -57,7 +57,6 @@ EXTRA = {
     "rc_patrulha": "guarda municipal medida protetiva acompanhamento mulher ameaçada",
     "defensoria_nudem": "medida protetiva advogado gratuito direitos da mulher",
     "carretas_estado": "carreta caminhão mamografia itinerante quando passa calendário",
-    "rc_carreta_hospital_de_amor": "carreta hospital de amor rio claro quando vem",
     "caminho_do_exame": "nunca fiz mamografia idade para começar quantos anos primeira vez por onde começar passo a passo primeira consulta pedido médico unidade de saúde",
     "rc_unidades": "posto de saúde ubs usf unidade de saúde perto de casa ginecologista consulta",
     "rc_cadu_agendamento": "marcar consulta exame agendamento telefone prefeitura",
@@ -91,6 +90,23 @@ def buscar(pergunta, n=3):
     """[(id do item, nota)] dos n mais parecidos com a pergunta, do maior para o menor."""
     notas = INDICE.notas(pergunta)
     return sorted(notas.items(), key=lambda kv: -kv[1])[:n]
+
+
+def _diagnostico_recente(pergunta):
+    """Reconhece pedidos pessoais explícitos sobre diagnóstico confirmado, antes da busca por itens."""
+    texto = ent.normalizar(pergunta)
+    menciona_cancer = any(p in texto for p in ("cancer", "tumor maligno", "neoplasia maligna"))
+    relata_diagnostico = any(p in texto for p in (
+        "recebi diagnostico", "recebi o diagnostico", "recebi um diagnostico",
+        "acabei de receber diagnostico", "acabei de receber um diagnostico",
+        "acabou de receber diagnostico", "recebeu diagnostico", "recebeu o diagnostico",
+        "acabei de receber um laudo", "recebi um laudo que confirma", "meu laudo confirmou",
+        "minha biopsia confirmou", "biopsia confirmou", "laudo confirmou", "laudo confirma",
+        "fui diagnosticada", "fui diagnosticado", "me diagnosticaram",
+        "descobri que tenho cancer", "descobri um cancer", "descobri cancer",
+        "acabou de descobrir um cancer", "acabou de descobrir cancer", "acaba de descobrir cancer",
+    ))
+    return menciona_cancer and relata_diagnostico
 
 
 # ---------- respostas ----------
@@ -178,6 +194,11 @@ def responder_pergunta(pergunta, classificar=None):
                              ("Unidades de Saúde em Rio Claro", apoio.item("rc_unidades"))],
                      destino={"aba": apoio.LAMINAS["caminho"], "caminho": "diagnostico"})
         return _com_inicio(_de(r, tipo="sintoma", selo="Texto fixo. A IA não improvisa sobre sintomas.", **comum))
+    if _diagnostico_recente(pergunta):
+        # Não deixar semelhança lexical transformar um diagnóstico confirmado em mamografia ou hospital aleatório.
+        r = apoio.responder(apoio.etapa("diagnostico_cancer"))
+        return _de(r, tipo="etapa", selo="Orientação fixa do guia; a Lia não escolhe hospital nem tratamento.",
+                   **comum)
     # parece "previsão do tempo", não um item do guia; mas evidência clara de item vence esse sinal geral
     # ("o que é UNACON" lembra "o que é inflação")
     fora_do_assunto = social.tipo == "fora" and n1 < NOTA_FORA
