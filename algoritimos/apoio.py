@@ -1,5 +1,3 @@
-from datetime import date
-
 from lia import INICIO, Resposta
 
 # =====================================
@@ -35,6 +33,8 @@ from lia import INICIO, Resposta
 CONFERIDO = "24/09/2026"
 CIDADE = "Rio Claro"
 REGIAO = "DRS X Piracicaba / RRAS 14"
+URL_CARRETAS_SP_POR_TODAS = "https://www.spportodas.sp.gov.br/sp-por-todas/saude"
+URL_CARRETAS_POUPATEMPO = "https://www.poupatempo.sp.gov.br/carta/B7ED6C20-6D1B-481B-8693-35AD62D16E42"
 
 LAMINAS = {"caminho": "Encontre um caminho", "hospitais": "Hospitais no Estado", "carretas": "Carretas",
            "rio_claro": "Rio Claro", "barretos": "Barretos", "sobre": "Sobre estas informações"}
@@ -141,13 +141,14 @@ ITENS = [
           como="Procure a UBS mais próxima e passe por uma consulta. Se o exame for indicado, o encaminhamento é "
                "feito no sistema de regulação do município, que agenda o serviço."),
     _item("lei_30_dias", "diagnostico", "caminho", "SUS (todo o Brasil)",
-          "Direito: exames de diagnóstico em até 30 dias",
-          "com suspeita de câncer, os exames que confirmam o diagnóstico devem sair em até 30 dias",
+          "Direito: investigação diagnóstica em até 30 dias, quando a lei se aplica",
+          "quando câncer é a principal hipótese diagnóstica, os exames necessários à investigação devem ser feitos em até 30 dias, com pedido médico fundamentado",
           "Lei federal 13.896/2019 (Câmara dos Deputados)",
           "https://www2.camara.leg.br/legin/fed/lei/2019/lei-13896-30-outubro-2019-789326-norma-pl.html",
-          para_quem="Pessoas com suspeita de câncer atendidas no SUS.",
-          como="A lei garante que os exames necessários para confirmar o diagnóstico sejam feitos em até 30 dias, "
-               "contados do pedido médico.",
+          para_quem="Pessoas atendidas no SUS quando a principal hipótese diagnóstica seja câncer.",
+          como="A Lei 13.896/2019 prevê até 30 dias para os exames necessários à investigação quando câncer é a "
+               "principal hipótese diagnóstica e o médico responsável faz uma solicitação fundamentada. Se não "
+               "souber se esse critério se aplica ao seu caso, peça à equipe de saúde que explique.",
           tambem_caminhos=["direitos"]),
     _item("mater_ribeirao", "diagnostico", "caminho", "Ribeirão Preto",
           "MATER – Centro de Referência da Saúde da Mulher",
@@ -170,8 +171,10 @@ ITENS = [
           "https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2012/lei/l12732.htm",
           para_quem="Pacientes com câncer diagnosticado no SUS.",
           como="A lei dá prazo máximo de 60 dias, contados do laudo patológico, para começar o tratamento (cirurgia, "
-               "quimioterapia ou radioterapia). Somada à lei dos 30 dias, da suspeita ao início do tratamento são no "
-               "máximo 90 dias.",
+               "quimioterapia ou radioterapia). O prazo de até 30 dias para exames de investigação tem critérios "
+               "próprios: câncer deve ser a principal hipótese diagnóstica e o médico responsável precisa fazer uma "
+               "solicitação fundamentada. Os prazos têm marcos e critérios diferentes; a equipe de saúde pode explicar "
+               "qual se aplica ao seu caso.",
           tambem_caminhos=["direitos"]),
     _item("rede_oncologica", "rede", "caminho", "Estado de SP",
           "Rede de Atenção Oncológica do Estado de São Paulo",
@@ -199,14 +202,13 @@ ITENS = [
     # ---------------- IR ATÉ VOCÊ ----------------
     _item("carretas_estado", "mama", "carretas", "Estado de SP",
           "Carretas da Mamografia (Programa Mulheres de Peito)",
-          "a partir de 35 anos, sem mamografia nos últimos 12 meses; itinerário no Poupatempo",
+          "atendimento gratuito a partir de 35 anos, sem mamografia nos últimos 12 meses; consulte o itinerário oficial",
           "Poupatempo / Secretaria de Estado da Saúde de SP",
           "https://www.poupatempo.sp.gov.br/carta/B7ED6C20-6D1B-481B-8693-35AD62D16E42",
           para_quem="Mulheres a partir de 35 anos que não fizeram mamografia nos últimos 12 meses.",
           levar="De 50 a 74 anos: RG e cartão SUS. De 35 a 49 e acima de 74 anos: também o pedido médico do SUS.",
           como="Consultar o itinerário no Poupatempo (site ou aplicativo). Atendimento de segunda a sexta, das 8h às "
                "17h, e aos sábados, das 8h às 12h, com senhas limitadas. Gratuito.",
-          confirmar="O itinerário muda todo mês: consulte antes de ir.",
           grupo="Carretas da Mamografia do Estado"),
 
     # ---------------- ENCONTRAR REFERÊNCIA ----------------
@@ -361,17 +363,6 @@ ITENS = [
                   "às 16h.",
           confirmar="É um informativo antigo da Fundação: confirme endereço, telefones e se o agendamento ainda é "
                     "feito ali."),
-    _item("rc_carreta_hospital_de_amor", "mama", "rio_claro", "Rio Claro",
-          "Carreta do Hospital de Amor em Rio Claro",
-          "em fevereiro de 2025 a carreta veio a Rio Claro: cerca de 300 mamografias e Papanicolau, com agendamento",
-          "Prefeitura de Rio Claro",
-          "https://rioclaro.sp.gov.br/fundacao-de-saude/rc-faz-300-exames-de-papanicolau-e-mamografia-em-carreta-"
-          "do-hospital-do-amor/",
-          como="Nos dias 17, 18 e 20 de fevereiro de 2025 a carreta ficou no Centro Cultural, das 8h às 16h, e fez "
-               "cerca de 300 exames gratuitos. Foram 180 vagas de mamografia para mulheres de 40 a 69 anos e 120 de "
-               "Papanicolau para 25 a 65 anos, com agendamento prévio nas Unidades de Saúde da Família.",
-          confirmar="Foi uma ação com data marcada, não um serviço fixo: pergunte na sua USF se haverá nova vinda.",
-          tambem=[("carretas", "Unidades móveis do Hospital de Amor")]),
     _item("rc_santa_casa", "tratamento", "rio_claro", "Rio Claro",
           "Santa Casa de Rio Claro – oncologia (UNACON) e Centro Oncológico Santa Ágata",
           "hospital habilitado para tratar câncer pelo SUS na própria cidade",
@@ -417,7 +408,7 @@ ITENS = [
           tambem_caminhos=["colo"]),
     _item("ha_moveis", "mama", "barretos", "Barretos",
           "Unidades móveis do Hospital de Amor",
-          "carretas que percorrem o país em ações com as prefeituras; em fevereiro de 2025 uma esteve em Rio Claro",
+          "unidades móveis que fazem ações de prevenção em parceria com as prefeituras",
           "Hospital de Amor",
           "https://hospitaldeamor.com.br/prevencao/",
           para_quem="Mulheres de 40 a 69 anos.",
@@ -425,7 +416,7 @@ ITENS = [
                "mais próxima.",
           levar="Cópia do RG, CPF, cartão SUS e comprovante de residência.",
           grupo="Carretas e unidades móveis",
-          tambem=[("carretas", "Unidades móveis do Hospital de Amor")]),
+          ),
     _item("ha_primeiro_atendimento", "tratamento", "barretos", "Barretos",
           "Primeiro atendimento no Hospital de Amor",
           "com o câncer confirmado por exame, o primeiro agendamento é feito com os documentos pelo WhatsApp",
@@ -893,7 +884,7 @@ GRUPOS_HOSPITAIS = ["Como chegar e listas oficiais", "Rio Claro e Piracicaba (RR
                     "Capital e Grande São Paulo", "Barretos, Franca, Ribeirão Preto e Araraquara (RRAS 13)",
                     "Rio Preto, Araçatuba e Jales (RRAS 12)", "Centro-Oeste: Jaú, Bauru, Botucatu e Marília",
                     "Oeste, Sorocaba, Vale do Paraíba e Litoral"]
-GRUPOS_CARRETAS = ["Carretas da Mamografia do Estado", "Unidades móveis do Hospital de Amor"]
+GRUPOS_CARRETAS = ["Carretas da Mamografia do Estado"]
 GRUPOS = {"barretos": GRUPOS_BARRETOS, "hospitais": GRUPOS_HOSPITAIS, "carretas": GRUPOS_CARRETAS}
 
 # "Preciso de ajuda": em que ponto a mulher está -> portas e itens.
@@ -904,16 +895,18 @@ ETAPAS = [
      "a mamografia pelo Estado não precisa de pedido médico, e as carretas atendem sem agendamento.",
      ["mama", "colo"], ["rc_unidades", "mulheres_de_peito", "colo_utero"]),
     ("alterado", "Meu exame deu alteração",
-     "Um exame alterado não quer dizer câncer: é o começo de uma investigação. Leve o laudo à unidade de saúde, "
-     "e a lei garante os exames de diagnóstico em até 30 dias.",
+     "Um exame alterado não confirma câncer. Leve o laudo à equipe de saúde que pediu o exame e pergunte qual é o "
+     "próximo passo. O prazo legal de até 30 dias se aplica quando câncer é a principal hipótese diagnóstica e o "
+     "médico responsável faz um pedido fundamentado.",
      ["diagnostico"], ["mamografia_alterada", "preventivo_alterado", "lei_30_dias"]),
     ("encaminhada", "Fui encaminhada",
      "Depois do encaminhamento, a vaga é organizada pela regulação do Estado. Você pode acompanhar a fila da "
      "oncologia e, se o nome não aparecer, sabe onde procurar ajuda.",
      ["regulacao"], ["lista_regulacao", "nao_achei_nome", "como_chegar_cross"]),
     ("diagnostico_cancer", "Recebi diagnóstico de câncer",
-     "Com o diagnóstico, o tratamento pelo SUS deve começar em até 60 dias, num hospital habilitado da rede. Você "
-     "também tem direitos, como transporte e benefícios.",
+     "Converse com a equipe de saúde que acompanha seu caso para saber quem está responsável pelo encaminhamento e "
+     "como acompanhar a vaga. O primeiro tratamento no SUS tem prazo de até 60 dias a partir do diagnóstico em "
+     "laudo patológico, ou prazo menor conforme a necessidade terapêutica registrada no prontuário.",
      ["tratamento", "rede", "direitos"], ["lei_60_dias", "como_chegar_cross", "cartilha_inca"]),
     ("em_tratamento", "Estou em tratamento",
      "Durante o tratamento, vale conhecer os seus direitos (transporte, FGTS, INSS) e o apoio de entidades como a "
@@ -928,94 +921,11 @@ NOME_ETAPA = {e: r for e, r, _, _, _ in ETAPAS}
 POR_ID = {i["id"]: i for i in ITENS}
 
 
-# ---------- itinerário das Carretas da Mamografia do Estado ----------
-# Trazido pelo autor em 24/09/2026 e conferido nas notícias da Agência
-# SP. Muda todo mês: quando vencer, o painel e a Lia avisam para ver o
-# novo no Poupatempo. Atualizar = trocar esta lista (datas em 2026).
-FONTES_ITINERARIO = {
-    "setembro": ("Agência SP – Carretas da Mamografia atenderão a capital e mais cinco municípios em setembro",
-                 "https://www.agenciasp.sp.gov.br/carretas-da-mamografia-atenderao-capital-e-mais-cinco-municipios-no-"
-                 "estado-em-setembro/"),
-    "fim_setembro": ("Agência SP – Carretas fecham o mês de setembro em cinco municípios (publicada em 23/09/2026)",
-                     "https://www.agenciasp.sp.gov.br/carretas-de-prevencao-ao-cancer-de-mama-fecham-o-mes-de-setembro-"
-                     "em-cinco-municipios-paulistas-veja-itinerario/"),
-}
-ITINERARIO = [
-    {"cidade": "Apiaí", "inicio": None, "fim": None, "local": None, "fonte": "setembro"},
-    {"cidade": "Bananal", "inicio": date(2026, 9, 3), "fim": date(2026, 9, 14), "local": None, "fonte": "setembro"},
-    {"cidade": "São Paulo (Paraisópolis)", "inicio": date(2026, 9, 10), "fim": date(2026, 9, 21), "local": None,
-     "fonte": "setembro"},
-    {"cidade": "Eldorado", "inicio": date(2026, 9, 16), "fim": date(2026, 9, 28), "local": None, "fonte": "setembro"},
-    {"cidade": "Piquete", "inicio": date(2026, 9, 17), "fim": date(2026, 9, 28), "local": None, "fonte": "setembro"},
-    {"cidade": "Araçoiaba da Serra", "inicio": date(2026, 9, 24), "fim": date(2026, 10, 5), "local": None,
-     "fonte": "setembro"},
-    {"cidade": "Bertioga", "inicio": date(2026, 9, 22), "fim": date(2026, 10, 3),
-     "local": "Avenida São Gonçalo, s/n – Chácara Vista Linda", "fonte": "fim_setembro"},
-    {"cidade": "Serrana", "inicio": date(2026, 9, 22), "fim": date(2026, 10, 3),
-     "local": "Rua Tancredo de Almeida Neves, 176 – Jardim Bela Vista", "fonte": "fim_setembro"},
-    {"cidade": "Barra do Turvo", "inicio": date(2026, 9, 22), "fim": date(2026, 10, 3),
-     "local": "Avenida Vinte e Um de Março, 304 – Centro", "fonte": "fim_setembro"},
-    {"cidade": "Itapura", "inicio": date(2026, 9, 22), "fim": date(2026, 10, 3),
-     "local": "Av. Mal. Artur Costa e Silva, 1120 (em frente à UBS II)", "fonte": "fim_setembro"},
-    {"cidade": "Avaré", "inicio": date(2026, 9, 22), "fim": date(2026, 10, 3),
-     "local": "Praça Prefeito Romeu Bretas (Praça da Concha Acústica) – Centro", "fonte": "fim_setembro"},
-]
-SITUACOES = {"agora": "Agora", "em_breve": "Em breve", "sem_data": "Sem data publicada", "encerrada": "Já passou"}
-
-
-def hoje():
-    """A data de hoje (função própria para os testes fixarem o dia)."""
-    return date.today()
-
-
-def carretas(dia=None):
-    """O itinerário com a situação de cada carreta no dia: agora, em
-    breve, sem data publicada ou já passou (nessa ordem)."""
-    dia = dia or hoje()
-    lista = []
-    for c in ITINERARIO:
-        if c["inicio"] is None:
-            situacao = "sem_data"
-        elif dia < c["inicio"]:
-            situacao = "em_breve"
-        elif dia > c["fim"]:
-            situacao = "encerrada"
-        else:
-            situacao = "agora"
-        lista.append({**c, "situacao": situacao})
-    ordem = list(SITUACOES)
-    return sorted(lista, key=lambda c: (ordem.index(c["situacao"]), c["inicio"] or date.max, c["cidade"]))
-
-
-def itinerario_vencido(dia=None):
-    """True quando todas as datas guardadas já passaram."""
-    dia = dia or hoje()
-    return all(c["fim"] is None or c["fim"] < dia for c in ITINERARIO)
-
-
-def periodo(c):
-    if c["inicio"] is None:
-        return "datas no Poupatempo"
-    return f"{c['inicio']:%d/%m} a {c['fim']:%d/%m}"
-
-
-def frase_carretas(dia=None):
-    """A fala da Lia sobre onde a carreta está no dia."""
-    dia = dia or hoje()
-    if itinerario_vencido(dia):
-        return (f"O itinerário que eu tenho terminou em {max(c['fim'] for c in ITINERARIO if c['fim']):%d/%m}. "
-                "Consulte o novo no Poupatempo (cartão Carretas da Mamografia).")
-    lista = carretas(dia)
-    agora = [c for c in lista if c["situacao"] == "agora"]
-    breve = [c for c in lista if c["situacao"] == "em_breve"]
-    partes = [f"**Hoje ({dia:%d/%m}) a carreta está em:** "
-              + (", ".join(f"{c['cidade']} (até {c['fim']:%d/%m})" for c in agora) if agora else "nenhuma cidade")
-              + "."]
-    if breve:
-        partes.append("**Em breve:** " + ", ".join(f"{c['cidade']} ({periodo(c)})" for c in breve) + ".")
-    partes.append(f"Nenhuma está na região de {CIDADE} ({REGIAO}) neste itinerário; ele muda todo mês."
-                  if not any(c["cidade"] == CIDADE for c in agora + breve) else "")
-    return " ".join(p for p in partes if p)
+def frase_carretas():
+    """Orienta a consultar o itinerário oficial, sem reproduzir locais sujeitos a mudança."""
+    return ("As cidades, datas e endereços das Carretas da Mamografia podem mudar. Antes de sair, consulte o "
+            f"[itinerário no SP Por Todas]({URL_CARRETAS_SP_POR_TODAS}) ou as "
+            f"[orientações do Poupatempo]({URL_CARRETAS_POUPATEMPO}).")
 
 
 def itens(caminho=None, lamina=None):
@@ -1103,7 +1013,7 @@ def saudacao():
              "saúde, com as páginas oficiais.",
         expressao="acolhedora",
         botoes=[(r, caminho(c)) for c, r, _, _ in CAMINHOS]
-        + [("Hospitais no Estado", lamina("hospitais")), ("Carretas: onde estão agora", lamina("carretas")),
+        + [("Hospitais no Estado", lamina("hospitais")), ("Consultar itinerário das Carretas", lamina("carretas")),
            ("Rio Claro: o que tem aqui", lamina("rio_claro")), ("Barretos: Hospital de Amor", lamina("barretos")),
            ("De onde vêm estas informações?", SOBRE)],
         destino={"aba": LAMINAS["caminho"]},
@@ -1127,7 +1037,7 @@ def responder_etapa(e):
         fala=texto,
         expressao="acolhedora" if e in ("violencia", "diagnostico_cancer") else "explicando",
         botoes=[(f"Porta {NOME_CAMINHO[c]}", caminho(c)) for c in portas]
-        + ([("Carretas: onde estão agora", lamina("carretas"))] if e == "nao_fiz" else [])
+        + ([("Consultar itinerário das Carretas", lamina("carretas"))] if e == "nao_fiz" else [])
         + [(i["titulo"], item(i["id"])) for i in lista]
         + [("Outro ponto do caminho", caminho("ajuda"))],
         destino={"aba": LAMINAS["caminho"], "caminho": "ajuda", "etapa": e},
@@ -1157,7 +1067,7 @@ def responder_caminho(c):
         fala += "\n\nTambém para esta porta: " + "; ".join(partes) + "."
     if c == "mama":
         fala += "\n\n" + frase_carretas()
-        botoes.append(("Carretas: onde estão agora", lamina("carretas")))
+        botoes.append(("Consultar itinerário das Carretas", lamina("carretas")))
     return Resposta(
         fala=fala,
         expressao="explicando",
@@ -1208,8 +1118,8 @@ INTRO_LAMINA = {
                   "são porta de entrada: chega-se a eles pela regulação (CROSS), a partir da unidade de saúde. Para "
                   "quem mora em Rio Claro, as referências são Rio Claro e Piracicaba, e o HC da Unicamp também atende "
                   "a região. Escolha uma região."),
-    "carretas": ("**Carretas da mamografia**: o exame vai até a mulher, de graça. As do Estado mudam de cidade todo "
-                 "mês; o Hospital de Amor também tem unidades móveis."),
+    "carretas": ("**Carretas da mamografia**: o exame é gratuito. Consulte os canais oficiais para ver as cidades, "
+                 "datas e endereços atualizados."),
 }
 
 

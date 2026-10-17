@@ -186,7 +186,23 @@ def main():
             ruins.append(f"{gi['pergunta']} -> {erro}")
     checar(f"6. as {len(gabarito)} perguntas do gabarito respondem, com botões, mesmo com o Gemini quebrado" + (f" {ruins[:3]}" if ruins else ""), not ruins)
 
-    # ---- 7. medição ----
+    # ---- 7. diagnóstico recém-confirmado: não deixar a busca lexical desviar para mamografia/hospital ----
+    for q in ("qual o caminho para quem acabou de descobrir um câncer de pulmão?",
+              "recebi o diagnóstico de câncer de mama, o que faço agora?",
+              "acabei de receber um laudo que confirma câncer"):
+        x = ab.responder_pergunta(q)
+        checar(f"7. diagnóstico recente '{q[:42]}': abre a etapa certa, sem escolher hospital",
+               x.tipo == "etapa" and x.destino.get("etapa") == "diagnostico_cancer"
+               and "não escolhe hospital" in x.selo and x.botoes)
+    x = ab.responder_pergunta("o médico demora pra me mandar pro especialista, tem lei?")
+    checar("7. prazo de 30 dias: pergunta vaga oferece opções, sem prometer prazo fora do critério legal",
+           x.tipo == "palpites" and "lei_30_dias" in x.candidatos
+           and "principal hipótese diagnóstica" in x.fala)
+    x = ab.responder_pergunta("senti um caroço e estou com medo")
+    checar("7. sintoma e medo continuam no encaminhamento fixo de sintoma, sem Gemini",
+           x.tipo == "sintoma" and "não faço diagnóstico" in x.fala.lower())
+
+    # ---- 8. medição ----
     print()
     for conjunto in ("desenvolvimento", "final"):
         r = medir(gabarito, conjunto)

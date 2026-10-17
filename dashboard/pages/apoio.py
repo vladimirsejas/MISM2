@@ -47,17 +47,6 @@ div[data-testid="stRadio"]:has(input[value="Encontre um caminho"]) > div { gap: 
 .apoio-cartao.confirmar { border-left-color: #f0b58d; }
 .apoio-cartao.destaque { box-shadow: 0 0 0 2px #7565a8; }
 .apoio-cartao.curto { border-left-style: dashed; }
-/* "Onde a carreta está agora?" (lâmina Carretas) */
-.carreta-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin: 8px 0; }
-.carreta { background: #fff; border: 1px solid #ebe8f2; border-radius: 14px; padding: 10px 14px; }
-.carreta b { font-family: 'Manrope', sans-serif; color: #292541; }
-.carreta .quando { color: #4d4863; font-size: .92rem; margin-top: 2px; }
-.carreta .local { color: #706b82; font-size: .85rem; margin-top: 4px; }
-.carreta-selo { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-                border-radius: 999px; padding: 2px 9px; margin-bottom: 4px; }
-.carreta-selo.agora { background: #dcf3e8; color: #11734f; }
-.carreta-selo.em_breve { background: #e3eefc; color: #1f5fae; }
-.carreta-selo.sem_data { background: #efeef3; color: #625d72; }
 .apoio-resumo { color: #4d4863; margin: 2px 0 6px; }
 .apoio-cartao ul { padding-left: 18px; margin: 4px 0; }
 .apoio-fonte { color: #8a8599; font-size: .85rem; margin-top: 8px; }
@@ -93,6 +82,13 @@ a.apoio-botao:hover { background: #1f5fae; }
                       color: #4a3d78; font-weight: 600; font-size: .9rem; }
 .apoio-jornada span.ativo { background: #4a3d78; border-color: #4a3d78; color: #fff; }
 .apoio-jornada i { color: #9b8fc4; font-style: normal; }
+.apoio-jornada-diagnostico { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+                              gap: 8px; list-style: none; padding: 0; margin: 14px 0; }
+.apoio-jornada-diagnostico li { background: #fff; border: 1px solid #e3dcf2; border-radius: 12px;
+                                padding: 12px; min-width: 0; }
+.apoio-jornada-diagnostico li.atual { background: #f1eef8; border-color: #4a3d78; }
+.apoio-jornada-diagnostico b, .apoio-jornada-diagnostico span { display: block; }
+.apoio-jornada-diagnostico span { color: #625d72; font-size: .88rem; margin-top: 4px; }
 .apoio-grupo { font-family: 'Manrope', sans-serif; font-weight: 700; color: #4a3d78; font-size: 1rem; margin: 18px 0 0; }
 </style>
 """, unsafe_allow_html=True)
@@ -101,7 +97,7 @@ a.apoio-botao:hover { background: #1f5fae; }
 ABAS = [apoio.LAMINAS[k] for k in ("caminho", "rio_claro", "hospitais", "carretas", "barretos", "sobre")]
 ROTULO = apoio.NOME_CAMINHO
 TODOS = {"barretos": "Todos os temas", "hospitais": "Todas as regiões", "carretas": "Todas as carretas"}
-PADROES = {"ap_aba": ABAS[0], "ap_caminho": "mama", "ap_item": None, "ap_etapa": apoio.ETAPAS[0][0],
+PADROES = {"ap_aba": ABAS[0], "ap_caminho": "mama", "ap_item": None, "ap_etapa": None,
            **{f"ap_grupo_{lam}": TODOS[lam] for lam in apoio.GRUPOS}}
 for chave, valor in PADROES.items():
     st.session_state.setdefault(chave, valor)
@@ -116,11 +112,13 @@ def definir(chave, valor):
 def seletor(onde, rotulo, chave, opcoes, **kwargs):
     """st.radio preso à chave persistente (mesma defesa de app.py)."""
     k = f"w_{chave}_{st.session_state[chave]}"
+    atual = st.session_state[chave]
+    indice = opcoes.index(atual) if atual in opcoes else None
 
     def sincronizar():
         st.session_state[chave] = st.session_state[k]
         st.session_state["ap_item"] = None
-    return onde.radio(rotulo, opcoes, index=opcoes.index(st.session_state[chave]), key=k,
+    return onde.radio(rotulo, opcoes, index=indice, key=k,
                       on_change=sincronizar, **kwargs)
 
 
@@ -202,9 +200,10 @@ def botao_inicio(onde, chave):
                      help="Volta à página inicial do Escudo."):
             st.session_state["aba"] = "Panorama"
             try:
-                st.switch_page("app.py")
-            except Exception:  # Streamlit antigo, ou esta página aberta sozinha num teste
-                st.markdown('<a href="/" target="_self">Ir para o início</a>', unsafe_allow_html=True)
+                st.switch_page(os.path.abspath(os.path.join(AQUI, "..", "app.py")))
+            except Exception:  # Esta página pode ser executada fora do app multipágina.
+                st.warning("Esta página foi aberta como prévia isolada. Para voltar ao Panorama, abra o Apoio "
+                           "à mulher pelo dashboard principal.")
 
 
 def pergunta(texto):
@@ -267,37 +266,37 @@ def cartao_curto(i):
 
 
 def onde_esta_a_carreta():
-    """Quadro do itinerário das Carretas da Mamografia no dia de hoje."""
+    """Direciona para a programação oficial atualizada das Carretas da Mamografia."""
     e = html.escape
-    dia = apoio.hoje()
-    pergunta("Onde a carreta da mamografia está agora?")
-    dica(f"Itinerário do Estado (Programa Mulheres de Peito) conferido em {apoio.CONFERIDO}; hoje é {dia:%d/%m/%Y}. "
-         "Gratuito e sem agendamento, com senhas limitadas por dia.")
-    if apoio.itinerario_vencido(dia):
-        st.markdown(f'<div class="escudo-alerta">{e(apoio.frase_carretas(dia))}</div>', unsafe_allow_html=True)
-    else:
-        lista = [c for c in apoio.carretas(dia) if c["situacao"] != "encerrada"]
-        st.markdown('<div class="carreta-grade">' + "".join(
-            f'<div class="carreta"><span class="carreta-selo {c["situacao"]}">{apoio.SITUACOES[c["situacao"]]}</span>'
-            f'<br><b>{e(c["cidade"])}</b><div class="quando">{e(apoio.periodo(c))}</div>'
-            + (f'<div class="local">{e(c["local"])}</div>' if c["local"] else "") + "</div>"
-            for c in lista) + "</div>", unsafe_allow_html=True)
-        passou = [c for c in apoio.carretas(dia) if c["situacao"] == "encerrada"]
-        if passou:
-            st.caption("Já passou: " + "; ".join(f"{c['cidade']} ({apoio.periodo(c)})" for c in passou) + ".")
-    levar = apoio.POR_ID["carretas_estado"]["levar"]
-    st.markdown(f'<div class="escudo-info"><b>O que levar:</b> {e(levar)} Fontes: '
-                + " · ".join(f'<a href="{e(link)}" target="_blank" rel="noopener">{e(nome)}</a>'
-                             for nome, link in apoio.FONTES_ITINERARIO.values())
-                + ". O itinerário completo e atualizado fica no Poupatempo (cartão Carretas da Mamografia).</div>",
-                unsafe_allow_html=True)
+    pergunta("Consulte o itinerário atualizado das carretas")
+    dica("As cidades, datas e endereços mudam. Confira a programação oficial antes de sair de casa.")
+    st.markdown(
+        '<div class="escudo-cartao apoio-cartao"><h4>Carretas da Mamografia · Mulheres de Peito</h4>'
+        '<div class="apoio-resumo">Veja no canal oficial quais cidades estão no roteiro e onde a carreta vai atender.</div>'
+        f'<a class="apoio-botao" href="{e(apoio.URL_CARRETAS_SP_POR_TODAS)}" target="_blank" rel="noopener">'
+        'Consultar cidades e locais · SP Por Todas ↗</a><br>'
+        f'<a class="apoio-botao" href="{e(apoio.URL_CARRETAS_POUPATEMPO)}" target="_blank" rel="noopener">'
+        'Consultar itinerário, horários e documentos · Poupatempo ↗</a></div>',
+        unsafe_allow_html=True,
+    )
+    info = apoio.POR_ID["carretas_estado"]
+    st.markdown(
+        '<div class="escudo-info"><b>Para quem:</b> '
+        f'{e(info["para_quem"])}<br><b>O que levar:</b> {e(info["levar"])}'
+        f'<br><b>Como funciona:</b> {e(info["como"])}'
+        f'<br><small>Fonte: {e(info["fonte"])} · conferido em {e(info["conferido"])}</small></div>',
+        unsafe_allow_html=True,
+    )
 
 
 def lamina_por_grupos(lam, rotulo_seletor):
     """Lâmina organizada em temas ou regiões, escolhidos como botões."""
-    with pilulas(lam):
-        escolha = seletor(st, rotulo_seletor, f"ap_grupo_{lam}", [TODOS[lam]] + apoio.GRUPOS[lam], horizontal=True,
-                          label_visibility="collapsed")
+    if len(apoio.GRUPOS[lam]) == 1:
+        escolha = apoio.GRUPOS[lam][0]
+    else:
+        with pilulas(lam):
+            escolha = seletor(st, rotulo_seletor, f"ap_grupo_{lam}", [TODOS[lam]] + apoio.GRUPOS[lam], horizontal=True,
+                              label_visibility="collapsed")
     for g in (apoio.GRUPOS[lam] if escolha == TODOS[lam] else [escolha]):
         casa, visitas = apoio.do_grupo(lam, g)
         if casa or visitas:
@@ -340,7 +339,7 @@ def porta(c, rotulo, dentro, abertura):
     if c == "rede":
         fluxo_rede()
     if c == "mama":
-        st.button("Carretas da mamografia: onde estão agora →", key="ir_carretas_mama", type="primary",
+        st.button("Consultar itinerário das carretas →", key="ir_carretas_mama", type="primary",
                   on_click=aplicar_destino, args=({"aba": apoio.LAMINAS["carretas"]},))
     for i in apoio.itens(caminho=c, lamina="caminho"):
         cartao(i)
@@ -353,13 +352,27 @@ def porta(c, rotulo, dentro, abertura):
 
 def porta_ajuda():
     """Preciso de ajuda: em que ponto a mulher está -> o próximo passo."""
-    pergunta("Em que ponto você está?")
-    dica("Escolha o que está acontecendo com você. A Lia mostra o próximo passo na rede de saúde.")
+    pergunta("Qual destas situações parece com a sua?")
+    dica("Escolha uma opção para ver o próximo passo. Se ainda não souber, não precisa escolher agora.")
     with pilulas("etapa"):
-        e = seletor(st, "Em que ponto você está?", "ap_etapa", list(apoio.NOME_ETAPA),
-                    format_func=apoio.NOME_ETAPA.get, horizontal=True, label_visibility="collapsed")
+        e = seletor(st, "Escolha uma situação", "ap_etapa", list(apoio.NOME_ETAPA),
+                    format_func=apoio.NOME_ETAPA.get, horizontal=False)
+    if e is None:
+        st.info("Escolha uma situação acima. A Lia organiza as opções sem presumir o que aconteceu com você.")
+        return
     _, _, fala, portas, _ = next(x for x in apoio.ETAPAS if x[0] == e)
     st.markdown(f'<div class="apoio-etapa">{html.escape(fala)}</div>', unsafe_allow_html=True)
+    if e == "diagnostico_cancer":
+        st.markdown("""
+<ol class="apoio-jornada-diagnostico" aria-label="Próximos passos depois do diagnóstico">
+  <li class="atual"><b>Diagnóstico confirmado</b><span>Você está aqui.</span></li>
+  <li><b>Converse com sua equipe de saúde</b><span>Pergunte quem acompanha seu encaminhamento e como receber notícias da vaga.</span></li>
+  <li><b>Regulação do SUS</b><span>A rede organiza o acesso ao serviço especializado.</span></li>
+  <li><b>Serviço especializado</b><span>A equipe avalia seu caso e conversa com você sobre o tratamento indicado.</span></li>
+</ol>
+""", unsafe_allow_html=True)
+        st.markdown("**Perguntas que você pode levar à equipe:** qual serviço está responsável pelo encaminhamento? Como acompanho a vaga? Quando devo voltar se ainda não tiver resposta? Leve o laudo e os exames que já tem, se puder."
+                    )
     if portas or e == "nao_fiz":
         colunas = st.columns(max(len(portas) + (e == "nao_fiz"), 1))
         for col, porta_id in zip(colunas, portas):
@@ -367,7 +380,7 @@ def porta_ajuda():
                        on_click=aplicar_destino, args=({"aba": apoio.LAMINAS["caminho"], "caminho": porta_id},),
                        width="stretch")
         if e == "nao_fiz":
-            colunas[-1].button("Carretas: onde estão agora →", key="etapa_carretas", type="primary",
+            colunas[-1].button("Consultar itinerário das carretas →", key="etapa_carretas", type="primary",
                                on_click=aplicar_destino, args=({"aba": apoio.LAMINAS["carretas"]},),
                                width="stretch")
     for i in apoio.itens_da_etapa(e):
@@ -392,13 +405,6 @@ with col_link:
     botao_inicio(st, "topo")
     st.caption("Cada cartão informa sua fonte e data de conferência. Itens marcados “a confirmar” precisam ser verificados antes de usar.")
 
-# Mostradores: deixam explícito o tamanho do catálogo e o que ainda exige conferência.
-pendentes = sum(bool(i["confirmar"]) for i in apoio.ITENS)
-m1, m2, m3 = st.columns(3)
-m1.metric("Caminhos de orientação", len(apoio.CAMINHOS))
-m2.metric("Informações cadastradas", len(apoio.ITENS))
-m3.metric("Pedem confirmação", pendentes)
-
 # Entrada guiada: poucas escolhas principais; o catálogo completo continua nas abas abaixo.
 _pergunta_pendente = st.session_state.pop("caixa_ap_pendente", None)
 if _pergunta_pendente:
@@ -417,14 +423,19 @@ if not st.session_state.get("ap_boas_vindas_fechada"):
         st.markdown('<div class="lia-nome">Lia <span>· pesquisadora do Escudo Feminino</span></div>'
                     '<div class="lia-fala-grande">Vamos por partes. Escolha o que mais se parece com a sua situação; você pode voltar e mudar de caminho.</div>',
                     unsafe_allow_html=True)
-        st.markdown("**Comece por aqui**")
-        a1, a2, a3 = st.columns(3)
+        st.markdown("**Por onde você quer começar?**")
+        a1, a2 = st.columns(2)
         a1.button("Prevenção e exames", key="bv_ap_prevencao", help="Mamografia, Papanicolau, vacina e prevenção.",
                   on_click=lia_clicar, args=(apoio.caminho("mama"),), width="stretch")
-        a2.button("Exame alterado ou diagnóstico", key="bv_ap_diagnostico",
-                  help="Entender o próximo passo depois de um resultado alterado.", on_click=lia_clicar,
-                  args=(apoio.caminho("diagnostico"),), width="stretch")
-        a3.button("Não sei por onde começar", key="bv_ap_ajuda", help="A Lia ajuda a identificar o próximo passo.",
+        a2.button("Meu exame deu alterado", key="bv_ap_alterado",
+                  help="Um resultado alterado precisa ser explicado pela equipe de saúde; não significa, por si só, câncer.",
+                  on_click=lia_clicar, args=(apoio.etapa("alterado"),), width="stretch")
+        a3, a4 = st.columns(2)
+        a3.button("Recebi diagnóstico de câncer", key="bv_ap_diagnostico",
+                  help="Veja o caminho depois de um diagnóstico confirmado.", on_click=lia_clicar,
+                  args=(apoio.etapa("diagnostico_cancer"),), width="stretch")
+        a4.button("Não sei por onde começar", key="bv_ap_ajuda",
+                  help="A Lia pergunta em que ponto você está, sem escolher por você.",
                   on_click=lia_clicar, args=(apoio.caminho("ajuda"),), width="stretch")
         st.button("Ver todas as áreas abaixo", key="bv_fechar_apoio",
                   on_click=lambda: st.session_state.update(ap_boas_vindas_fechada=True))
@@ -510,8 +521,6 @@ if aba == apoio.LAMINAS["hospitais"]:
 
 if aba == apoio.LAMINAS["carretas"]:
     onde_esta_a_carreta()
-    onde_clicar("Em cada cartão, clique no botão azul <b>Abrir a página oficial</b>.")
-    lamina_por_grupos("carretas", "Carretas")
 
 
 # ============================================================
@@ -522,6 +531,16 @@ if aba == apoio.LAMINAS["rio_claro"]:
     pergunta(f"O que {apoio.CIDADE} oferece às mulheres?")
     dica(f"{apoio.CIDADE} faz parte da {apoio.REGIAO}. As referências de câncer da região são Rio Claro e "
          "Piracicaba, e o HC da Unicamp também atende a região (lâmina Hospitais no Estado).")
+    st.markdown(
+        '<div class="escudo-cartao apoio-cartao"><h4>Carretas da Mamografia: veja a programação atual</h4>'
+        '<div class="apoio-resumo">As cidades e datas das Carretas da Mamografia do Estado (Mulheres de Peito) mudam. '
+        'Consulte o roteiro atual nos canais oficiais antes de sair:</div>'
+        f'<a class="apoio-botao" href="{html.escape(apoio.URL_CARRETAS_SP_POR_TODAS)}" target="_blank" rel="noopener">'
+        'Consultar cidades e locais · SP Por Todas ↗</a><br>'
+        f'<a class="apoio-botao" href="{html.escape(apoio.URL_CARRETAS_POUPATEMPO)}" target="_blank" rel="noopener">'
+        'Consultar itinerário, horários e documentos · Poupatempo ↗</a></div>',
+        unsafe_allow_html=True,
+    )
     onde_clicar("Em cada cartão, clique no botão azul <b>Abrir a página oficial</b>.")
     lista = apoio.itens(lamina="rio_claro")
     for c in [c for c, _, _, _ in apoio.CAMINHOS]:
@@ -568,6 +587,12 @@ if aba == apoio.LAMINAS["barretos"]:
 
 if aba == apoio.LAMINAS["sobre"]:
     pergunta("De onde vêm estas informações?")
+    # Transparência do catálogo fica junto às fontes, fora da entrada de quem procura cuidado.
+    pendentes = sum(bool(i["confirmar"]) for i in apoio.ITENS)
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Caminhos de orientação", len(apoio.CAMINHOS))
+    m2.metric("Informações cadastradas", len(apoio.ITENS))
+    m3.metric("Pedem confirmação", pendentes)
     st.markdown(f"""
 - **O que é:** um guia de onde procurar ajuda, montado a partir de páginas oficiais: portal da Saúde do Estado
   de SP, Poupatempo, rede oncológica da FOSP, Ministério da Saúde, Fundação Municipal de Saúde de Rio Claro,

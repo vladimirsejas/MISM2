@@ -56,17 +56,37 @@ inicio = time.time()
 # ---------- A. boas-vindas ----------
 at = abrir()
 checar("A. abre sem erro", not erros(at))
-checar("A. boas-vindas no centro com as 3 entradas principais",
-       all(botao(at, f"bv_ap_{c}") is not None for c in ("prevencao", "diagnostico", "ajuda")))
+checar("A. boas-vindas separa prevenção, exame alterado, diagnóstico e outras situações",
+       all(botao(at, f"bv_ap_{c}") is not None
+           for c in ("prevencao", "alterado", "diagnostico", "ajuda")))
+checar("A. contadores internos não ocupam a entrada de quem procura atendimento",
+       not any(m.label in ("Caminhos de orientação", "Informações cadastradas", "Pedem confirmação")
+               for m in at.metric))
 checar("A. mesma Lia na lateral (rosto + nome)",
        any("lia-nome" in m.value for m in at.sidebar.markdown) and any("lia-rosto" in m.value for m in at.sidebar.markdown))
-for entrada, caminho in (("prevencao", "mama"), ("diagnostico", "diagnostico"), ("ajuda", "ajuda")):
+for entrada, caminho, etapa in (("prevencao", "mama", None), ("alterado", "ajuda", "alterado"),
+                                ("diagnostico", "ajuda", "diagnostico_cancer"), ("ajuda", "ajuda", None)):
     at = abrir()
     botao(at, f"bv_ap_{entrada}").click().run()
     checar(f"A. entrada {entrada} do centro", not erros(at)
            and at.session_state["ap_caminho"] == caminho
+           and at.session_state["ap_etapa"] == etapa
            and at.session_state["ap_aba"] == apoio.LAMINAS["caminho"]
            and botao(at, f"bv_ap_{entrada}") is None)
+checar("A. 'Não sei' deixa as seis etapas sem nenhuma presumida", at.session_state["ap_etapa"] is None)
+
+at = abrir()
+botao(at, "nav_apoio_sobre").click().run()
+checar("A. os contadores e informações de confirmação continuam disponíveis em 'Sobre estas informações'",
+       not erros(at) and {m.label for m in at.metric} ==
+       {"Caminhos de orientação", "Informações cadastradas", "Pedem confirmação"})
+
+at = abrir()
+botao(at, "bv_ap_diagnostico").click().run()
+conteudo = " ".join(str(x.value) for x in at.markdown)
+checar("A. diagnóstico confirmado abre diagrama com a etapa atual e a regulação", not erros(at)
+       and all(t in conteudo for t in ("Diagnóstico confirmado", "Você está aqui", "Regulação do SUS",
+                                      "Como acompanho a vaga?")))
 
 # ---------- B. Lia: todos os botões ----------
 at = abrir()
@@ -108,6 +128,9 @@ checar("C. voltar devolve a fala anterior", at.session_state["ap_lia"]["atual"].
        and at.session_state["ap_caminho"] == "mama")
 at2 = abrir()
 botao(at2, "bv_ap_ajuda").click().run()
+checar("C. sem saber o ponto: a tela não assume que a mulher ainda não fez exame",
+       not erros(at2) and at2.session_state["ap_etapa"] is None
+       and "Escolha uma situação acima" in " ".join(str(x.value) for x in at2.info))
 next(b for b in botoes_lia(at2) if b.label == "Meu exame deu alteração").click().run()
 checar("C. Preciso de ajuda → 'Meu exame deu alteração' leva a Diagnóstico",
        not erros(at2) and at2.session_state["ap_etapa"] == "alterado"
@@ -162,9 +185,20 @@ checar("D. cartões com o botão Abrir a página oficial", "apoio-botao" in text
 at.session_state["ap_aba"] = apoio.LAMINAS["carretas"]
 at.run()
 texto = " ".join(m.value for m in at.markdown)
-checar("D. lâmina Carretas mostra onde a carreta está agora",
-       not erros(at) and "Onde a carreta da mamografia está agora?" in texto
-       and ("carreta-grade" in texto or "escudo-alerta" in texto))
+checar("D. lâmina Carretas direciona aos itinerários oficiais e preserva as orientações essenciais",
+       not erros(at) and "Consulte o itinerário atualizado das carretas" in texto
+       and apoio.URL_CARRETAS_SP_POR_TODAS in texto
+       and apoio.URL_CARRETAS_POUPATEMPO in texto
+       and "O que levar" in texto and "senhas limitadas" in texto
+       and "Araçoiaba da Serra" not in texto)
+at.session_state["ap_aba"] = apoio.LAMINAS["rio_claro"]
+at.run()
+texto = " ".join(m.value for m in at.markdown)
+checar("D. Rio Claro omite a ação passada e direciona ao itinerário oficial atual",
+       not erros(at) and "Ação passada do Hospital de Amor" not in texto
+       and "cidades e datas das Carretas da Mamografia do Estado" in texto
+       and apoio.URL_CARRETAS_SP_POR_TODAS in texto
+       and apoio.URL_CARRETAS_POUPATEMPO in texto)
 
 # ---------- E. botão Início (volta ao painel, na aba Panorama) ----------
 at = abrir()
@@ -202,7 +236,7 @@ try:
     perguntar_no_apoio(at, "como funciona a carreta da mamografia?")
     atual = at.session_state["ap_lia"]["atual"]
     checar("F. pergunta escrita: a Lia mostra o item do guia (carretas), com a pergunta, o selo 'nenhuma IA' e o painel na lâmina certa",
-           not erros(at) and atual.tipo in ("itens", "palpites") and ("carretas_estado" in atual.candidatos or "rc_carreta_hospital_de_amor" in atual.candidatos)
+           not erros(at) and atual.tipo in ("itens", "palpites") and "carretas_estado" in atual.candidatos
            and "Você perguntou" in lateral(at) and "Nenhuma IA escreveu" in lateral(at))
     if atual.tipo == "palpites":
         botoes = botoes_lia(at)

@@ -61,6 +61,13 @@ checar("todo 'tambem_caminhos' aponta para uma porta que existe",
        all(c in apoio.NOME_CAMINHO and c != i["caminho"] for i in apoio.ITENS for c in i["tambem_caminhos"]))
 checar("diagnóstico explica mamografia e preventivo alterados",
        {"mamografia_alterada", "preventivo_alterado"} <= {i["id"] for i in apoio.itens(caminho="diagnostico")})
+checar("prazo legal de 30 dias explicita hipótese principal e pedido médico fundamentado",
+       "principal hipótese diagnóstica" in apoio.POR_ID["lei_30_dias"]["resumo"]
+       and "pedido médico fundamentado" in apoio.POR_ID["lei_30_dias"]["resumo"]
+       and "principal hipótese" in next(x[2] for x in apoio.ETAPAS if x[0] == "alterado"))
+checar("diagnóstico recente tem um próximo passo prático sem indicar hospital por conta própria",
+       "quem está responsável pelo encaminhamento" in next(x[2] for x in apoio.ETAPAS if x[0] == "diagnostico_cancer")
+       and "60 dias" in next(x[2] for x in apoio.ETAPAS if x[0] == "diagnostico_cancer"))
 checar("regulação diz o que fazer se o nome não aparecer", "nao_achei_nome" in apoio.POR_ID
        and apoio.POR_ID["nao_achei_nome"]["caminho"] == "regulacao")
 checar("fluxo da rede aponta para portas que existem", all(p in apoio.NOME_CAMINHO for _, _, p in apoio.FLUXO_REDE))
@@ -124,21 +131,16 @@ checar("botão desconhecido volta à saudação", apoio.responder({"tipo": "apoi
        == inicio.fala)
 
 # ---------- itinerário das carretas ----------
-from datetime import date  # noqa: E402
-dia = date(2026, 9, 24)
-agora = {c["cidade"] for c in apoio.carretas(dia) if c["situacao"] == "agora"}
-checar("carretas em 24/09/2026: as 8 em andamento", agora == {
-    "Eldorado", "Piquete", "Araçoiaba da Serra", "Bertioga", "Serrana", "Barra do Turvo", "Itapura", "Avaré"})
-checar("carretas: Bananal e Paraisópolis já passaram; Apiaí sem data",
-       {c["cidade"]: c["situacao"] for c in apoio.carretas(dia)}["Bananal"] == "encerrada"
-       and {c["cidade"]: c["situacao"] for c in apoio.carretas(dia)}["Apiaí"] == "sem_data")
-checar("carretas: em 01/09 Bananal aparece como em breve",
-       {c["cidade"]: c["situacao"] for c in apoio.carretas(date(2026, 9, 1))}["Bananal"] == "em_breve")
-checar("carretas: a Lia diz onde a carreta está hoje", "Araçoiaba da Serra" in apoio.frase_carretas(dia))
-checar("carretas: itinerário vencido manda ver o novo no Poupatempo",
-       apoio.itinerario_vencido(date(2026, 10, 10)) and "Poupatempo" in apoio.frase_carretas(date(2026, 10, 10)))
-checar("carretas: toda fonte do itinerário existe", all(c["fonte"] in apoio.FONTES_ITINERARIO
-                                                         for c in apoio.ITINERARIO))
+fala_carretas = apoio.frase_carretas()
+checar("carretas: a Lia aponta para o itinerário do SP Por Todas e do Poupatempo",
+       apoio.URL_CARRETAS_SP_POR_TODAS in fala_carretas
+       and apoio.URL_CARRETAS_POUPATEMPO in fala_carretas)
+checar("carretas: a Lia não reproduz cidades nem datas de uma rota que pode vencer",
+       "Araçoiaba da Serra" not in fala_carretas and "24/09" not in fala_carretas)
+checar("carretas: o grupo estadual não mistura a ação histórica do Hospital de Amor",
+       [i["id"] for i in apoio.itens(lamina="carretas")] == ["carretas_estado"])
+checar("Rio Claro: não mostra o registro antigo da carreta do Hospital de Amor",
+       all(i["id"] != "rc_carreta_hospital_de_amor" for i in apoio.itens(lamina="rio_claro")))
 
 print()
 print("Todas as checagens do apoio passaram." if not falhas else f"{len(falhas)} falha(s).")
