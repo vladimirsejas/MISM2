@@ -42,7 +42,7 @@ def entender(pergunta, **kw):
 
 def medir_novo(gabarito, conjunto, classificar=None):
     r = dict(conteudo=0, certo=0, errado=0, palpite=0, sem_nada=0, fora=0, fora_ok=0, esp=0, esp_ok=0,
-             cancer_n=0, cancer_ok=0, gemini_direto=0, gemini_sem_apoio=0)
+             cancer_n=0, cancer_ok=0, gemini_direto=0, gemini_sem_apoio=0, erros=[])
     for g in gabarito:
         if g["conjunto"] != conjunto:
             continue
@@ -60,6 +60,8 @@ def medir_novo(gabarito, conjunto, classificar=None):
             r["conteudo"] += 1
             if e.tipo == "intencao":
                 r["certo" if e.intencao in aceitas else "errado"] += 1
+                if e.intencao not in aceitas:
+                    r["erros"].append((g["pergunta"], esp, e.intencao, e.origem))
                 if g.get("cancer") and e.intencao in aceitas:  # o câncer certo também faz parte de entender
                     r["cancer_n"] += 1
                     r["cancer_ok"] += e.cancer == g["cancer"]
@@ -247,7 +249,10 @@ def main():
             print(".", end="", flush=True)
             return ia_linguagem.classificar_pergunta(pergunta, opcoes, **kw)
 
+        so = sys.argv[sys.argv.index("--so") + 1] if "--so" in sys.argv else None  # ex.: --so final
         for conjunto in ("desenvolvimento", "teste", "final"):
+            if so and conjunto != so:
+                continue
             sem = medir_novo(gabarito, conjunto)
             print(f"  [{conjunto}] consultando o Gemini ", end="", flush=True)
             com = medir_novo(gabarito, conjunto, classificar=classificar_com_andamento)
@@ -255,6 +260,8 @@ def main():
             print(f"  [{conjunto}] entendeu direto: {sem['certo']} -> {com['certo']} de {sem['conteudo']}; "
                   f"errou: {sem['errado']} -> {com['errado']}; palpite com a certa: {sem['palpite']} -> {com['palpite']}; "
                   f"fora do assunto: {sem['fora_ok']} -> {com['fora_ok']} de {sem['fora']}")
+            for pergunta, esperado, obtido, origem in com["erros"]:
+                print(f"  [{conjunto}] ERROU: \"{pergunta}\" -> {obtido} (origem {origem}); esperado {esperado}")
             print(f"  [{conjunto}] o Gemini concordou com a busca local em {com['gemini_direto']} perguntas (respondeu direto) e "
                   f"estava sozinho em {com['gemini_sem_apoio']} (virou palpite para a pessoa confirmar)")
 
