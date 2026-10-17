@@ -3,6 +3,7 @@ from decimal import Decimal
 from dataclasses import dataclass, field, replace
 
 import entendimento as ent
+import localizacao
 from inteligencia import (
     MODELOS_PREVISAO,
     anos_incompletos,
@@ -531,7 +532,7 @@ def _hospital_de_cancer(ctx, pergunta):
     citada = cidade_citada(pergunta)
     do_painel = ent.normalizar(ctx.cidade)
     outra = citada if citada and citada != do_painel else None
-    hospitais = [i for i in apoio.ITENS if i["lamina"] == "hospitais" and i["id"] != "como_chegar_hospital"]
+    hospitais = [i for i in apoio.ITENS if i["lamina"] == "hospitais" or i["id"] in localizacao.IDS_EXTRAS]
     if outra:
         da_cidade = sorted((i for i in hospitais if outra in ent.normalizar(f"{i['onde']} {i['titulo']} {i['grupo'] or ''}")),
                            key=lambda i: outra not in ent.normalizar(i["onde"]))[:3]
@@ -543,7 +544,15 @@ def _hospital_de_cancer(ctx, pergunta):
         nome = ctx.cidade
     else:
         da_cidade, nome = [], None
-    if da_cidade:
+    proximos = localizacao.hospitais_proximos(getattr(ctx, "localizacao", None), outra, hospitais) if outra else []
+    if da_cidade and any(localizacao.cidade_do_item(i["onde"]) == outra for i in da_cidade):
+        proximos = []  # a cidade tem hospital no catálogo: a lista dela já responde
+    if proximos:
+        km = "\n".join(f"- **{i['titulo']}** ({i['onde']}): cerca de **{int(round(d, -1)) if d >= 20 else int(round(d))} km** em linha reta"
+                       for d, i in proximos)
+        fala = (f"Não há hospital de câncer do catálogo em **{nome}**. Os mais próximos, em **linha reta entre os centros das cidades** "
+                f"(não é a rota nem o tempo de viagem):\n\n{km}\n\n")
+    elif da_cidade:
         linhas = "\n".join(f"- **{i['titulo']}** ({i['onde']}; {i['grupo'] or 'região'}): {i['como'] or i['resumo']}" for i in da_cidade)
         fala = (f"Hospitais do catálogo do Escudo ligados a **{nome}**:\n\n{linhas}\n\n")
     else:

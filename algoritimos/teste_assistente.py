@@ -382,6 +382,33 @@ def main():
     checar("7g. raça das INTERNADAS continua 'não tenho' (só o ambulatorial tem), apontando a pergunta certa",
            r.intencao == "sem_dados" and "quimioterapia" in r.fala)
 
+    # ---- 7h. distância até os hospitais de câncer (centro dos municípios do IBGE), sem chutar posição ----
+    import localizacao as loc
+    import apoio as _apoio
+    centros = _pd.DataFrame([("Rio Claro", -22.411, -47.561), ("Catanduva", -21.137, -48.973), ("São José do Rio Preto", -20.820, -49.380),
+                             ("Barretos", -20.557, -48.567), ("Araraquara", -21.794, -48.176), ("Jaú", -22.296, -48.558),
+                             ("Campinas", -22.906, -47.061), ("São Paulo", -23.550, -46.633), ("Piracicaba", -22.725, -47.649),
+                             ("Ribeirão Preto", -21.178, -47.810), ("São Carlos", -22.018, -47.891), ("Limeira", -22.565, -47.402)],
+                            columns=["nome", "latitude", "longitude"])
+    centros["chave"] = centros["nome"].map(ent.normalizar)
+    centros = centros[["nome", "chave", "latitude", "longitude"]]
+    km = loc.distancia_km(-22.411, -47.561, -22.725, -47.649)
+    checar("7h. distância Rio Claro-Piracicaba em linha reta é de uns 30 a 45 km", 30 < km < 45)
+    hosp = [i for i in _apoio.ITENS if i["lamina"] == "hospitais" or i["id"] in loc.IDS_EXTRAS]
+    prox = loc.hospitais_proximos(centros, "Catanduva", hosp, n=3)
+    checar("7h. perto de Catanduva: o mais próximo é de Rio Preto, em ordem crescente de distância, sem repetir cidade além de 2",
+           prox and "Rio Preto" in prox[0][1]["onde"] and [d for d, _ in prox] == sorted(d for d, _ in prox) and 40 < prox[0][0] < 80)
+    checar("7h. cidade fora da tabela: nada de distância inventada", loc.hospitais_proximos(centros, "Cidade Inexistente", hosp) == [])
+    ctx_geo = Contexto(serie=ctx.serie, cidade="Rio Claro", faixas=ctx.faixas, localizacao=centros)
+    r = asst.responder_pergunta(ctx_geo, "descobri câncer de ovário agora e moro em catanduva, onde que eu me trato?", foco, ia=asst.IA())
+    checar("7h. a Lia mostra os hospitais mais próximos de Catanduva em km, diz que é linha reta e que a regulação decide",
+           "linha reta" in r.fala and " km" in r.fala and "Rio Preto" in r.fala and "CROSS" in r.fala and "Santa Casa de Rio Claro" not in r.fala
+           and not asst.PROMETE.search(r.fala))
+    r = asst.responder_pergunta(ctx_geo, "moro em araraquara e preciso de hospital de câncer", foco, ia=asst.IA())
+    checar("7h. cidade que já tem hospital no catálogo (Araraquara) lista o dela, sem distâncias", "Araraquara" in r.fala and " km" not in r.fala)
+    r = asst.responder_pergunta(ctx, "moro em catanduva e preciso de hospital de câncer", foco, ia=asst.IA())
+    checar("7h. sem a tabela de localização a Lia não dá distância e continua orientando pela região", " km" not in r.fala and "região" in r.fala)
+
     # ---- 8. palpites e botões ----
     r = perguntar("me explica o negócio dos números do hospital das moças")
     ok_palpites = r.tipo in ("palpites", "fora")

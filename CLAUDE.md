@@ -376,6 +376,17 @@ Estado atual:
   centro do trabalho, os hospitais ficam fora); a cidade que a pessoa diz ("moro em X", "perto de X") vale mais que a do painel, mostra
   os hospitais do catálogo ligados a ela, e sem eles aponta a lâmina Hospitais no Estado e como descobrir a DRS (**o Escudo não tem a
   lista cidade -> região e prefere não chutar**). Teste 7f. **Streamlit:** `use_container_width` foi trocado por `width="stretch"`.
+  **Localização e distância até hospitais de câncer (17/10/2026, ideia do autor):** `etl/baixar_centroides.py` (etapa `geo` do
+  `carregar_tudo_pysus.py`) baixa a malha dos municípios de SP da API do IBGE em GeoJSON e calcula o PONTO CENTRAL de cada cidade em
+  Python puro (sem geopandas/geobr; `geobr` fica só como plano B citado na mensagem de erro), tabela `municipios_localizacao`
+  (645 linhas, dado público); confere que o centro de Rio Claro cai no lugar certo antes de gravar. `algoritimos/localizacao.py`:
+  `distancia_km` (haversine) e `hospitais_proximos` (hospitais da lâmina Hospitais no Estado + Hospital de Amor, até 2 por cidade;
+  cidade fora da tabela = nenhuma distância, nunca posição inventada). A Lia diz sempre que é **linha reta entre centros de cidades**,
+  não rota nem tempo, e que quem decide é a regulação (CROSS). Cidade que já tem hospital no catálogo lista o dela, sem km. Teste:
+  `etl/teste_baixar_centroides.py` e 7h de `teste_assistente.py`. **Falta rodar no notebook** (a nuvem não alcança o IBGE) e conferir os
+  nomes de campo da API (`codarea` na malha). **Segurança (teste humano, 17/10/2026):** "meu marido tá me agredindo, me ajuda" virava
+  pedido de ajuda genérico, sem 190/180; o padrão de violência agora pega gerúndio, voz passiva e "violência doméstica" (não pega
+  "violência sexual" sozinha: essa é consulta do catálogo do Apoio). Testes em `teste_entendimento.py`.
   **Carga robusta (24/09/2026):** a carga antiga apagava a tabela no 1º arquivo
   e parava no 2º que desse erro -- por isso o banco do autor ficou só com colo
   do útero. Agora ela lê e confere os 7 arquivos antes de gravar, um arquivo com

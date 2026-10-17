@@ -70,6 +70,7 @@ class Contexto:
     ranking: object = None        # {câncer ou None: inteligencia.ranking_municipios} (None: banco sem a população)
     tratamento: object = None     # inteligencia.carregar_tratamento (None: banco sem quimio e radio do SIA)
     obitos_sim: object = None     # inteligencia.carregar_obitos_sim (None: banco sem a mortalidade do SIM)
+    localizacao: object = None    # localizacao.carregar_localizacao (None: banco sem os centros dos municípios)
 
 
 # ---------- ações (o que um botão faz) ----------

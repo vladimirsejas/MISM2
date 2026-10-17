@@ -13,6 +13,7 @@ from configuracao_geografica import BANCO, listar_municipios_disponiveis, obter_
 from lia import INICIO, Contexto, responder as lia_responder
 from assistente import IA, acao as acao_assistente, obter_ia, responder_escolha, responder_pergunta
 from conversa import registrar_pergunta
+from localizacao import carregar_localizacao
 from passeio import PARADAS, parada as passeio_parada
 from lia_rosto import img as rosto_lia
 from estilo import CSS
@@ -196,6 +197,16 @@ def tabelas_ambulatorial_e_sim():
     conn = sqlite3.connect(BANCO)
     try:
         return carregar_tratamento(conn), carregar_obitos_sim(conn)
+    finally:
+        conn.close()
+
+
+@st.cache_data
+def localizacao_dos_municipios():
+    """Centro de cada município de SP (py -3.12 etl\\baixar_centroides.py); vazio sem a tabela (a Lia então não dá distâncias)."""
+    conn = sqlite3.connect(BANCO)
+    try:
+        return carregar_localizacao(conn)
     finally:
         conn.close()
 
@@ -407,7 +418,8 @@ ctx_lia = Contexto(serie=serie, cidade=nome_cidade, faixas=faixas_municipio(ORIG
                    duplicados=tuple(duplicados_municipio(ORIGEM)),
                    fluxo=fluxo_geral(), fluxo_cidade=fluxo_cidade(ORIGEM, cidade["codigo_ibge"]),
                    codigo_ibge=cidade["codigo_ibge"], ranking=rankings_por_100_mil(),
-                   tratamento=tabelas_ambulatorial_e_sim()[0], obitos_sim=tabelas_ambulatorial_e_sim()[1])
+                   tratamento=tabelas_ambulatorial_e_sim()[0], obitos_sim=tabelas_ambulatorial_e_sim()[1],
+                   localizacao=localizacao_dos_municipios())
 st.session_state.setdefault("lia", {"cidade": None, "atual": None, "pilha": []})
 lia_estado = st.session_state["lia"]
 if lia_estado["cidade"] != ORIGEM:  # trocou de cidade: a Lia recomeça
