@@ -296,7 +296,7 @@ ROTULOS = {
     "onde_atendida": "Onde ser atendida", "apoio": "Apoio à mulher", "sintoma": "Estou com um sintoma",
     "ajuda": "O que posso perguntar?", "causa": "Por que mudou?", "sem_dados": "O que os dados não têm",
 }
-ROTULOS_POR_GATILHO = {"tratamento": "Quimio e radioterapia", "mortalidade_real": "Mortes por câncer (todas)"}  # fora do índice (ver _por_gatilho)
+ROTULOS_POR_GATILHO = {"tratamento": "Quimio e radioterapia", "mortalidade_real": "Mortes por câncer (todas)", "polos": "Cidades que mais tratam"}  # fora do índice (ver _por_gatilho)
 ROTULOS_TODOS = {**ROTULOS, **ROTULOS_POR_GATILHO}
 
 
@@ -495,7 +495,7 @@ class Entendimento:
 
 # Assuntos de dados: os únicos que têm uma explicação simples (os de texto fixo já são texto fixo).
 COM_NUMEROS = {"mais_aparece", "evolucao", "futuro", "obitos", "valores", "tempo", "idade", "estado", "atencao",
-               "fora_padrao", "fluxo", "completude", "metodo", "tratamento", "mortalidade_real"}
+               "fora_padrao", "fluxo", "completude", "metodo", "tratamento", "mortalidade_real", "polos"}
 # Pares que cabem juntos numa resposta segura. Outras combinações continuam virando palpites para a pessoa escolher.
 PARES_SEGUROS = {frozenset(p) for p in (("evolucao", "futuro"), ("obitos", "valores"), ("evolucao", "estado"))}
 CONFUSAO = re.compile(r"^(eu )?(nao entendi|nao compreendi|nao ficou claro|como assim|nao sei o que (isso )?quer dizer)\b")
@@ -564,6 +564,9 @@ CONTA_TRATAMENTO = re.compile(r"\b(quantas|quantos|volume|numero de|total de|ses
 PESSOAL_TRATAMENTO = re.compile(r"\b(minha|meu|vou|vai comecar|cobre|direito\w*|peruca|onde (fazer|faco)|preciso|medo|dor|efeito\w*)\b")
 GATILHO_MORTES = re.compile(r"\b(fora do hospital|em casa|via publica|na rua|declaracao de obito|todos os lugares|mortalidade real|"
                             r"dentro e fora|(pelo|no|do) sim)\b")
+GATILHO_POLOS = re.compile(r"\b((cidades?|municipios?) que mais (tratam|atendem|recebem|internam)|polos? de (tratamento|atendimento)|"
+                           r"onde (mais )?(se )?(tratam|internam|atendem)|cidades? de referencia|"
+                           r"(casos|pacientes|mulheres) (tratad\w+|atendid\w+) (nas|nos|em) cidades)\b")
 PALAVRA_MORTE = re.compile(r"\b(morr\w+|obito\w*|mort\w+|mortalidade)\b")
 
 
@@ -574,6 +577,8 @@ def _por_gatilho(texto):
         return "tratamento"
     if GATILHO_MORTES.search(norm) and PALAVRA_MORTE.search(norm):
         return "mortalidade_real"
+    if GATILHO_POLOS.search(norm):
+        return "polos"
     return None
 
 

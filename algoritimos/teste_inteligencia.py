@@ -391,6 +391,55 @@ checar("N. leitura: diz a taxa por 100 mil, a posição da cidade do painel (3 d
        "60,0 por 100 mil mulheres" in texto and "posição **3** de 4" in texto and "Não é incidência" in texto
        and "câncer de mama" in texto and "vai " not in texto.lower().replace("moram", ""))
 
+# ---- O. polos de tratamento: onde as internações ACONTECEM (hospital) x onde a mulher MORA (banco sintético, contas à mão) ----
+from inteligencia import leitura_atendimento, ranking_atendimento
+
+
+def banco_polos(com_fluxo=True):
+    c = _sq.connect(":memory:")
+    c.execute("CREATE TABLE internacoes (origem TEXT, municipio TEXT, codigo_ibge INTEGER, "
+              + ("municipio_hospital TEXT, uf_residencia TEXT, " if com_fluxo else "") + "tipo_cancer TEXT, ano INTEGER, mes INTEGER)")
+
+    def pôr(n, residencia, hospital, municipio="X", cancer="MAMA"):
+        for _ in range(n):
+            if com_fluxo:
+                c.execute("INSERT INTO internacoes VALUES ('SP', ?, ?, ?, 'SP', ?, 2022, 1)", (municipio, residencia, hospital, cancer))
+            else:
+                c.execute("INSERT INTO internacoes VALUES ('SP', ?, ?, ?, 2022, 1)", (municipio, residencia, cancer))
+    pôr(30, 350500, "350500")                         # H trata 30 moradoras dela
+    pôr(50, 350010, "350500")                         # ... 50 de outra cidade de SP
+    pôr(20, 410000, "350500", municipio="OUTRO_ESTADO")  # ... e 20 de outro estado
+    pôr(10, 350500, "350600")                         # 10 moradoras de H se tratam em outro hospital (H2)
+    pôr(40, 350010, "350010")                         # A trata 40 das próprias (ela mandou 50 para H)
+    pôr(60, 350700, "350700", cancer="COLO_UTERO")    # outra cidade, só colo do útero
+    c.execute("CREATE TABLE populacao_mulheres (codigo_ibge TEXT, municipio TEXT, ano INTEGER, populacao INTEGER, fonte TEXT)")
+    c.executemany("INSERT INTO populacao_mulheres VALUES (?, ?, 2022, 50000, 't')",
+                  [("3505005", "Cidade H"), ("3500105", "Cidade A"), ("3507007", "Cidade G")])
+    c.commit()
+    return c
+
+
+pl = ranking_atendimento(banco_polos(), "MAMA", minimo=40)
+por = {r.municipio: r for r in pl.itertuples()}
+checar("O. polos: H trata 100 internações (30 + 50 + 20) e A trata 40; ordem do maior para o menor",
+       list(pl["municipio"]) == ["Cidade H", "Cidade A"] and por["Cidade H"].internacoes == 100)
+checar("O. polos: H = 30% de moradoras, 50% de outras cidades de SP, 20% de outros estados (conta à mão)",
+       abs(por["Cidade H"].pct_da_cidade - 30) < 1e-9 and abs(por["Cidade H"].pct_outras_cidades - 50) < 1e-9
+       and abs(por["Cidade H"].pct_outros_estados - 20) < 1e-9)
+checar("O. polos: razão = trata 100 e as moradoras dela internam 40 (30 em H + 10 em outro hospital) = 2,5 vezes",
+       abs(por["Cidade H"].moradoras - 40) < 1e-9 and abs(por["Cidade H"].razao - 2.5) < 1e-9)
+checar("O. polos: A trata 40 e as moradoras dela internam 90 (40 em A + 50 em H): razão 0,44, ou seja, manda mais do que trata",
+       por["Cidade A"].moradoras == 90 and abs(por["Cidade A"].razao - 40 / 90) < 1e-9)
+checar("O. polos: o mínimo de internações tira as cidades pequenas (padrão 100: só H fica)",
+       list(ranking_atendimento(banco_polos(), "MAMA")["municipio"]) == ["Cidade H"])
+checar("O. polos: por câncer (colo do útero) só aparece a cidade que trata colo, sem misturar com a mama",
+       list(ranking_atendimento(banco_polos(), "COLO_UTERO", minimo=50)["municipio"]) == ["Cidade G"])
+checar("O. polos: banco antigo, sem o município do hospital: vazio, sem erro", ranking_atendimento(banco_polos(com_fluxo=False), "MAMA").empty)
+texto = leitura_atendimento(pl, "MAMA", "Cidade H", 3505005)
+checar("O. leitura: diz 'trata 2,5 vezes', a posição da cidade, que conta o HOSPITAL e que não explica o motivo",
+       "2,5 vezes" in texto and "posição **1** de 2" in texto and "**acontece**" in texto and "não explica o motivo" in texto
+       and "vai " not in texto.lower())
+
 print()
 if falhas:
     print(f"{len(falhas)} checagem(ns) falharam.")

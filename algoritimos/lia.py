@@ -15,6 +15,7 @@ from inteligencia import (
     hospitais_fluxo,
     leitura_cidade,
     leitura_faixas,
+    leitura_atendimento,
     leitura_mortalidade,
     leitura_tratamento,
     resumo_mortalidade,
@@ -71,6 +72,7 @@ class Contexto:
     tratamento: object = None     # inteligencia.carregar_tratamento (None: banco sem quimio e radio do SIA)
     obitos_sim: object = None     # inteligencia.carregar_obitos_sim (None: banco sem a mortalidade do SIM)
     localizacao: object = None    # localizacao.carregar_localizacao (None: banco sem os centros dos municípios)
+    atendimento: object = None    # {câncer ou None: inteligencia.ranking_atendimento} (None: banco sem o município do hospital)
 
 
 # ---------- ações (o que um botão faz) ----------
@@ -624,6 +626,21 @@ def tratamento(ctx, cancer=None):
                     destino={"aba": "Método"})
 
 
+def polos(ctx, cancer=None):
+    """Cidades que mais TRATAM (município do hospital), ao lado do que a população delas tem. Só descreve."""
+    tabelas = getattr(ctx, "atendimento", None) or {}
+    tabela = tabelas.get(cancer) if cancer in tabelas else tabelas.get(None)
+    usado = cancer if cancer in tabelas else None
+    if tabela is None or not len(tabela):
+        return Resposta(
+            fala=("Ainda não consigo mostrar onde as internações acontecem: o banco foi carregado sem o município do hospital. "
+                  "Quando a carga for rodada de novo (py etl\\carga_todas_bases.py), eu passo a mostrar as cidades que mais tratam."),
+            expressao="cautelosa", botoes=[("Mulheres de outros estados", caminho("fluxo"))], destino={"aba": "Investigar"})
+    return Resposta(fala=leitura_atendimento(tabela, usado, ctx.cidade, ctx.codigo_ibge), expressao="explicando",
+                    botoes=[("Mulheres de outros estados", caminho("fluxo")), ("Como esses dados funcionam?", caminho("metodo"))],
+                    destino={"aba": "Investigar"})
+
+
 def mortalidade_real(ctx, cancer=None):
     """Mortes por câncer pelo SIM (dentro e fora do hospital), cruzadas com os óbitos de internação do SIH. Só descreve."""
     if ctx.obitos_sim is None or ctx.obitos_sim.empty:
@@ -638,7 +655,7 @@ def mortalidade_real(ctx, cancer=None):
                     destino={"aba": "Método"})
 
 
-CAMINHOS_FUNCOES = {"tratamento": tratamento, "mortalidade_real": mortalidade_real, "completude": completude, "mais_aparece": mais_aparece, "aumentando": aumentando, "atencao": atencao,
+CAMINHOS_FUNCOES = {"polos": polos, "tratamento": tratamento, "mortalidade_real": mortalidade_real, "completude": completude, "mais_aparece": mais_aparece, "aumentando": aumentando, "atencao": atencao,
                     "valores": valores, "estado": estado, "fluxo": fluxo, "fora_padrao": fora_padrao, "metodo": metodo}
 
 

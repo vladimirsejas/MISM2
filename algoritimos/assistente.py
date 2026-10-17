@@ -18,7 +18,7 @@ from inteligencia import (
     serie_doenca,
     _variacao_pct,
 )
-from lia import INICIO, Resposta, caminho, responder as lia_responder, sobre, tratamento as lia_tratamento, mortalidade_real as lia_mortalidade
+from lia import INICIO, Resposta, caminho, responder as lia_responder, sobre, tratamento as lia_tratamento, mortalidade_real as lia_mortalidade, polos as lia_polos
 
 # =====================================
 # ASSISTENTE DA LIA — a caixa "Pergunte à Lia" (10/2026)
@@ -420,7 +420,7 @@ def _fato_do_ano(ctx, c, ano):
 # ---------- decisão: qual resposta da Lia (ou daqui) serve a cada intenção ----------
 
 POR_CANCER = {"idade"}                      # sem câncer citado, usam o câncer em foco no painel
-USAM_CANCER_SE_CITADO = {"evolucao", "obitos", "valores", "tempo", "estado", "futuro", "idade", "tratamento", "mortalidade_real"}
+USAM_CANCER_SE_CITADO = {"evolucao", "obitos", "valores", "tempo", "estado", "futuro", "idade", "tratamento", "mortalidade_real", "polos"}
 SO_DADOS = {"mais_aparece", "evolucao", "futuro", "obitos", "valores", "tempo", "idade", "estado", "atencao",
             "fora_padrao", "fluxo", "completude", "metodo"}   # as únicas que a IA pode reescrever
 
@@ -447,6 +447,8 @@ def _resposta_base(ctx, intencao, cancer, foco, ano, ia):
         return (_futuro_cancer(ctx, c, ano) if c else _futuro_todos(ctx, ano)), c, nota
     if intencao == "obitos":
         return (lia_responder(ctx, sobre(c, "obitos")) if c else _obitos_todos(ctx)), c, nota
+    if intencao == "polos":
+        return lia_polos(ctx, c), c, nota
     if intencao == "tratamento":
         return lia_tratamento(ctx, c), c, nota
     if intencao == "mortalidade_real":
@@ -670,6 +672,8 @@ def montar(ctx, e, pergunta, foco, perfil="TECNICO", ia=None):
         chave = pedido if pedido in rankings else None  # o câncer citado, ou os 7 somados
         tabela = rankings.get(chave)
         botoes = [("Comparar com outra cidade", acao("comparar_cidades", None, pergunta)),
+                  ("Cidades que mais tratam", caminho("polos")),
+                  ("Mulheres de outros estados", caminho("fluxo")),
                   ("Como esses dados funcionam?", caminho("metodo"))]
         if tabela is not None and len(tabela):  # a população do IBGE está no banco: responde com o ranking de verdade
             base = Resposta(fala=leitura_ranking(tabela, chave, ctx.cidade, ctx.codigo_ibge), expressao="explicando",

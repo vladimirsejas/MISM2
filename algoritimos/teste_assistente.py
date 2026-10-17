@@ -312,6 +312,9 @@ def main():
     checar("7e. o ranking sai dos cálculos: sem número inventado, sem causa, sem 'vai', e continua oferecendo comparar cidades",
            not asst.PROMETE.search(r.fala) and not asst.CAUSA_ATRIBUIDA.search(r.fala)
            and any(rot == "Comparar com outra cidade" for rot, _ in r.botoes))
+    checar("7e. o ranking diz que conta onde a mulher MORA (quem vem de fora se tratar não infla a cidade do hospital) e oferece o fluxo",
+           "moram" not in r.fala.split("Como ler")[0] and "**mora**" in r.fala and "não aumenta" in r.fala
+           and any(rot == "Mulheres de outros estados" for rot, _ in r.botoes))
     r = asst.responder_pergunta(ctx_pop, "quais as cidades que mais têm câncer proporcionalmente?", foco, ia=asst.IA())
     checar("7e. sem citar câncer usa os 7 somados", "os 7 cânceres somados" in r.fala)
     r = asst.responder_pergunta(ctx, "quais as cidades que mais têm câncer de mama proporcionalmente?", foco, ia=asst.IA())
@@ -408,6 +411,23 @@ def main():
     checar("7h. cidade que já tem hospital no catálogo (Araraquara) lista o dela, sem distâncias", "Araraquara" in r.fala and " km" not in r.fala)
     r = asst.responder_pergunta(ctx, "moro em catanduva e preciso de hospital de câncer", foco, ia=asst.IA())
     checar("7h. sem a tabela de localização a Lia não dá distância e continua orientando pela região", " km" not in r.fala and "região" in r.fala)
+
+    # ---- 7i. polos de tratamento: o que as cidades com hospital de referência tratam x o que a população tem ----
+    polos_df = _pd.DataFrame([("354390", "Rio Claro", 300, 70.0, 20.0, 10.0, 200, 1.5, 1), ("350010", "Cidade B", 150, 40.0, 40.0, 20.0, 60, 2.5, 2)],
+                             columns=ti.COLUNAS_POLOS)
+    ctx_pol = Contexto(serie=ctx.serie, cidade="Rio Claro", faixas=ctx.faixas, codigo_ibge=3543907, atendimento={None: polos_df})
+    for q in ("quais as cidades que mais tratam câncer?", "onde mais se tratam as mulheres, quais os polos de tratamento?",
+              "quais as cidades de referência para tratamento de câncer?"):
+        r = asst.responder_pergunta(ctx_pol, q, foco, ia=asst.IA())
+        checar(f"7i. '{q[:45]}...': mostra as cidades que mais tratam (hospital), diz que não é onde mora e o saldo com a população",
+               r.intencao == "polos" and "**acontece**" in r.fala and "vezes" in r.fala and "posição **1**" in r.fala
+               and not asst.PROMETE.search(r.fala) and not asst.CAUSA_ATRIBUIDA.search(r.fala))
+    r = asst.responder_pergunta(ctx, "quais as cidades que mais tratam câncer?", foco, ia=asst.IA())
+    checar("7i. sem o município do hospital no banco, a Lia diz o que falta e não inventa ranking", r.intencao == "polos" and "carga" in r.fala)
+    r = asst.responder_pergunta(ctx_pop, "quais as cidades que mais têm câncer de mama proporcionalmente?", foco, ia=asst.IA())
+    checar("7i. o ranking por população oferece o botão das cidades que mais tratam", any(rot == "Cidades que mais tratam" for rot, _ in r.botoes))
+    r = asst.responder_pergunta(ctx, "onde me trato, moro em Catanduva e tenho câncer de ovário", foco, ia=asst.IA())
+    checar("7i. 'onde me trato' (pessoal) continua sendo hospital da região, não o ranking de polos", r.intencao == "onde_atendida")
 
     # ---- 8. palpites e botões ----
     r = perguntar("me explica o negócio dos números do hospital das moças")

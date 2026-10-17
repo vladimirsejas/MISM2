@@ -20,6 +20,7 @@ from estilo import CSS
 from identidade import regua_cobertura as regua_mism, simbolo as simbolo_mism
 from inteligencia import (
     ranking_municipios,
+    ranking_atendimento,
     carregar_tratamento,
     carregar_obitos_sim,
     ano_atipico_no_estado,
@@ -207,6 +208,24 @@ def localizacao_dos_municipios():
     conn = sqlite3.connect(BANCO)
     try:
         return carregar_localizacao(conn)
+    finally:
+        conn.close()
+
+
+@st.cache_data
+def polos_de_tratamento():
+    """{câncer ou None (os 7 somados): cidades que mais tratam (município do hospital)}. Vazio se o banco não guarda o município do hospital."""
+    conn = sqlite3.connect(BANCO)
+    try:
+        tipos = [r[0] for r in conn.execute("SELECT DISTINCT tipo_cancer FROM internacoes WHERE tipo_cancer IS NOT NULL")]
+        saida = {}
+        for chave in [None] + tipos:
+            tabela = ranking_atendimento(conn, chave, UF_REFERENCIA)
+            if len(tabela):
+                saida[chave] = tabela
+        return saida
+    except sqlite3.Error:
+        return {}
     finally:
         conn.close()
 
@@ -419,7 +438,7 @@ ctx_lia = Contexto(serie=serie, cidade=nome_cidade, faixas=faixas_municipio(ORIG
                    fluxo=fluxo_geral(), fluxo_cidade=fluxo_cidade(ORIGEM, cidade["codigo_ibge"]),
                    codigo_ibge=cidade["codigo_ibge"], ranking=rankings_por_100_mil(),
                    tratamento=tabelas_ambulatorial_e_sim()[0], obitos_sim=tabelas_ambulatorial_e_sim()[1],
-                   localizacao=localizacao_dos_municipios())
+                   localizacao=localizacao_dos_municipios(), atendimento=polos_de_tratamento())
 st.session_state.setdefault("lia", {"cidade": None, "atual": None, "pilha": []})
 lia_estado = st.session_state["lia"]
 if lia_estado["cidade"] != ORIGEM:  # trocou de cidade: a Lia recomeça

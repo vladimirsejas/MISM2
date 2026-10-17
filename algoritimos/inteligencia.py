@@ -2027,9 +2027,11 @@ def leitura_ranking(ranking, cancer, cidade, codigo_ibge, quantas=5):
                       f"{formatar_numero(m.taxa, 1)} por 100 mil mulheres.")
     cabeca = (f"Internações por {quem}, por **100 mil mulheres**, em média por ano, entre as {len(ranking)} cidades de SP com "
               f"{formatar_numero(MIN_MULHERES_RANKING)} mulheres ou mais:")
-    cuidado = ("O que isso mede: internações registradas no SIH/SUS de mulheres que **moram** em cada cidade, divididas pela "
-               "população de mulheres do Censo 2022 (IBGE). **Não é incidência**: também depende de acesso ao hospital e de "
-               "registro, e o Escudo não explica o motivo das diferenças.")
+    cuidado = ("**Como ler:** cada internação conta para a cidade onde a mulher **mora**, não para a cidade do hospital. Quem vem de "
+               "outra cidade ou de outro estado se tratar **não aumenta** a conta da cidade do hospital. E a divisão por 100 mil "
+               "mulheres (população do Censo 2022, IBGE) já tira o efeito do tamanho da cidade. **Não é incidência**: também depende de "
+               "acesso ao hospital e de registro, e o Escudo não explica o motivo das diferenças. Para ver quem vem de fora se tratar, "
+               "use \"Mulheres de outros estados\".")
     return cabeca + "\n\n" + "\n".join(linhas) + "\n\n" + cuidado
 
 
@@ -2193,3 +2195,100 @@ def leitura_mortalidade(resumo, cidade, cancer=None):
     return texto + ("\n\nSIM e SIH medem coisas diferentes: o SIM conta toda morte por câncer como causa básica, em qualquer lugar; o "
                     "SIH só a que acontece durante uma internação. Por isso os números não se subtraem nem se comparam direto, e o "
                     "Escudo não explica a diferença.")
+
+
+# =====================================
+# POLOS DE TRATAMENTO: quantos casos cada cidade TRATA (hospital) x quantos a população dela TEM (residência)
+#
+# O ranking por 100 mil mulheres (acima) conta onde a mulher MORA. Cidades com hospital de referência (Barretos, Jaú, Ribeirão Preto...)
+# tratam muito mais mulheres do que têm, porque recebem de outras cidades e de outros estados. Esta é a outra metade da pergunta: onde as
+# internações acontecem (município do hospital) e quanto delas é de gente de fora. Só descreve; conta internações, não pessoas, e só
+# enxerga hospitais de SP.
+# =====================================
+
+MIN_INTERNACOES_POLO = 100
+COLUNAS_POLOS = ["codigo6", "municipio", "internacoes", "pct_da_cidade", "pct_outras_cidades", "pct_outros_estados",
+                 "moradoras", "razao", "posicao"]
+
+SQL_POLOS = """
+SELECT municipio_hospital AS codigo6,
+       COUNT(*) AS internacoes,
+       SUM(CASE WHEN municipio = 'OUTRO_ESTADO' THEN 1 ELSE 0 END) AS de_outros_estados,
+       SUM(CASE WHEN municipio <> 'OUTRO_ESTADO' AND substr(CAST(codigo_ibge AS TEXT), 1, 6) = municipio_hospital
+                THEN 1 ELSE 0 END) AS da_cidade
+FROM internacoes
+WHERE origem = ? AND municipio_hospital IS NOT NULL{filtro_cancer}
+GROUP BY municipio_hospital
+"""
+
+
+def _nomes_para_ranking(conexao):
+    """codigo6 -> nome do município, da população do IBGE ou, sem ela, dos centros dos municípios; vazio se nenhuma tabela existe."""
+    nomes = {}
+    for sql in ("SELECT substr(CAST(codigo_ibge AS TEXT), 1, 6), municipio FROM populacao_mulheres",
+                "SELECT codigo6, nome FROM municipios_localizacao"):
+        try:
+            for codigo, nome in conexao.execute(sql).fetchall():
+                nomes.setdefault(str(codigo), str(nome))
+        except Exception:
+            continue
+    return nomes
+
+
+def ranking_atendimento(conexao, tipo_cancer=None, uf_referencia="SP", minimo=MIN_INTERNACOES_POLO):
+    """Cidades de SP por internações nos hospitais DELAS (da maior para a menor), com a parcela de moradoras da cidade, de outras cidades
+    de SP e de outros estados, e a razão entre o que o hospital trata e o que as moradoras da cidade internam (em qualquer hospital).
+    DataFrame vazio se o banco não guarda o município do hospital."""
+    vazio = pd.DataFrame(columns=COLUNAS_POLOS)
+    if not _banco_tem_fluxo(conexao):
+        return vazio
+    filtro = " AND tipo_cancer = ?" if tipo_cancer else ""
+    params = (uf_referencia,) + ((tipo_cancer,) if tipo_cancer else ())
+    try:
+        polos = pd.read_sql(SQL_POLOS.format(filtro_cancer=filtro), conexao, params=params)
+        moradoras = pd.read_sql(
+            "SELECT substr(CAST(codigo_ibge AS TEXT), 1, 6) AS codigo6, COUNT(*) AS moradoras FROM internacoes "
+            "WHERE origem = ? AND codigo_ibge IS NOT NULL AND municipio <> 'OUTRO_ESTADO'" + filtro + " GROUP BY codigo6", conexao, params=params)
+    except Exception:
+        return vazio
+    polos = polos[polos["internacoes"] >= minimo].merge(moradoras, how="left", on="codigo6")
+    if polos.empty:
+        return vazio
+    polos["moradoras"] = polos["moradoras"].fillna(0).astype(int)
+    total = polos["internacoes"]
+    polos["pct_da_cidade"] = polos["da_cidade"] / total * 100
+    polos["pct_outros_estados"] = polos["de_outros_estados"] / total * 100
+    polos["pct_outras_cidades"] = 100 - polos["pct_da_cidade"] - polos["pct_outros_estados"]
+    polos["razao"] = polos["internacoes"] / polos["moradoras"].where(polos["moradoras"] > 0)
+    nomes = _nomes_para_ranking(conexao)
+    polos["municipio"] = polos["codigo6"].map(lambda c: nomes.get(str(c), f"município {c}"))
+    polos = polos.sort_values("internacoes", ascending=False).reset_index(drop=True)
+    polos["posicao"] = polos.index + 1
+    return polos[COLUNAS_POLOS]
+
+
+def leitura_atendimento(polos, cancer, cidade, codigo_ibge, quantas=5):
+    """Texto dos polos de tratamento, com a posição da cidade do painel. Só descreve."""
+    quem = cancer_de(cancer) if cancer else "os 7 cânceres somados"
+    linhas = []
+    for r in polos.head(quantas).itertuples():
+        razao = (f"; trata **{formatar_numero(r.razao, 1)} vezes** o que as moradoras da própria cidade internam"
+                 if r.razao == r.razao and r.razao else "")
+        linhas.append(f"{int(r.posicao)}. **{r.municipio}**: {formatar_numero(r.internacoes)} internações; "
+                      f"{formatar_numero(r.pct_da_cidade, 0)}% de moradoras da cidade, {formatar_numero(r.pct_outras_cidades, 0)}% de "
+                      f"outras cidades de SP e {formatar_numero(r.pct_outros_estados, 0)}% de outros estados{razao}.")
+    minha = polos[polos["codigo6"] == str(codigo_ibge)[:6]] if codigo_ibge else polos.iloc[0:0]
+    if len(minha):
+        m = minha.iloc[0]
+        linhas.append(f"\n**{cidade}** está na posição **{int(m.posicao)}** de {len(polos)} cidades, com "
+                      f"{formatar_numero(m.internacoes)} internações em hospitais da cidade.")
+    elif cidade:
+        linhas.append(f"\n{cidade} não aparece: tem menos de {formatar_numero(MIN_INTERNACOES_POLO)} internações por {quem} nos "
+                      "hospitais da cidade no período.")
+    cabeca = (f"Cidades de SP onde **mais se internam** mulheres por {quem}, contando o município do **hospital** (as {len(polos)} com "
+              f"{formatar_numero(MIN_INTERNACOES_POLO)} internações ou mais no período):")
+    cuidado = ("**Como ler:** aqui conta onde a internação **acontece**, e não onde a mulher mora. É por isso que cidades com hospital "
+               "de referência aparecem no alto: recebem de outras cidades e de outros estados. O ranking por 100 mil mulheres faz o "
+               "contrário (conta pela cidade onde ela mora). Os dois juntos mostram a diferença entre os casos da população e os casos "
+               "tratados na cidade. Conta internações, não pessoas, só enxerga hospitais de SP, e o Escudo não explica o motivo das diferenças.")
+    return cabeca + "\n\n" + "\n".join(linhas) + "\n\n" + cuidado

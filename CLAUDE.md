@@ -387,6 +387,15 @@ Estado atual:
   municípios gravados, centro de Rio Claro em (-22,373; -47,580), nomes de campo da API conferidos. **Segurança (teste humano, 17/10/2026):** "meu marido tá me agredindo, me ajuda" virava
   pedido de ajuda genérico, sem 190/180; o padrão de violência agora pega gerúndio, voz passiva e "violência doméstica" (não pega
   "violência sexual" sozinha: essa é consulta do catálogo do Apoio). Testes em `teste_entendimento.py`.
+  **Polos de tratamento (17/10/2026, observação do autor: "tem diferença dos casos da população com os casos tratados nas cidades que
+  têm hospitais de referência"):** o ranking por 100 mil mulheres conta onde a mulher MORA; cidade com hospital de referência (Barretos,
+  Jaú, Ribeirão Preto) trata muito mais do que tem. `inteligencia.ranking_atendimento`/`leitura_atendimento`: cidades por internações nos
+  hospitais DELAS (município do hospital), com % de moradoras da cidade, de outras cidades de SP e de outros estados, e a **razão** entre o
+  que o hospital trata e o que as moradoras da cidade internam em qualquer hospital (mínimo de 100 internações). A fala do ranking por
+  população agora diz "conta onde a mulher mora; quem vem de fora se tratar não aumenta a cidade do hospital" e oferece o botão "Cidades
+  que mais tratam"; o inverso também. Entra por gatilho (`GATILHO_POLOS`, só frases inequívocas de ranking de cidades: "vem de fora
+  tratar" é o assunto `fluxo` que já existia e "centro de referência" aparece em consultas do Apoio). Caminho `lia.polos`, `Contexto.atendimento`.
+  Testes: O em `teste_inteligencia.py` e 7i em `teste_assistente.py`. Falta conferir com o banco real do notebook.
   **Carga robusta (24/09/2026):** a carga antiga apagava a tabela no 1º arquivo
   e parava no 2º que desse erro -- por isso o banco do autor ficou só com colo
   do útero. Agora ela lê e confere os 7 arquivos antes de gravar, um arquivo com
