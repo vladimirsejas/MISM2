@@ -266,6 +266,19 @@ def main():
     checar("7b. composto: botões de cada assunto e um só 'Início'",
            sum(1 for _, a in rc.botoes if a.get("tipo") == "inicio") == 1)
 
+    # ---- 7c. recusa explicativa: ranking ou proporção entre cidades depende da população ----
+    r = perguntar("quais as cidades que mais têm câncer de mama proporcionalmente?")
+    checar("7c. ranking proporcional entre cidades: a Lia diz que falta a população, por que importa e o que dá para ver hoje",
+           (r.tipo, r.intencao) == ("intencao", "sem_dados") and r.fala.startswith(asst.SEM_POPULACAO[:60])
+           and "população de cada cidade" in r.fala and "parcela de cada câncer" in r.fala and not r.usou_ia)
+    checar("7c. a recusa oferece 'Comparar com outra cidade' (o que existe hoje) e não inventa ranking",
+           any(rot == "Comparar com outra cidade" for rot, _ in r.botoes) and "R$" not in r.fala
+           and not any(c.isdigit() for c in asst.SEM_POPULACAO) and not asst.PROMETE.search(asst.SEM_POPULACAO)
+           and not asst.CAUSA_ATRIBUIDA.search(asst.SEM_POPULACAO))
+    r2 = perguntar("qual a raça das mulheres internadas?")
+    checar("7c. outra falta de dado (raça) continua com a recusa geral, sem o texto da população",
+           r2.intencao == "sem_dados" and r2.fala.startswith(asst.SEM_DADOS[:60]) and "proporcionalmente" not in r2.fala)
+
     # ---- 8. palpites e botões ----
     r = perguntar("me explica o negócio dos números do hospital das moças")
     ok_palpites = r.tipo in ("palpites", "fora")

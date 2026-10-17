@@ -217,6 +217,15 @@ EXPLICACAO_SIMPLES = {
 COMO_LER = ("Para ler os números: cada um conta **internações** registradas no SUS (uma mulher pode ter mais de uma), não casos novos "
             "de câncer. O Escudo mostra o que aconteceu, não explica o porquê.")
 
+# Pedido de ranking ou proporção entre cidades: a recusa diz exatamente o que falta (a população) e o que dá para ver hoje.
+SEM_POPULACAO = (
+    "Para dizer quais cidades têm mais casos **proporcionalmente**, eu precisaria da **população de cada cidade**, e ela ainda não "
+    "está no Escudo (é uma das próximas etapas, com dados do IBGE). Sem ela, contar internações favorece as cidades grandes e não "
+    "diz nada sobre o risco de cada mulher.\n\n"
+    "O que consigo mostrar hoje, sem depender do tamanho da cidade: a **parcela de cada câncer**, a **letalidade hospitalar**, o "
+    "**tempo médio de internação** e o **ritmo de crescimento**, comparando a sua cidade com outra.")
+PEDE_PROPORCAO = re.compile(r"proporcion|por habitante|per capita|ranking|em relacao a populacao|numero de habitantes|cidades que mais")
+
 LINK_APOIO = ("🩷 Abrir Apoio à mulher", "pages/apoio.py")
 LINK_ONDE = ("📍 Abrir Onde ser atendida", "pages/onde_ser_atendida.py")
 
@@ -566,6 +575,10 @@ def montar(ctx, e, pergunta, foco, perfil="TECNICO", ia=None):
     if intencao == "mais_aparece" and pedido and e.ano is not None and e.ano <= int(ctx.serie["ano"].max()):
         intencao = "evolucao"  # "quantas internações de mama em 2020?" é sobre aquele câncer e aquele ano
     base, usado, nota = _resposta_base(ctx, intencao, pedido, foco, e.ano, ia)
+    if intencao == "sem_dados" and PEDE_PROPORCAO.search(ent.normalizar(pergunta)):
+        base = Resposta(fala=SEM_POPULACAO, expressao="cautelosa", destino={"aba": "Investigar"},
+                        botoes=[("Comparar com outra cidade", acao("comparar_cidades", None, pergunta)),
+                                ("Como esses dados funcionam?", caminho("metodo"))])
     nota = nota or (nota_foco if usado else None)
     if e.nao_acompanhado:
         nota = (f"Ainda não acompanho o câncer de {e.nao_acompanhado}; mostro os que acompanho. " + (nota or "")).strip()
