@@ -99,7 +99,7 @@ def conferir(linhas):
 
 
 def gravar(linhas, banco=BANCO):
-    conn = sqlite3.connect(banco)
+    conn = sqlite3.connect(banco, timeout=120)  # espera até 2 min se o painel ou outro programa estiver com o banco aberto
     try:
         conn.execute("DROP TABLE IF EXISTS municipios_localizacao")
         conn.execute("""CREATE TABLE municipios_localizacao (codigo_ibge TEXT, codigo6 TEXT, nome TEXT, uf TEXT,

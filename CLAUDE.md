@@ -396,6 +396,10 @@ Estado atual:
   que mais tratam"; o inverso também. Entra por gatilho (`GATILHO_POLOS`, só frases inequívocas de ranking de cidades: "vem de fora
   tratar" é o assunto `fluxo` que já existia e "centro de referência" aparece em consultas do Apoio). Caminho `lia.polos`, `Contexto.atendimento`.
   Testes: O em `teste_inteligencia.py` e 7i em `teste_assistente.py`. Falta conferir com o banco real do notebook.
+  **Carga das bases novas no notebook (17/10/2026):** SIA (29 min) e SIM (3 min) entraram; o CNES falhou com "database is locked" (outro
+  programa, provavelmente o painel, estava com o banco aberto): as gravações dos ETLs agora esperam até 2 min (`timeout=120`). Fechar o
+  painel durante a carga continua sendo o mais seguro. `py etl\validar_bases_novas.py` só LÊ o banco (modo somente leitura) e mostra o
+  que entrou em cada tabela, os anos que faltam, Rio Claro e se raça/cor parece trocada; teste `etl/teste_validar_bases_novas.py`.
   **Carga robusta (24/09/2026):** a carga antiga apagava a tabela no 1º arquivo
   e parava no 2º que desse erro -- por isso o banco do autor ficou só com colo
   do útero. Agora ela lê e confere os 7 arquivos antes de gravar, um arquivo com

@@ -100,7 +100,7 @@ def perfil(bruto, preparado, ano):
 
 
 def gravar(agregado, ano, banco=BANCO):
-    conn = sqlite3.connect(banco)
+    conn = sqlite3.connect(banco, timeout=120)  # espera até 2 min se o painel ou outro programa estiver com o banco aberto
     try:
         conn.execute("""CREATE TABLE IF NOT EXISTS obitos_sim (ano INTEGER, codigo_residencia TEXT, tipo_cancer TEXT, faixa TEXT,
             local_obito TEXT, raca_cor TEXT, obitos INTEGER)""")

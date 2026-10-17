@@ -79,7 +79,7 @@ def perfil(tabela, grupo, ano):
 
 def gravar(tabela, grupo, ano, banco=BANCO):
     nome = TABELAS[grupo]
-    conn = sqlite3.connect(banco)
+    conn = sqlite3.connect(banco, timeout=120)  # espera até 2 min se o painel ou outro programa estiver com o banco aberto
     try:
         if conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (nome,)).fetchone():
             conn.execute(f"DELETE FROM {nome} WHERE ano = ?", (ano,))
