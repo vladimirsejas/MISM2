@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.join(AQUI, "..", "..", "algoritimos"))
 sys.path.insert(0, os.path.join(AQUI, ".."))
 
 import apoio  # noqa: E402
+import apoio_busca  # noqa: E402
 from estilo import CSS  # noqa: E402
 from lia import INICIO  # noqa: E402
 from lia_rosto import img as rosto_lia  # noqa: E402
@@ -137,14 +138,35 @@ def aplicar_destino(destino):
             definir(f"ap_grupo_{lam}", destino.get("grupo") or TODOS[lam])
 
 
-def lia_clicar(acao):
-    resposta = apoio.responder(acao)
+def lia_mostrar(resposta):
     if lia_estado["atual"] is not None:
         lia_estado["pilha"].append(lia_estado["atual"])
     lia_estado["atual"] = resposta
     lia_estado["falas"] += 1
     st.session_state["ap_boas_vindas_fechada"] = True
     aplicar_destino(resposta.destino)
+
+
+def lia_clicar(acao):
+    lia_mostrar(apoio.responder(acao))
+
+
+# Pergunte à Lia no Apoio (algoritimos/apoio_busca.py): a pessoa escreve e a Lia mostra o item do guia.
+# Nenhuma IA escreve sobre serviço (o texto é do catálogo conferido); o Gemini, se ligado, só ajuda a entender
+# a pergunta. As perguntas desta página NÃO são gravadas. Chaves "caixa_ap_*".
+LIMITE_PERGUNTAS_COM_IA = 40
+
+
+def enviar_pergunta(texto=None):
+    texto = (texto if texto is not None else st.session_state.get("caixa_ap_texto") or "").strip()
+    if texto:
+        st.session_state["caixa_ap_pendente"] = texto[:300]
+
+
+def classificador_da_sessao():
+    if st.session_state.get("caixa_ap_ia", 0) >= LIMITE_PERGUNTAS_COM_IA:
+        return None
+    return apoio_busca.obter_classificador()
 
 
 def lia_voltar():
@@ -378,6 +400,15 @@ m2.metric("Informações cadastradas", len(apoio.ITENS))
 m3.metric("Pedem confirmação", pendentes)
 
 # Entrada guiada: poucas escolhas principais; o catálogo completo continua nas abas abaixo.
+_pergunta_pendente = st.session_state.pop("caixa_ap_pendente", None)
+if _pergunta_pendente:
+    with st.spinner("A Lia está procurando no guia..."):
+        _classificador = classificador_da_sessao()
+        _resposta = apoio_busca.responder_pergunta(_pergunta_pendente, classificar=_classificador)
+        if _resposta.origem == "gemini":
+            st.session_state["caixa_ap_ia"] = st.session_state.get("caixa_ap_ia", 0) + 1
+        lia_mostrar(_resposta)
+
 if not st.session_state.get("ap_boas_vindas_fechada"):
     c_rosto, c_fala = st.columns([1, 4.6])
     with c_rosto:
@@ -575,7 +606,11 @@ with st.sidebar:
         if not st.session_state.get("ap_boas_vindas_fechada"):
             st.markdown("Estou ali no centro da tela. Escolha um caminho por lá.")
         else:
+            if getattr(atual, "pergunta", None):
+                st.caption(f"Você perguntou: “{atual.pergunta}”")
             st.markdown(atual.fala)
+            if getattr(atual, "selo", None):
+                st.caption(atual.selo)
             if atual.numeros:
                 with st.expander("Onde a Lia conferiu"):
                     st.markdown("\n".join(f"- {n}" for n in atual.numeros))
@@ -587,6 +622,20 @@ with st.sidebar:
             if lia_estado["pilha"]:
                 c_voltar.button("← Voltar", key="lia_discreto_voltar_ap", on_click=lia_voltar)
             c_inicio.button("Começar de novo", key="lia_discreto_inicio_ap", on_click=lia_clicar, args=(INICIO,))
+    # Pergunte à Lia: junto dela, como no painel
+    st.markdown("**Pergunte à Lia**")
+    with st.form("caixa_ap_form", clear_on_submit=True):
+        st.text_input("Pergunte à Lia", key="caixa_ap_texto", max_chars=300, label_visibility="collapsed",
+                      placeholder="Ex.: onde faço mamografia pelo SUS?")
+        st.form_submit_button("Perguntar", key="caixa_ap_enviar", on_click=enviar_pergunta, use_container_width=True)
+    st.caption("🤖 A IA ajuda a entender a sua pergunta; o texto que aparece é do guia, conferido nas páginas oficiais."
+               if apoio_busca.obter_classificador() else
+               "Busca no guia (a IA de linguagem está desligada). O texto que aparece é do guia, conferido nas páginas oficiais.")
+    with st.expander("Não sabe o que perguntar?"):
+        for n, exemplo in enumerate(["Onde faço mamografia pelo SUS?", "Meu exame deu alterado, e agora?",
+                                     "Quais são os meus direitos?", "Como pedir ajuda em situação de violência?"]):
+            st.button(exemplo, key=f"caixa_ap_exemplo_{n}", on_click=enviar_pergunta, args=(exemplo,), use_container_width=True)
+    st.caption("Não escreva dados pessoais. As perguntas desta página não são guardadas.")
     st.divider()
     botao_inicio(st.sidebar, "lateral")
 

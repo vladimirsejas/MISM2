@@ -48,6 +48,9 @@ jobs:
       - name: Assistente da Lia (Gemini simulado, conferência do texto, segurança)
         working-directory: algoritimos
         run: python teste_assistente.py
+      - name: Pergunte à Lia no Apoio à mulher (busca no catálogo, segurança, sem gravar)
+        working-directory: algoritimos
+        run: python teste_apoio_busca.py
       - name: Carga e ferramentas do ETL
         working-directory: etl
         run: |

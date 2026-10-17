@@ -1,0 +1,691 @@
+[
+ {
+  "pergunta": "onde faço mamografia de graça?",
+  "tipo": "itens",
+  "aceitaveis": [
+   "mulheres_de_peito",
+   "rc_central_vagas",
+   "carretas_estado",
+   "caminho_do_exame",
+   "rc_ame"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "a carreta da mamografia vai passar em rio claro?",
+  "tipo": "itens",
+  "aceitaveis": [
+   "rc_carreta_hospital_de_amor",
+   "carretas_estado"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quero fazer o preventivo",
+  "tipo": "itens",
+  "aceitaveis": [
+   "colo_utero",
+   "rc_unidades"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "como tomo a vacina do HPV",
+  "tipo": "itens",
+  "aceitaveis": [
+   "vacina_hpv"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "minha mamografia veio com BI-RADS 4, e agora?",
+  "tipo": "itens",
+  "aceitaveis": [
+   "mamografia_alterada"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "meu papanicolau deu alterado",
+  "tipo": "itens",
+  "aceitaveis": [
+   "preventivo_alterado"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "tenho direito de começar o tratamento em quanto tempo?",
+  "tipo": "itens",
+  "aceitaveis": [
+   "lei_60_dias"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quanto tempo para fazer os exames de diagnóstico?",
+  "tipo": "itens",
+  "aceitaveis": [
+   "lei_30_dias"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "não aparece meu nome na lista de espera",
+  "tipo": "itens",
+  "aceitaveis": [
+   "nao_achei_nome",
+   "lista_regulacao"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "como vejo a fila da regulação",
+  "tipo": "itens",
+  "aceitaveis": [
+   "lista_regulacao",
+   "nao_achei_nome"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "onde posso me tratar de câncer por aqui",
+  "tipo": "itens",
+  "aceitaveis": [
+   "rc_santa_casa",
+   "rede_oncologica",
+   "fosp_hospitais_sus",
+   "inca_onde_tratar",
+   "santa_casa_piracicaba"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "posso sacar o FGTS por causa do câncer?",
+  "tipo": "itens",
+  "aceitaveis": [
+   "fgts_pis"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "como consigo transporte para ir ao tratamento em outra cidade",
+  "tipo": "itens",
+  "aceitaveis": [
+   "tfd",
+   "como_chegar_cross"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "reconstrução da mama pelo SUS",
+  "tipo": "itens",
+  "aceitaveis": [
+   "reconstrucao_mamaria",
+   "ha_mastologia"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "preciso ligar para denunciar violência",
+  "tipo": "itens",
+  "aceitaveis": [
+   "ligue_180",
+   "delegacia_eletronica",
+   "ddm_estado",
+   "rc_ddm"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "tem delegacia da mulher em rio claro?",
+  "tipo": "itens",
+  "aceitaveis": [
+   "rc_ddm",
+   "ddm_estado"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "como funciona o hospital de amor de barretos",
+  "tipo": "itens",
+  "aceitaveis": [
+   "ha_quem_e",
+   "ha_unidades",
+   "ha_primeiro_atendimento"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "auxílio doença para quem tem câncer",
+  "tipo": "itens",
+  "aceitaveis": [
+   "auxilio_inss",
+   "cartilha_inca"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "peruca para quem faz quimio",
+  "tipo": "itens",
+  "aceitaveis": [
+   "rc_perucas",
+   "rede_feminina",
+   "rc_rede_feminina"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "onde fica o CRAM",
+  "tipo": "itens",
+  "aceitaveis": [
+   "rc_cram"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quais são os direitos de quem tem câncer",
+  "tipo": "itens",
+  "aceitaveis": [
+   "cartilha_inca",
+   "auxilio_inss",
+   "fgts_pis",
+   "tfd"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "o que é UNACON",
+  "tipo": "itens",
+  "aceitaveis": [
+   "rc_santa_casa",
+   "rede_oncologica"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "mamografia em campinas",
+  "tipo": "itens",
+  "aceitaveis": [
+   "campinas_craim"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "mamografia em piracicaba",
+  "tipo": "itens",
+  "aceitaveis": [
+   "piracicaba_cesm"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "defensoria pública para mulheres",
+  "tipo": "itens",
+  "aceitaveis": [
+   "defensoria_nudem"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "atendimento hospitalar para violência sexual",
+  "tipo": "itens",
+  "aceitaveis": [
+   "violencia_sexual_24h"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "aplicativo de segurança para mulher",
+  "tipo": "itens",
+  "aceitaveis": [
+   "sp_mulher_segura"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "ainda não fiz nenhum exame, por onde começo",
+  "tipo": "itens",
+  "aceitaveis": [
+   "caminho_do_exame",
+   "colo_utero",
+   "mulheres_de_peito"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "hospital de referência em oncologia perto de piracicaba",
+  "tipo": "itens",
+  "aceitaveis": [
+   "santa_casa_piracicaba",
+   "fornecedores_cana",
+   "rede_oncologica",
+   "hc_unicamp",
+   "caism_unicamp"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quero ajudar a rede feminina",
+  "tipo": "itens",
+  "aceitaveis": [
+   "rede_feminina",
+   "rc_rede_feminina"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "meu filho tem câncer, tem algum apoio aqui",
+  "tipo": "itens",
+  "aceitaveis": [
+   "rc_gacc"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "mastologista pelo sus",
+  "tipo": "itens",
+  "aceitaveis": [
+   "ha_mastologia",
+   "caminho_do_exame",
+   "rc_ame",
+   "ames_estado"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "consulta com especialista no AME",
+  "tipo": "itens",
+  "aceitaveis": [
+   "rc_ame",
+   "ames_estado"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quero agendar mamografia pelo 0800",
+  "tipo": "itens",
+  "aceitaveis": [
+   "mulheres_de_peito"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "o que é busca ativa do colo do útero",
+  "tipo": "itens",
+  "aceitaveis": [
+   "ha_colo_busca_ativa"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "autocoleta de HPV",
+  "tipo": "itens",
+  "aceitaveis": [
+   "ha_pesquisa_hpv"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "casa da mulher brasileira",
+  "tipo": "itens",
+  "aceitaveis": [
+   "casa_mulher_brasileira",
+   "casas_mulher_paulista"
+  ],
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "meu marido me bate",
+  "tipo": "risco",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quero morrer",
+  "tipo": "risco",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "estou passando mal",
+  "tipo": "risco",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "oi",
+  "tipo": "saudacao",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "boa tarde",
+  "tipo": "saudacao",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "senti um caroço no peito",
+  "tipo": "sintoma",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "qual a previsão do tempo",
+  "tipo": "fora",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "receita de bolo de cenoura",
+  "tipo": "fora",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quanto custa um carro",
+  "tipo": "fora",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quem ganhou o jogo",
+  "tipo": "fora",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "qnd e onde vai ter carreta de mamografia",
+  "tipo": "itens",
+  "aceitaveis": [
+   "carretas_estado",
+   "rc_carreta_hospital_de_amor"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "preciso fazer mamografia mas não tenho pedido médico",
+  "tipo": "itens",
+  "aceitaveis": [
+   "mulheres_de_peito",
+   "rc_central_vagas",
+   "caminho_do_exame"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "tenho 55 anos e nunca fiz mamografia",
+  "tipo": "itens",
+  "aceitaveis": [
+   "mulheres_de_peito",
+   "caminho_do_exame"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "exame de colo do útero a partir de que idade",
+  "tipo": "itens",
+  "aceitaveis": [
+   "colo_utero"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "minha filha de 12 anos pode tomar a vacina contra hpv",
+  "tipo": "itens",
+  "aceitaveis": [
+   "vacina_hpv"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "o laudo da mamografia disse birads 3",
+  "tipo": "itens",
+  "aceitaveis": [
+   "mamografia_alterada"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "fiz papanicolau e pediram colposcopia",
+  "tipo": "itens",
+  "aceitaveis": [
+   "preventivo_alterado"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "o médico demora pra me mandar pro especialista, tem lei?",
+  "tipo": "itens",
+  "aceitaveis": [
+   "lei_30_dias",
+   "lei_60_dias",
+   "nao_achei_nome"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "fui encaminhada pra oncologia e ninguém me chamou",
+  "tipo": "itens",
+  "aceitaveis": [
+   "nao_achei_nome",
+   "lista_regulacao"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "quanto tempo o sus tem para iniciar quimioterapia",
+  "tipo": "itens",
+  "aceitaveis": [
+   "lei_60_dias"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "quais hospitais de sp tratam cancer pelo sus",
+  "tipo": "itens",
+  "aceitaveis": [
+   "fosp_hospitais_sus",
+   "rede_oncologica",
+   "inca_onde_tratar"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "dá pra usar o PIS por estar com câncer",
+  "tipo": "itens",
+  "aceitaveis": [
+   "fgts_pis"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "quem tem câncer paga imposto de renda",
+  "tipo": "itens",
+  "aceitaveis": [
+   "auxilio_inss"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "tfd o que é",
+  "tipo": "itens",
+  "aceitaveis": [
+   "tfd"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "preciso refazer o seio depois da cirurgia",
+  "tipo": "itens",
+  "aceitaveis": [
+   "reconstrucao_mamaria"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "como pedir medida protetiva",
+  "tipo": "itens",
+  "aceitaveis": [
+   "defensoria_nudem",
+   "ddm_estado",
+   "rc_ddm",
+   "rc_patrulha",
+   "delegacia_eletronica"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "a guarda municipal acompanha mulher ameaçada",
+  "tipo": "itens",
+  "aceitaveis": [
+   "rc_patrulha"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "hospital de amor tem carreta?",
+  "tipo": "itens",
+  "aceitaveis": [
+   "ha_moveis",
+   "rc_carreta_hospital_de_amor"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "onde é o atendimento oncológico em rio claro",
+  "tipo": "itens",
+  "aceitaveis": [
+   "rc_santa_casa"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "consulta com ginecologista pelo posto de saúde",
+  "tipo": "itens",
+  "aceitaveis": [
+   "rc_unidades",
+   "rc_cadu_agendamento",
+   "caminho_do_exame"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "marcar exame pelo cadu",
+  "tipo": "itens",
+  "aceitaveis": [
+   "rc_cadu_agendamento"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "minha mãe está em tratamento e precisa de apoio",
+  "tipo": "itens",
+  "aceitaveis": [
+   "rede_feminina",
+   "rc_rede_feminina"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "qual a diferença entre papanicolau e teste de hpv",
+  "tipo": "itens",
+  "aceitaveis": [
+   "colo_utero"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "unidade de saúde da família perto de mim",
+  "tipo": "itens",
+  "aceitaveis": [
+   "rc_unidades"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "mamografia pela prefeitura de ribeirão",
+  "tipo": "itens",
+  "aceitaveis": [
+   "ribeirao_agendamento"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "centro de referência da saúde da mulher mater",
+  "tipo": "itens",
+  "aceitaveis": [
+   "mater_ribeirao"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "como ser atendida no hospital do câncer de barretos",
+  "tipo": "itens",
+  "aceitaveis": [
+   "ha_primeiro_atendimento",
+   "ha_quem_e"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "o que é a rras 13",
+  "tipo": "itens",
+  "aceitaveis": [
+   "ha_rras13"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "pesquisa científica do hospital de amor",
+  "tipo": "itens",
+  "aceitaveis": [
+   "ha_iep",
+   "ha_pesquisa_hpv"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "icesp atende pelo sus?",
+  "tipo": "itens",
+  "aceitaveis": [
+   "icesp"
+  ],
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "ele me bateu ontem de novo",
+  "tipo": "risco",
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "meu companheiro me ameaçou",
+  "tipo": "risco",
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "minha tia desmaiou aqui",
+  "tipo": "risco",
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "ola lia bom dia",
+  "tipo": "saudacao",
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "estou com sangramento depois da menopausa",
+  "tipo": "sintoma",
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "apareceu um nódulo na minha mama",
+  "tipo": "sintoma",
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "que filme você recomenda",
+  "tipo": "fora",
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "qual o melhor celular",
+  "tipo": "fora",
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "como declarar imposto de renda",
+  "tipo": "fora",
+  "conjunto": "final"
+ }
+]

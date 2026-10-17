@@ -315,6 +315,7 @@ class Indice:
 
     def __init__(self, intencoes):
         self.ids, self.frases = [], []
+        self.todos = [item["id"] for item in intencoes]  # o universo deste índice (o do Escudo, o do Apoio...)
         for item in intencoes:
             for frase in item["frases"]:
                 self.ids.append(item["id"])
@@ -339,14 +340,14 @@ class Indice:
         qp = _tfidf(Counter(fichas(pergunta)), self.idf_p)
         qc = _tfidf(Counter(trechos(pergunta)), self.idf_c)
         if not qp and not qc:
-            return {i: 0.0 for i in IDS + ["fora"]}
-        melhor = {i: 0.0 for i in IDS + ["fora"]}
+            return {i: 0.0 for i in self.todos}
+        melhor = {i: 0.0 for i in self.todos}
         for i, fp, fc in zip(self.ids, self.frase_p, self.frase_c):
             nota = self.PESO_PALAVRAS * _cos(qp, fp) + (1 - self.PESO_PALAVRAS) * _cos(qc, fc)
             if nota > melhor[i]:
                 melhor[i] = nota
         saida = {}
-        for i in IDS + ["fora"]:
+        for i in self.todos:
             inteira = self.PESO_PALAVRAS * _cos(qp, self.doc_p[i]) + (1 - self.PESO_PALAVRAS) * _cos(qc, self.doc_c[i])
             saida[i] = self.PESO_FRASE * melhor[i] + (1 - self.PESO_FRASE) * inteira
         return saida

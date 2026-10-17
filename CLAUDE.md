@@ -388,8 +388,18 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   `py algoritimos\teste_entendimento.py --com-gemini`; o painel com o banco real. Os testes na nuvem
   usam a base pública de Rio Claro e um Gemini simulado. Testes: `teste_previsao.py`,
   `teste_entendimento.py`, `teste_assistente.py` e o cenário I de `dashboard/teste_painel.py`.
-- Ainda não feito (combinar): caixa na lâmina Apoio à mulher (catálogo de 75 itens como destinos
-  do mesmo motor); população do IBGE; testar com pessoas de verdade.
+- **Pergunte à Lia no Apoio à mulher (10/2026, preparada na branch `claude/tender-fermat-7n7ien`,
+  NÃO enviada ao `main` até o autor ver):** `algoritimos/apoio_busca.py` + caixa na lateral de
+  `dashboard/pages/apoio.py` (chaves `caixa_ap_*`). Aqui quem pergunta PROCURA cuidado, então: **nenhuma IA
+  escreve sobre serviço** (o texto é do catálogo conferido, com aviso e link oficial); o motor só escolhe o
+  item (mesmo `entendimento.Indice`, agora com universo próprio: palavras + letras sobre os 81 itens); com
+  dúvida mostra até 3 candidatos em botões; o Gemini (se ligado) só escolhe uma PORTA ou LÂMINA numa lista
+  fechada; segurança e sintoma = texto fixo; **as perguntas do Apoio NÃO são gravadas** (nem no banco).
+  Gabarito `gabarito_apoio.json` (86 perguntas, desenvolvimento e final); testes `teste_apoio_busca.py` e
+  o cenário F de `dashboard/teste_apoio_tela.py`. O conjunto final já foi medido e corrigido: para medir de
+  novo, escrever um conjunto novo às cegas. Nada do Gemini real foi comprovado.
+- Ainda não feito (combinar): população do IBGE; testar com pessoas de verdade; revisar com o autor o
+  vocabulário popular do Apoio (`apoio_busca.VOCABULARIO`/`EXTRA`).
 
 ## Notas de contexto do domínio
 

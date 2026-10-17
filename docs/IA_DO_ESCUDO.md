@@ -118,3 +118,13 @@ A nuvem onde isto foi feito não tem a chave do Gemini, o banco real nem o Windo
 | A caixa com pessoas de verdade | Teste de usabilidade com colegas e gestores; guardar as perguntas (as que não são relato pessoal ficam em `perguntas_usuarios`) para ampliar o vocabulário |
 
 Custo e limites operacionais: cada pergunta usa até 2 chamadas ao Gemini (entender, se as regras não bastarem, e redigir); há limite de 40 perguntas com IA por sessão; o prazo de espera por chamada é de 25 s; sem a chave o Escudo funciona inteiro.
+
+## 7. A caixa no Apoio à mulher (preparada em 17/10/2026, ainda não enviada ao `main`)
+
+A página Apoio é para quem **procura cuidado**, então o desenho é mais cauteloso que o do painel de gestão:
+- **Nenhuma IA escreve sobre serviço.** Telefone, prazo, regra e endereço saem do catálogo conferido (`apoio.py`, 81 itens, fonte oficial, data, "a confirmar"). O motor (`apoio_busca.py`) só escolhe qual item mostrar, com a mesma busca por palavras e letras do painel.
+- Confiança alta: o cartão do item, idêntico ao do clique. Dúvida: até 3 candidatos em botões. Nada parecido: "não encontrei no guia" e as portas. Resposta direta errada é a exceção que mais importa.
+- O Gemini, se ligado, só escolhe uma porta ou lâmina numa lista fechada (segunda chance de entender); o selo diz "o texto é do guia, não da IA".
+- Segurança (violência, risco de vida, emergência) e sintoma pessoal: texto fixo, sem IA. As perguntas do Apoio não são gravadas em lugar nenhum (o teste prova que a página não abre o banco).
+
+**Medição** (`gabarito_apoio.json`, 86 perguntas escritas antes do motor; `py algoritimos\teste_apoio_busca.py`). Primeira execução, sem ajuste: desenvolvimento 12 de 37 diretas e corretas, 0 erradas; **final, às cegas: 19 de 30 (63%), 0 erradas, o item certo entre os 3 primeiros em 29 de 30**, segurança/saudação/sintoma 5 de 6, fora do assunto 2 de 3. Depois dos ajustes: 26 de 37 e 21 de 30 (70%), 0 erradas — o final **já não é independente**. Limites: perguntas da equipe, não de usuárias; vocabulário popular do Apoio precisa da revisão do autor; "como declarar imposto de renda" encontra o item de isenção do IR para quem tem câncer (aceitável no contexto, mas conta como não recusada no gabarito).

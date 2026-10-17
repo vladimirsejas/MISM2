@@ -174,6 +174,89 @@ at.session_state["aba"] = "Evolução"  # o painel tinha ficado noutra aba
 botao(at, "inicio_topo").click().run()
 checar("E. Início marca o Panorama no painel", not erros(at) and at.session_state["aba"] == "Panorama")
 
+# ---------- F. Pergunte à Lia no Apoio (caixa de texto na lateral) ----------
+import sqlite3  # noqa: E402
+import apoio_busca  # noqa: E402
+
+
+def perguntar_no_apoio(at, texto):
+    at.text_input(key="caixa_ap_texto").set_value(texto)
+    botao(at, "caixa_ap_enviar").click().run()
+
+
+def lateral(at):
+    return " ".join(str(c.value) for c in at.sidebar.caption) + " " + " ".join(str(m.value) for m in at.sidebar.markdown)
+
+
+abriu_banco = []
+sqlite_original = sqlite3.connect
+sqlite3.connect = lambda *a, **k: (abriu_banco.append(a), sqlite_original(*a, **k))[1]
+try:
+    at = abrir()
+    at.button(key="bv_ap_ajuda").click().run() if botao(at, "bv_ap_ajuda") is not None else None
+    checar("F. a caixa 'Pergunte à Lia' está na lateral do Apoio, junto da Lia, e avisa que as perguntas não são guardadas",
+           not erros(at) and at.text_input(key="caixa_ap_texto") is not None and "Pergunte à Lia" in lateral(at)
+           and "não são guardadas" in lateral(at))
+    checar("F. sem chave do Gemini a caixa diz que a IA está desligada e que o texto é do guia", "desligada" in lateral(at))
+
+    perguntar_no_apoio(at, "como funciona a carreta da mamografia?")
+    atual = at.session_state["ap_lia"]["atual"]
+    checar("F. pergunta escrita: a Lia mostra o item do guia (carretas), com a pergunta, o selo 'nenhuma IA' e o painel na lâmina certa",
+           not erros(at) and atual.tipo in ("itens", "palpites") and ("carretas_estado" in atual.candidatos or "rc_carreta_hospital_de_amor" in atual.candidatos)
+           and "Você perguntou" in lateral(at) and "Nenhuma IA escreveu" in lateral(at))
+    if atual.tipo == "palpites":
+        botoes = botoes_lia(at)
+        botoes[0].click().run()
+        atual = at.session_state["ap_lia"]["atual"]
+    checar("F. o cartão do item aparece com o aviso de conferência e o botão da página oficial",
+           not erros(at) and apoio.AVISO in lateral(at) + " ".join(str(m.value) for m in at.markdown) and "Abrir a página oficial" in lateral(at))
+
+    perguntar_no_apoio(at, "meu marido me bate")
+    atual = at.session_state["ap_lia"]["atual"]
+    checar("F. segurança: 190 e 180, o canal Ligue 180 em botão, e a página vai para 'Preciso de ajuda'",
+           not erros(at) and atual.tipo == "risco" and "190" in atual.fala and "180" in atual.fala
+           and any("Ligue 180" in b.label for b in botoes_lia(at)) and at.session_state["ap_caminho"] == "ajuda")
+
+    perguntar_no_apoio(at, "senti um caroço no peito")
+    checar("F. sintoma pessoal: texto fixo sem diagnóstico", "Eu não faço diagnóstico" in at.session_state["ap_lia"]["atual"].fala)
+
+    antes = at.session_state["ap_lia"]["atual"]
+    perguntar_no_apoio(at, "   ")
+    checar("F. enviar vazio não faz nada e não quebra", not erros(at) and at.session_state["ap_lia"]["atual"] is antes)
+
+    perguntar_no_apoio(at, "qual a previsão do tempo")
+    checar("F. fora do assunto: diz que não achou e mostra as portas de novo", not erros(at) and at.session_state["ap_lia"]["atual"].tipo == "nada"
+           and len(botoes_lia(at)) >= 8)
+
+    at.button(key="caixa_ap_exemplo_0").click().run()
+    checar("F. botão de exemplo ('Onde faço mamografia pelo SUS?') responde sem digitar",
+           not erros(at) and at.session_state["ap_lia"]["atual"].tipo in ("itens", "palpites"))
+
+    at.button(key="lia_discreto_voltar_ap").click().run()
+    checar("F. '← Voltar' continua funcionando depois de perguntas", not erros(at))
+
+    # com o Gemini (simulado): só ajuda a entender; o texto continua sendo do guia
+    recebidos = []
+    original = apoio_busca.obter_classificador
+    apoio_busca.obter_classificador = lambda: (lambda p, o, contexto=None, com_cancer=True: recebidos.append(p) or {"intencao": "mama"})
+    try:
+        at = abrir()
+        checar("F. com o Gemini ligado a caixa diz que a IA ajuda a entender", "ajuda a entender" in lateral(at))
+        perguntar_no_apoio(at, "xyzzy plugh")
+        atual = at.session_state["ap_lia"]["atual"]
+        checar("F. Gemini escolheu a porta: o texto é o do guia e o selo diz que não é da IA",
+               not erros(at) and atual.origem == "gemini" and recebidos == ["xyzzy plugh"] and apoio.responder(apoio.caminho("mama")).fala in atual.fala
+               and "não da IA" in lateral(at))
+        at.session_state["caixa_ap_ia"] = 40
+        perguntar_no_apoio(at, "xyzzy plugh dois")
+        checar("F. passou do limite de perguntas com IA na sessão: segue só com a busca", recebidos == ["xyzzy plugh"]
+               and at.session_state["ap_lia"]["atual"].tipo == "nada")
+    finally:
+        apoio_busca.obter_classificador = original
+finally:
+    sqlite3.connect = sqlite_original
+checar("F. a página do Apoio não abriu banco de dados em nenhum momento (perguntas não são gravadas)", abriu_banco == [])
+
 print(f"\n({time.time() - inicio:.0f} s)")
 print("Todas as checagens da lâmina de apoio passaram." if not falhas else f"{len(falhas)} falha(s).")
 sys.exit(1 if falhas else 0)
