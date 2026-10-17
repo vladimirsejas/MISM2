@@ -533,7 +533,8 @@ def _idade(ctx, c):
                         botoes=_mais(c, "evolucao"), destino={"aba": "Investigar", "cancer": c})
     frases = leitura_faixas(tabela, periodos)
     return Resposta(fala=f"Comparei a idade das mulheres internadas por {cancer_de(c)} em {periodos[0]} e "
-                         f"{periodos[1]}. " + " ".join(frases),
+                         f"{periodos[1]}. " + " ".join(frases)
+                         + " Esta é a idade na **internação**, não a idade em que o câncer foi descoberto: o Escudo não tem o diagnóstico.",
                     expressao="cautelosa" if len(frases) > 1 else "explicando",
                     botoes=_mais(c, "evolucao", "obitos"),
                     destino={"aba": "Investigar", "cancer": c})
