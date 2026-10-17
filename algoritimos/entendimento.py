@@ -296,6 +296,8 @@ ROTULOS = {
     "onde_atendida": "Onde ser atendida", "apoio": "Apoio à mulher", "sintoma": "Estou com um sintoma",
     "ajuda": "O que posso perguntar?", "causa": "Por que mudou?", "sem_dados": "O que os dados não têm",
 }
+ROTULOS_POR_GATILHO = {"tratamento": "Quimio e radioterapia", "mortalidade_real": "Mortes por câncer (todas)"}  # fora do índice (ver _por_gatilho)
+ROTULOS_TODOS = {**ROTULOS, **ROTULOS_POR_GATILHO}
 
 
 # ---------- índice (palavras + letras) ----------
@@ -488,7 +490,7 @@ class Entendimento:
 
 # Assuntos de dados: os únicos que têm uma explicação simples (os de texto fixo já são texto fixo).
 COM_NUMEROS = {"mais_aparece", "evolucao", "futuro", "obitos", "valores", "tempo", "idade", "estado", "atencao",
-               "fora_padrao", "fluxo", "completude", "metodo"}
+               "fora_padrao", "fluxo", "completude", "metodo", "tratamento", "mortalidade_real"}
 # Pares que cabem juntos numa resposta segura. Outras combinações continuam virando palpites para a pessoa escolher.
 PARES_SEGUROS = {frozenset(p) for p in (("evolucao", "futuro"), ("obitos", "valores"), ("evolucao", "estado"))}
 CONFUSAO = re.compile(r"^(eu )?(nao entendi|nao compreendi|nao ficou claro|como assim|nao sei o que (isso )?quer dizer)\b")
@@ -549,6 +551,27 @@ def sem_nomes_de_cidade(pergunta, cidade=None, outras=()):
     return texto.strip(), citou_outra
 
 
+# Dois assuntos que entram só por gatilho explícito (não pelo índice de palavras): "morrem de câncer" e "quantas mulheres" são frases
+# de óbitos e de internações, e um vocabulário compartilhado tiraria acertos dos assuntos antigos (medido: 6 perguntas mudavam).
+# tratamento = quimio/radio ambulatoriais (SIA); mortalidade_real = mortes por câncer em qualquer lugar (SIM).
+GATILHO_TRATAMENTO = re.compile(r"\b(quimio\w*|radio(terapia)?|apacs?|ambulatorial)\b")
+CONTA_TRATAMENTO = re.compile(r"\b(quantas|quantos|volume|numero de|total de|sessoes|estagio|estadiamento|raca|cor)\b")
+PESSOAL_TRATAMENTO = re.compile(r"\b(minha|meu|vou|vai comecar|cobre|direito\w*|peruca|onde (fazer|faco)|preciso|medo|dor|efeito\w*)\b")
+GATILHO_MORTES = re.compile(r"\b(fora do hospital|em casa|via publica|na rua|declaracao de obito|todos os lugares|mortalidade real|"
+                            r"dentro e fora|(pelo|no|do) sim)\b")
+PALAVRA_MORTE = re.compile(r"\b(morr\w+|obito\w*|mort\w+|mortalidade)\b")
+
+
+def _por_gatilho(texto):
+    """'tratamento' ou 'mortalidade_real' quando a pergunta traz o gatilho dele; None nos outros casos."""
+    norm = normalizar(texto)
+    if GATILHO_TRATAMENTO.search(norm) and CONTA_TRATAMENTO.search(norm) and not PESSOAL_TRATAMENTO.search(norm):
+        return "tratamento"
+    if GATILHO_MORTES.search(norm) and PALAVRA_MORTE.search(norm):
+        return "mortalidade_real"
+    return None
+
+
 def compreender(pergunta, disponiveis=None, memoria=None, classificar=None, cidade=None, outras_cidades=(),
                 ano_dados=None):
     """Entende a pergunta. `disponiveis`: cânceres que a cidade tem. `memoria`:
@@ -587,6 +610,9 @@ def compreender(pergunta, disponiveis=None, memoria=None, classificar=None, cida
                             **{**base, "cancer": memoria.get("cancer")})
     if _pede_comparar_canceres(texto, base, ano):
         return Entendimento("intencao", intencao="mais_aparece", origem="comparar_canceres", **base)
+    gatilho = _por_gatilho(texto)
+    if gatilho:
+        return Entendimento("intencao", intencao=gatilho, origem="regras", **base)
     nota_fora = notas.pop("fora")
     ordem = sorted(notas.items(), key=lambda kv: -kv[1])
     (primeira, n1), (_, n2) = ordem[0], ordem[1]

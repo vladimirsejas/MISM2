@@ -359,6 +359,23 @@ Estado atual:
   `etl/teste_baixar_sia_oncologia.py`. As colunas reais (AP_SEXO, AP_CIDPRI, AP_MUNPCN, AP_NUIDADE, AP_RACACOR, AQ_ESTADI/AR_ESTADI) vieram
   do `explorar_pysus --amostra`; falta usar a tabela em `inteligencia.py` e na Lia depois de conferir o perfil. O SIM se oferece sem grupo
   (`Mortalidade_Geral_ANO` e `DO<UF><ANO>`). CNES EQ (TIPEQUIP, CODEQUIP, QT_EXIST) e LT (TP_LEITO, CODLEITO, QT_SUS) têm as colunas.
+  **Tudo de uma vez (17/10/2026, o autor decidiu baixar tudo):** UM comando, sem `.bat` novo: `py -3.12 etl\carregar_tudo_pysus.py`
+  (`--so populacao|sia|sim|cnes` para uma etapa). Cada etapa é isolada (uma falha não derruba as outras) e o fim mostra o resumo e os
+  blocos PERFIL, que o autor cola no chat para conferir códigos (sexo, raça/cor, estadiamento, equipamentos). ETLs: `baixar_sia_oncologia.py`
+  (`oncologia_ambulatorial`, 2013-2025), `baixar_sim_obitos.py` (`obitos_sim`: ano, residência, câncer, faixa, local do óbito, raça/cor;
+  usa `DOSP<ano>`) e `baixar_cnes_capacidade.py` (`cnes_equipamentos` e `cnes_leitos`, dezembro de cada ano, **códigos crus**: o
+  Escudo AINDA NÃO nomeia "mamógrafo" nem "leito oncológico", falta o dicionário do CNES, então o CNES não entrou na Lia). Raça/cor
+  tem códigos diferentes no SIA (03 parda, 04 amarela) e no SIM (4 parda, 3 amarela): `alerta_raca` avisa no PERFIL se parecerem
+  trocados. Só agregados vão ao banco. Teste: `etl/teste_baixar_sim_cnes.py` (PySUS simulado). **Na Lia:** dois assuntos novos,
+  `tratamento` (quimio/radio por APAC, nunca "mulheres"; estadiamento e raça/cor só informados x não, sem nomear estágio) e
+  `mortalidade_real` (SIM x SIH: "não se subtraem"), com `inteligencia.resumo_/leitura_tratamento` e `resumo_/leitura_mortalidade`.
+  **Entram só por gatilho** (`entendimento._por_gatilho`), não pelo índice: pondo as frases no índice, 6 perguntas dos gabaritos
+  mudavam de resposta (medido); por gatilho as medições ficaram idênticas (80/47/33). Sem as tabelas, a Lia diz o que falta e como
+  trazer. Teste 7g de `teste_assistente.py`. **Hospital de câncer + cidade citada (teste humano, 17/10/2026, Catanduva):**
+  `assistente._hospital_de_cancer`: hospital de câncer pelo SUS não se escolhe por proximidade nem pela cidade do painel (Rio Claro é o
+  centro do trabalho, os hospitais ficam fora); a cidade que a pessoa diz ("moro em X", "perto de X") vale mais que a do painel, mostra
+  os hospitais do catálogo ligados a ela, e sem eles aponta a lâmina Hospitais no Estado e como descobrir a DRS (**o Escudo não tem a
+  lista cidade -> região e prefere não chutar**). Teste 7f. **Streamlit:** `use_container_width` foi trocado por `width="stretch"`.
   **Carga robusta (24/09/2026):** a carga antiga apagava a tabela no 1º arquivo
   e parava no 2º que desse erro -- por isso o banco do autor ficou só com colo
   do útero. Agora ela lê e confere os 7 arquivos antes de gravar, um arquivo com

@@ -15,6 +15,10 @@ from inteligencia import (
     hospitais_fluxo,
     leitura_cidade,
     leitura_faixas,
+    leitura_mortalidade,
+    leitura_tratamento,
+    resumo_mortalidade,
+    resumo_tratamento,
     leitura_ponta_projecao,
     MEDIA_PEQUENA,
     nome_doenca,
@@ -64,6 +68,8 @@ class Contexto:
     fluxo_cidade: object = None   # inteligencia.fluxo_da_cidade
     codigo_ibge: object = None    # código IBGE da cidade do painel (posição no ranking por 100 mil mulheres)
     ranking: object = None        # {câncer ou None: inteligencia.ranking_municipios} (None: banco sem a população)
+    tratamento: object = None     # inteligencia.carregar_tratamento (None: banco sem quimio e radio do SIA)
+    obitos_sim: object = None     # inteligencia.carregar_obitos_sim (None: banco sem a mortalidade do SIM)
 
 
 # ---------- ações (o que um botão faz) ----------
@@ -89,6 +95,8 @@ CAMINHOS = [
     ("Valores hospitalares", "valores"),
     ("Comparar com São Paulo", "estado"),
     ("Mulheres de outros estados", "fluxo"),
+    ("Quimio e radioterapia", "tratamento"),
+    ("Mortes por câncer (todas)", "mortalidade_real"),
     ("Olhar para frente", "futuro"),
     ("Anos fora do padrão", "fora_padrao"),
     ("Os dados estão completos?", "completude"),
@@ -601,7 +609,34 @@ def _porque(ctx, c):
 ACOES = {"evolucao": _evolucao, "obitos": _obitos, "valores": _valores, "tempo": _tempo, "idade": _idade,
          "estado": _estado_cancer, "projecao": _projecao, "porque": _porque}
 
-CAMINHOS_FUNCOES = {"completude": completude, "mais_aparece": mais_aparece, "aumentando": aumentando, "atencao": atencao,
+def tratamento(ctx, cancer=None):
+    """Quimio e radio ambulatoriais da cidade (SIA). Só descreve; sem a tabela, diz o que falta."""
+    if ctx.tratamento is None or ctx.tratamento.empty:
+        return Resposta(
+            fala=("Ainda não tenho o tratamento ambulatorial (quimioterapia e radioterapia) neste banco. Para trazer, rode "
+                  "py -3.12 etl\\carregar_tudo_pysus.py --so sia. Hoje o painel só conhece as internações."),
+            expressao="cautelosa", botoes=[("Como esses dados funcionam?", caminho("metodo"))], destino={"aba": "Método"})
+    resumo = resumo_tratamento(ctx.tratamento, ctx.codigo_ibge, cancer)
+    return Resposta(fala=leitura_tratamento(resumo, ctx.cidade, cancer), expressao="explicando" if resumo else "cautelosa",
+                    botoes=[("Mortes por câncer (todas)", caminho("mortalidade_real")), ("Como esses dados funcionam?", caminho("metodo"))],
+                    destino={"aba": "Método"})
+
+
+def mortalidade_real(ctx, cancer=None):
+    """Mortes por câncer pelo SIM (dentro e fora do hospital), cruzadas com os óbitos de internação do SIH. Só descreve."""
+    if ctx.obitos_sim is None or ctx.obitos_sim.empty:
+        return Resposta(
+            fala=("Ainda não tenho a mortalidade das declarações de óbito (SIM) neste banco. Para trazer, rode "
+                  "py -3.12 etl\\carregar_tudo_pysus.py --so sim. Hoje só conheço os óbitos que acontecem durante uma internação."),
+            expressao="cautelosa", botoes=[("Óbitos na internação", caminho("mais_aparece"))], destino={"aba": "Método"})
+    cidade = ctx.serie[ctx.serie["grupo"] == "MUNICIPIO"] if "grupo" in ctx.serie else ctx.serie
+    resumo = resumo_mortalidade(ctx.obitos_sim, ctx.codigo_ibge, cancer, cidade)
+    return Resposta(fala=leitura_mortalidade(resumo, ctx.cidade, cancer), expressao="explicando" if resumo else "cautelosa",
+                    botoes=[("Quimio e radioterapia", caminho("tratamento")), ("Como esses dados funcionam?", caminho("metodo"))],
+                    destino={"aba": "Método"})
+
+
+CAMINHOS_FUNCOES = {"tratamento": tratamento, "mortalidade_real": mortalidade_real, "completude": completude, "mais_aparece": mais_aparece, "aumentando": aumentando, "atencao": atencao,
                     "valores": valores, "estado": estado, "fluxo": fluxo, "fora_padrao": fora_padrao, "metodo": metodo}
 
 

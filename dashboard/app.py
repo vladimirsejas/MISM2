@@ -19,6 +19,8 @@ from estilo import CSS
 from identidade import regua_cobertura as regua_mism, simbolo as simbolo_mism
 from inteligencia import (
     ranking_municipios,
+    carregar_tratamento,
+    carregar_obitos_sim,
     ano_atipico_no_estado,
     anos_fora_do_padrao,
     anos_incompletos,
@@ -184,6 +186,16 @@ def fluxo_cidade(origem, codigo_ibge):
     conn = sqlite3.connect(BANCO)
     try:
         return fluxo_da_cidade(conn, origem, codigo_ibge, UF_REFERENCIA)
+    finally:
+        conn.close()
+
+
+@st.cache_data
+def tabelas_ambulatorial_e_sim():
+    """(tratamento SIA, óbitos SIM): vazias se o banco ainda não tem as tabelas (py -3.12 etl\\carregar_tudo_pysus.py)."""
+    conn = sqlite3.connect(BANCO)
+    try:
+        return carregar_tratamento(conn), carregar_obitos_sim(conn)
     finally:
         conn.close()
 
@@ -394,7 +406,8 @@ nome = nome_doenca(doenca)
 ctx_lia = Contexto(serie=serie, cidade=nome_cidade, faixas=faixas_municipio(ORIGEM),
                    duplicados=tuple(duplicados_municipio(ORIGEM)),
                    fluxo=fluxo_geral(), fluxo_cidade=fluxo_cidade(ORIGEM, cidade["codigo_ibge"]),
-                   codigo_ibge=cidade["codigo_ibge"], ranking=rankings_por_100_mil())
+                   codigo_ibge=cidade["codigo_ibge"], ranking=rankings_por_100_mil(),
+                   tratamento=tabelas_ambulatorial_e_sim()[0], obitos_sim=tabelas_ambulatorial_e_sim()[1])
 st.session_state.setdefault("lia", {"cidade": None, "atual": None, "pilha": []})
 lia_estado = st.session_state["lia"]
 if lia_estado["cidade"] != ORIGEM:  # trocou de cidade: a Lia recomeça
@@ -544,7 +557,7 @@ if not st.session_state.get("lia_fechada"):
         colunas = st.columns(2)  # 2 x 2: os rótulos cabem inteiros
         for i, (rotulo, acao) in enumerate(a for a in boas_vindas.botoes if a[1].get("id") in principais):
             colunas[i % 2].button(rotulo, key=f"bv_{i}", on_click=lia_clicar, args=(acao,),
-                              use_container_width=True)
+                              width="stretch")
         st.button("Prefiro explorar sozinha", key="bv_fechar",
                   on_click=lambda: st.session_state.update(lia_fechada=True))
 
@@ -559,7 +572,7 @@ with col_inicio:
     except TypeError:  # Streamlit antigo: sem key em container
         caixa_inicio = st.container()
     caixa_inicio.button("🏠 Início", key="inicio_painel", on_click=definir, args=("aba", "Panorama"),
-                        use_container_width=True, disabled=aba == "Panorama",
+                        width="stretch", disabled=aba == "Panorama",
                         help="Volta à página inicial do Escudo.")
 
 
@@ -601,10 +614,10 @@ if aba == "Panorama":
     fig.update_layout(bargap=0.3, showlegend=False)
 
     try:
-        evento = st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO,
+        evento = st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO,
                                  on_select="rerun", selection_mode="points", key="barras")
     except TypeError:  # Streamlit antigo, sem clique em gráfico
-        st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
+        st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO)
         evento = None
 
     # O clique só vale quando é novo: a seleção do gráfico continua
@@ -726,7 +739,7 @@ if aba == "Evolução":
     fig.update_xaxes(dtick=1)
     fig.update_yaxes(rangemode="tozero")
     estilizar(fig, altura=430)
-    st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
+    st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO)
 
     if incompletos:
         st.caption("Marcador vazado: ano com meses que o DATASUS não oferece ("
@@ -763,7 +776,7 @@ if aba == "Evolução":
                     tabela_modelos[["descricao", "mae", "vies", "testes", "Escolhido"]].rename(columns={
                         "descricao": "Modelo", "mae": "Erro médio (internações/ano)", "vies": "Viés (negativo: prevê a mais)",
                         "testes": "Previsões testadas"}).round(1),
-                    hide_index=True, use_container_width=True)
+                    hide_index=True, width="stretch")
                 leitura("O que a validação mostra", [f.replace("**", "") for f in leitura_previsao(prev, doenca)])
                 st.caption("Cada modelo é ajustado só com os anos anteriores a cada teste e prevê 1, 2 e 3 anos à frente; "
                            "o erro é a média dessas previsões. É projeção de tendência de internações, não previsão de "
@@ -842,7 +855,7 @@ if aba == "Investigar":
             fig.update_yaxes(visible=False, range=[-35, 6], scaleanchor="x", scaleratio=1)
             estilizar(fig, altura=560)
             fig.update_layout(showlegend=False, margin={"l": 0, "r": 0, "t": 10, "b": 0})
-            st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
+            st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO)
             topo = pontos.iloc[0]
             frases = [f"{topo['estado']} é o estado com mais internações de mulheres de fora "
                       f"({formatar_numero(topo['internacoes'])}, {formatar_numero(topo['pct'], 1)}% das de fora); "
@@ -875,7 +888,7 @@ if aba == "Investigar":
         ))
         estilizar(fig, altura=max(460, 120 + 44 * max(len(origens), len(destinos_s))))
         fig.update_layout(showlegend=False)
-        st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
+        st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO)
         leitura("O que o gráfico mostra", leitura_fluxo(r_fluxo, None))
 
         pergunta("Quais hospitais de SP mais atendem mulheres de outros estados?", "estado",
@@ -890,7 +903,7 @@ if aba == "Investigar":
             })
             if tabela_h["Município"].nunique() == 1:  # coluna igual em todas as linhas não informa
                 tabela_h = tabela_h.drop(columns="Município")
-            st.dataframe(tabela_h, use_container_width=True, hide_index=True)
+            st.dataframe(tabela_h, width="stretch", hide_index=True)
         leitura("O que a tabela mostra", leitura_hospitais(fluxo, hosp))
 
         pergunta("Como é o atendimento em um hospital específico?", "estado",
@@ -941,7 +954,7 @@ if aba == "Investigar":
             fig.update_xaxes(dtick=1)
             estilizar(fig, altura=340)
             fig.update_layout(showlegend=True)
-            st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
+            st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO)
             leitura("O que o gráfico mostra", leitura_hospital_anos(ficha))
 
             if cancer_h is None:  # com um câncer escolhido, a tabela teria uma linha só
@@ -949,7 +962,7 @@ if aba == "Investigar":
                     "Câncer": ficha["cancer"]["doenca"],
                     "Internações": [formatar_numero(v) for v in ficha["cancer"]["internacoes"]],
                     "Parcela": [f"{formatar_numero(v, 1)}%" for v in ficha["cancer"]["pct"]],
-                }), use_container_width=True, hide_index=True)
+                }), width="stretch", hide_index=True)
             leitura("O que a ficha mostra", leitura_hospital(ficha))
 
         pergunta("A parcela de mulheres de fora está crescendo?", "estado", "todas as cidades de SP, 7 cânceres somados")
@@ -966,7 +979,7 @@ if aba == "Investigar":
         fig.update_xaxes(dtick=1)
         estilizar(fig, altura=300)
         fig.update_layout(showlegend=False)
-        st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
+        st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO)
         leitura("O que o gráfico mostra", leitura_evolucao_fluxo(e_fluxo))
 
         pergunta("Em quais cânceres a parcela de fora é maior?", "estado", "uma linha por câncer, no Estado inteiro")
@@ -978,7 +991,7 @@ if aba == "Investigar":
         ).drop(columns="tipo_cancer").rename(columns={
             "doenca": "Câncer", "internacoes_fora": "Internações de fora", "internacoes_total": "Total de internações",
             "pct_fora": "Parcela de fora", "estado_principal": "Estado que mais envia",
-            "destino_principal": "Município que mais atende"}), use_container_width=True, hide_index=True)
+            "destino_principal": "Município que mais atende"}), width="stretch", hide_index=True)
 
         pergunta(f"Quem é atendida nos hospitais de {nome_cidade}, e para onde vão as moradoras?", "cidade",
                  f"só hospitais de {html.escape(nome_cidade)} e só moradoras de {html.escape(nome_cidade)}, "
@@ -1021,7 +1034,7 @@ if aba == "Investigar":
             ).rename(columns={"doenca": "Câncer", "ano": "Ano", "observado": "Internações",
                               "esperado": "Esperado", "direcao": "Direção",
                               "numeros_pequenos": "Números pequenos", "diferenca_pct": "Diferença"}),
-            use_container_width=True, hide_index=True,
+            width="stretch", hide_index=True,
         )
         contagem = tabela["ano"].value_counts()
         if contagem.iloc[0] >= 2:
@@ -1033,7 +1046,7 @@ if aba == "Investigar":
     st.markdown('<div class="escudo-dica">Do que mais cresce para o que menos cresce. Uma linha por câncer.</div>',
                 unsafe_allow_html=True)
     aparece = quando_aparece(serie)
-    st.dataframe(tabela_aparece_para_tela(aparece, ano_ini), use_container_width=True, hide_index=True)
+    st.dataframe(tabela_aparece_para_tela(aparece, ano_ini), width="stretch", hide_index=True)
     leitura("O que a tabela mostra", leitura_aparece(aparece, anos_incompletos(serie), ano_fim, ano_ini))
 
     pergunta(f"A idade das mulheres internadas por {cancer_de(doenca)} mudou?", "cidade",
@@ -1055,7 +1068,7 @@ if aba == "Investigar":
         fig.update_layout(barmode="group", bargap=0.3, bargroupgap=0.08)
         fig.update_yaxes(ticksuffix="%", rangemode="tozero")
         estilizar(fig, altura=340)
-        st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
+        st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO)
         leitura("O que o gráfico mostra", leitura_faixas(tabela_faixas, periodos)
                 + ["A faixa de 50 a 69 anos é a do rastreamento de câncer de mama recomendado pelo INCA."
                    if doenca == "MAMA" else "Percentual de cada faixa dentro de cada período."])
@@ -1080,7 +1093,7 @@ if aba == "Investigar":
             st.info(f"{outro_nome} não tem internações registradas para comparar.")
         else:
             st.dataframe(tabela_comparacao(perfil_a, perfil_b, nome_cidade, outro_nome),
-                         use_container_width=True, hide_index=True)
+                         width="stretch", hide_index=True)
             mix = mix_comparacao(perfil_a, perfil_b, nome_cidade, outro_nome)
             ordem = list(mix[mix["cidade"] == nome_cidade].sort_values("pct")["doenca"])
             fig = go.Figure()
@@ -1095,7 +1108,7 @@ if aba == "Investigar":
             estilizar(fig, altura=120 + 56 * len(ordem))
             st.markdown('<div class="escudo-dica">Parcela de cada câncer nas internações da cidade (cada cidade soma '
                         '100%).</div>', unsafe_allow_html=True)
-            st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
+            st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO)
             leitura("O que a comparação mostra", leitura_comparacao(perfil_a, perfil_b, nome_cidade, outro_nome))
 
     st.download_button(
@@ -1188,7 +1201,7 @@ if aba == "Planejamento":
                          title="Crescimento das internações (% ao ano)", ticksuffix="%", zeroline=False)
         estilizar(fig, altura=420)
         fig.update_layout(showlegend=False)
-        st.plotly_chart(fig, use_container_width=True, theme=None, config=CONFIG_GRAFICO)
+        st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO)
         canto = [r["doenca"] for r in pontos_q if r["crescimento"] >= 3 and r["letalidade_relativa"] > 1]
         fora_q = [r["doenca"] for r in lista if r["letalidade_relativa"] is None]
         leitura("Como ler", [
@@ -1248,7 +1261,7 @@ def desenhar_passeio(indice):
                         'A Lia conduz, na ordem, e o painel vai mostrando cada gráfico. Só clicar.',
                         unsafe_allow_html=True)
             st.button("Começar o passeio", key="pbtn_seguir_comecar", on_click=passeio_ir, args=(0,),
-                      use_container_width=True)
+                      width="stretch")
         else:
             p = passeio_parada(ctx_lia, indice)
             pontos = "●" * p["numero"] + "○" * (p["total"] - p["numero"])
@@ -1263,10 +1276,10 @@ def desenhar_passeio(indice):
             c_ant, c_seg = st.columns(2)
             if indice > 0:
                 c_ant.button("← anterior", key="pbtn_anterior", on_click=passeio_ir, args=(indice - 1,),
-                             use_container_width=True)
+                             width="stretch")
             ultima = indice == len(PARADAS) - 1
             c_seg.button("terminar ✓" if ultima else "próxima parada →", key="pbtn_seguir",
-                         on_click=passeio_ir, args=(None if ultima else indice + 1,), use_container_width=True)
+                         on_click=passeio_ir, args=(None if ultima else indice + 1,), width="stretch")
             if not ultima:
                 st.button("sair do passeio", key="pbtn_sair", on_click=passeio_ir, args=(None,))
 
@@ -1323,7 +1336,7 @@ with st.sidebar:
             proximos = [(r, a) for r, a in atual.botoes if a is not INICIO and a.get("tipo") != "inicio"]
             for i, (rotulo, acao) in enumerate(proximos):
                 st.button(rotulo, key=f"lia_{i}_{rotulo}", on_click=lia_clicar, args=(acao,),
-                          use_container_width=True)
+                          width="stretch")
             c_voltar, c_inicio = st.columns(2)
             if lia_estado["pilha"]:
                 c_voltar.button("← Voltar", key="lia_discreto_voltar", on_click=lia_voltar)
@@ -1335,7 +1348,7 @@ with st.sidebar:
     with st.form("caixa_form", clear_on_submit=True):
         st.text_input("Pergunte à Lia", key="caixa_texto", max_chars=300, label_visibility="collapsed",
                       placeholder=f"Ex.: o câncer de mama está aumentando em {nome_cidade}?")
-        st.form_submit_button("Perguntar", key="caixa_enviar", on_click=enviar_pergunta, use_container_width=True)
+        st.form_submit_button("Perguntar", key="caixa_enviar", on_click=enviar_pergunta, width="stretch")
     ia_atual = ia_da_sessao()
     st.caption("🤖 IA de linguagem (Gemini) ligada. Os números vêm sempre dos cálculos do Escudo." if ia_atual.ligada else
                "IA de linguagem desligada: respondo direto dos cálculos do Escudo.")
@@ -1347,7 +1360,7 @@ with st.sidebar:
                                                ("Por que os números mudam?", "causa"),
                                                ("Como a IA funciona?", "sobre_ia")]):
             st.button(rotulo, key=f"caixa_exemplo_{i}", on_click=lia_clicar,
-                      args=(acao_assistente(assunto, pergunta=rotulo),), use_container_width=True)
+                      args=(acao_assistente(assunto, pergunta=rotulo),), width="stretch")
     st.caption("Não escreva dados pessoais. A pergunta só é enviada ao Gemini quando ele está ligado.")
 
     indice_passeio = st.session_state.get("passeio")

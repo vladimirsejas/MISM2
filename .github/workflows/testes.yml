@@ -66,6 +66,7 @@ jobs:
           python teste_criar_tabela_hospitais.py
           python teste_baixar_populacao.py
           python teste_baixar_sia_oncologia.py
+          python teste_baixar_sim_cnes.py
       - name: Painel (clica em tudo)
         run: python dashboard/teste_painel.py
       - name: Lâmina de apoio (clica em tudo)

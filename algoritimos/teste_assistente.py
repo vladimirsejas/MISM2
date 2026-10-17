@@ -318,6 +318,56 @@ def main():
     checar("7e. sem a população no banco (ctx sem ranking) a Lia volta a dizer o que falta, sem ranking inventado",
            r.fala.startswith(asst.SEM_POPULACAO[:60]) and "por 100 mil" not in r.fala.split("população")[0])
 
+    # ---- 7f. hospital de câncer e a cidade que a pessoa cita (teste humano de 17/10/2026: Catanduva, "Hospikital") ----
+    for q in ("preciso dde um hospital que atenda cande de ovario eu moro em Catanduva",
+              "Hospikital perto de mim que atenda paciente de cancer moro em Catanduva"):
+        r = asst.responder_pergunta(ctx, q, foco, ia=asst.IA())
+        checar(f"7f. '{q[:40]}...': não empurra Rio Claro nem o cadastro local; aponta a lâmina Hospitais no Estado e a região",
+               r.intencao == "onde_atendida" and "Catanduva" in r.fala and "Hospitais no Estado" in r.fala and "região" in r.fala
+               and "Santa Casa de Rio Claro" not in r.fala and not r.usou_ia)
+    r = asst.responder_pergunta(ctx, "moro em Rio Claro, qual hospital trata câncer de mama?", foco, ia=asst.IA())
+    checar("7f. moradora de Rio Claro recebe os hospitais de câncer do catálogo da cidade",
+           r.intencao == "onde_atendida" and "Santa Casa de Rio Claro" in r.fala)
+    r = asst.responder_pergunta(ctx, "hospital de cancer, moro em Araraquara", foco, ia=asst.IA())
+    checar("7f. cidade citada que aparece no catálogo (Araraquara): mostra o hospital ligado a ela, não só Rio Claro",
+           r.intencao == "onde_atendida" and "Araraquara" in r.fala and "Hospitais do catálogo" in r.fala)
+    r = asst.responder_pergunta(ctx, "onde ser atendida em Rio Claro, posto de saúde", foco, ia=asst.IA())
+    checar("7f. posto de saúde (sem câncer) continua com o texto de Onde ser atendida", r.intencao == "onde_atendida" and "Onde ser atendida" in r.fala)
+
+    # ---- 7g. quimio/radio (SIA) e mortalidade real (SIM): só descrevem, e sem as tabelas dizem o que falta ----
+    trat = _pd.DataFrame(
+        [("QUIMIO", 2022, m, "354390", "MAMA", "50 a 69", "2", "01", 10) for m in range(1, 13)]
+        + [("QUIMIO", 2022, m, "355030", "MAMA", "50 a 69", "2", "01", 90) for m in range(1, 13)]
+        + [("RADIO", 2022, 1, "354390", "MAMA", "50 a 69", "", "03", 4), ("RADIO", 2022, 1, "354390", "MAMA", "50 a 69", "2", "99", 6)],
+        columns=["modalidade", "ano", "mes", "codigo6", "tipo_cancer", "faixa", "estadiamento", "raca_cor", "apacs"])
+    rt = ti.resumo_tratamento(trat, 3543907)
+    checar("7g. resumo do tratamento: 120 APACs de quimio em 2022 na cidade, 1.200 no Estado (12 meses, sem compensação)",
+           rt["QUIMIO"]["apacs_ultimo"] == 120 and rt["QUIMIO"]["estado_ultimo"] == 1200 and rt["QUIMIO"]["ultimo_ano"] == 2022)
+    checar("7g. radio com 1 mês na fonte é compensada x12 (10 APACs no mês = 120 no ano)", abs(rt["RADIO"]["apacs_ultimo"] - 120) < 1e-9)
+    checar("7g. estadiamento informado em 60% e raça informada em 40% das APACs de radio (conta à mão)",
+           abs(rt["RADIO"]["pct_estadiamento"] - 60) < 1e-9 and abs(rt["RADIO"]["pct_raca_informada"] - 40) < 1e-9)
+    sim = _pd.DataFrame([(2023, "354390", "MAMA", "50 a 69", "1", "1", 30), (2023, "354390", "MAMA", "50 a 69", "3", "1", 10),
+                         (2023, "355030", "MAMA", "50 a 69", "1", "1", 960)],
+                        columns=["ano", "codigo6", "tipo_cancer", "faixa", "local_obito", "raca_cor", "obitos"])
+    rm = ti.resumo_mortalidade(sim, 3543907, serie=ctx.serie[ctx.serie["grupo"] == "MUNICIPIO"])
+    checar("7g. SIM: 40 óbitos na cidade e 1.000 no Estado; 75% no hospital e 25% em casa", rm["obitos_ultimo"] == 40
+           and rm["estado_ultimo"] == 1000 and abs(rm["onde"]["no hospital"] - 75) < 1e-9 and abs(rm["onde"]["em casa"] - 25) < 1e-9)
+    ctx_novo = Contexto(serie=ctx.serie, cidade="Rio Claro", faixas=ctx.faixas, codigo_ibge=3543907, tratamento=trat, obitos_sim=sim)
+    r = asst.responder_pergunta(ctx_novo, "quantas mulheres fazem quimioterapia na cidade?", foco, ia=asst.IA())
+    checar("7g. a Lia responde a quimio e radio com APAC (não mulheres), sem causa, sem 'vai', sem IA",
+           r.intencao == "tratamento" and "APAC" in r.fala and "não é número de mulheres" in r.fala
+           and not asst.PROMETE.search(r.fala) and not asst.CAUSA_ATRIBUIDA.search(r.fala) and not r.usou_ia)
+    r = asst.responder_pergunta(ctx_novo, "quantas mulheres morreram de câncer no total, dentro e fora do hospital?", foco, ia=asst.IA())
+    checar("7g. a Lia responde a mortalidade real explicando que SIM e SIH não se subtraem",
+           r.intencao == "mortalidade_real" and "SIM" in r.fala and "SIH" in r.fala and "não se subtraem" in r.fala
+           and not asst.PROMETE.search(r.fala) and not asst.CAUSA_ATRIBUIDA.search(r.fala))
+    r = asst.responder_pergunta(ctx, "quantas mulheres fazem quimioterapia na cidade?", foco, ia=asst.IA())
+    checar("7g. sem as tabelas no banco a Lia diz o que falta e como trazer, sem inventar número",
+           r.intencao == "tratamento" and "carregar_tudo_pysus" in r.fala)
+    r = asst.responder_pergunta(ctx, "qual a cor ou raça das internadas?", foco, ia=asst.IA())
+    checar("7g. raça das INTERNADAS continua 'não tenho' (só o ambulatorial tem), apontando a pergunta certa",
+           r.intencao == "sem_dados" and "quimioterapia" in r.fala)
+
     # ---- 8. palpites e botões ----
     r = perguntar("me explica o negócio dos números do hospital das moças")
     ok_palpites = r.tipo in ("palpites", "fora")

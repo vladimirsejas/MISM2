@@ -89,6 +89,15 @@ def agregar(preparado, modalidade, ano, mes):
     return tabela
 
 
+def alerta_raca(contagens, parda, amarela):
+    """Raça/cor vem em códigos que DIFEREM entre bases (no SIA 03=parda e 04=amarela; no SIM 4=parda e 3=amarela). A parda é uma das
+    maiores categorias em SP e a amarela uma das menores: se os códigos disserem o contrário, o mapeamento está trocado."""
+    if contagens.get(parda, 0) < contagens.get(amarela, 0):
+        return (f"ATENÇÃO: o código {parda} (que tratei como PARDA) é MENOR que o {amarela} (AMARELA). O mapeamento de raça/cor "
+                "parece trocado: não interprete raça/cor antes de conferir com o chat.")
+    return None
+
+
 def perfil(bruto, preparado, grupo):
     """Valores reais das colunas de código (nenhum dado individual) para conferir antes de interpretar."""
     b = bruto.copy()
@@ -101,6 +110,10 @@ def perfil(bruto, preparado, grupo):
     if "AP_CIDPRI" in b:
         cids = b["AP_CIDPRI"].astype("string").fillna("(vazio)").str[:3].value_counts().head(10)
         print("      AP_CIDPRI (3 primeiros caracteres): " + ", ".join(f"{v}={n}" for v, n in cids.items()))
+    if "AP_RACACOR" in b:
+        aviso = alerta_raca(b["AP_RACACOR"].astype("string").str.strip().value_counts().to_dict(), "03", "04")
+        if aviso:
+            print("      " + aviso)
     if len(preparado):
         print("      por câncer (mulheres): " + ", ".join(f"{k}={v}" for k, v in preparado["tipo_cancer"].value_counts().items()))
     else:
@@ -119,7 +132,7 @@ def gravar(agregado, modalidade, ano, banco=BANCO):
         conn.close()
 
 
-async def baixar(anos, pysus_cls=None, banco=BANCO):
+async def baixar(anos, pysus_cls=None, banco=BANCO, verboso=True):
     if pysus_cls is None:
         from pysus import PySUS as pysus_cls
     falhas, resumo = [], []
@@ -137,7 +150,8 @@ async def baixar(anos, pysus_cls=None, banco=BANCO):
                     chave = mes_do_arquivo(sih.nome_do_arquivo(arquivo))
                     if chave and chave[0] == ano:
                         por_mes.setdefault(chave[1], []).append(arquivo)
-                print(f"  meses listados: {', '.join(f'{m:02d}' for m in sorted(por_mes)) or 'nenhum'}")
+                if verboso:
+                    print(f"  meses listados: {', '.join(f'{m:02d}' for m in sorted(por_mes)) or 'nenhum'}")
                 partes, perfilado = [], False
                 for mes in range(1, 13):
                     if mes not in por_mes:
@@ -157,7 +171,8 @@ async def baixar(anos, pysus_cls=None, banco=BANCO):
                                 perfil(bruto, preparado, grupo)
                                 perfilado = True
                             partes.append(agregar(preparado, modalidade, ano, mes))
-                            print(f"  {ano}/{mes:02d}: ok ({len(preparado)} APACs de mulheres)")
+                            if verboso:
+                                print(f"  {ano}/{mes:02d}: ok ({len(preparado)} APACs de mulheres)")
                         except Exception as erro_leitura:  # noqa: BLE001
                             falhas.append(f"{grupo} {ano}/{mes:02d}: {type(erro_leitura).__name__}: {str(erro_leitura)[:200]}")
                         finally:
@@ -166,6 +181,8 @@ async def baixar(anos, pysus_cls=None, banco=BANCO):
                     agregado = pd.concat(partes, ignore_index=True)
                     gravar(agregado, modalidade, ano, banco)
                     resumo.append((modalidade, ano, len(agregado), int(agregado["apacs"].sum())))
+                    if not verboso:
+                        print(f"  {modalidade} {ano}: {len(partes)} meses, {int(agregado['apacs'].sum()):,} APACs de mulheres".replace(",", "."))
     return falhas, resumo
 
 
@@ -177,10 +194,10 @@ def _anos_da_linha(argv):
     return [2023]
 
 
-def main(pysus_cls=None, anos=None, banco=BANCO):
+def main(pysus_cls=None, anos=None, banco=BANCO, verboso=True):
     anos = anos or _anos_da_linha(sys.argv)
     print(f"QUIMIO E RADIO AMBULATORIAIS (SIA): {anos[0]}-{anos[-1]}, só agregados (nenhum identificador é gravado)")
-    falhas, resumo = asyncio.run(baixar(anos, pysus_cls, banco))
+    falhas, resumo = asyncio.run(baixar(anos, pysus_cls, banco, verboso))
     print("\nGRAVADO em oncologia_ambulatorial:")
     for modalidade, ano, linhas, apacs in resumo:
         print(f"  {modalidade} {ano}: {linhas:,} linhas agregadas, {apacs:,} APACs de mulheres".replace(",", "."))

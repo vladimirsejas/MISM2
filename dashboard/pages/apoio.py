@@ -198,7 +198,7 @@ def botao_inicio(onde, chave):
     except TypeError:  # Streamlit antigo: sem key em container
         caixa = onde.container()
     with caixa:
-        if st.button("🏠 Início", key=f"inicio_{chave}", use_container_width=True,
+        if st.button("🏠 Início", key=f"inicio_{chave}", width="stretch",
                      help="Volta à página inicial do Escudo."):
             st.session_state["aba"] = "Panorama"
             try:
@@ -331,7 +331,7 @@ def fluxo_rede():
         destino = ({"aba": apoio.LAMINAS["hospitais"]} if passo == "Especialista"
                    else {"aba": apoio.LAMINAS["caminho"], "caminho": porta_id})
         col.button("Hospitais" if passo == "Especialista" else ROTULO[porta_id], key=f"fluxo_{n}",
-                   on_click=aplicar_destino, args=(destino,), use_container_width=True)
+                   on_click=aplicar_destino, args=(destino,), width="stretch")
 
 
 def porta(c, rotulo, dentro, abertura):
@@ -365,11 +365,11 @@ def porta_ajuda():
         for col, porta_id in zip(colunas, portas):
             col.button(f"Porta {ROTULO[porta_id]} →", key=f"etapa_{e}_{porta_id}", type="primary",
                        on_click=aplicar_destino, args=({"aba": apoio.LAMINAS["caminho"], "caminho": porta_id},),
-                       use_container_width=True)
+                       width="stretch")
         if e == "nao_fiz":
             colunas[-1].button("Carretas: onde estão agora →", key="etapa_carretas", type="primary",
                                on_click=aplicar_destino, args=({"aba": apoio.LAMINAS["carretas"]},),
-                               use_container_width=True)
+                               width="stretch")
     for i in apoio.itens_da_etapa(e):
         (cartao if i["caminho"] == "ajuda" else cartao_curto)(i)
     if e == "violencia":
@@ -420,12 +420,12 @@ if not st.session_state.get("ap_boas_vindas_fechada"):
         st.markdown("**Comece por aqui**")
         a1, a2, a3 = st.columns(3)
         a1.button("Prevenção e exames", key="bv_ap_prevencao", help="Mamografia, Papanicolau, vacina e prevenção.",
-                  on_click=lia_clicar, args=(apoio.caminho("mama"),), use_container_width=True)
+                  on_click=lia_clicar, args=(apoio.caminho("mama"),), width="stretch")
         a2.button("Exame alterado ou diagnóstico", key="bv_ap_diagnostico",
                   help="Entender o próximo passo depois de um resultado alterado.", on_click=lia_clicar,
-                  args=(apoio.caminho("diagnostico"),), use_container_width=True)
+                  args=(apoio.caminho("diagnostico"),), width="stretch")
         a3.button("Não sei por onde começar", key="bv_ap_ajuda", help="A Lia ajuda a identificar o próximo passo.",
-                  on_click=lia_clicar, args=(apoio.caminho("ajuda"),), use_container_width=True)
+                  on_click=lia_clicar, args=(apoio.caminho("ajuda"),), width="stretch")
         st.button("Ver todas as áreas abaixo", key="bv_fechar_apoio",
                   on_click=lambda: st.session_state.update(ap_boas_vindas_fechada=True))
 
@@ -439,7 +439,7 @@ n1, n2 = st.columns(2)
 for col, chave in ((n1, "caminho"), (n2, "rio_claro")):
     nome = apoio.LAMINAS[chave]
     col.button(nome, key=f"nav_apoio_{chave}", type="primary" if st.session_state["ap_aba"] == nome else "secondary",
-               on_click=ir_aba, args=(nome,), use_container_width=True)
+               on_click=ir_aba, args=(nome,), width="stretch")
 
 st.markdown("**Recursos de referência**")
 r1, r2 = st.columns(2)
@@ -447,13 +447,13 @@ for col, chave in ((r1, "hospitais"), (r2, "carretas")):
     nome = apoio.LAMINAS[chave]
     rotulo = {"hospitais": "Hospitais no Estado", "carretas": "Carretas da mamografia"}[chave]
     col.button(rotulo, key=f"nav_apoio_{chave}", type="primary" if st.session_state["ap_aba"] == nome else "secondary",
-               on_click=ir_aba, args=(nome,), use_container_width=True)
+               on_click=ir_aba, args=(nome,), width="stretch")
 r3, r4 = st.columns(2)
 for col, chave in ((r3, "barretos"), (r4, "sobre")):
     nome = apoio.LAMINAS[chave]
     rotulo = {"barretos": "Hospital de Amor", "sobre": "Sobre as informações"}[chave]
     col.button(rotulo, key=f"nav_apoio_{chave}", type="primary" if st.session_state["ap_aba"] == nome else "secondary",
-               on_click=ir_aba, args=(nome,), use_container_width=True)
+               on_click=ir_aba, args=(nome,), width="stretch")
 
 aba = st.session_state["ap_aba"]
 
@@ -587,7 +587,7 @@ if aba == apoio.LAMINAS["sobre"]:
         "Item": i["titulo"], "Onde": i["onde"], "Lâmina": apoio.LAMINAS[i["lamina"]],
         "Caminho": ROTULO.get(i["caminho"], "—"), "Tema ou região": i["grupo"] or "—", "Fonte": i["fonte"], "Situação": "a confirmar" if i["confirmar"] else "conferido",
         "Página": i["link"]} for i in apoio.ITENS])
-    st.dataframe(tabela, use_container_width=True, hide_index=True)
+    st.dataframe(tabela, width="stretch", hide_index=True)
 
 
 # ============================================================
@@ -617,7 +617,7 @@ with st.sidebar:
             proximos = [(r, a) for r, a in atual.botoes if a is not INICIO and a.get("tipo") != "inicio"]
             for n, (rotulo, acao) in enumerate(proximos):
                 st.button(rotulo, key=f"lia_ap_{n}_{rotulo}", on_click=lia_clicar, args=(acao,),
-                          use_container_width=True)
+                          width="stretch")
             c_voltar, c_inicio = st.columns(2)
             if lia_estado["pilha"]:
                 c_voltar.button("← Voltar", key="lia_discreto_voltar_ap", on_click=lia_voltar)
@@ -627,14 +627,14 @@ with st.sidebar:
     with st.form("caixa_ap_form", clear_on_submit=True):
         st.text_input("Pergunte à Lia", key="caixa_ap_texto", max_chars=300, label_visibility="collapsed",
                       placeholder="Ex.: onde faço mamografia pelo SUS?")
-        st.form_submit_button("Perguntar", key="caixa_ap_enviar", on_click=enviar_pergunta, use_container_width=True)
+        st.form_submit_button("Perguntar", key="caixa_ap_enviar", on_click=enviar_pergunta, width="stretch")
     st.caption("🤖 A IA ajuda a entender a sua pergunta; o texto que aparece é do guia, conferido nas páginas oficiais."
                if apoio_busca.obter_classificador() else
                "Busca no guia (a IA de linguagem está desligada). O texto que aparece é do guia, conferido nas páginas oficiais.")
     with st.expander("Não sabe o que perguntar?"):
         for n, exemplo in enumerate(["Onde faço mamografia pelo SUS?", "Meu exame deu alterado, e agora?",
                                      "Quais são os meus direitos?", "Como pedir ajuda em situação de violência?"]):
-            st.button(exemplo, key=f"caixa_ap_exemplo_{n}", on_click=enviar_pergunta, args=(exemplo,), use_container_width=True)
+            st.button(exemplo, key=f"caixa_ap_exemplo_{n}", on_click=enviar_pergunta, args=(exemplo,), width="stretch")
     st.caption("Não escreva dados pessoais. As perguntas desta página não são guardadas.")
     st.divider()
     botao_inicio(st.sidebar, "lateral")

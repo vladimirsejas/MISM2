@@ -17,7 +17,7 @@ from inteligencia import (
     serie_doenca,
     _variacao_pct,
 )
-from lia import INICIO, Resposta, caminho, responder as lia_responder, sobre
+from lia import INICIO, Resposta, caminho, responder as lia_responder, sobre, tratamento as lia_tratamento, mortalidade_real as lia_mortalidade
 
 # =====================================
 # ASSISTENTE DA LIA — a caixa "Pergunte à Lia" (10/2026)
@@ -182,8 +182,9 @@ SEM_DADOS = (
     "Essa informação **eu não tenho**. O Escudo trabalha só com **internações hospitalares do SIH/SUS**: número de internações, "
     "óbitos durante a internação, dias de leito, valor hospitalar registrado, idade, e o município onde a mulher mora e onde foi "
     "internada. Quem se trata só em ambulatório ou por plano de saúde não aparece.\n\n"
-    "Não há nesta base cor ou raça, renda, escolaridade, estadiamento, sobrevida, doenças associadas nem a população de cada cidade. "
-    "Prefiro dizer isso a responder com um palpite.")
+    "Não há nas internações cor ou raça, renda, escolaridade, estadiamento, sobrevida nem doenças associadas. Cor ou raça e "
+    "estadiamento aparecem só no tratamento ambulatorial (quimio e radioterapia, SIA), quando essa base está carregada: pergunte "
+    "\"quantas mulheres fazem quimioterapia\". Prefiro dizer isso a responder com um palpite.")
 
 # "Me explica isso melhor": o que cada assunto de dados significa, em palavras simples. Texto fixo (sem números e sem causa):
 # os números vêm dos cálculos, e a IA não improvisa aqui.
@@ -418,7 +419,7 @@ def _fato_do_ano(ctx, c, ano):
 # ---------- decisão: qual resposta da Lia (ou daqui) serve a cada intenção ----------
 
 POR_CANCER = {"idade"}                      # sem câncer citado, usam o câncer em foco no painel
-USAM_CANCER_SE_CITADO = {"evolucao", "obitos", "valores", "tempo", "estado", "futuro", "idade"}
+USAM_CANCER_SE_CITADO = {"evolucao", "obitos", "valores", "tempo", "estado", "futuro", "idade", "tratamento", "mortalidade_real"}
 SO_DADOS = {"mais_aparece", "evolucao", "futuro", "obitos", "valores", "tempo", "idade", "estado", "atencao",
             "fora_padrao", "fluxo", "completude", "metodo"}   # as únicas que a IA pode reescrever
 
@@ -445,6 +446,10 @@ def _resposta_base(ctx, intencao, cancer, foco, ano, ia):
         return (_futuro_cancer(ctx, c, ano) if c else _futuro_todos(ctx, ano)), c, nota
     if intencao == "obitos":
         return (lia_responder(ctx, sobre(c, "obitos")) if c else _obitos_todos(ctx)), c, nota
+    if intencao == "tratamento":
+        return lia_tratamento(ctx, c), c, nota
+    if intencao == "mortalidade_real":
+        return lia_mortalidade(ctx, c), c, nota
     if intencao == "valores":
         return (lia_responder(ctx, sobre(c, "valores")) if c else lia_responder(ctx, caminho("valores"))), c, nota
     if intencao == "tempo":
@@ -484,6 +489,63 @@ def _resposta_base(ctx, intencao, cancer, foco, ano, ia):
                   "não garante vaga nem que o serviço esteja aberto naquele momento. Para **hospital especializado em câncer** (os de "
                   "referência da região), veja na página **Apoio à mulher** a lâmina **Hospitais no Estado**."), expressao="acolhedora"), None, nota
     return lia_responder(ctx, INICIO), None, nota
+
+
+# "Preciso de um hospital que atenda câncer de ovário, moro em Catanduva": hospital de câncer pelo SUS não se escolhe por proximidade
+# nem pela cidade do painel (Rio Claro é o centro do trabalho, mas os hospitais ficam fora); a paciente é encaminhada ao serviço de
+# referência da REGIÃO onde mora. O Escudo não tem a lista de qual região atende cada cidade e prefere não chutar: mostra os
+# hospitais do catálogo que citam a cidade e, sem eles, aponta a lâmina Hospitais no Estado e como descobrir a região.
+PEDE_HOSPITAL_CANCER = re.compile(r"(hosp\w*|ospital|unacon|cacon|centro de oncologia|oncologista|onde (tratar|se tratar|fazer quimio|fazer radio)).*"
+                                  r"(cancer|oncolog|tumor|quimio|radio|mama|ovario|colo do utero|utero|pulmao|intestino|colorretal|endometrio)"
+                                  r"|(cancer|oncolog|tumor|quimio|radio|mama|ovario|utero|pulmao|intestino|colorretal|endometrio).*"
+                                  r"(hosp\w*|ospital|unacon|cacon|centro de oncologia)")
+CIDADE_CITADA = [re.compile(p) for p in (
+    r"\b(?:moro|moramos|resido|vivo|sou)\s+(?:em|no|na|de|do|da)\s+([a-z]+(?: (?:de|do|da|dos|das|[a-z]+)){0,3}?)(?= (?:e|mas|que|com|preciso|quero|gostaria|onde|tem)\b|$)",
+    r"\b(?:perto|proximo|proxima|nas proximidades)\s+(?:de|do|da)\s+([a-z]+(?: (?:de|do|da|dos|das|[a-z]+)){0,3}?)(?= (?:e|mas|que|com|preciso|quero|gostaria|onde|tem)\b|$)",
+    r"\b(?:na cidade de|no municipio de)\s+([a-z]+(?: (?:de|do|da|dos|das|[a-z]+)){0,3}?)(?= (?:e|mas|que|com|preciso|quero|gostaria|onde|tem)\b|$)")]
+
+
+def cidade_citada(pergunta):
+    """A cidade que a pessoa diz morar ou procurar ('moro em Catanduva'), normalizada; None se não citou."""
+    texto = ent.normalizar(pergunta)
+    for padrao in CIDADE_CITADA:
+        achado = padrao.search(texto)
+        if achado:
+            return achado.group(1).strip()
+    return None
+
+
+def _hospital_de_cancer(ctx, pergunta):
+    """Resposta de texto fixo para 'hospital que atenda câncer', respeitando a cidade que a pessoa citou. None se não for esse pedido."""
+    import apoio
+    norm = ent.normalizar(pergunta)
+    if not PEDE_HOSPITAL_CANCER.search(norm):
+        return None
+    citada = cidade_citada(pergunta)
+    do_painel = ent.normalizar(ctx.cidade)
+    outra = citada if citada and citada != do_painel else None
+    hospitais = [i for i in apoio.ITENS if i["lamina"] == "hospitais" and i["id"] != "como_chegar_hospital"]
+    if outra:
+        da_cidade = sorted((i for i in hospitais if outra in ent.normalizar(f"{i['onde']} {i['titulo']} {i['grupo'] or ''}")),
+                           key=lambda i: outra not in ent.normalizar(i["onde"]))[:3]
+        nome = outra.title()
+    elif do_painel == "rio claro":
+        da_cidade = [i for i in apoio.ITENS if i["lamina"] == "rio_claro" and "oncolog" in ent.normalizar(i["titulo"])][:2]
+        nome = ctx.cidade
+    else:
+        da_cidade, nome = [], None
+    if da_cidade:
+        linhas = "\n".join(f"- **{i['titulo']}** ({i['onde']}; {i['grupo'] or 'região'}): {i['como'] or i['resumo']}" for i in da_cidade)
+        fala = (f"Hospitais do catálogo do Escudo ligados a **{nome}**:\n\n{linhas}\n\n")
+    else:
+        onde = f" para quem mora em **{nome}**" if nome else ""
+        fala = (f"Não tenho no catálogo um hospital de câncer{onde} que eu possa indicar com segurança. Prefiro não chutar.\n\n")
+    fala += ("**Como funciona pelo SUS:** hospital de câncer não se escolhe por proximidade. A paciente é encaminhada, pela unidade de "
+             "saúde e pela regulação (CROSS), ao serviço de referência da **região** onde mora. Na página **Apoio à mulher**, a lâmina "
+             "**Hospitais no Estado** reúne 23 hospitais por região, com a fonte oficial e como chegar pela CROSS. Se não achar a "
+             "sua cidade, pergunte na unidade de saúde ou na Secretaria de Saúde a qual região (DRS) ela pertence: o Escudo ainda não "
+             "tem essa lista por cidade.")
+    return Resposta(fala=fala, expressao="acolhedora")
 
 
 LINKS = {"apoio": [LINK_APOIO], "sintoma": [LINK_APOIO, LINK_ONDE], "onde_atendida": [LINK_ONDE, LINK_APOIO]}
@@ -560,8 +622,8 @@ def montar(ctx, e, pergunta, foco, perfil="TECNICO", ia=None):
         ra = montar(ctx, replace(e, tambem=None, origem="regras"), pergunta, foco, perfil, ia)
         rb = montar(ctx, replace(e, intencao=e.tambem, tambem=None, origem="regras"), pergunta, foco, perfil, ia)
         resp = ra
-        resp.fala = (f"Você fez dois pedidos, e respondo os dois.\n\n**{ent.ROTULOS[ra.intencao]}**\n\n{ra.fala}"
-                     f"\n\n**{ent.ROTULOS[rb.intencao]}**\n\n{rb.fala}")
+        resp.fala = (f"Você fez dois pedidos, e respondo os dois.\n\n**{ent.ROTULOS_TODOS[ra.intencao]}**\n\n{ra.fala}"
+                     f"\n\n**{ent.ROTULOS_TODOS[rb.intencao]}**\n\n{rb.fala}")
         resp.links = list(dict.fromkeys(list(ra.links) + list(rb.links)))
         ja = {r for r, _ in resp.botoes}
         resp.botoes = resp.botoes + [(r, a) for r, a in rb.botoes if r not in ja and a.get("tipo") != "inicio"]
@@ -578,6 +640,10 @@ def montar(ctx, e, pergunta, foco, perfil="TECNICO", ia=None):
     if intencao == "mais_aparece" and pedido and e.ano is not None and e.ano <= int(ctx.serie["ano"].max()):
         intencao = "evolucao"  # "quantas internações de mama em 2020?" é sobre aquele câncer e aquele ano
     base, usado, nota = _resposta_base(ctx, intencao, pedido, foco, e.ano, ia)
+    if intencao == "onde_atendida":
+        hospital = _hospital_de_cancer(ctx, pergunta)
+        if hospital is not None:
+            base = hospital
     if intencao == "sem_dados" and PEDE_PROPORCAO.search(ent.normalizar(pergunta)):
         rankings = getattr(ctx, "ranking", None) or {}
         chave = pedido if pedido in rankings else None  # o câncer citado, ou os 7 somados
@@ -624,6 +690,9 @@ def responder_pergunta(ctx, pergunta, foco, memoria=None, perfil="TECNICO", ia=N
     e = ent.compreender(pergunta, set(_canceres(ctx)), memoria=memoria,
                         classificar=ia.classificar if ia.ligada else None,
                         cidade=ctx.cidade, outras_cidades=outras_cidades, ano_dados=int(ctx.serie["ano"].max()))
+    if e.tipo in ("palpites", "fora") and PEDE_HOSPITAL_CANCER.search(ent.normalizar(pergunta)):
+        # pede hospital de câncer mas a busca ficou em dúvida (nome de cidade e erro de digitação atrapalham): é o assunto "onde ser atendida"
+        e = ent.Entendimento("intencao", intencao="onde_atendida", origem="regras")
     return montar(ctx, e, pergunta, foco, perfil, ia)
 
 

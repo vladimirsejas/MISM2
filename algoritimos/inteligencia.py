@@ -2031,3 +2031,165 @@ def leitura_ranking(ranking, cancer, cidade, codigo_ibge, quantas=5):
                "população de mulheres do Censo 2022 (IBGE). **Não é incidência**: também depende de acesso ao hospital e de "
                "registro, e o Escudo não explica o motivo das diferenças.")
     return cabeca + "\n\n" + "\n".join(linhas) + "\n\n" + cuidado
+
+
+# =====================================
+# TRATAMENTO AMBULATORIAL (SIA, APACs de quimio e radio) E MORTALIDADE REAL (SIM)
+#
+# Duas perguntas que o SIH sozinho não responde: quantas mulheres se tratam FORA da internação (quimio e radio) e quantas morrem de
+# câncer no total, não só durante uma internação. Só descrevem (nada de causa); entram na Lia, não no painel. Lê as tabelas
+# `oncologia_ambulatorial` e `obitos_sim` (py -3.12 etl\carregar_tudo_pysus.py); sem elas, a Lia diz o que falta.
+# =====================================
+
+NOMES_MODALIDADE = {"QUIMIO": "quimioterapia", "RADIO": "radioterapia"}
+# Códigos de raça/cor do SIA e do SIM (diferem entre as bases); o ETL avisa se parecerem trocados.
+RACA_SIA = {"01": "branca", "02": "preta", "03": "parda", "04": "amarela", "05": "indígena"}
+RACA_SIM = {"1": "branca", "2": "preta", "3": "amarela", "4": "parda", "5": "indígena"}
+LOCAL_OBITO_SIM = {"1": "no hospital", "2": "em outro serviço de saúde", "3": "em casa", "4": "na rua ou via pública", "5": "em outro local"}
+
+
+def _sem_tabela(colunas):
+    return pd.DataFrame(columns=colunas)
+
+
+def carregar_tratamento(conexao):
+    """APACs de quimio e radio já agregadas (sem identificador). Vazio se o banco ainda não tem a tabela."""
+    try:
+        return pd.read_sql("SELECT modalidade, ano, mes, substr(codigo_residencia, 1, 6) AS codigo6, tipo_cancer, faixa, estadiamento, "
+                           "raca_cor, apacs FROM oncologia_ambulatorial", conexao)
+    except Exception:
+        return _sem_tabela(["modalidade", "ano", "mes", "codigo6", "tipo_cancer", "faixa", "estadiamento", "raca_cor", "apacs"])
+
+
+def _compensar(soma_por_ano, meses_por_ano):
+    """Mesma regra do resto do Escudo: ano com meses a menos na fonte vira média dos meses disponíveis x 12."""
+    return {ano: (valor * MESES_NO_ANO / meses_por_ano[ano] if 0 < meses_por_ano.get(ano, 0) < MESES_NO_ANO else valor)
+            for ano, valor in soma_por_ano.items()}
+
+
+def resumo_tratamento(dados, codigo_ibge, tipo_cancer=None):
+    """Por modalidade: APACs por ano da cidade e do Estado (anos comparáveis), o último ano e quanto veio com estadiamento e raça/cor
+    informados na cidade. Dict vazio se a tabela não existe ou a cidade não tem APAC."""
+    if dados is None or dados.empty:
+        return {}
+    if tipo_cancer:
+        dados = dados[dados["tipo_cancer"] == tipo_cancer]
+    codigo6 = str(codigo_ibge)[:6]
+    saida = {}
+    for modalidade, parte in dados.groupby("modalidade"):
+        meses = parte.groupby("ano")["mes"].nunique().to_dict()
+        estado = _compensar(parte.groupby("ano")["apacs"].sum().to_dict(), meses)
+        cidade_df = parte[parte["codigo6"] == codigo6]
+        if cidade_df.empty:
+            continue
+        cidade = _compensar(cidade_df.groupby("ano")["apacs"].sum().to_dict(), meses)
+        ultimo = max(cidade)
+        recente = cidade_df[cidade_df["ano"] == ultimo]
+        total = float(recente["apacs"].sum())
+
+        def parcela(coluna, vazios):
+            informados = recente[~recente[coluna].astype("string").str.strip().isin(vazios) & recente[coluna].notna()]["apacs"].sum()
+            return float(informados) / total * 100 if total else None
+        raca = recente.groupby("raca_cor")["apacs"].sum()
+        informada = raca[[r for r in raca.index if str(r) in RACA_SIA]]
+        saida[modalidade] = {
+            "cidade": cidade, "estado": estado, "ultimo_ano": int(ultimo), "meses_ultimo": int(meses.get(ultimo, 0)),
+            "apacs_ultimo": float(cidade[ultimo]), "estado_ultimo": float(estado.get(ultimo, 0)),
+            "pct_estadiamento": parcela("estadiamento", {"", "0", "9", "sem_info", "nan", "None"}),
+            "pct_raca_informada": parcela("raca_cor", {"", "99", "sem_info", "nan", "None"}),
+            "raca": {RACA_SIA[str(r)]: float(v) / float(informada.sum()) * 100 for r, v in informada.items()} if informada.sum() else {},
+        }
+    return saida
+
+
+def leitura_tratamento(resumo, cidade, cancer=None):
+    """Texto do tratamento ambulatorial. Só descreve; APAC é a autorização do procedimento (cada uma cobre um período de tratamento),
+    então o número NÃO é de mulheres."""
+    quem = cancer_de(cancer) if cancer else "os 7 cânceres somados"
+    blocos = []
+    for modalidade in ("QUIMIO", "RADIO"):
+        r = resumo.get(modalidade)
+        if not r:
+            continue
+        anos = sorted(r["cidade"])
+        antes = r["cidade"].get(anos[0])
+        tendencia = ""
+        if len(anos) >= 3 and antes:
+            tendencia = (f" Em {anos[0]} eram {formatar_numero(antes)}; a série vai de {anos[0]} a {anos[-1]}.")
+        parte = r["estado_ultimo"]
+        peso = f" ({formatar_numero(r['apacs_ultimo'] / parte * 100, 1)}% do Estado)" if parte else ""
+        blocos.append(f"**{NOMES_MODALIDADE[modalidade].capitalize()}**: em {r['ultimo_ano']}, {formatar_numero(r['apacs_ultimo'])} APACs de "
+                      f"mulheres moradoras de {cidade}{peso}.{tendencia}")
+    if not blocos:
+        return f"Não encontrei APACs de quimioterapia ou radioterapia de mulheres moradoras de {cidade} para {quem}."
+    r = next(iter(resumo.values()))
+    extra = []
+    if r["pct_estadiamento"] is not None:
+        extra.append(f"o estadiamento veio informado em {formatar_numero(r['pct_estadiamento'], 0)}% das APACs")
+    if r["pct_raca_informada"] is not None:
+        extra.append(f"a cor ou raça veio informada em {formatar_numero(r['pct_raca_informada'], 0)}%")
+    if r["raca"]:
+        extra.append("entre as que informaram: " + ", ".join(f"{n} {formatar_numero(p, 0)}%" for n, p in
+                                                              sorted(r["raca"].items(), key=lambda x: -x[1])))
+    cuidado = ("APAC é a autorização de um procedimento ambulatorial; **não é número de mulheres** (a mesma pessoa tem várias). "
+               "Mostra o tratamento que o SUS autorizou, não quem precisou e não conseguiu, e o Escudo não explica o motivo das variações.")
+    return (f"Tratamento ambulatorial de {quem} (SIA/SUS, por residência):\n\n" + "\n\n".join(blocos)
+            + (f"\n\nNo último ano: {'; '.join(extra)}." if extra else "") + "\n\n" + cuidado)
+
+
+def carregar_obitos_sim(conexao):
+    """Óbitos por câncer (mulheres) do SIM já agregados. Vazio se o banco ainda não tem a tabela."""
+    try:
+        return pd.read_sql("SELECT ano, substr(codigo_residencia, 1, 6) AS codigo6, tipo_cancer, faixa, local_obito, raca_cor, obitos "
+                           "FROM obitos_sim", conexao)
+    except Exception:
+        return _sem_tabela(["ano", "codigo6", "tipo_cancer", "faixa", "local_obito", "raca_cor", "obitos"])
+
+
+def resumo_mortalidade(sim, codigo_ibge, tipo_cancer=None, serie=None):
+    """Óbitos por câncer em mulheres moradoras da cidade (SIM), por ano e onde ocorreram, e o que o SIH registrou de óbitos na
+    internação no mesmo ano (`serie` = carregar_serie da cidade, para o cruzamento). Dict vazio sem dados."""
+    if sim is None or sim.empty:
+        return {}
+    if tipo_cancer:
+        sim = sim[sim["tipo_cancer"] == tipo_cancer]
+    cidade = sim[sim["codigo6"] == str(codigo_ibge)[:6]]
+    if cidade.empty:
+        return {}
+    por_ano = cidade.groupby("ano")["obitos"].sum().astype(int).to_dict()
+    ultimo = max(por_ano)
+    recente = cidade[cidade["ano"] == ultimo].groupby("local_obito")["obitos"].sum()
+    total = float(recente.sum())
+    onde = {LOCAL_OBITO_SIM[str(k)]: float(v) / total * 100 for k, v in recente.items() if str(k) in LOCAL_OBITO_SIM}
+    sih = None
+    if serie is not None and len(serie):
+        s = serie[serie["ano"] == ultimo]
+        s = s[s["tipo_cancer"] == tipo_cancer] if tipo_cancer and "tipo_cancer" in s else s
+        if len(s) and "obitos_reg" in s:
+            sih = int(s["obitos_reg"].sum())
+        elif len(s) and "obitos" in s:
+            sih = int(s["obitos"].sum())
+    return {"por_ano": por_ano, "ultimo_ano": int(ultimo), "obitos_ultimo": int(por_ano[ultimo]), "onde": onde,
+            "estado_ultimo": int(sim[sim["ano"] == ultimo]["obitos"].sum()), "sih_ultimo": sih}
+
+
+def leitura_mortalidade(resumo, cidade, cancer=None):
+    """Texto da mortalidade real. Só descreve; SIM e SIH medem coisas diferentes e não se subtraem."""
+    if not resumo:
+        return f"Não encontrei óbitos por câncer de mulheres moradoras de {cidade} na base de mortalidade (SIM)."
+    quem = cancer_de(cancer) if cancer else "os 7 cânceres somados"
+    ano = resumo["ultimo_ano"]
+    texto = (f"Pelo **SIM** (declarações de óbito), em {ano} morreram **{formatar_numero(resumo['obitos_ultimo'])}** mulheres moradoras "
+             f"de {cidade} com {quem} como causa básica, contra {formatar_numero(resumo['estado_ultimo'])} no Estado de SP.")
+    if resumo["onde"]:
+        partes = ", ".join(f"{n} {formatar_numero(p, 0)}%" for n, p in sorted(resumo["onde"].items(), key=lambda x: -x[1]))
+        texto += f" Onde ocorreram: {partes}."
+    if resumo["sih_ultimo"] is not None:
+        texto += (f"\n\nNo mesmo ano, o **SIH** registrou {formatar_numero(resumo['sih_ultimo'])} óbitos durante internações (as internações que "
+                  "o painel mostra).")
+    anos = sorted(resumo["por_ano"])
+    if len(anos) >= 3:
+        texto += f"\n\nA série do SIM nesta cidade vai de {anos[0]} a {anos[-1]}."
+    return texto + ("\n\nSIM e SIH medem coisas diferentes: o SIM conta toda morte por câncer como causa básica, em qualquer lugar; o "
+                    "SIH só a que acontece durante uma internação. Por isso os números não se subtraem nem se comparam direto, e o "
+                    "Escudo não explica a diferença.")
