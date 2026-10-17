@@ -385,8 +385,11 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   (`gabarito_perguntas.json`): ajustar regras olhando só o desenvolvimento, e NÃO reaproveitar o
   conjunto "final" (já foi medido e consertado) -- criar um novo conjunto às cegas para medir de novo.
 - **O que a nuvem NÃO comprovou (só o autor, no Windows):** o Gemini já passou no `py algoritimos\testar_gemini.py`
-  (17/10/2026, 6 de 6); falta `py algoritimos\teste_entendimento.py --com-gemini` (quanto a IA melhora o
-  entendimento) e o painel com o banco real. Os testes na nuvem
+  (17/10/2026, 6 de 6); `py algoritimos\teste_entendimento.py --com-gemini` também foi medido (17/10/2026, regra em que o
+  Gemini sozinho responde direto): entendeu direto **91/91** (desenvolvimento), **62/62** (teste) e **35/35** (final), 0 respostas
+  erradas, contra 80, 47 e 31 só com as regras; o Gemini também recusou todo o fora do assunto do teste (4/4). Ressalvas: perguntas
+  escritas pela equipe (o "final" já não é independente) e o Gemini não é determinístico mesmo com temperatura 0. Falta o painel
+  com o banco real. Os testes na nuvem
   usam a base pública de Rio Claro e um Gemini simulado. Testes: `teste_previsao.py`,
   `teste_entendimento.py`, `teste_assistente.py` e o cenário I de `dashboard/teste_painel.py`.
 - **Pergunte à Lia no Apoio à mulher (10/2026, enviada ao `main` em 17/10/2026 com o OK do autor; ainda

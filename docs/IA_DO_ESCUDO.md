@@ -113,7 +113,7 @@ A nuvem onde isto foi feito não tem a chave do Gemini, o banco real nem o Windo
 |---|---|
 | ~~A chave funciona e o modelo `gemini-3.8-flash` existe~~ **COMPROVADO em 17/10/2026** (6 de 6 passos, chamada simples em 6,7 s; o texto do passo 5 passou na conferência) | Dois cliques em `Testar IA (Gemini).bat` (ou `py algoritimos\testar_gemini.py`). Se o modelo não existir, o script lista os que a chave aceita; trocar com `GEMINI_MODEL=...` no `.env` |
 | O texto do Gemini passa na conferência na prática (não é descartado o tempo todo) | Passo 5 do mesmo script; depois abrir o painel e perguntar. O selo diz se foi IA ou resposta direta |
-| Quanto o Gemini melhora o entendimento | `py algoritimos\teste_entendimento.py --com-gemini` |
+| ~~Quanto o Gemini melhora o entendimento~~ **MEDIDO em 17/10/2026** (`py algoritimos\teste_entendimento.py --com-gemini`) | Entendeu direto 80 → **91**/91 (desenvolvimento), 47 → **62**/62 (teste) e 31 → **35**/35 (final), com 0 respostas erradas; fora do assunto no teste 3 → 4 de 4. Só foram ao Gemini as perguntas que as regras não resolviam sozinhas (11, 15 e 4). Perguntas escritas pela equipe, não por usuárias; falta um conjunto novo às cegas |
 | O painel com o banco real (7 cânceres, todas as cidades) | Abrir `Abrir Escudo Feminino.bat` e perguntar; rodar `py dashboard\teste_painel.py` |
 | A caixa com pessoas de verdade | Teste de usabilidade com colegas e gestores; anotar à mão, com consentimento, as perguntas que não foram entendidas (o painel só conta o assunto, nunca o texto) para ampliar o vocabulário |
 
