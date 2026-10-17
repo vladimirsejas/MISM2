@@ -62,6 +62,8 @@ class Contexto:
     duplicados: tuple = ()
     fluxo: object = None          # inteligencia.carregar_fluxo (None: banco antigo, sem o fluxo)
     fluxo_cidade: object = None   # inteligencia.fluxo_da_cidade
+    codigo_ibge: object = None    # código IBGE da cidade do painel (posição no ranking por 100 mil mulheres)
+    ranking: object = None        # {câncer ou None: inteligencia.ranking_municipios} (None: banco sem a população)
 
 
 # ---------- ações (o que um botão faz) ----------

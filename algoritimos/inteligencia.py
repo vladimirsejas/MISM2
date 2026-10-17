@@ -1948,3 +1948,86 @@ def leitura_previsao(prev, cancer):
     if prev["pequeno"]:
         frases.append("São poucas internações por ano, então a faixa é larga e o acaso pesa.")
     return frases
+
+
+# =====================================================================
+# POPULAÇÃO: TAXA POR 100 MIL MULHERES E RANKING ENTRE CIDADES
+#
+# A população vem do IBGE (etl/baixar_populacao.py, tabela `populacao_mulheres`). O cruzamento é pelo código de RESIDÊNCIA
+# (6 primeiros dígitos: o SIH usa 6, o IBGE usa 7). Só descreve: internações registradas por 100 mil mulheres, não é
+# incidência. Cidades pequenas oscilam muito de um ano para o outro, então só entram as com MIN_MULHERES_RANKING ou mais.
+# =====================================================================
+
+MIN_MULHERES_RANKING = 20_000
+
+SQL_INTERNACOES_POR_CIDADE = """
+SELECT substr(CAST(codigo_ibge AS TEXT), 1, 6) AS codigo6, ano, COUNT(*) AS internacoes
+FROM internacoes
+WHERE origem = ? AND codigo_ibge IS NOT NULL
+  AND substr(CAST(codigo_ibge AS TEXT), 1, 2) = '35'{filtro_cancer}
+GROUP BY codigo6, ano
+"""
+
+COLUNAS_RANKING = ["codigo6", "municipio", "populacao", "internacoes", "media_anual", "taxa", "posicao"]
+
+
+def carregar_populacao(conexao):
+    """DataFrame (codigo6, municipio, populacao). Vazio se a tabela ainda não foi baixada (banco sem a população)."""
+    try:
+        return pd.read_sql("SELECT substr(CAST(codigo_ibge AS TEXT), 1, 6) AS codigo6, municipio, populacao "
+                           "FROM populacao_mulheres", conexao)
+    except Exception:  # sem a tabela: rodar py etl\baixar_populacao.py
+        return pd.DataFrame(columns=["codigo6", "municipio", "populacao"])
+
+
+def ranking_municipios(conexao, tipo_cancer=None, uf_referencia="SP", minimo=MIN_MULHERES_RANKING):
+    """Internações por 100 mil mulheres, por ano (média do período), das cidades de SP com `minimo` mulheres ou mais, da maior
+    para a menor. `tipo_cancer=None`: os 7 cânceres somados. Os meses que o DATASUS não oferece são compensados como no resto do
+    Escudo (média dos meses disponíveis x 12). DataFrame vazio se faltar a população ou o código de residência."""
+    vazio = pd.DataFrame(columns=COLUNAS_RANKING)
+    populacao = carregar_populacao(conexao)
+    if populacao.empty:
+        return vazio
+    sql = SQL_INTERNACOES_POR_CIDADE.format(filtro_cancer=" AND tipo_cancer = ?" if tipo_cancer else "")
+    params = (uf_referencia,) + ((tipo_cancer,) if tipo_cancer else ())
+    try:
+        dados = pd.read_sql(sql, conexao, params=params)
+    except Exception:  # banco sem a coluna codigo_ibge
+        return vazio
+    if dados.empty:
+        return vazio
+    meses = meses_por_ano(conexao, uf_referencia)
+    if meses:
+        dados["ajustado"] = dados["internacoes"] * 12.0 / dados["ano"].map(lambda a: meses.get(int(a), 12))
+    else:
+        dados["ajustado"] = dados["internacoes"].astype(float)
+    # todos os anos da base (e não só os em que ESTE câncer apareceu): ano sem internação conta como zero na média
+    n_anos = len(conexao.execute("SELECT DISTINCT ano FROM internacoes WHERE origem = ?", (uf_referencia,)).fetchall()) \
+        or dados["ano"].nunique()
+    por_cidade = dados.groupby("codigo6").agg(internacoes=("internacoes", "sum"), soma_ajustada=("ajustado", "sum"))
+    tabela = populacao.merge(por_cidade, how="left", left_on="codigo6", right_index=True)
+    tabela["internacoes"] = tabela["internacoes"].fillna(0).astype(int)
+    tabela["media_anual"] = tabela["soma_ajustada"].fillna(0.0) / n_anos
+    tabela = tabela[tabela["populacao"] >= minimo].copy()
+    tabela["taxa"] = tabela["media_anual"] / tabela["populacao"] * 100_000
+    tabela = tabela.sort_values("taxa", ascending=False).reset_index(drop=True)
+    tabela["posicao"] = tabela.index + 1
+    return tabela[COLUNAS_RANKING]
+
+
+def leitura_ranking(ranking, cancer, cidade, codigo_ibge, quantas=5):
+    """Texto do ranking por 100 mil mulheres, com a posição da cidade do painel. `cancer=None`: os 7 somados. Só descreve."""
+    quem = cancer_de(cancer) if cancer else "os 7 cânceres somados"
+    linhas = [f"{int(r.posicao)}. {r.municipio}: {formatar_numero(r.taxa, 1)} por 100 mil mulheres"
+              for r in ranking.head(quantas).itertuples()]
+    minha = ranking[ranking["codigo6"] == str(codigo_ibge)[:6]] if codigo_ibge else ranking.iloc[0:0]
+    if len(minha):
+        m = minha.iloc[0]
+        linhas.append(f"\n**{cidade}** está na posição **{int(m.posicao)}** de {len(ranking)} cidades, com "
+                      f"{formatar_numero(m.taxa, 1)} por 100 mil mulheres.")
+    cabeca = (f"Internações por {quem}, por **100 mil mulheres**, em média por ano, entre as {len(ranking)} cidades de SP com "
+              f"{formatar_numero(MIN_MULHERES_RANKING)} mulheres ou mais:")
+    cuidado = ("O que isso mede: internações registradas no SIH/SUS de mulheres que **moram** em cada cidade, divididas pela "
+               "população de mulheres do Censo 2022 (IBGE). **Não é incidência**: também depende de acesso ao hospital e de "
+               "registro, e o Escudo não explica o motivo das diferenças.")
+    return cabeca + "\n\n" + "\n".join(linhas) + "\n\n" + cuidado

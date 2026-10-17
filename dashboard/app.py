@@ -18,6 +18,7 @@ from lia_rosto import img as rosto_lia
 from estilo import CSS
 from identidade import regua_cobertura as regua_mism, simbolo as simbolo_mism
 from inteligencia import (
+    ranking_municipios,
     ano_atipico_no_estado,
     anos_fora_do_padrao,
     anos_incompletos,
@@ -183,6 +184,25 @@ def fluxo_cidade(origem, codigo_ibge):
     conn = sqlite3.connect(BANCO)
     try:
         return fluxo_da_cidade(conn, origem, codigo_ibge, UF_REFERENCIA)
+    finally:
+        conn.close()
+
+
+@st.cache_data
+def rankings_por_100_mil():
+    """{câncer ou None (os 7 somados): ranking por 100 mil mulheres}. Vazio se o banco ainda não tem a população do IBGE
+    (py etl\\baixar_populacao.py); a Lia então diz o que falta em vez de inventar um ranking."""
+    conn = sqlite3.connect(BANCO)
+    try:
+        tipos = [r[0] for r in conn.execute("SELECT DISTINCT tipo_cancer FROM internacoes WHERE tipo_cancer IS NOT NULL")]
+        saida = {}
+        for chave in [None] + tipos:
+            tabela = ranking_municipios(conn, chave, UF_REFERENCIA)
+            if len(tabela):
+                saida[chave] = tabela
+        return saida
+    except sqlite3.Error:
+        return {}
     finally:
         conn.close()
 
@@ -373,7 +393,8 @@ nome = nome_doenca(doenca)
 
 ctx_lia = Contexto(serie=serie, cidade=nome_cidade, faixas=faixas_municipio(ORIGEM),
                    duplicados=tuple(duplicados_municipio(ORIGEM)),
-                   fluxo=fluxo_geral(), fluxo_cidade=fluxo_cidade(ORIGEM, cidade["codigo_ibge"]))
+                   fluxo=fluxo_geral(), fluxo_cidade=fluxo_cidade(ORIGEM, cidade["codigo_ibge"]),
+                   codigo_ibge=cidade["codigo_ibge"], ranking=rankings_por_100_mil())
 st.session_state.setdefault("lia", {"cidade": None, "atual": None, "pilha": []})
 lia_estado = st.session_state["lia"]
 if lia_estado["cidade"] != ORIGEM:  # trocou de cidade: a Lia recomeça

@@ -8,6 +8,7 @@ from inteligencia import (
     anos_incompletos,
     cancer_de,
     formatar_numero,
+    leitura_ranking,
     nome_doenca,
     prever_com_validacao,
     previsao_todos,
@@ -578,9 +579,17 @@ def montar(ctx, e, pergunta, foco, perfil="TECNICO", ia=None):
         intencao = "evolucao"  # "quantas internações de mama em 2020?" é sobre aquele câncer e aquele ano
     base, usado, nota = _resposta_base(ctx, intencao, pedido, foco, e.ano, ia)
     if intencao == "sem_dados" and PEDE_PROPORCAO.search(ent.normalizar(pergunta)):
-        base = Resposta(fala=SEM_POPULACAO, expressao="cautelosa", destino={"aba": "Investigar"},
-                        botoes=[("Comparar com outra cidade", acao("comparar_cidades", None, pergunta)),
-                                ("Como esses dados funcionam?", caminho("metodo"))])
+        rankings = getattr(ctx, "ranking", None) or {}
+        chave = pedido if pedido in rankings else None  # o câncer citado, ou os 7 somados
+        tabela = rankings.get(chave)
+        botoes = [("Comparar com outra cidade", acao("comparar_cidades", None, pergunta)),
+                  ("Como esses dados funcionam?", caminho("metodo"))]
+        if tabela is not None and len(tabela):  # a população do IBGE está no banco: responde com o ranking de verdade
+            base = Resposta(fala=leitura_ranking(tabela, chave, ctx.cidade, ctx.codigo_ibge), expressao="explicando",
+                            destino={"aba": "Investigar"}, botoes=botoes)
+            usado = chave
+        else:  # sem a população: diz o que falta e o que dá para ver hoje
+            base = Resposta(fala=SEM_POPULACAO, expressao="cautelosa", destino={"aba": "Investigar"}, botoes=botoes)
     nota = nota or (nota_foco if usado else None)
     if e.nao_acompanhado and intencao in SO_DADOS:  # nos textos fixos (sintoma, apoio...) o aviso só atrapalharia
         nota = (f"Ainda não acompanho o câncer de {e.nao_acompanhado}; mostro os que acompanho. " + (nota or "")).strip()

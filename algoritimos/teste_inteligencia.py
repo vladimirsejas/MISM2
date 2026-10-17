@@ -331,6 +331,66 @@ checar("M. banco antigo (sem coluna mes): sem ajuste e pede para recarregar",
        serie_doenca(sv, "MAMA").loc[lambda d: d["ano"] == 2018, "internacoes"].iloc[0] == 30
        and any("sem o mês" in t for _, t in confiabilidade(sv, "MAMA")))
 
+# ---- N. população: taxa por 100 mil mulheres e ranking entre cidades (banco sintético, contas conferidas à mão) ----
+import sqlite3 as _sq
+from inteligencia import leitura_ranking, ranking_municipios
+
+
+def banco_ranking(com_populacao=True, com_codigo=True):
+    c = _sq.connect(":memory:")
+    c.execute("CREATE TABLE internacoes (origem TEXT, municipio TEXT, " + ("codigo_ibge INTEGER, " if com_codigo else "")
+              + "tipo_cancer TEXT, ano INTEGER, mes INTEGER)")
+    cols = "(origem, municipio, " + ("codigo_ibge, " if com_codigo else "") + "tipo_cancer, ano, mes)"
+    marca = "(?, ?, ?, ?, ?, ?)" if com_codigo else "(?, ?, ?, ?, ?)"
+
+    def pôr(codigo, cancer, por_mes_2022, por_mes_2023, municipio="X"):
+        for ano, meses, qtd in ((2022, range(1, 13), por_mes_2022), (2023, range(1, 7), por_mes_2023)):
+            for mes in meses:
+                for _ in range(qtd):
+                    linha = ("SP", municipio) + ((codigo,) if com_codigo else ()) + (cancer, ano, mes)
+                    c.execute(f"INSERT INTO internacoes {cols} VALUES {marca}", linha)
+    pôr(350010, "MAMA", 5, 5)            # A: 60 em 2022; 30 em 2023 (6 meses) -> 60 ajustado; média 60/ano
+    pôr(350020, "MAMA", 1, 1)            # B: 12 e 6 (-> 12); média 12/ano
+    pôr(3543907, "MAMA", 2, 2)           # Rio Claro (código de 7 dígitos): 24 e 12 (-> 24); média 24/ano
+    pôr(350030, "MAMA", 9, 9)            # C: muitas internações, mas só 10 mil mulheres: fica fora do ranking
+    pôr(410000, "MAMA", 7, 7)            # moradora de outro estado (código 41...): nunca entra
+    for mes in range(1, 11):             # B: colo do útero, só em 2022 (10 internações)
+        c.execute(f"INSERT INTO internacoes {cols} VALUES {marca}",
+                  ("SP", "X") + ((350020,) if com_codigo else ()) + ("COLO_UTERO", 2022, mes))
+    if com_populacao:
+        c.execute("CREATE TABLE populacao_mulheres (codigo_ibge TEXT, municipio TEXT, ano INTEGER, populacao INTEGER, fonte TEXT)")
+        c.executemany("INSERT INTO populacao_mulheres VALUES (?, ?, 2022, ?, 'teste')",
+                      [("3500105", "Cidade A", 100_000), ("3500200", "Cidade B", 50_000), ("3543907", "Rio Claro", 106_123),
+                       ("3500300", "Cidade C", 10_000), ("3500400", "Cidade D", 80_000)])
+    c.commit()
+    return c
+
+
+rk = ranking_municipios(banco_ranking(), "MAMA")
+por = {r.municipio: r for r in rk.itertuples()}
+checar("N. ranking: só cidades com 20 mil mulheres ou mais (a de 10 mil e as de outro estado ficam fora)",
+       set(rk["municipio"]) == {"Cidade A", "Cidade B", "Rio Claro", "Cidade D"})
+checar("N. taxa por 100 mil: A = 60/100 mil = 60,0 por ano (o ano de 6 meses é compensado: 30 x 12/6)",
+       abs(por["Cidade A"].taxa - 60.0) < 1e-9 and abs(por["Cidade B"].taxa - 24.0) < 1e-9)
+checar("N. cruza o código de 7 dígitos do IBGE com o de 6 do SIH: Rio Claro = 24/106.123 x 100 mil",
+       abs(por["Rio Claro"].taxa - 24 / 106123 * 100000) < 1e-9)
+checar("N. ordem da maior para a menor taxa; cidade sem internação entra com 0 e fica por último",
+       list(rk["municipio"]) == ["Cidade A", "Cidade B", "Rio Claro", "Cidade D"] and por["Cidade D"].taxa == 0
+       and list(rk["posicao"]) == [1, 2, 3, 4])
+rc = ranking_municipios(banco_ranking(), "COLO_UTERO")
+checar("N. por câncer: a média usa TODOS os anos da base (colo só em 2022: 10 em 2 anos = 5/ano = 10,0 por 100 mil)",
+       abs(rc.set_index("municipio").loc["Cidade B", "taxa"] - 10.0) < 1e-9)
+checar("N. câncer None soma os 7 cânceres (B: 12 + 10 = mais que só a mama)",
+       ranking_municipios(banco_ranking(), None).set_index("municipio").loc["Cidade B", "taxa"] > 24.0)
+checar("N. sem a tabela da população (banco antes de baixar_populacao): vazio, sem erro",
+       ranking_municipios(banco_ranking(com_populacao=False), "MAMA").empty)
+checar("N. banco antigo, sem a coluna codigo_ibge: vazio, sem erro",
+       ranking_municipios(banco_ranking(com_codigo=False), "MAMA").empty)
+texto = leitura_ranking(rk, "MAMA", "Rio Claro", 3543907)
+checar("N. leitura: diz a taxa por 100 mil, a posição da cidade do painel (3 de 4) e que NÃO é incidência",
+       "60,0 por 100 mil mulheres" in texto and "posição **3** de 4" in texto and "Não é incidência" in texto
+       and "câncer de mama" in texto and "vai " not in texto.lower().replace("moram", ""))
+
 print()
 if falhas:
     print(f"{len(falhas)} checagem(ns) falharam.")

@@ -298,6 +298,26 @@ def main():
     checar("7d. endereço de hospital (cadastro da cidade) também aponta o 'Hospitais no Estado' para câncer",
            "Hospitais no Estado" in r.fala and any(a == "pages/onde_ser_atendida.py" for _, a in r.links))
 
+    # ---- 7e. com a população do IBGE no banco, a Lia responde o ranking proporcional de verdade ----
+    import pandas as _pd
+    rk = _pd.DataFrame([(f"35{i:04d}", f"Cidade {i}", 50_000, 100, 10.0, 80.0 - 10 * i, i + 1) for i in range(4)] +
+                       [("354390", "Rio Claro", 106_123, 50, 10.0, 22.6, 5)],
+                       columns=["codigo6", "municipio", "populacao", "internacoes", "media_anual", "taxa", "posicao"])
+    ctx_pop = Contexto(serie=ctx.serie, cidade="Rio Claro", faixas=ctx.faixas, codigo_ibge=3543907, ranking={"MAMA": rk, None: rk})
+    r = asst.responder_pergunta(ctx_pop, "quais as cidades que mais têm câncer de mama proporcionalmente?", foco,
+                                ia=asst.IA(), outras_cidades=["Campinas"])
+    checar("7e. com a população: a Lia mostra o ranking por 100 mil mulheres, a posição de Rio Claro e que não é incidência",
+           r.intencao == "sem_dados" and "por **100 mil mulheres**" in r.fala and "Cidade 0: 80,0" in r.fala
+           and "posição **5** de 5" in r.fala and "Não é incidência" in r.fala and not r.usou_ia)
+    checar("7e. o ranking sai dos cálculos: sem número inventado, sem causa, sem 'vai', e continua oferecendo comparar cidades",
+           not asst.PROMETE.search(r.fala) and not asst.CAUSA_ATRIBUIDA.search(r.fala)
+           and any(rot == "Comparar com outra cidade" for rot, _ in r.botoes))
+    r = asst.responder_pergunta(ctx_pop, "quais as cidades que mais têm câncer proporcionalmente?", foco, ia=asst.IA())
+    checar("7e. sem citar câncer usa os 7 somados", "os 7 cânceres somados" in r.fala)
+    r = asst.responder_pergunta(ctx, "quais as cidades que mais têm câncer de mama proporcionalmente?", foco, ia=asst.IA())
+    checar("7e. sem a população no banco (ctx sem ranking) a Lia volta a dizer o que falta, sem ranking inventado",
+           r.fala.startswith(asst.SEM_POPULACAO[:60]) and "por 100 mil" not in r.fala.split("população")[0])
+
     # ---- 8. palpites e botões ----
     r = perguntar("me explica o negócio dos números do hospital das moças")
     ok_palpites = r.tipo in ("palpites", "fora")

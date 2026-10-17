@@ -348,8 +348,11 @@ Estado atual:
   Reconhecido em 17/10/2026 (SP, 2023): SIH/RD 11 arquivos; SIM/CID10 0 arquivos em 2023 (provável ano ainda não publicado: testar 2021);
   SIA/PA 36 (a, b, c por mês; volume enorme: para câncer preferir as APACs AQ e AR); CNES EQ, LT e ST 12 cada. **População:**
   `py etl\baixar_populacao.py` (IBGE, Censo 2022, tabela 9514; descobre os códigos pelo nome; grava `populacao_mulheres`; teste
-  `etl/teste_baixar_populacao.py`; `--reconhecer` só mostra a tabela). Ainda falta usar a tabela em `inteligencia.py` (taxa por 100 mil e
-  ranking) depois de conferir os dados reais no notebook.
+  `etl/teste_baixar_populacao.py`; `--reconhecer` só mostra a tabela). **Usada (17/10/2026):** `inteligencia.ranking_municipios`/`leitura_ranking` (internações
+  por 100 mil mulheres, média por ano, só cidades com 20 mil mulheres ou mais, cruzando o código de residência pelos 6 primeiros dígitos;
+  os meses que o DATASUS não oferece são compensados) e a Lia responde "quais cidades têm mais ... proporcionalmente?" com o ranking e a
+  posição da cidade do painel (`Contexto.ranking`, `rankings_por_100_mil` em `app.py`); sem a tabela no banco ela diz o que falta
+  (`SEM_POPULACAO`). Testes: `teste_inteligencia.py` (N) e `teste_assistente.py` (7e). Falta conferir com os dados reais do notebook.
   **Carga robusta (24/09/2026):** a carga antiga apagava a tabela no 1º arquivo
   e parava no 2º que desse erro -- por isso o banco do autor ficou só com colo
   do útero. Agora ela lê e confere os 7 arquivos antes de gravar, um arquivo com
