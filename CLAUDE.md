@@ -398,8 +398,12 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   (17/10/2026, 6 de 6); `py algoritimos\teste_entendimento.py --com-gemini` também foi medido (17/10/2026, regra em que o
   Gemini sozinho responde direto): entendeu direto **91/91** (desenvolvimento), **62/62** (teste) e **35/35** (final), 0 respostas
   erradas, contra 80, 47 e 31 só com as regras; o Gemini também recusou todo o fora do assunto do teste (4/4). Ressalvas: perguntas
-  escritas pela equipe (o "final" já não é independente) e o Gemini não é determinístico mesmo com temperatura 0. Falta o painel
-  com o banco real. Os testes na nuvem
+  escritas pela equipe (o "final" já não é independente) e o Gemini não é determinístico mesmo com temperatura 0. **O painel com o banco real
+  também passou (17/10/2026, `py dashboard\teste_painel_banco_real.py`):** 464.340 internações, 7 cânceres, 5 abas sem erro e 3 perguntas
+  à Lia com o Gemini real, todas entendidas e redigidas pela IA com o texto aprovado na conferência. `py algoritimos\comparar_regras.py` com o
+  Gemini real (57 consultas): a regra antiga errou 2 respostas diretas e a nova 1 (evitou 1; custo 10 confirmações); o erro que sobra,
+  "qual desses cânceres tá lotando mais o hospital?" -> `tempo`, vem de o Gemini escolher mal entre candidatos que a busca local já
+  tinha (defeito conhecido, não corrigido de propósito para não contaminar o conjunto final). Os testes na nuvem
   usam a base pública de Rio Claro e um Gemini simulado. Testes: `teste_previsao.py`,
   `teste_entendimento.py`, `teste_assistente.py` e o cenário I de `dashboard/teste_painel.py`.
 - **Pergunte à Lia no Apoio à mulher (10/2026, enviada ao `main` em 17/10/2026 com o OK do autor; ainda
