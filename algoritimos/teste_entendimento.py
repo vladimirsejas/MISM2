@@ -42,11 +42,13 @@ def entender(pergunta, **kw):
 
 def medir_novo(gabarito, conjunto, classificar=None):
     r = dict(conteudo=0, certo=0, errado=0, palpite=0, sem_nada=0, fora=0, fora_ok=0, esp=0, esp_ok=0,
-             cancer_n=0, cancer_ok=0)
+             cancer_n=0, cancer_ok=0, gemini_direto=0, gemini_sem_apoio=0, erros=[])
     for g in gabarito:
         if g["conjunto"] != conjunto:
             continue
         e, esp = entender(g["pergunta"], classificar=classificar), g["esperado"]
+        r["gemini_direto"] += e.origem == "gemini"          # Gemini e busca local apontaram o mesmo assunto
+        r["gemini_sem_apoio"] += e.origem == "gemini_sem_apoio"  # só o Gemini apontou: virou palpite
         aceitas = {esp, *g.get("aceitavel", [])}
         if esp in ("saudacao", "risco"):
             r["esp"] += 1
@@ -58,6 +60,8 @@ def medir_novo(gabarito, conjunto, classificar=None):
             r["conteudo"] += 1
             if e.tipo == "intencao":
                 r["certo" if e.intencao in aceitas else "errado"] += 1
+                if e.intencao not in aceitas:
+                    r["erros"].append((g["pergunta"], esp, e.intencao, e.origem))
                 if g.get("cancer") and e.intencao in aceitas:  # o câncer certo também faz parte de entender
                     r["cancer_n"] += 1
                     r["cancer_ok"] += e.cancer == g["cancer"]
@@ -65,6 +69,38 @@ def medir_novo(gabarito, conjunto, classificar=None):
                 r["palpite"] += 1
             else:
                 r["sem_nada"] += 1
+    return r
+
+
+def pareado(gabarito, conjunto, classificar):
+    """Compara as DUAS regras da segunda chance com as MESMAS respostas do Gemini (uma chamada por pergunta que as regras
+    não resolvem sozinhas), sem o ruído de rodar duas vezes. Regra antiga: o assunto que o Gemini escolher responde direto.
+    Regra nova: só responde direto se também estiver entre os palpites da busca local; senão vira palpite."""
+    r = dict(chamadas=0, certo=0, errado=0, sem_escolha=0, antiga_certa=0, antiga_erro=0, nova_certa=0, nova_erro=0,
+             nova_palpite_com_certa=0, nova_palpite_sem_certa=0, erros=[])
+    for g in gabarito:
+        if g["conjunto"] != conjunto or g["esperado"] in ("saudacao", "risco"):
+            continue
+        e0 = entender(g["pergunta"])
+        if e0.tipo not in ("palpites", "fora"):
+            continue  # as regras entenderam sozinhas: o Gemini nem é chamado
+        r["chamadas"] += 1
+        resposta = classificar(g["pergunta"], [(i, ent.DESCRICOES[i]) for i in ent.IDS])
+        escolha = resposta.get("intencao") if isinstance(resposta, dict) else None
+        if escolha not in ent.IDS:
+            r["sem_escolha"] += 1  # "nenhuma", inválida ou falha: as duas regras caem no mesmo lugar
+            continue
+        aceitas = {g["esperado"], *g.get("aceitavel", [])}
+        locais = {i for i, _ in e0.palpites}
+        certo = escolha in aceitas
+        r["certo" if certo else "errado"] += 1
+        r["antiga_certa" if certo else "antiga_erro"] += 1
+        if escolha in locais:
+            r["nova_certa" if certo else "nova_erro"] += 1
+        else:
+            r["nova_palpite_com_certa" if aceitas & (locais | {escolha}) else "nova_palpite_sem_certa"] += 1
+        if not certo:
+            r["erros"].append((g["pergunta"], g["esperado"], escolha, escolha in locais))
     return r
 
 
@@ -162,8 +198,27 @@ def main():
     base = entender(obscura)
     checar("3. sem Gemini, pergunta obscura vira palpites ou fora (nunca resposta chutada)", base.tipo in ("palpites", "fora"))
     e = entender(obscura, classificar=gemini({"intencao": "metodo", "cancer": None}))
-    checar("3. com Gemini: escolhe da lista fechada e marca a origem", (e.tipo, e.intencao, e.origem) == ("intencao", "metodo", "gemini")
-           and chamadas[-1][1] == [i["id"] for i in ent.INTENCOES])
+    checar("3. o Gemini recebe a lista fechada de assuntos", chamadas[-1][1] == [i["id"] for i in ent.INTENCOES])
+    # Concordância: só responde direto quando o Gemini e a busca local apontam o mesmo assunto.
+    quase = next((g["pergunta"] for g in gabarito if entender(g["pergunta"]).tipo == "palpites"), None)  # as regras ficam em dúvida
+    local = entender(quase) if quase else None
+    if local is not None and local.palpites:
+        concorda = local.palpites[0][0]
+        e = entender(quase, classificar=gemini({"intencao": concorda, "cancer": None}))
+        checar("3. Gemini e busca local concordam: responde direto e marca a origem 'gemini'",
+               (e.tipo, e.intencao, e.origem) == ("intencao", concorda, "gemini"))
+        fora_dos_palpites = next(i for i in ent.IDS if i not in {x for x, _ in local.palpites})
+        e = entender(quase, classificar=gemini({"intencao": fora_dos_palpites, "cancer": None}))
+        checar("3. Gemini discorda da busca local: NÃO responde direto, pergunta (palpites com a escolha dele primeiro)",
+               e.tipo == "palpites" and e.intencao is None and e.origem == "gemini_sem_apoio"
+               and e.palpites[0][0] == fora_dos_palpites and len(e.palpites) <= 3
+               and {x for x, _ in local.palpites[:2]} <= {x for x, _ in e.palpites})
+    else:
+        checar("3. (caso de concordância não montado: a pergunta de teste mudou de comportamento)", False)
+    if not base.palpites:
+        e = entender(obscura, classificar=gemini({"intencao": "metodo", "cancer": None}))
+        checar("3. busca local sem nada parecido: o Gemini sozinho vira um palpite para confirmar, não resposta direta",
+               e.tipo == "palpites" and e.origem == "gemini_sem_apoio" and [x for x, _ in e.palpites] == ["metodo"])
     e = entender(obscura, classificar=gemini({"intencao": "invencao_do_modelo", "cancer": "MAMA"}))
     checar("3. Gemini devolveu intenção que não existe: ignorada (cai nos palpites/fora)", e.tipo in ("palpites", "fora") and e.intencao is None)
     e = entender(obscura, classificar=gemini({"intencao": "nenhuma"}))
@@ -220,12 +275,80 @@ def main():
         # Medição que só o autor consegue fazer (precisa da chave): quantos "palpites" e "sem nada" o Gemini converte.
         # Só relata. Chama o Gemini uma vez por pergunta que as regras não entenderam sozinhas.
         import ia_linguagem
-        print("\nCOM O GEMINI DE VERDADE (segunda chance do entendimento):")
+        print("\nCOM O GEMINI DE VERDADE (segunda chance do entendimento; cada ponto é uma chamada, leva alguns minutos):")
+
+        def classificar_com_andamento(pergunta, opcoes, **kw):
+            print(".", end="", flush=True)
+            return ia_linguagem.classificar_pergunta(pergunta, opcoes, **kw)
+
+        so = sys.argv[sys.argv.index("--so") + 1] if "--so" in sys.argv else None  # ex.: --so final
         for conjunto in ("desenvolvimento", "teste", "final"):
+            if so and conjunto != so:
+                continue
             sem = medir_novo(gabarito, conjunto)
-            com = medir_novo(gabarito, conjunto, classificar=ia_linguagem.classificar_pergunta)
+            print(f"  [{conjunto}] consultando o Gemini ", end="", flush=True)
+            com = medir_novo(gabarito, conjunto, classificar=classificar_com_andamento)
+            print(" pronto")
             print(f"  [{conjunto}] entendeu direto: {sem['certo']} -> {com['certo']} de {sem['conteudo']}; "
-                  f"errou: {sem['errado']} -> {com['errado']}; fora do assunto: {sem['fora_ok']} -> {com['fora_ok']} de {sem['fora']}")
+                  f"errou: {sem['errado']} -> {com['errado']}; palpite com a certa: {sem['palpite']} -> {com['palpite']}; "
+                  f"fora do assunto: {sem['fora_ok']} -> {com['fora_ok']} de {sem['fora']}")
+            for pergunta, esperado, obtido, origem in com["erros"]:
+                print(f"  [{conjunto}] ERROU: \"{pergunta}\" -> {obtido} (origem {origem}); esperado {esperado}")
+            print(f"  [{conjunto}] o Gemini concordou com a busca local em {com['gemini_direto']} perguntas (respondeu direto) e "
+                  f"estava sozinho em {com['gemini_sem_apoio']} (virou palpite para a pessoa confirmar)")
+
+    if "--pareado" in sys.argv:
+        # Mesmas respostas do Gemini, duas regras: é a comparação que decide se a regra de concordância vale a pena.
+        import ia_linguagem
+        adv = json.load(open(os.path.join(AQUI, "gabarito_adversarial.json"), encoding="utf-8"))
+        so = sys.argv[sys.argv.index("--so") + 1] if "--so" in sys.argv else None
+        print("\nPAREADO: mesma resposta do Gemini avaliada pelas duas regras (cada ponto é uma chamada, leva alguns minutos):")
+
+        def com_andamento(pergunta, opcoes, **kw):
+            print(".", end="", flush=True)
+            return ia_linguagem.classificar_pergunta(pergunta, opcoes, **kw)
+
+        for conjunto, lista in (("desenvolvimento", gabarito), ("teste", gabarito), ("final", gabarito), ("adversarial", adv)):
+            if so and conjunto != so:
+                continue
+            print(f"  [{conjunto}] ", end="", flush=True)
+            p_ = pareado(lista, conjunto, com_andamento)
+            print(" pronto")
+            print(f"  [{conjunto}] Gemini consultado em {p_['chamadas']} perguntas: escolheu certo {p_['certo']}, errado {p_['errado']}, "
+                  f"sem escolha {p_['sem_escolha']}")
+            print(f"  [{conjunto}] regra ANTIGA: diretas certas {p_['antiga_certa']}, diretas ERRADAS {p_['antiga_erro']}")
+            print(f"  [{conjunto}] regra NOVA:   diretas certas {p_['nova_certa']}, diretas ERRADAS {p_['nova_erro']}, viraram palpite "
+                  f"com a certa {p_['nova_palpite_com_certa']} e sem a certa {p_['nova_palpite_sem_certa']}")
+            for pergunta, esperado, escolha, nos_locais in p_["erros"]:
+                print(f"  [{conjunto}] Gemini errou: \"{pergunta}\" -> {escolha}; esperado {esperado}; "
+                      f"{'estava entre os palpites locais' if nos_locais else 'NÃO estava entre os palpites locais'}")
+
+    if "--adversarial" in sys.argv:
+        # Perguntas escritas DEPOIS de ler o vocabulário, deliberadamente longe dele: NÃO são às cegas e não valem como
+        # nota de generalização. Servem para exercitar o caso em que o Gemini decide sozinho. Só relata.
+        adv = json.load(open(os.path.join(AQUI, "gabarito_adversarial.json"), encoding="utf-8"))
+        validos = {i["id"] for i in ent.INTENCOES} | {"fora", "saudacao", "risco"}
+        checar(f"5. adversarial: {len(adv)} perguntas, todas com intenção válida", all(g["esperado"] in validos for g in adv))
+        sem = medir_novo(adv, "adversarial")
+        print(f"\nADVERSARIAL (não é às cegas), só regras: {sem['conteudo']} de conteúdo: direto {sem['certo']}, errou {sem['errado']}, "
+              f"palpite com a certa {sem['palpite']}, sem nada {sem['sem_nada']}; fora do assunto {sem['fora_ok']}/{sem['fora']}")
+        for pergunta, esperado, obtido, _ in sem["erros"]:
+            print(f"  ERROU (só regras): \"{pergunta}\" -> {obtido}; esperado {esperado}")
+        if "--com-gemini" in sys.argv:
+            import ia_linguagem
+            print("  consultando o Gemini ", end="", flush=True)
+
+            def com_andamento(pergunta, opcoes, **kw):
+                print(".", end="", flush=True)
+                return ia_linguagem.classificar_pergunta(pergunta, opcoes, **kw)
+
+            com = medir_novo(adv, "adversarial", classificar=com_andamento)
+            print(" pronto")
+            print(f"  com o Gemini: direto {com['certo']}, errou {com['errado']}, palpite com a certa {com['palpite']}, "
+                  f"sem nada {com['sem_nada']}; fora do assunto {com['fora_ok']}/{com['fora']}; "
+                  f"Gemini com apoio da busca {com['gemini_direto']}, sozinho {com['gemini_sem_apoio']}")
+            for pergunta, esperado, obtido, origem in com["erros"]:
+                print(f"  ERROU: \"{pergunta}\" -> {obtido} (origem {origem}); esperado {esperado}")
 
     if falhas:
         print(f"\n{len(falhas)} checagem(ns) falharam.")

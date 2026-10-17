@@ -225,8 +225,12 @@ def main():
     # a IA também pode ajudar a ENTENDER (segunda chance), e o resultado é redigido normalmente
     g3 = Gemini(texto=lambda base: "A tendência aponta variações; veja os números abaixo.", classe={"intencao": "metodo", "cancer": None})
     r = perguntar("me explica o negócio dos números do hospital das moças", ia=g3.ia())
-    checar("7. pergunta obscura: Gemini escolhe da lista (origem 'gemini') e a resposta vem do assunto escolhido",
-           g3.classificacoes and r.intencao == "metodo" and r.origem == "gemini" and r.usou_ia)
+    checar("7. pergunta obscura: o Gemini sozinho (sem apoio da busca local) vira palpite para confirmar, não resposta direta",
+           g3.classificacoes and r.tipo == "palpites" and r.origem == "gemini_sem_apoio" and not r.usou_ia
+           and r.botoes and r.botoes[0][0] == ent.ROTULOS["metodo"])
+    r2 = asst.responder_escolha(ctx, r.botoes[0][1], foco)
+    checar("7. clicar no palpite do Gemini responde o assunto escolhido (origem 'escolha')",
+           r2.tipo == "intencao" and r2.intencao == "metodo" and r2.origem == "escolha" and r2.fala.strip())
     g4 = Gemini(texto="x", classe={"intencao": "invencao"})
     r = perguntar("me explica o negócio dos números do hospital das moças", ia=g4.ia())
     checar("7. Gemini devolve assunto que não existe: vira palpites/fora, nunca resposta chutada", r.tipo in ("palpites", "fora"))
