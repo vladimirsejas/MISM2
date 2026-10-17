@@ -15,7 +15,10 @@ ESTADO, ANO = "SP", 2023
 CANDIDATOS = [
     ("sih", "RD", "o que o Escudo já usa (referência: precisa funcionar)"),
     ("sim", "CID10", "óbitos por causa, por município (mortalidade real, dentro e fora do hospital)"),
+    ("sim", "CID10", "óbitos: o mesmo, em 2021 (o 2023 pode ainda não estar publicado)", 2021),
     ("sia", "PA", "produção ambulatorial: quimioterapia, radioterapia, mamografia, biópsia"),
+    ("sia", "AQ", "APAC de quimioterapia: paciente, sexo, idade, CID e município de residência", 2023),
+    ("sia", "AR", "APAC de radioterapia: paciente, sexo, idade, CID e município de residência", 2023),
     ("cnes", "EQ", "equipamentos dos estabelecimentos (ex.: mamógrafos)"),
     ("cnes", "LT", "leitos dos estabelecimentos (ex.: leitos oncológicos)"),
     ("cnes", "ST", "estabelecimentos"),
@@ -36,12 +39,14 @@ async def reconhecer(pysus_cls=None):
                     print(f"PySUS.{nome}: {valor}")
                 except Exception as erro:  # noqa: BLE001
                     print(f"PySUS.{nome}: erro {type(erro).__name__}: {str(erro)[:200]}")
-        for base, grupo, para_que in CANDIDATOS:
+        for candidato in CANDIDATOS:
+            base, grupo, para_que = candidato[:3]
+            ano = candidato[3] if len(candidato) > 3 else ANO
             print(f"\n=== {base.upper()} / {grupo}: {para_que}")
             try:
-                arquivos = await pysus.query(dataset=base, group=grupo, state=ESTADO, year=ANO)
+                arquivos = await pysus.query(dataset=base, group=grupo, state=ESTADO, year=ano)
                 arquivos = list(arquivos)
-                print(f"  OK: {len(arquivos)} arquivo(s) para {ESTADO} em {ANO}")
+                print(f"  OK: {len(arquivos)} arquivo(s) para {ESTADO} em {ano}")
                 for a in arquivos[:3]:
                     print(f"    - {getattr(a, 'name', a)}")
             except Exception as erro:  # noqa: BLE001

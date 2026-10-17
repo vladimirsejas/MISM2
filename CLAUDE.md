@@ -345,6 +345,11 @@ Estado atual:
   responder no teste com pessoa), SIM (mortalidade real por município, dentro e fora do hospital), SIA (quimio, radio, mamografia e
   biópsia ambulatoriais: o maior ponto cego declarado) e CNES (mamógrafos e leitos). A nuvem não alcança o DATASUS nem o IBGE; antes
   de escrever cada ETL, rodar no notebook `py -3.12 etl\explorar_pysus.py` (não baixa nada) para ter os nomes reais das bases e grupos.
+  Reconhecido em 17/10/2026 (SP, 2023): SIH/RD 11 arquivos; SIM/CID10 0 arquivos em 2023 (provável ano ainda não publicado: testar 2021);
+  SIA/PA 36 (a, b, c por mês; volume enorme: para câncer preferir as APACs AQ e AR); CNES EQ, LT e ST 12 cada. **População:**
+  `py etl\baixar_populacao.py` (IBGE, Censo 2022, tabela 9514; descobre os códigos pelo nome; grava `populacao_mulheres`; teste
+  `etl/teste_baixar_populacao.py`; `--reconhecer` só mostra a tabela). Ainda falta usar a tabela em `inteligencia.py` (taxa por 100 mil e
+  ranking) depois de conferir os dados reais no notebook.
   **Carga robusta (24/09/2026):** a carga antiga apagava a tabela no 1º arquivo
   e parava no 2º que desse erro -- por isso o banco do autor ficou só com colo
   do útero. Agora ela lê e confere os 7 arquivos antes de gravar, um arquivo com
