@@ -293,7 +293,7 @@ def main():
     checar("7d. pele não melanoma é acompanhado: sem o falso aviso de melanoma", "Ainda não acompanho" not in r.fala)
     r = perguntar("quero contato de hospital especializado em câncer")
     checar("7d. hospital especializado em câncer: a Lia aponta a lâmina 'Hospitais no Estado' do Apoio à mulher",
-           r.intencao == "apoio" and "Hospitais no Estado" in r.fala)
+           r.intencao in ("apoio", "onde_atendida") and "Hospitais no Estado" in r.fala)
     r = perguntar("endereço de algum hospital de câncer")
     checar("7d. endereço de hospital (cadastro da cidade) também aponta o 'Hospitais no Estado' para câncer",
            "Hospitais no Estado" in r.fala and any(a == "pages/onde_ser_atendida.py" for _, a in r.links))
@@ -325,6 +325,20 @@ def main():
         checar(f"7f. '{q[:40]}...': não empurra Rio Claro nem o cadastro local; aponta a lâmina Hospitais no Estado e a região",
                r.intencao == "onde_atendida" and "Catanduva" in r.fala and "Hospitais no Estado" in r.fala and "região" in r.fala
                and "Santa Casa de Rio Claro" not in r.fala and not r.usou_ia)
+    r = asst.responder_pergunta(ctx, "descobri câncer de ovário agora e moro em catanduva, onde que eu me trato?", foco, ia=asst.IA())
+    checar("7f. 'moro em catanduva, onde que eu me trato' não vira 'comparar cidades': é hospital de câncer da região",
+           r.intencao == "onde_atendida" and "Catanduva" in r.fala and "Hospitais no Estado" in r.fala)
+    r = asst.responder_pergunta(ctx, "qual hospital perto de campinas trata mama de graça pelo sus?", foco, ia=asst.IA())
+    checar("7f. 'perto de campinas': a cidade citada vale mais que a do painel (nada de Rio Claro)",
+           "Campinas" in r.fala and "Santa Casa de Rio Claro" not in r.fala)
+    r = asst.responder_pergunta(ctx, "qual cidade que tem o hospital mais top pra tratar câncer", foco, ia=asst.IA())
+    checar("7f. 'hospital mais top': diz que não classifica hospitais e não apresenta o de Rio Claro como o melhor",
+           "não classifica hospitais" in r.fala and "Santa Casa de Rio Claro" not in r.fala)
+    r = asst.responder_pergunta(ctx, "moro em São José do Rio Preto e preciso de hospital de câncer", foco, ia=asst.IA())
+    checar("7f. nome de cidade composto (São José do Rio Preto) é reconhecido", asst.cidade_citada("moro em São José do Rio Preto e preciso de hospital de câncer") == "sao jose do rio preto"
+           and "Santa Casa de Rio Claro" not in r.fala)
+    r = asst.responder_pergunta(ctx, "compare rio claro com campinas", foco, ia=asst.IA(), outras_cidades=["Campinas"])
+    checar("7f. pedir para comparar cidades continua sendo comparar cidades", r.intencao == "comparar_cidades")
     r = asst.responder_pergunta(ctx, "moro em Rio Claro, qual hospital trata câncer de mama?", foco, ia=asst.IA())
     checar("7f. moradora de Rio Claro recebe os hospitais de câncer do catálogo da cidade",
            r.intencao == "onde_atendida" and "Santa Casa de Rio Claro" in r.fala)

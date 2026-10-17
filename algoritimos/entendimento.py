@@ -442,7 +442,12 @@ RISCOS = [
                   r"machuca|machucou|estuprou|abusa|abusou|persegue|esgana|enforcou|espancou)|"
                   r"me bate|me bateu|apanho|apanhei|apanhando|estou sofrendo violencia|sofro violencia|sofri violencia|"
                   r"fui estuprada|fui agredida|fui abusada|abusaram de mim|tenho medo do meu (marido|companheiro|namorado|ex)|"
-                  r"me ameaca de morte|vai me matar"),
+                  r"me ameaca de morte|vai me matar|"
+                  # formas que o teste humano de 17/10/2026 mostrou faltar: gerúndio, "tá me agredindo", voz passiva, "violência doméstica"
+                  r"\b(marido|companheiro|namorado|ex|pai|padrasto|parceiro|esposo|noivo|ele)\b( \w+){0,4} (me )?(bat\w+|agred\w+|agress\w+|"
+                  r"ameac\w+|machuc\w+|estupr\w+|abus\w+|persegu\w+|esgan\w+|enforc\w+|espanc\w+|xing\w+|humilh\w+)|"
+                  r"\b(estou|to|ta|esta|fui|sendo|estava)\b( \w+){0,2} (agredid\w+|espancad\w+|estuprad\w+|abusad\w+|ameacad\w+|violentad\w+|perseguid\w+)|"
+                  r"violencia domestica|tenho medo d(ele|o meu \w+)|me sinto em perigo em casa"),
     ("emergencia", r"passando mal|desmai\w+|convuls\w+|inconsciente|parou de respirar|sangramento (muito |bem )?(forte|intenso)|"
                    r"nao consigo respirar|falta de ar (forte|agora)|dor forte no peito|\binfarto\b|\bavc\b|(estou|esta|ta) sangrando (muito|bastante)|"
                    r"sangrando muito|engasgou|engasgad\w+|overdose"),

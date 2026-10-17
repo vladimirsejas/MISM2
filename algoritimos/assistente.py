@@ -499,10 +499,17 @@ PEDE_HOSPITAL_CANCER = re.compile(r"(hosp\w*|ospital|unacon|cacon|centro de onco
                                   r"(cancer|oncolog|tumor|quimio|radio|mama|ovario|colo do utero|utero|pulmao|intestino|colorretal|endometrio)"
                                   r"|(cancer|oncolog|tumor|quimio|radio|mama|ovario|utero|pulmao|intestino|colorretal|endometrio).*"
                                   r"(hosp\w*|ospital|unacon|cacon|centro de oncologia)")
-CIDADE_CITADA = [re.compile(p) for p in (
-    r"\b(?:moro|moramos|resido|vivo|sou)\s+(?:em|no|na|de|do|da)\s+([a-z]+(?: (?:de|do|da|dos|das|[a-z]+)){0,3}?)(?= (?:e|mas|que|com|preciso|quero|gostaria|onde|tem)\b|$)",
-    r"\b(?:perto|proximo|proxima|nas proximidades)\s+(?:de|do|da)\s+([a-z]+(?: (?:de|do|da|dos|das|[a-z]+)){0,3}?)(?= (?:e|mas|que|com|preciso|quero|gostaria|onde|tem)\b|$)",
-    r"\b(?:na cidade de|no municipio de)\s+([a-z]+(?: (?:de|do|da|dos|das|[a-z]+)){0,3}?)(?= (?:e|mas|que|com|preciso|quero|gostaria|onde|tem)\b|$)")]
+PEDE_TRATAR = re.compile(r"\bonde\b.*\b(me trato|me tratar|tratar|tratamento|me trata|fazer tratamento|faco tratamento|pra onde eu vou|para onde eu vou)\b"
+                         r"|\b(pra|para) onde eu (vou|devo ir)\b")
+CITA_CANCER = re.compile(r"cancer|oncolog|tumor|ovario|mama|colo do utero|utero|pulmao|intestino|colorretal|endometrio|diagnostic\w+")
+PEDE_MELHOR = re.compile(r"\b(melhor|melhores|mais top|top|mais bom|mais conceituado|mais bem avaliado|qual cidade (que )?tem o)\b")
+_PARADA = (r"(?= (?:e|mas|que|com|preciso|quero|gostaria|onde|tem|qual|quais|como|me|pode|trata|atende|faz|fica|pelo|pra|para|"
+           r"gratis|sus|eu|existe|queria|vou|devo)\b|$)")
+_NOME = r"([a-z]+(?: (?:de|do|da|dos|das|[a-z]+)){0,5}?)"
+CIDADE_CITADA = [re.compile(p + _NOME + _PARADA) for p in (
+    r"\b(?:moro|moramos|resido|vivo|sou)\s+(?:em|no|na|de|do|da)\s+",
+    r"\b(?:perto|proximo|proxima|nas proximidades)\s+(?:de|do|da)\s+",
+    r"\b(?:na cidade de|no municipio de)\s+")]
 
 
 def cidade_citada(pergunta):
@@ -519,7 +526,7 @@ def _hospital_de_cancer(ctx, pergunta):
     """Resposta de texto fixo para 'hospital que atenda câncer', respeitando a cidade que a pessoa citou. None se não for esse pedido."""
     import apoio
     norm = ent.normalizar(pergunta)
-    if not PEDE_HOSPITAL_CANCER.search(norm):
+    if not (PEDE_HOSPITAL_CANCER.search(norm) or (PEDE_TRATAR.search(norm) and CITA_CANCER.search(norm))):
         return None
     citada = cidade_citada(pergunta)
     do_painel = ent.normalizar(ctx.cidade)
@@ -529,6 +536,8 @@ def _hospital_de_cancer(ctx, pergunta):
         da_cidade = sorted((i for i in hospitais if outra in ent.normalizar(f"{i['onde']} {i['titulo']} {i['grupo'] or ''}")),
                            key=lambda i: outra not in ent.normalizar(i["onde"]))[:3]
         nome = outra.title()
+    elif PEDE_MELHOR.search(norm):
+        da_cidade, nome = [], None  # "qual o melhor hospital": não ranqueia, então não apresenta o da cidade do painel como resposta
     elif do_painel == "rio claro":
         da_cidade = [i for i in apoio.ITENS if i["lamina"] == "rio_claro" and "oncolog" in ent.normalizar(i["titulo"])][:2]
         nome = ctx.cidade
@@ -540,6 +549,9 @@ def _hospital_de_cancer(ctx, pergunta):
     else:
         onde = f" para quem mora em **{nome}**" if nome else ""
         fala = (f"Não tenho no catálogo um hospital de câncer{onde} que eu possa indicar com segurança. Prefiro não chutar.\n\n")
+    if PEDE_MELHOR.search(norm):
+        fala = ("O Escudo **não classifica hospitais** nem diz qual é o melhor: os dados que tenho contam internações, não qualidade. "
+                "Pelo SUS, a escolha também não é da paciente: ela segue o encaminhamento.\n\n") + fala
     fala += ("**Como funciona pelo SUS:** hospital de câncer não se escolhe por proximidade. A paciente é encaminhada, pela unidade de "
              "saúde e pela regulação (CROSS), ao serviço de referência da **região** onde mora. Na página **Apoio à mulher**, a lâmina "
              "**Hospitais no Estado** reúne 23 hospitais por região, com a fonte oficial e como chegar pela CROSS. Se não achar a "
@@ -690,7 +702,10 @@ def responder_pergunta(ctx, pergunta, foco, memoria=None, perfil="TECNICO", ia=N
     e = ent.compreender(pergunta, set(_canceres(ctx)), memoria=memoria,
                         classificar=ia.classificar if ia.ligada else None,
                         cidade=ctx.cidade, outras_cidades=outras_cidades, ano_dados=int(ctx.serie["ano"].max()))
-    if e.tipo in ("palpites", "fora") and PEDE_HOSPITAL_CANCER.search(ent.normalizar(pergunta)):
+    norm_p = ent.normalizar(pergunta)
+    pede_hospital = bool(PEDE_HOSPITAL_CANCER.search(norm_p) or (PEDE_TRATAR.search(norm_p) and CITA_CANCER.search(norm_p)))
+    if pede_hospital and (e.tipo in ("palpites", "fora") or e.intencao == "apoio"
+                           or (e.intencao == "comparar_cidades" and "compar" not in norm_p)):
         # pede hospital de câncer mas a busca ficou em dúvida (nome de cidade e erro de digitação atrapalham): é o assunto "onde ser atendida"
         e = ent.Entendimento("intencao", intencao="onde_atendida", origem="regras")
     return montar(ctx, e, pergunta, foco, perfil, ia)

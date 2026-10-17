@@ -125,11 +125,17 @@ def main():
     checar("2. 'esse câncer' = o câncer em foco no painel", entender("e a letalidade desse câncer?").foco)
 
     for frase, tipo in (("meu marido me bate", "violencia"), ("quero morrer", "suicidio"), ("estou passando mal agora", "emergencia"),
-                        ("apanho em casa", "violencia"), ("fui abusada", "violencia"), ("não aguento mais viver", "suicidio")):
+                        ("apanho em casa", "violencia"), ("fui abusada", "violencia"), ("não aguento mais viver", "suicidio"),
+                        # teste humano de 17/10/2026: "meu marido tá me agredindo, me ajuda" virava pedido de ajuda genérico, sem 190/180
+                        ("meu marido tá me agredindo, me ajuda", "violencia"), ("estou sendo agredida", "violencia"),
+                        ("ele me xingou e me ameaçou", "violencia"), ("fui espancada ontem", "violencia"),
+                        ("meu namorado está me perseguindo", "violencia"), ("tenho medo dele", "violencia")):
         checar(f"2. segurança: '{frase}' -> {tipo}, antes de qualquer outra coisa", entender(frase).risco == tipo)
     checar("2. segurança: pergunta de dados sobre violência (sem relato pessoal) não dispara",
            entender("qual a taxa de internação por câncer na cidade").tipo != "risco" and
-           entender("meu marido me levou ao médico").tipo != "risco")
+           entender("meu marido me levou ao médico").tipo != "risco" and
+           entender("atendimento hospitalar para violência sexual").tipo != "risco" and
+           entender("meu marido agendou minha mamografia").tipo != "risco")
     checar("2. saudação e agradecimento", all(entender(s).tipo == "saudacao" for s in ("oi", "Bom dia, Lia!", "obrigada", "valeu")))
     checar("2. vazio e só pontuação não quebram", entender("").tipo == "vazio" and entender("   ").tipo == "vazio"
            and entender("???").tipo in ("fora", "palpites"))
