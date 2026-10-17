@@ -382,7 +382,7 @@ def main():
     # ---- I. Pergunte à Lia: a caixa de texto no painel real ----
     import assistente
     gravadas = []
-    conversa.registrar_pergunta = lambda banco, pergunta, assunto: gravadas.append((pergunta, assunto))
+    conversa.registrar_pergunta = lambda banco, assunto: gravadas.append(assunto)
     obter_ia_original = assistente.obter_ia
 
     def perguntar_na_caixa(at, texto):
@@ -408,7 +408,8 @@ def main():
                and at.session_state["doenca"] == "MAMA")
         checar("I. a resposta mostra o que foi perguntado, o selo (sem IA) e a fonte dos dados",
                "Você perguntou: “o câncer de mama está aumentando?”" in lateral and "sem IA" in lateral and "SIH/SUS" in lateral)
-        checar("I. a pergunta foi registrada com o assunto entendido", ("o câncer de mama está aumentando?", "evolucao") in gravadas)
+        checar("I. só o ASSUNTO entendido é contado; o texto da pergunta nunca é guardado",
+               gravadas == ["evolucao"] and all("mama" not in str(g) for g in gravadas))
 
         perguntar_na_caixa(at, "e no estado?")
         atual = at.session_state["lia"]["atual"]

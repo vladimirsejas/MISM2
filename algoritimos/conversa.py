@@ -456,9 +456,13 @@ def responder(pergunta, serie, cidade, cancer_em_foco=None, perfil="SIMPLES", ex
             "fatos": fatos, "usou_ia": usou_ia}
 
 
-def registrar_pergunta(banco, pergunta, assunto):
-    """Guarda a pergunta em perguntas_usuarios (mesma tabela que
-    analise_perguntas.py lê), para saber o que as pessoas perguntam."""
+def registrar_pergunta(banco, assunto):
+    """Conta em perguntas_usuarios o ASSUNTO de uma pergunta (a tabela que
+    analise_perguntas.py lê), para saber o que as pessoas perguntam.
+
+    O texto escrito nunca é guardado (decisão de privacidade, 10/2026): quem escreve
+    "estou com câncer, o que faço?" conta um dado de saúde, e texto livre pode trazer
+    nome, bairro ou idade. A coluna `pergunta` existe só por compatibilidade e fica vazia."""
     try:
         conn = sqlite3.connect(banco)
         try:
@@ -469,7 +473,7 @@ def registrar_pergunta(banco, pergunta, assunto):
             """)
             conn.execute(
                 "INSERT INTO perguntas_usuarios (data_hora, pergunta, categoria, reconhecida) VALUES (?, ?, ?, ?)",
-                (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), pergunta, assunto, "SIM"),
+                (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), None, assunto, "SIM"),
             )
             conn.commit()
         finally:

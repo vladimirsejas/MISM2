@@ -1,8 +1,10 @@
 import os
+import sqlite3
+import tempfile
 
 import pandas as pd
 
-from conversa import entender, responder
+from conversa import entender, registrar_pergunta, responder
 from inteligencia import completar_anos
 
 # =====================================
@@ -112,6 +114,18 @@ if os.path.exists(CSV_REAL):
     checar("C. IA com resposta vazia: cai na resposta direta", not r["usou_ia"] and "1.668" in r["texto"])
 else:
     print("(pulado) B e C: base real não encontrada em " + CSV_REAL)
+
+# ---- D. privacidade: o texto da pergunta nunca é gravado, só o assunto ----
+with tempfile.TemporaryDirectory() as pasta:
+    banco = os.path.join(pasta, "teste.db")
+    registrar_pergunta(banco, "apoio")
+    registrar_pergunta(banco, "evolucao")
+    conn = sqlite3.connect(banco)
+    linhas = conn.execute("SELECT pergunta, categoria FROM perguntas_usuarios ORDER BY id").fetchall()
+    conn.close()
+    checar("D. privacidade: cada pergunta conta só o assunto", [c for _, c in linhas] == ["apoio", "evolucao"])
+    checar("D. privacidade: a coluna do texto fica vazia (nada escrito pela pessoa é guardado)",
+           all(texto is None for texto, _ in linhas))
 
 print()
 if falhas:

@@ -443,8 +443,8 @@ def perguntar_a_lia(texto):
     outras = [m["nome"] for m in lista_municipios if m["origem"] != ORIGEM]
     resposta = responder_pergunta(ctx_lia, texto, doenca, memoria=st.session_state.get("lia_memoria"),
                                   perfil=perfil_da_lia(), ia=ia, outras_cidades=outras)
-    if resposta.tipo != "risco" and resposta.intencao != "sintoma":  # relato pessoal não é guardado
-        registrar_pergunta(BANCO, texto, resposta.intencao or resposta.tipo)
+    if resposta.tipo != "risco" and resposta.intencao != "sintoma":  # só o assunto é contado; o texto nunca é guardado
+        registrar_pergunta(BANCO, resposta.intencao or resposta.tipo)
     guardar_resposta_da_caixa(resposta, ia)
 
 

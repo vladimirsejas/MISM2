@@ -42,7 +42,7 @@ da Lia aparece. A caixa nunca fica muda e nunca mostra erro técnico.
 - Texto da IA com número novo, "vai aumentar/ficar" ou "por causa de/devido a" é **descartado**.
 - Segurança, sintoma, apoio, onde ser atendida, causa e "sem dados" **não passam pela IA** (o Gemini nem é chamado).
 - Gemini com erro de rede, cota esgotada, resposta vazia ou assunto inventado: a caixa continua respondendo.
-- Relato de violência e sintoma pessoal **não são gravados** em `perguntas_usuarios`.
+- **Privacidade:** o texto da pergunta **nunca é gravado**, de nenhuma pergunta. `perguntas_usuarios` só conta o assunto (ex.: `evolucao`), para saber o que as pessoas perguntam; quem escreve "estou com câncer, o que faço?" não deixa rastro. Relato de violência e sintoma pessoal não entram nem nessa contagem.
 
 ### Três situações de resposta (abstenção por critério verificável, não por "porcentagem de confiança")
 1. **Respondida:** a regra reconheceu o assunto com nota alta e folga sobre o 2º lugar, ou o Gemini escolheu um assunto da lista e o câncer citado existe no banco.
@@ -115,11 +115,11 @@ A nuvem onde isto foi feito não tem a chave do Gemini, o banco real nem o Windo
 | O texto do Gemini passa na conferência na prática (não é descartado o tempo todo) | Passo 5 do mesmo script; depois abrir o painel e perguntar. O selo diz se foi IA ou resposta direta |
 | Quanto o Gemini melhora o entendimento | `py algoritimos\teste_entendimento.py --com-gemini` |
 | O painel com o banco real (7 cânceres, todas as cidades) | Abrir `Abrir Escudo Feminino.bat` e perguntar; rodar `py dashboard\teste_painel.py` |
-| A caixa com pessoas de verdade | Teste de usabilidade com colegas e gestores; guardar as perguntas (as que não são relato pessoal ficam em `perguntas_usuarios`) para ampliar o vocabulário |
+| A caixa com pessoas de verdade | Teste de usabilidade com colegas e gestores; anotar à mão, com consentimento, as perguntas que não foram entendidas (o painel só conta o assunto, nunca o texto) para ampliar o vocabulário |
 
 Custo e limites operacionais: cada pergunta usa até 2 chamadas ao Gemini (entender, se as regras não bastarem, e redigir); há limite de 40 perguntas com IA por sessão; o prazo de espera por chamada é de 25 s; sem a chave o Escudo funciona inteiro.
 
-## 7. A caixa no Apoio à mulher (preparada em 17/10/2026, ainda não enviada ao `main`)
+## 7. A caixa no Apoio à mulher (17/10/2026, enviada ao `main`; ainda não vista no notebook do autor)
 
 A página Apoio é para quem **procura cuidado**, então o desenho é mais cauteloso que o do painel de gestão:
 - **Nenhuma IA escreve sobre serviço.** Telefone, prazo, regra e endereço saem do catálogo conferido (`apoio.py`, 81 itens, fonte oficial, data, "a confirmar"). O motor (`apoio_busca.py`) só escolhe qual item mostrar, com a mesma busca por palavras e letras do painel.

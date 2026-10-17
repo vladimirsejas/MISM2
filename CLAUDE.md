@@ -378,7 +378,7 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   `lia_*`: o teste do painel trata `lia_*` como botão da árvore). A resposta entra no balão da Lia
   (`RespostaIA` herda de `Resposta`), o painel vai ao gráfico, e o balão mostra a pergunta, o selo
   (IA ou "sem IA"), a fonte e, se a IA redigiu, "O que o Escudo calculou". Limite de 40 perguntas
-  com IA por sessão. Relato de violência/sintoma pessoal **não é gravado** em `perguntas_usuarios`.
+  com IA por sessão. **O texto da pergunta nunca é gravado** (10/2026, privacidade): `conversa.registrar_pergunta(banco, assunto)` só conta o assunto em `perguntas_usuarios`; relato de violência/sintoma nem isso.
 - Regras que valem para qualquer mudança aqui: nunca "vai"/"deve ficar" (só "a tendência aponta");
   nada de causa; nada de orçamento; texto de IA nunca vai a segurança/sintoma; gabarito em 3 conjuntos
   (`gabarito_perguntas.json`): ajustar regras olhando só o desenvolvimento, e NÃO reaproveitar o
@@ -388,8 +388,8 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   `py algoritimos\teste_entendimento.py --com-gemini`; o painel com o banco real. Os testes na nuvem
   usam a base pública de Rio Claro e um Gemini simulado. Testes: `teste_previsao.py`,
   `teste_entendimento.py`, `teste_assistente.py` e o cenário I de `dashboard/teste_painel.py`.
-- **Pergunte à Lia no Apoio à mulher (10/2026, preparada na branch `claude/tender-fermat-7n7ien`,
-  NÃO enviada ao `main` até o autor ver):** `algoritimos/apoio_busca.py` + caixa na lateral de
+- **Pergunte à Lia no Apoio à mulher (10/2026, enviada ao `main` em 17/10/2026 com o OK do autor; ainda
+  não vista por ele no notebook):** `algoritimos/apoio_busca.py` + caixa na lateral de
   `dashboard/pages/apoio.py` (chaves `caixa_ap_*`). Aqui quem pergunta PROCURA cuidado, então: **nenhuma IA
   escreve sobre serviço** (o texto é do catálogo conferido, com aviso e link oficial); o motor só escolhe o
   item (mesmo `entendimento.Indice`, agora com universo próprio: palavras + letras sobre os 81 itens); com

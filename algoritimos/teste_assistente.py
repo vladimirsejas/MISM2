@@ -81,6 +81,17 @@ def main():
            asst.numeros_novos("foram 1668 e 5,3%", "total de 1.668 internações, 5.3% ao ano") == [])
     checar("1. número novo é apontado (e o de 1 dígito é ignorado)",
            asst.numeros_novos("foram 2.000 em 2030, 3 casos", "foram 1.668 em 2025") == ["2000", "2030"])
+    checar("1. 5,3 NÃO é 53: a vírgula decimal não some na comparação (e 0,5 não é 50)",
+           asst.numeros_novos("A taxa foi de 53%", "A taxa foi de 5,3%") == ["53"]
+           and asst.numeros_novos("A taxa foi de 5,3%", "A taxa foi de 53%") == ["5.3"]
+           and asst.numeros_novos("0,5 por cento", "50 por cento") == ["0.5"])
+    checar("1. milhar e decimal certos: 1,668 = 1.668 = 1668; 1.234.567 = 1234567; 5,30 = 5,3",
+           asst.numeros_novos("1,668 e 1668", "1.668 casos") == []
+           and asst.numeros_novos("1.234.567", "1234567") == []
+           and asst.numeros_novos("5,30%", "5,3%") == [])
+    checar("1. a conferência barra o texto da IA que troca 5,3 por 53",
+           asst.conferir("Cresce 53% ao ano.", "Cresce 5,3% ao ano.", "x") is not None
+           and asst.conferir("Cresce 5,3% ao ano.", "Cresce 5,3% ao ano.", "x") is None)
     checar("1. o ano que a pessoa escreveu na pergunta pode ser repetido", asst.conferir("Em 2030 a tendência aponta 40.", "40 internações", "e em 2030?") is None)
     checar("1. 'vai ficar' e 'vai aumentar' são barrados", asst.conferir("A mama vai aumentar em 40.", "40", "x") is not None
            and asst.conferir("Vai ficar em 40.", "40", "x") is not None)

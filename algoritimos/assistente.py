@@ -1,4 +1,5 @@
 import re
+from decimal import Decimal
 from dataclasses import dataclass, field
 
 import entendimento as ent
@@ -75,18 +76,46 @@ def obter_ia():
 
 # ---------- conferência do texto da IA ----------
 
+def _leituras(numero):
+    """Valores que um número escrito em português pode ter, como texto canônico ("5,3" -> {"5.3"}).
+
+    "5,3" é decimal e "1.234.567" é milhar; "1.668" ou "1,668" é ambíguo e vale pelas duas leituras
+    ({"1668", "1.668"}). A primeira leitura da lista é a que aparece na mensagem de erro."""
+    def canon(texto):
+        return format(Decimal(texto).normalize(), "f")
+
+    separadores = re.findall(r"[.,]", numero)
+    if not separadores:
+        return [canon(numero)]
+    ultimo = max(numero.rfind("."), numero.rfind(","))
+    cauda = numero[ultimo + 1:]
+    if len(set(separadores)) == 2:        # "1.668,5": o último separador é o decimal, o outro é milhar
+        return [canon(re.sub(r"[.,]", "", numero[:ultimo]) + "." + cauda)]
+    if len(separadores) > 1:              # "1.234.567": só pode ser milhar
+        return [canon(re.sub(r"[.,]", "", numero))]
+    inteira = numero[:ultimo]
+    decimal = canon(inteira + "." + cauda)
+    if len(cauda) == 3:                   # "1.668" pode ser milhar ou decimal: vale pelas duas
+        return [canon(inteira + cauda), decimal]
+    return [decimal]
+
+
 def _numeros(texto):
-    """Números do texto sem separadores ("1.668" e "1668" são iguais; "5,3" -> "53"); ignora 1 dígito."""
+    """Um item por número do texto, com as leituras possíveis dele; ignora número de 1 dígito."""
     achados = re.findall(r"\d+(?:[.,]\d+)*", texto)
-    return {re.sub(r"[.,]", "", n) for n in achados if len(re.sub(r"[.,]", "", n)) >= 2}
+    return [_leituras(n) for n in achados if len(re.sub(r"[.,]", "", n)) >= 2]
 
 
 def numeros_novos(texto_ia, *fontes):
-    """Números do texto da IA que não aparecem em nenhuma das fontes (base, pergunta)."""
+    """Números do texto da IA que não aparecem em nenhuma das fontes (base, pergunta).
+
+    Compara o valor, não os dígitos: "5,3" não é "53", e "1.668" é "1668"."""
     permitidos = set()
     for fonte in fontes:
-        permitidos |= _numeros(fonte)
-    return sorted(_numeros(texto_ia) - permitidos)
+        for leituras in _numeros(fonte):
+            permitidos.update(leituras)
+    novos = {leituras[0] for leituras in _numeros(texto_ia) if not permitidos.intersection(leituras)}
+    return sorted(novos)
 
 
 PROMETE = re.compile(r"\b(vai|ira|irá|vao|vão) (ficar|ter|aumentar|diminuir|crescer|cair|chegar|subir|piorar|melhorar)\b", re.I)
