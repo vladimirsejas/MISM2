@@ -72,38 +72,6 @@ def medir_novo(gabarito, conjunto, classificar=None):
     return r
 
 
-def pareado(gabarito, conjunto, classificar):
-    """Compara as DUAS regras da segunda chance com as MESMAS respostas do Gemini (uma chamada por pergunta que as regras
-    não resolvem sozinhas), sem o ruído de rodar duas vezes. Regra antiga: o assunto que o Gemini escolher responde direto.
-    Regra nova: só responde direto se também estiver entre os palpites da busca local; senão vira palpite."""
-    r = dict(chamadas=0, certo=0, errado=0, sem_escolha=0, antiga_certa=0, antiga_erro=0, nova_certa=0, nova_erro=0,
-             nova_palpite_com_certa=0, nova_palpite_sem_certa=0, erros=[])
-    for g in gabarito:
-        if g["conjunto"] != conjunto or g["esperado"] in ("saudacao", "risco"):
-            continue
-        e0 = entender(g["pergunta"])
-        if e0.tipo not in ("palpites", "fora"):
-            continue  # as regras entenderam sozinhas: o Gemini nem é chamado
-        r["chamadas"] += 1
-        resposta = classificar(g["pergunta"], [(i, ent.DESCRICOES[i]) for i in ent.IDS])
-        escolha = resposta.get("intencao") if isinstance(resposta, dict) else None
-        if escolha not in ent.IDS:
-            r["sem_escolha"] += 1  # "nenhuma", inválida ou falha: as duas regras caem no mesmo lugar
-            continue
-        aceitas = {g["esperado"], *g.get("aceitavel", [])}
-        locais = {i for i, _ in e0.palpites}
-        certo = escolha in aceitas
-        r["certo" if certo else "errado"] += 1
-        r["antiga_certa" if certo else "antiga_erro"] += 1
-        if escolha in locais:
-            r["nova_certa" if certo else "nova_erro"] += 1
-        else:
-            r["nova_palpite_com_certa" if aceitas & (locais | {escolha}) else "nova_palpite_sem_certa"] += 1
-        if not certo:
-            r["erros"].append((g["pergunta"], g["esperado"], escolha, escolha in locais))
-    return r
-
-
 def medir_antiga(gabarito, conjunto, so_o_que_ela_cobre=False, novo=False):
     """Quantas perguntas de conteúdo cada caixa entende (a antiga com conversa.entender, a nova
     só se entendeu direto). `so_o_que_ela_cobre`: só as perguntas dos 10 assuntos que a antiga tem."""
@@ -296,32 +264,6 @@ def main():
                 print(f"  [{conjunto}] ERROU: \"{pergunta}\" -> {obtido} (origem {origem}); esperado {esperado}")
             print(f"  [{conjunto}] o Gemini concordou com a busca local em {com['gemini_direto']} perguntas (respondeu direto) e "
                   f"estava sozinho em {com['gemini_sem_apoio']} (virou palpite para a pessoa confirmar)")
-
-    if "--pareado" in sys.argv:
-        # Mesmas respostas do Gemini, duas regras: é a comparação que decide se a regra de concordância vale a pena.
-        import ia_linguagem
-        adv = json.load(open(os.path.join(AQUI, "gabarito_adversarial.json"), encoding="utf-8"))
-        so = sys.argv[sys.argv.index("--so") + 1] if "--so" in sys.argv else None
-        print("\nPAREADO: mesma resposta do Gemini avaliada pelas duas regras (cada ponto é uma chamada, leva alguns minutos):")
-
-        def com_andamento(pergunta, opcoes, **kw):
-            print(".", end="", flush=True)
-            return ia_linguagem.classificar_pergunta(pergunta, opcoes, **kw)
-
-        for conjunto, lista in (("desenvolvimento", gabarito), ("teste", gabarito), ("final", gabarito), ("adversarial", adv)):
-            if so and conjunto != so:
-                continue
-            print(f"  [{conjunto}] ", end="", flush=True)
-            p_ = pareado(lista, conjunto, com_andamento)
-            print(" pronto")
-            print(f"  [{conjunto}] Gemini consultado em {p_['chamadas']} perguntas: escolheu certo {p_['certo']}, errado {p_['errado']}, "
-                  f"sem escolha {p_['sem_escolha']}")
-            print(f"  [{conjunto}] regra ANTIGA: diretas certas {p_['antiga_certa']}, diretas ERRADAS {p_['antiga_erro']}")
-            print(f"  [{conjunto}] regra NOVA:   diretas certas {p_['nova_certa']}, diretas ERRADAS {p_['nova_erro']}, viraram palpite "
-                  f"com a certa {p_['nova_palpite_com_certa']} e sem a certa {p_['nova_palpite_sem_certa']}")
-            for pergunta, esperado, escolha, nos_locais in p_["erros"]:
-                print(f"  [{conjunto}] Gemini errou: \"{pergunta}\" -> {escolha}; esperado {esperado}; "
-                      f"{'estava entre os palpites locais' if nos_locais else 'NÃO estava entre os palpites locais'}")
 
     if "--adversarial" in sys.argv:
         # Perguntas escritas DEPOIS de ler o vocabulário, deliberadamente longe dele: NÃO são às cegas e não valem como

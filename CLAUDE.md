@@ -363,9 +363,9 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   = previsão; segurança PRIMEIRO (violência, suicídio, emergência -> 190/180/188/192);
   contexto mínimo ("e no estado?", "e o de colo do útero?"); o Gemini só entra como
   segunda chance, escolhendo numa lista fechada, e o que ele devolve é conferido. **Regra de concordância
-  (17/10/2026, medida e NÃO enviada ao `main`, ver `docs/IA_DO_ESCUDO.md` 6b):** a escolha do Gemini só vira resposta direta se estiver entre os palpites da busca local; se só
+  (17/10/2026, enviada ao `main` pelos números do `algoritimos/comparar_regras.py`, ver `docs/IA_DO_ESCUDO.md` 6b):** a escolha do Gemini só vira resposta direta se estiver entre os palpites da busca local; se só
   o Gemini apontou (`origem = "gemini_sem_apoio"`), vira palpite para a pessoa confirmar (id válido ainda pode ser o
-  assunto errado). O `teste_entendimento.py --com-gemini` mede quantas perguntas caem em cada caso.
+  assunto errado). `py algoritimos\comparar_regras.py` (ou `Testar tudo no notebook.bat`) compara as duas regras com as mesmas respostas do Gemini.
   Modelo da cidade: o nome da cidade do painel é ignorado; outra cidade = comparar.
 - `algoritimos/assistente.py`: respostas. Gemini só reescreve respostas de DADOS; segurança,
   sintoma, apoio, onde ser atendida, causa e "sem dados" são texto fixo. Todo texto da IA é
