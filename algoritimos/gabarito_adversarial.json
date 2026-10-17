@@ -1,0 +1,224 @@
+[
+ {
+  "pergunta": "em qual doença das mulheres o hospital mais trabalha?",
+  "esperado": "mais_aparece",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "o que mais pesa na rotina das enfermarias femininas?",
+  "esperado": "mais_aparece",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "a situação do câncer de mama está piorando com o passar do tempo?",
+  "esperado": "evolucao",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "esse número vem subindo ou se mantém estável desde 2013?",
+  "esperado": "evolucao",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "o que dá pra esperar daqui a uns anos?",
+  "esperado": "futuro",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "se continuar assim, como estaremos em 2029?",
+  "esperado": "futuro",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "quantas pacientes não resistem durante a hospitalização?",
+  "esperado": "obitos",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "taxa de falecimento no hospital por tipo de tumor",
+  "esperado": "obitos",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "qual o peso financeiro dessas hospitalizações?",
+  "esperado": "valores",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "quanto dinheiro público é movimentado por essas internações?",
+  "esperado": "valores",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "quanto tempo uma paciente costuma ficar no leito?",
+  "esperado": "tempo",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "as mulheres são mais velhas ou mais novas quando chegam ao hospital?",
+  "esperado": "idade",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "em que faixa de idade aparece mais?",
+  "esperado": "idade",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "estamos melhores ou piores que o resto de São Paulo?",
+  "esperado": "estado",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "nossa cidade foge do padrão paulista?",
+  "esperado": "estado",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "o que exige mais atenção do poder público local?",
+  "esperado": "atencao",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "onde a prefeitura precisa agir primeiro?",
+  "esperado": "atencao",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "algum período destoou do restante da série?",
+  "esperado": "fora_padrao",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "há anos com números estranhos?",
+  "esperado": "fora_padrao",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "gente de outros estados vem se tratar aqui?",
+  "esperado": "fluxo",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "pacientes de fora do estado ocupam leitos paulistas?",
+  "esperado": "fluxo",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "dá pra confiar nesses números, tem lacuna?",
+  "esperado": "completude",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "alguma parte do histórico ficou sem registro?",
+  "esperado": "completude",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "como foi feita essa contagem?",
+  "esperado": "metodo",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "o que significa AIH?",
+  "esperado": "metodo",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "essa Lia pensa sozinha ou só repete o que programaram?",
+  "esperado": "sobre_ia",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "e se eu quiser ver outro município?",
+  "esperado": "comparar_cidades",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "Campinas está pior que nós?",
+  "esperado": "comparar_cidades",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "tem algum serviço de saúde perto de mim?",
+  "esperado": "onde_atendida",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "recebi o diagnóstico ontem, por onde começo?",
+  "esperado": "apoio",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "acho que sinto algo diferente na mama",
+  "esperado": "sintoma",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "o que dá pra descobrir aqui?",
+  "esperado": "ajuda",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "o que explica esse crescimento?",
+  "esperado": "causa",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "tem informação de renda das pacientes?",
+  "esperado": "sem_dados",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "melhor receita de bolo de cenoura",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "quem vai ganhar a eleição?",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "adversarial"
+ },
+ {
+  "pergunta": "como tratar câncer em cachorros?",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "adversarial"
+ }
+]
