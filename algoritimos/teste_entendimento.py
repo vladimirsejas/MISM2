@@ -42,11 +42,13 @@ def entender(pergunta, **kw):
 
 def medir_novo(gabarito, conjunto, classificar=None):
     r = dict(conteudo=0, certo=0, errado=0, palpite=0, sem_nada=0, fora=0, fora_ok=0, esp=0, esp_ok=0,
-             cancer_n=0, cancer_ok=0)
+             cancer_n=0, cancer_ok=0, gemini_direto=0, gemini_sem_apoio=0)
     for g in gabarito:
         if g["conjunto"] != conjunto:
             continue
         e, esp = entender(g["pergunta"], classificar=classificar), g["esperado"]
+        r["gemini_direto"] += e.origem == "gemini"          # Gemini e busca local apontaram o mesmo assunto
+        r["gemini_sem_apoio"] += e.origem == "gemini_sem_apoio"  # só o Gemini apontou: virou palpite
         aceitas = {esp, *g.get("aceitavel", [])}
         if esp in ("saudacao", "risco"):
             r["esp"] += 1
@@ -162,8 +164,27 @@ def main():
     base = entender(obscura)
     checar("3. sem Gemini, pergunta obscura vira palpites ou fora (nunca resposta chutada)", base.tipo in ("palpites", "fora"))
     e = entender(obscura, classificar=gemini({"intencao": "metodo", "cancer": None}))
-    checar("3. com Gemini: escolhe da lista fechada e marca a origem", (e.tipo, e.intencao, e.origem) == ("intencao", "metodo", "gemini")
-           and chamadas[-1][1] == [i["id"] for i in ent.INTENCOES])
+    checar("3. o Gemini recebe a lista fechada de assuntos", chamadas[-1][1] == [i["id"] for i in ent.INTENCOES])
+    # Concordância: só responde direto quando o Gemini e a busca local apontam o mesmo assunto.
+    quase = next((g["pergunta"] for g in gabarito if entender(g["pergunta"]).tipo == "palpites"), None)  # as regras ficam em dúvida
+    local = entender(quase) if quase else None
+    if local is not None and local.palpites:
+        concorda = local.palpites[0][0]
+        e = entender(quase, classificar=gemini({"intencao": concorda, "cancer": None}))
+        checar("3. Gemini e busca local concordam: responde direto e marca a origem 'gemini'",
+               (e.tipo, e.intencao, e.origem) == ("intencao", concorda, "gemini"))
+        fora_dos_palpites = next(i for i in ent.IDS if i not in {x for x, _ in local.palpites})
+        e = entender(quase, classificar=gemini({"intencao": fora_dos_palpites, "cancer": None}))
+        checar("3. Gemini discorda da busca local: NÃO responde direto, pergunta (palpites com a escolha dele primeiro)",
+               e.tipo == "palpites" and e.intencao is None and e.origem == "gemini_sem_apoio"
+               and e.palpites[0][0] == fora_dos_palpites and len(e.palpites) <= 3
+               and {x for x, _ in local.palpites[:2]} <= {x for x, _ in e.palpites})
+    else:
+        checar("3. (caso de concordância não montado: a pergunta de teste mudou de comportamento)", False)
+    if not base.palpites:
+        e = entender(obscura, classificar=gemini({"intencao": "metodo", "cancer": None}))
+        checar("3. busca local sem nada parecido: o Gemini sozinho vira um palpite para confirmar, não resposta direta",
+               e.tipo == "palpites" and e.origem == "gemini_sem_apoio" and [x for x, _ in e.palpites] == ["metodo"])
     e = entender(obscura, classificar=gemini({"intencao": "invencao_do_modelo", "cancer": "MAMA"}))
     checar("3. Gemini devolveu intenção que não existe: ignorada (cai nos palpites/fora)", e.tipo in ("palpites", "fora") and e.intencao is None)
     e = entender(obscura, classificar=gemini({"intencao": "nenhuma"}))
@@ -225,7 +246,10 @@ def main():
             sem = medir_novo(gabarito, conjunto)
             com = medir_novo(gabarito, conjunto, classificar=ia_linguagem.classificar_pergunta)
             print(f"  [{conjunto}] entendeu direto: {sem['certo']} -> {com['certo']} de {sem['conteudo']}; "
-                  f"errou: {sem['errado']} -> {com['errado']}; fora do assunto: {sem['fora_ok']} -> {com['fora_ok']} de {sem['fora']}")
+                  f"errou: {sem['errado']} -> {com['errado']}; palpite com a certa: {sem['palpite']} -> {com['palpite']}; "
+                  f"fora do assunto: {sem['fora_ok']} -> {com['fora_ok']} de {sem['fora']}")
+            print(f"  [{conjunto}] o Gemini concordou com a busca local em {com['gemini_direto']} perguntas (respondeu direto) e "
+                  f"estava sozinho em {com['gemini_sem_apoio']} (virou palpite para a pessoa confirmar)")
 
     if falhas:
         print(f"\n{len(falhas)} checagem(ns) falharam.")

@@ -119,6 +119,10 @@ A nuvem onde isto foi feito não tem a chave do Gemini, o banco real nem o Windo
 
 Custo e limites operacionais: cada pergunta usa até 2 chamadas ao Gemini (entender, se as regras não bastarem, e redigir); há limite de 40 perguntas com IA por sessão; o prazo de espera por chamada é de 25 s; sem a chave o Escudo funciona inteiro.
 
+## 6b. Concordância entre o Gemini e a busca local (17/10/2026, em teste)
+
+**Hipótese:** um id de assunto válido devolvido pelo Gemini ainda pode ser o assunto errado, e resposta errada sem aviso é o pior erro. **Mudança:** na segunda chance, o Gemini só gera resposta direta se o assunto estiver entre os palpites da busca local (palavras + letras). Se estiver sozinho, a pessoa vê o palpite dele e os da busca, e confirma com um clique. **Como medir:** `py algoritimos\teste_entendimento.py --com-gemini` mostra, por conjunto, respondeu direto / palpite com a certa / errou antes e depois, e quantas perguntas o Gemini resolveu junto com a busca ou sozinho. **Risco:** perguntas com paráfrase que o vocabulário não cobre deixam de ser resolvidas direto (viram 1 clique). Se a medição real mostrar perda grande sem ganho de acerto, reverter este commit. Medido só com Gemini simulado na nuvem; o efeito real depende da execução no notebook.
+
 ## 7. A caixa no Apoio à mulher (17/10/2026, enviada ao `main`; ainda não vista no notebook do autor)
 
 A página Apoio é para quem **procura cuidado**, então o desenho é mais cauteloso que o do painel de gestão:

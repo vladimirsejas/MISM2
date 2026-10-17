@@ -467,7 +467,7 @@ class Entendimento:
     intencao: str = None
     cancer: str = None        # citado na pergunta (ou herdado, no seguimento)
     ano: int = None
-    origem: str = "regras"    # regras | seguimento | gemini
+    origem: str = "regras"    # regras | seguimento | gemini | gemini_sem_apoio (só o Gemini apontou: vira palpite)
     nota: float = 0.0
     palpites: list = field(default_factory=list)   # [(intenção, nota)] da maior para a menor
     risco: str = None
@@ -562,8 +562,13 @@ def compreender(pergunta, disponiveis=None, memoria=None, classificar=None, cida
                     sugerido = resposta.get("cancer")
                     if isinstance(sugerido, str) and sugerido in dict(CANCERES) and (disponiveis is None or sugerido in disponiveis):
                         cancer = sugerido
-                return Entendimento("intencao", intencao=escolhida, origem="gemini", nota=n1, palpites=palpites,
-                                    **{**base, "cancer": cancer, "cancer_citado": base["cancer_citado"]})
+                dados = {**base, "cancer": cancer, "cancer_citado": base["cancer_citado"]}
+                if escolhida in {i for i, _ in palpites}:  # o Gemini e a busca local apontam o mesmo assunto: responde
+                    return Entendimento("intencao", intencao=escolhida, origem="gemini", nota=n1, palpites=palpites, **dados)
+                # Só o Gemini apontou (a busca local não tem esse assunto entre os palpites, ou não achou nada parecido):
+                # um id válido ainda pode ser o assunto errado, e resposta errada sem aviso é o pior erro. Pergunta à pessoa.
+                sugestoes = [(escolhida, 0.0)] + palpites
+                return Entendimento("palpites", origem="gemini_sem_apoio", nota=n1, palpites=sugestoes[:3], **dados)
             if escolhida in ("nenhuma", "nenhum", None):
                 return Entendimento("fora", nota=n1, palpites=[], **base)
 
