@@ -185,6 +185,19 @@ def main():
            all(entender(f).tambem is None for f in ("o câncer de mama está aumentando?", "quantas mulheres morrem de câncer de mama?",
                                                     "como vai estar a mama em 2028?", "quanto o sus gasta com câncer de mama?")))
 
+    # perguntas escritas pelo autor no notebook (teste com uma pessoa, 17/10/2026); depois das correções já não são às cegas
+    humano = json.load(open(os.path.join(AQUI, "gabarito_humano.json"), encoding="utf-8"))
+    for g in humano:
+        e = entender(g["pergunta"])
+        aceitas = {g["esperado"], *g.get("aceitavel", [])}
+        checar(f"3c. pergunta do autor: '{g['pergunta'][:60]}' chega ao assunto certo ({g['esperado']}) sem resposta errada",
+               e.intencao in aceitas or any(i in aceitas for i, _ in e.palpites))
+    apoio = next(g for g in humano if g["esperado"] == "apoio")
+    checar("3c. quem acabou de descobrir um câncer recebe o caminho de apoio, nunca a explicação da IA",
+           entender(apoio["pergunta"]).intencao == "apoio" and entender("acabei de descobrir um câncer de mama, e agora?").intencao == "apoio")
+    checar("3c. 'quais cidades têm mais câncer proporcionalmente?' cai em 'o que os dados não têm' (falta a população)",
+           entender("quais as cidades que mais têm câncer de mama proporcionalmente?").intencao == "sem_dados")
+
     chamadas = []
 
     def gemini(valor):

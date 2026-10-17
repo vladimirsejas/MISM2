@@ -230,7 +230,10 @@ INTENCOES = [
          "tenho câncer", "minha mãe está com câncer", "quero fazer o exame", "tratamento do câncer",
          "estou em tratamento", "auxílio doença", "benefício para quem tem câncer", "preciso de ajuda com o tratamento",
          "como funciona o tratamento", "lista de espera para cirurgia", "como prevenir o câncer de mama",
-         "como evitar o câncer"]},
+         "como evitar o câncer",
+         "acabei de descobrir um câncer", "descobri que tenho câncer e agora", "qual o primeiro passo depois do diagnóstico",
+         "recebi a notícia de que é câncer", "minha mãe acabou de ser diagnosticada", "qual o caminho depois de descobrir o câncer",
+         "como começar o tratamento", "por onde começo o tratamento do câncer", "fui diagnosticado com câncer"]},
     {"id": "sintoma",
      "descricao": "pessoa descrevendo sintoma ou pedindo diagnóstico pessoal (caroço, nódulo, sangramento, dor); o Escudo não faz diagnóstico",
      "frases": [
@@ -254,7 +257,9 @@ INTENCOES = [
          "renda das pacientes", "estadiamento do tumor", "em que estágio chegam", "sobrevida depois do diagnóstico",
          "quantas sobreviveram", "taxa de sobrevivência", "mulheres com HIV", "doenças associadas", "obesidade e tabagismo das pacientes",
          "plano de saúde ou SUS", "quimioterapia e radioterapia ambulatorial", "tempo de espera para consulta", "diagnóstico precoce",
-         "mutação genética BRCA", "tipo de tumor", "histórico familiar", "estado civil das pacientes", "profissão das internadas"]},
+         "mutação genética BRCA", "tipo de tumor", "histórico familiar", "estado civil das pacientes", "profissão das internadas",
+         "ranking de cidades com mais casos", "câncer proporcional ao número de habitantes",
+         "casos por habitante", "qual cidade tem mais câncer proporcionalmente", "cidades com maior proporção de casos"]},
     {"id": "ajuda",
      "descricao": "pedido de ajuda para usar a caixa; o que a Lia sabe responder; o que perguntar",
      "frases": [

@@ -51,8 +51,8 @@ def main():
     registros = []
     while True:
         try:
-            texto = input("\nSua pergunta: ").strip()
-        except EOFError:
+            texto = input("\nSua pergunta (Enter vazio ou Ctrl+C para terminar): ").strip()
+        except (EOFError, KeyboardInterrupt):
             break
         if not texto:
             break
@@ -74,7 +74,7 @@ def main():
             print(f"  (ofereceu opções: {', '.join(botoes)})")
         try:
             veredito = input("  Foi o que você queria? [s/n/p/Enter]: ").strip().lower()[:1]
-        except EOFError:
+        except (EOFError, KeyboardInterrupt):
             veredito = ""
         registros.append((texto, assunto, tipo, origem, ia, veredito or "-"))
 

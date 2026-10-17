@@ -1,0 +1,50 @@
+[
+ {
+  "pergunta": "ESTOU  COM NODULO O QUE FAÇO?",
+  "esperado": "sintoma",
+  "cancer": null,
+  "conjunto": "humano",
+  "medida_antes_da_correcao": "certa"
+ },
+ {
+  "pergunta": "QUERO SABER QUAL O CANCER QUE MAIS CRESCER NO ESTADO DE SAO PAULO?",
+  "esperado": "estado",
+  "aceitavel": [
+   "evolucao"
+  ],
+  "cancer": null,
+  "conjunto": "humano",
+  "medida_antes_da_correcao": "certa"
+ },
+ {
+  "pergunta": "QUAIS A TERS CIDADES QUE MAIS TEM CANCER DE MAMA? PROPORCIONALMENTE.",
+  "esperado": "sem_dados",
+  "aceitavel": [
+   "comparar_cidades"
+  ],
+  "cancer": "MAMA",
+  "conjunto": "humano",
+  "medida_antes_da_correcao": "palpite (a Lia não soube; o autor aceitou)"
+ },
+ {
+  "pergunta": "QUAL A PRECISÃO DE CRESCIMENTO DE CANCER EM RIO CLARO?",
+  "esperado": "evolucao",
+  "cancer": null,
+  "conjunto": "humano",
+  "medida_antes_da_correcao": "certa"
+ },
+ {
+  "pergunta": "A GESTORA DE SAUDE RIO CLARO DEVE SE ATENTAR A QUAL CANCER COM MAIS ATENÇÃO?",
+  "esperado": "atencao",
+  "cancer": null,
+  "conjunto": "humano",
+  "medida_antes_da_correcao": "certa"
+ },
+ {
+  "pergunta": "QUALO CAMINHO PARA QUEM ACABOU DE DESCOBRI UM CA DE PULMÃO?",
+  "esperado": "apoio",
+  "cancer": "PULMAO",
+  "conjunto": "humano",
+  "medida_antes_da_correcao": "ERRADA: as regras responderam sobre_ia com confiança"
+ }
+]
