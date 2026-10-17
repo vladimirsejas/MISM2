@@ -111,7 +111,7 @@ A nuvem onde isto foi feito não tem a chave do Gemini, o banco real nem o Windo
 
 | Pendência | Como o autor comprova |
 |---|---|
-| A chave funciona e o modelo `gemini-3.8-flash` existe | Dois cliques em `Testar IA (Gemini).bat` (ou `py algoritimos\testar_gemini.py`). Se o modelo não existir, o script lista os que a chave aceita; trocar com `GEMINI_MODEL=...` no `.env` |
+| ~~A chave funciona e o modelo `gemini-3.8-flash` existe~~ **COMPROVADO em 17/10/2026** (6 de 6 passos, chamada simples em 6,7 s; o texto do passo 5 passou na conferência) | Dois cliques em `Testar IA (Gemini).bat` (ou `py algoritimos\testar_gemini.py`). Se o modelo não existir, o script lista os que a chave aceita; trocar com `GEMINI_MODEL=...` no `.env` |
 | O texto do Gemini passa na conferência na prática (não é descartado o tempo todo) | Passo 5 do mesmo script; depois abrir o painel e perguntar. O selo diz se foi IA ou resposta direta |
 | Quanto o Gemini melhora o entendimento | `py algoritimos\teste_entendimento.py --com-gemini` |
 | O painel com o banco real (7 cânceres, todas as cidades) | Abrir `Abrir Escudo Feminino.bat` e perguntar; rodar `py dashboard\teste_painel.py` |

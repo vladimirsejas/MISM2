@@ -372,8 +372,9 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   backtest (treina até t, prevê t+1..t+3, anda um ano), faixa pelo erro medido, sempre
   comparada com "repetir o último ano"; sem anos suficientes, não prevê. É projeção de
   tendência de internações, nunca previsão de casos novos. `previsao_todos` ordena por variação.
-- `ia_linguagem.py`: `MODELO` vem de `GEMINI_MODEL` no `.env` (padrão `gemini-3.8-flash`, **nunca
-  confirmado com a chave do autor**); timeout; `classificar_pergunta`; `redigir_resposta`.
+- `ia_linguagem.py`: `MODELO` vem de `GEMINI_MODEL` no `.env` (padrão `gemini-3.8-flash`, **confirmado com a
+  chave do autor em 17/10/2026**: `testar_gemini.py` deu 6 de 6 passos, o modelo existe e o texto redigido passou na conferência;
+  uma chamada simples levou 6,7 s); timeout; `classificar_pergunta`; `redigir_resposta`.
 - Painel (`dashboard/app.py`): caixa na lateral logo abaixo do balão (chaves `caixa_*`, não
   `lia_*`: o teste do painel trata `lia_*` como botão da árvore). A resposta entra no balão da Lia
   (`RespostaIA` herda de `Resposta`), o painel vai ao gráfico, e o balão mostra a pergunta, o selo
@@ -383,9 +384,9 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   nada de causa; nada de orçamento; texto de IA nunca vai a segurança/sintoma; gabarito em 3 conjuntos
   (`gabarito_perguntas.json`): ajustar regras olhando só o desenvolvimento, e NÃO reaproveitar o
   conjunto "final" (já foi medido e consertado) -- criar um novo conjunto às cegas para medir de novo.
-- **O que a nuvem NÃO comprovou (só o autor, no Windows):** o Gemini real (chave, nome do modelo,
-  texto redigido passar na conferência) -> `py algoritimos\testar_gemini.py` (ou o .bat) e
-  `py algoritimos\teste_entendimento.py --com-gemini`; o painel com o banco real. Os testes na nuvem
+- **O que a nuvem NÃO comprovou (só o autor, no Windows):** o Gemini já passou no `py algoritimos\testar_gemini.py`
+  (17/10/2026, 6 de 6); falta `py algoritimos\teste_entendimento.py --com-gemini` (quanto a IA melhora o
+  entendimento) e o painel com o banco real. Os testes na nuvem
   usam a base pública de Rio Claro e um Gemini simulado. Testes: `teste_previsao.py`,
   `teste_entendimento.py`, `teste_assistente.py` e o cenário I de `dashboard/teste_painel.py`.
 - **Pergunte à Lia no Apoio à mulher (10/2026, enviada ao `main` em 17/10/2026 com o OK do autor; ainda
@@ -397,7 +398,7 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   fechada; segurança e sintoma = texto fixo; **as perguntas do Apoio NÃO são gravadas** (nem no banco).
   Gabarito `gabarito_apoio.json` (86 perguntas, desenvolvimento e final); testes `teste_apoio_busca.py` e
   o cenário F de `dashboard/teste_apoio_tela.py`. O conjunto final já foi medido e corrigido: para medir de
-  novo, escrever um conjunto novo às cegas. Nada do Gemini real foi comprovado.
+  novo, escrever um conjunto novo às cegas. O Gemini real só foi provado no teste da caixa do painel principal, não no Apoio (lá ele só escolhe porta).
 - Ainda não feito (combinar): população do IBGE; testar com pessoas de verdade; revisar com o autor o
   vocabulário popular do Apoio (`apoio_busca.VOCABULARIO`/`EXTRA`).
 
