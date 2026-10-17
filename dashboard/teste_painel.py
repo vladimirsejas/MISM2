@@ -421,6 +421,17 @@ def main():
         checar("I. contexto: 'e o de pulmão?' mantém o assunto e troca o câncer (o painel acompanha)",
                (atual.intencao, atual.cancer) == ("estado", "PULMAO") and at.session_state["doenca"] == "PULMAO")
 
+        perguntar_na_caixa(at, "me explica isso melhor")
+        atual = at.session_state["lia"]["atual"]
+        checar("I. conversa: 'me explica isso melhor' retoma a resposta anterior (estado, pulmão) com explicação simples e os números",
+               not erros(at) and (atual.intencao, atual.cancer, atual.origem) == ("estado", "PULMAO", "explicar")
+               and "Vou explicar de outro jeito" in atual.fala and "Para ler os números" in atual.fala)
+        perguntar_na_caixa(at, "está aumentando e o que posso esperar para frente?")
+        atual = at.session_state["lia"]["atual"]
+        checar("I. conversa: pedido composto responde os dois assuntos (evolução e previsão) e o painel vai ao gráfico",
+               not erros(at) and (atual.origem, atual.intencao) == ("composta", "evolucao") and "dois pedidos" in atual.selo
+               and at.session_state["aba"] == "Evolução")
+
         at.button(key="lia_discreto_inicio").click().run()
         checar("I. 'Começar de novo' esquece o contexto da caixa", "lia_memoria" not in at.session_state)
 

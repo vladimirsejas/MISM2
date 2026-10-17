@@ -366,6 +366,12 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   (17/10/2026, enviada ao `main` pelos números do `algoritimos/comparar_regras.py`, ver `docs/IA_DO_ESCUDO.md` 6b):** a escolha do Gemini só vira resposta direta se estiver entre os palpites da busca local; se só
   o Gemini apontou (`origem = "gemini_sem_apoio"`), vira palpite para a pessoa confirmar (id válido ainda pode ser o
   assunto errado). `py algoritimos\comparar_regras.py` (ou `Testar tudo no notebook.bat`) compara as duas regras com as mesmas respostas do Gemini.
+  **Conversa (17/10/2026, `origem` "explicar" e "composta"):** "me explica isso melhor", "não entendi", "como assim?" retomam a
+  resposta de dados anterior (a memória guarda assunto e câncer) com `assistente.EXPLICACAO_SIMPLES` + os mesmos números +
+  `COMO_LER`, texto fixo, sem IA; sem resposta anterior, ou depois de assunto de texto fixo, continua pedindo/oferecendo palpites; frase
+  com assunto próprio ("explica como calculam a tendência") nunca é sequestrada (`PALAVRAS_DE_EXPLICAR`). Pedido composto só nos pares
+  seguros `PARES_SEGUROS` (evolução+futuro, óbitos+valores, evolução+estado) responde os dois (`Entendimento.tambem`); outras
+  combinações seguem como palpites. Efeito medido: conjunto final 31 -> 33 diretas de 35, 0 erros. Ideia do Codex/ChatGPT.
   Modelo da cidade: o nome da cidade do painel é ignorado; outra cidade = comparar.
 - `algoritimos/assistente.py`: respostas. Gemini só reescreve respostas de DADOS; segurança,
   sintoma, apoio, onde ser atendida, causa e "sem dados" são texto fixo. Todo texto da IA é

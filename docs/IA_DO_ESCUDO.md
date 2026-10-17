@@ -125,6 +125,10 @@ Custo e limites operacionais: cada pergunta usa até 2 chamadas ao Gemini (enten
 
 **Risco:** perguntas com paráfrase que o vocabulário não cobre deixam de ser resolvidas direto (viram 1 clique). Se a medição real mostrar perda grande sem ganho de acerto, reverter este commit. Medido só com Gemini simulado na nuvem; o efeito real depende da execução no notebook.
 
+## 6c. Conversa: "me explica isso melhor" e pedidos compostos (17/10/2026)
+
+Achado de uma revisão externa (Codex/ChatGPT), confirmado no código: a caixa perdia o fio ("me explica isso melhor" depois de uma resposta virava botões genéricos) e reduzia um pedido com duas partes ("está aumentando e o que posso esperar?") a uma escolha. **Mudança:** (1) "me explica isso melhor", "não entendi", "como assim?" retomam a resposta anterior com a explicação simples do assunto, os mesmos números e um "como ler", em texto fixo, sem a IA; frases com assunto próprio não são tratadas assim, e sem resposta anterior a Lia pergunta. (2) Dois assuntos que cabem juntos (evolução e previsão, óbitos e valores, evolução e Estado) são respondidos juntos; qualquer outra combinação continua oferecendo botões. **Medido:** conjunto final 31 -> 33 respostas diretas de 35, 0 erradas; testes específicos em `teste_entendimento.py` (3b), `teste_assistente.py` (7b) e no painel (cenário I). **Limites:** continuação só retoma o último assunto de dados; não há conversa livre.
+
 ## 7. A caixa no Apoio à mulher (17/10/2026, enviada ao `main`; ainda não vista no notebook do autor)
 
 A página Apoio é para quem **procura cuidado**, então o desenho é mais cauteloso que o do painel de gestão:

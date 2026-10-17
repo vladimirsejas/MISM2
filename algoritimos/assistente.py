@@ -1,6 +1,6 @@
 import re
 from decimal import Decimal
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import entendimento as ent
 from inteligencia import (
@@ -183,6 +183,39 @@ SEM_DADOS = (
     "internada. Quem se trata só em ambulatório ou por plano de saúde não aparece.\n\n"
     "Não há nesta base cor ou raça, renda, escolaridade, estadiamento, sobrevida, doenças associadas nem a população de cada cidade. "
     "Prefiro dizer isso a responder com um palpite.")
+
+# "Me explica isso melhor": o que cada assunto de dados significa, em palavras simples. Texto fixo (sem números e sem causa):
+# os números vêm dos cálculos, e a IA não improvisa aqui.
+EXPLICACAO_SIMPLES = {
+    "mais_aparece": "Aqui eu conto, para cada tipo de câncer, quantas vezes mulheres foram internadas no hospital pelo SUS. O tipo com "
+                    "mais internações é o que mais ocupa os hospitais, e isso não quer dizer que seja o mais comum na população.",
+    "evolucao": "Comparo o número de internações ano a ano. Se a linha sobe, houve mais internações a cada ano; se desce, menos. "
+                "É o que os registros mostram, sem dizer o motivo.",
+    "futuro": "É uma projeção de tendência: o Escudo continua a linha dos anos anteriores para os próximos anos e mostra uma faixa de "
+              "erro. Não é uma previsão exata, e quanto mais longe no tempo, menos firme ela fica.",
+    "obitos": "São mulheres que morreram durante a internação no hospital. Não inclui quem morreu em casa ou depois da alta, e não "
+              "mede a gravidade da doença na população.",
+    "valores": "É o valor que o SUS registrou para pagar as internações. Não é o orçamento da cidade nem o custo total do tratamento, "
+               "que também tem exames e remédios fora do hospital.",
+    "tempo": "É o tempo, em dias, que a mulher fica no hospital em cada internação, em média. Dias a mais ou a menos dependem de "
+             "muitos fatores que estes dados não mostram.",
+    "idade": "Mostro em que faixa de idade estão as mulheres internadas. Isso descreve quem foi internada, e não quem tem mais "
+             "risco de adoecer.",
+    "estado": "Coloco a cidade ao lado do Estado de São Paulo para ver se o ritmo é parecido. Como as cidades têm tamanhos "
+              "diferentes, comparo a variação, não os números brutos.",
+    "atencao": "É uma lista do que merece olhar com mais atenção no planejamento, com os sinais que levaram a isso. Quem decide o que "
+               "fazer é a gestão, e o Escudo não calcula quanto investir.",
+    "fora_padrao": "Um ano fora do padrão é um ano em que o número ficou muito diferente do que a tendência esperava. Os dados mostram "
+                   "que foi diferente, e não dizem por quê.",
+    "fluxo": "Mostro de onde vêm as mulheres internadas em hospitais de São Paulo, inclusive de outros estados, e para onde vão as "
+             "moradoras da cidade. Conto internações, não pessoas.",
+    "completude": "O SUS não divulga todos os meses de todos os anos. Quando faltam meses, o Escudo estima o ano inteiro pela média "
+                  "dos meses que existem e avisa onde a estimativa é menos firme.",
+    "metodo": "Os dados vêm do SIH/SUS, o sistema que registra as internações pagas pelo SUS. Cada registro é uma internação, não um "
+              "caso novo de câncer. O Escudo calcula os números, e a IA, quando está ligada, só ajuda na redação.",
+}
+COMO_LER = ("Para ler os números: cada um conta **internações** registradas no SUS (uma mulher pode ter mais de uma), não casos novos "
+            "de câncer. O Escudo mostra o que aconteceu, não explica o porquê.")
 
 LINK_APOIO = ("🩷 Abrir Apoio à mulher", "pages/apoio.py")
 LINK_ONDE = ("📍 Abrir Onde ser atendida", "pages/onde_ser_atendida.py")
@@ -510,6 +543,21 @@ def montar(ctx, e, pergunta, foco, perfil="TECNICO", ia=None):
                   "para encontrar cuidado. Tente, por exemplo:"),
             expressao="acolhedora", botoes=[(r, acao(i, pergunta=r)) for r, i in EXEMPLOS], **comum))
 
+    # pedido composto: responde os dois assuntos, um depois do outro, sem descartar nenhum
+    if e.tambem:
+        ra = montar(ctx, replace(e, tambem=None, origem="regras"), pergunta, foco, perfil, ia)
+        rb = montar(ctx, replace(e, intencao=e.tambem, tambem=None, origem="regras"), pergunta, foco, perfil, ia)
+        resp = ra
+        resp.fala = (f"Você fez dois pedidos, e respondo os dois.\n\n**{ent.ROTULOS[ra.intencao]}**\n\n{ra.fala}"
+                     f"\n\n**{ent.ROTULOS[rb.intencao]}**\n\n{rb.fala}")
+        resp.links = list(dict.fromkeys(list(ra.links) + list(rb.links)))
+        ja = {r for r, _ in resp.botoes}
+        resp.botoes = resp.botoes + [(r, a) for r, a in rb.botoes if r not in ja and a.get("tipo") != "inicio"]
+        resp.usou_ia = ra.usou_ia or rb.usou_ia
+        resp.origem = "composta"
+        resp.selo = "Respondi os dois pedidos da sua pergunta, um depois do outro. Os números vêm dos cálculos do Escudo."
+        return resp
+
     # intenção entendida
     pedido, nota_foco = e.cancer, None
     if e.foco and not pedido and not e.varios_canceres:  # "esse câncer": o que está em foco no painel
@@ -522,6 +570,14 @@ def montar(ctx, e, pergunta, foco, perfil="TECNICO", ia=None):
     if e.nao_acompanhado:
         nota = (f"Ainda não acompanho o câncer de {e.nao_acompanhado}; mostro os que acompanho. " + (nota or "")).strip()
     resp = _tornar(base, intencao=intencao, cancer=usado, links=list(LINKS.get(intencao, [])), **comum)
+    if e.origem == "explicar" and intencao in EXPLICACAO_SIMPLES and base.fala:
+        # "me explica isso melhor": a mesma resposta, com o que ela significa em palavras simples (texto fixo, sem a IA)
+        resp.fonte = _fonte(ctx, intencao)
+        numeros = ("\n" + "\n".join(f"- {n}" for n in resp.numeros)) if resp.numeros else ""
+        resp.fala = ((nota + "\n\n" if nota else "") + "Vou explicar de outro jeito, com palavras simples.\n\n"
+                     + EXPLICACAO_SIMPLES[intencao] + "\n\nOs números, de novo:\n\n" + base.fala + numeros + "\n\n" + COMO_LER)
+        resp.selo = "Texto fixo do Escudo (a IA não improvisa na explicação simples)."
+        return _finalizar(resp)
     if intencao in SO_DADOS and base.fala:
         resp.fonte = _fonte(ctx, intencao)
         _redigir(resp, pergunta, ia, perfil)

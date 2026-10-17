@@ -59,10 +59,11 @@ def medir_novo(gabarito, conjunto, classificar=None):
         else:
             r["conteudo"] += 1
             if e.tipo == "intencao":
-                r["certo" if e.intencao in aceitas else "errado"] += 1
-                if e.intencao not in aceitas:
+                respondidos = {e.intencao, e.tambem}  # pedido composto: os dois assuntos são respondidos
+                r["certo" if aceitas & respondidos else "errado"] += 1
+                if not aceitas & respondidos:
                     r["erros"].append((g["pergunta"], esp, e.intencao, e.origem))
-                if g.get("cancer") and e.intencao in aceitas:  # o câncer certo também faz parte de entender
+                if g.get("cancer") and aceitas & respondidos:  # o câncer certo também faz parte de entender
                     r["cancer_n"] += 1
                     r["cancer_ok"] += e.cancer == g["cancer"]
             elif e.tipo == "palpites" and aceitas & {i for i, _ in e.palpites}:
@@ -85,7 +86,7 @@ def medir_antiga(gabarito, conjunto, so_o_que_ela_cobre=False, novo=False):
         n += 1
         if novo:
             e = entender(g["pergunta"])
-            certo += e.tipo == "intencao" and e.intencao in {g["esperado"], *g.get("aceitavel", [])}
+            certo += e.tipo == "intencao" and bool({g["esperado"], *g.get("aceitavel", [])} & {e.intencao, e.tambem})
         else:
             certo += MAPA_ANTIGA[conversa.entender(g["pergunta"], TODOS)["assunto"]] in {g["esperado"], *g.get("aceitavel", [])}
     return n, certo
@@ -151,6 +152,38 @@ def main():
     checar("3. seguimento: 'e em 2027?' continua a previsão, mantendo o câncer",
            (e.intencao, e.cancer, e.ano) == ("futuro", "MAMA", 2027))
     checar("3. sem memória, 'e de pulmão?' não inventa assunto", entender("e de pulmão?").tipo in ("palpites", "fora", "intencao"))
+
+    # "me explica isso melhor": retoma a resposta anterior; sem resposta anterior, pergunta; não sequestra frases com assunto próprio
+    memoria_ev = {"intencao": "evolucao", "cancer": "MAMA"}
+    for frase in ("me explica isso melhor", "não entendi", "como assim?", "o que isso quer dizer?", "explica de outro jeito",
+                  "pode explicar isso de novo, por favor?"):
+        e = entender(frase, memoria=memoria_ev)
+        checar(f"3b. explicar: '{frase}' retoma a resposta anterior (evolução da mama)",
+               (e.tipo, e.intencao, e.cancer, e.origem) == ("intencao", "evolucao", "MAMA", "explicar"))
+    checar("3b. explicar: sem resposta anterior a Lia não inventa (pergunta)",
+           all(entender(f).origem != "explicar" for f in ("me explica isso melhor", "não entendi", "como assim?")))
+    checar("3b. explicar: depois de um assunto de texto fixo (apoio) não finge ter uma explicação simples",
+           all(entender(f, memoria={"intencao": "apoio", "cancer": None}).origem != "explicar" for f in ("me explica isso melhor", "não entendi")))
+    checar("3b. explicar: frase com assunto próprio não é sequestrada ('explica melhor como calculam a tendência', 'o que significa AIH?')",
+           entender("explica melhor como vocês calculam a tendência", memoria=memoria_ev).origem != "explicar"
+           and entender("o que significa AIH?", memoria=memoria_ev).intencao == "metodo"
+           and entender("me explica o que é uma AIH", memoria=memoria_ev).origem != "explicar"
+           and entender("não entendi o gráfico", memoria=memoria_ev).origem != "explicar")
+    checar("3b. explicar: se cita outro câncer, segue o câncer citado (não explica o anterior)",
+           entender("me explica melhor o câncer de pulmão", memoria=memoria_ev).cancer != "MAMA")
+    checar("3b. segurança continua antes de tudo: 'não entendi, quero morrer' é risco",
+           entender("não entendi, quero morrer", memoria=memoria_ev).tipo == "risco")
+    for frase, par in (("está aumentando e o que posso esperar para frente?", {"evolucao", "futuro"}),
+                       ("morrem muito e quanto o SUS gasta com isso", {"obitos", "valores"})):
+        e = entender(frase)
+        checar(f"3b. pedido composto: '{frase}' responde os dois assuntos ({', '.join(sorted(par))})",
+               (e.tipo, e.origem) == ("intencao", "composta") and {e.intencao, e.tambem} == par)
+    e = entender("quanto morre e qual a idade")
+    checar("3b. pedido composto fora dos pares seguros continua virando palpites (a pessoa escolhe)",
+           e.tipo == "palpites" and e.tambem is None)
+    checar("3b. pergunta de um assunto só nunca vira composta",
+           all(entender(f).tambem is None for f in ("o câncer de mama está aumentando?", "quantas mulheres morrem de câncer de mama?",
+                                                    "como vai estar a mama em 2028?", "quanto o sus gasta com câncer de mama?")))
 
     chamadas = []
 

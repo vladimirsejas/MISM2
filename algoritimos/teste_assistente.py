@@ -235,6 +235,37 @@ def main():
     r = perguntar("me explica o negócio dos números do hospital das moças", ia=g4.ia())
     checar("7. Gemini devolve assunto que não existe: vira palpites/fora, nunca resposta chutada", r.tipo in ("palpites", "fora"))
 
+    # ---- 7b. conversa: "me explica isso melhor" e pedido composto ----
+    memoria_ev = {"intencao": "evolucao", "cancer": "MAMA"}
+    base_ev = perguntar("o câncer de mama tá aumentando?")
+    r = perguntar("me explica isso melhor", memoria=memoria_ev)
+    checar("7b. 'me explica isso melhor' retoma a evolução da mama: explicação simples + os mesmos números + como ler",
+           (r.tipo, r.intencao, r.cancer, r.origem) == ("intencao", "evolucao", "MAMA", "explicar")
+           and "Vou explicar de outro jeito" in r.fala and asst.EXPLICACAO_SIMPLES["evolucao"] in r.fala
+           and base_ev.fala in r.fala and asst.COMO_LER in r.fala)
+    checar("7b. a explicação simples é texto fixo, sem chamar a IA, e o painel acompanha o assunto anterior",
+           not r.usou_ia and "Texto fixo" in r.selo and r.destino == base_ev.destino)
+    g5 = Gemini(texto="x", classe={"intencao": "metodo"})
+    r5 = perguntar("não entendi", memoria=memoria_ev, ia=g5.ia())
+    checar("7b. mesmo com o Gemini ligado, 'não entendi' não gasta chamada de IA e continua explicando o assunto anterior",
+           r5.origem == "explicar" and not g5.classificacoes and not r5.usou_ia)
+    r = perguntar("me explica isso melhor")
+    checar("7b. sem resposta anterior, 'me explica isso melhor' não inventa: oferece palpites ou pergunta",
+           r.tipo in ("palpites", "fora") and r.origem != "explicar")
+    textos = list(asst.EXPLICACAO_SIMPLES.values()) + [asst.COMO_LER]
+    checar("7b. todas as explicações simples cobrem os 13 assuntos de dados, sem número, sem 'vai ficar' e sem atribuir causa",
+           set(asst.EXPLICACAO_SIMPLES) == asst.SO_DADOS and not any(any(c.isdigit() for c in t) for t in textos)
+           and not any(asst.PROMETE.search(t) or asst.CAUSA_ATRIBUIDA.search(t) for t in textos))
+    for pergunta_c, par in (("está aumentando e o que posso esperar para frente?", ("evolucao", "futuro")),
+                            ("morrem muito e quanto o SUS gasta com isso", ("valores", "obitos"))):
+        rc = perguntar(pergunta_c)
+        sozinhas = [asst.responder_escolha(ctx, asst.acao(i, rc.cancer, pergunta_c), foco) for i in par]
+        checar(f"7b. composto '{pergunta_c}': responde os dois, com os mesmos números das respostas separadas",
+               (rc.tipo, rc.origem, rc.intencao) == ("intencao", "composta", par[0])
+               and all(s.fala in rc.fala for s in sozinhas) and "dois pedidos" in rc.selo and not rc.usou_ia)
+    checar("7b. composto: botões de cada assunto e um só 'Início'",
+           sum(1 for _, a in rc.botoes if a.get("tipo") == "inicio") == 1)
+
     # ---- 8. palpites e botões ----
     r = perguntar("me explica o negócio dos números do hospital das moças")
     ok_palpites = r.tipo in ("palpites", "fora")

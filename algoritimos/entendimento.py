@@ -467,7 +467,7 @@ class Entendimento:
     intencao: str = None
     cancer: str = None        # citado na pergunta (ou herdado, no seguimento)
     ano: int = None
-    origem: str = "regras"    # regras | seguimento | gemini | gemini_sem_apoio (só o Gemini apontou: vira palpite)
+    origem: str = "regras"    # regras | seguimento | explicar | composta | gemini | gemini_sem_apoio (só o Gemini apontou: vira palpite)
     nota: float = 0.0
     palpites: list = field(default_factory=list)   # [(intenção, nota)] da maior para a menor
     risco: str = None
@@ -475,6 +475,37 @@ class Entendimento:
     varios_canceres: bool = False
     cancer_citado: bool = False
     foco: bool = False        # "esse câncer": usar o câncer em foco no painel
+    tambem: str = None        # pedido composto ("está aumentando e o que esperar?"): o segundo assunto, respondido junto
+
+
+# ---------- conversa: "me explica isso melhor" e pedidos compostos ----------
+
+# Assuntos de dados: os únicos que têm uma explicação simples (os de texto fixo já são texto fixo).
+COM_NUMEROS = {"mais_aparece", "evolucao", "futuro", "obitos", "valores", "tempo", "idade", "estado", "atencao",
+               "fora_padrao", "fluxo", "completude", "metodo"}
+# Pares que cabem juntos numa resposta segura. Outras combinações continuam virando palpites para a pessoa escolher.
+PARES_SEGUROS = {frozenset(p) for p in (("evolucao", "futuro"), ("obitos", "valores"), ("evolucao", "estado"))}
+CONFUSAO = re.compile(r"^(eu )?(nao entendi|nao compreendi|nao ficou claro|como assim|nao sei o que (isso )?quer dizer)\b")
+PEDE_EXPLICAR = re.compile(r"\b(explica\w*|explique|detalha\w*|repete\w*)\b.*\b(isso|melhor|de novo|outro jeito|simples)\b"
+                           r"|\b(quer dizer|significa)\b.*\bisso\b|\bo que isso (quer dizer|significa)\b"
+                           r"|\b(fala|diz|conta|explica) de novo\b|\b(de outro jeito|mais simples)\b")
+
+
+# Palavras que só pedem explicação. Qualquer outra palavra de conteúdo ("tendência", "AIH", "pulmão") significa que a
+# frase traz um assunto próprio e não é "explica o que você acabou de dizer".
+PALAVRAS_DE_EXPLICAR = set("""me eu a o e de do da que isso esse essa esses essas aquilo melhor novo outro jeito mais simples
+    simples por favor pode poderia voce voces vc pra para um uma pouco explica explicar explique detalha detalhar detalhe repete
+    repetir fala falar diz dizer conta contar quer significa nao entendi entender compreendi compreender ficou claro como assim
+    resposta anterior disse falou sei em com ainda se tem tu""".split())
+
+
+def _pede_explicacao(texto, nota_topo):
+    """'me explica isso melhor', 'não entendi', 'como assim?': pedido curto de explicar a resposta anterior. Se a frase já
+    traz um assunto por conta própria ("explica melhor como calculam a tendência"), não é isto."""
+    palavras = texto.split()
+    if len(palavras) > 9 or any(p not in PALAVRAS_DE_EXPLICAR for p in palavras):
+        return False
+    return bool(CONFUSAO.search(texto)) or (nota_topo < NOTA_ALTA and bool(PEDE_EXPLICAR.search(texto)))
 
 
 def _seguimento(pergunta, memoria, codigos, ano):
@@ -532,6 +563,11 @@ def compreender(pergunta, disponiveis=None, memoria=None, classificar=None, cida
         notas["causa"] += BONUS_POR_QUE  # "por que ...?" sem ano é pergunta de causa, não de números
     if ano and ano_dados and ano > ano_dados:
         notas["futuro"] += BONUS_ANO_FUTURO  # "em 2028" depois de dados até 2025 só pode ser projeção
+    if (memoria and memoria.get("intencao") in COM_NUMEROS and not codigos and ano is None
+            and _pede_explicacao(texto, max(v for k, v in notas.items() if k != "fora"))):
+        # "me explica isso melhor" depois de uma resposta de dados: explica a resposta anterior (a mesma, em palavras simples)
+        return Entendimento("intencao", intencao=memoria["intencao"], origem="explicar",
+                            **{**base, "cancer": memoria.get("cancer")})
     nota_fora = notas.pop("fora")
     ordem = sorted(notas.items(), key=lambda kv: -kv[1])
     (primeira, n1), (_, n2) = ordem[0], ordem[1]
@@ -547,6 +583,12 @@ def compreender(pergunta, disponiveis=None, memoria=None, classificar=None, cida
     # 2) as regras entendem sozinhas: nota alta e folga, ou um candidato único
     if (n1 >= NOTA_ALTA and (n1 - n2) >= FOLGA) or (n1 >= NOTA_UNICA and n2 < NOTA_BAIXA):
         return Entendimento("intencao", intencao=primeira, nota=n1, palpites=palpites, **base)
+
+    # 2b) pedido composto ("está aumentando e o que posso esperar?"): dois assuntos que cabem juntos e mais nada perto
+    if (len(ordem) >= 3 and frozenset((ordem[0][0], ordem[1][0])) in PARES_SEGUROS and ordem[1][1] >= NOTA_UNICA
+            and ordem[2][1] <= ordem[1][1] - FOLGA):
+        return Entendimento("intencao", intencao=ordem[0][0], tambem=ordem[1][0], origem="composta", nota=n1,
+                            palpites=palpites, **base)
 
     # 3) segunda chance com o Gemini (lista fechada); o que ele devolver é conferido
     if classificar is not None:
