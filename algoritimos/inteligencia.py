@@ -1751,3 +1751,200 @@ def leitura_cidade(info, nome_cidade):
                   f"(internações de quem mora fora, atendidas aqui, menos moradoras atendidas fora). "
                   "Conta internações e só enxerga hospitais de SP.")
     return frases
+
+
+# =====================================
+# PREVISÃO COM VALIDAÇÃO (aprendizado de máquina simples)
+#
+# A projeção de tendência do painel é UMA reta. Aqui o Escudo faz o que
+# se faz em aprendizado de máquina: treina vários modelos pequenos,
+# testa cada um prevendo anos que JÁ conhece (backtest "walk-forward":
+# treina até o ano t, prevê t+1..t+3, anda um ano e repete), e usa o
+# modelo que errou menos. A faixa de incerteza vem do erro medido nesses
+# testes, não de uma fórmula. E o resultado é sempre comparado com o
+# método mais bobo possível ("repetir o último ano"): se o modelo não
+# ganha dele, o Escudo diz isso e trata a previsão como frágil.
+#
+# Limites (valem para toda frase que usar isto): 13 anos por série é
+# pouco; escolher o melhor entre 5 modelos com tão poucos testes tem
+# ruído; é projeção de tendência de internações, não previsão de casos
+# novos, e não indica causa.
+# =====================================
+
+MODELOS_PREVISAO = {
+    "ingenuo": "repetir o último ano",
+    "media3": "média dos 3 últimos anos",
+    "tendencia": "tendência linear de todos os anos",
+    "tendencia_recente": "tendência linear dos 6 últimos anos",
+    "holt": "suavização exponencial com tendência amortecida",
+}
+ANOS_MINIMOS_TREINO = 6   # menos que isso, nenhum modelo tem do que aprender
+ANOS_MINIMOS_PREVISAO = ANOS_MINIMOS_TREINO + 2  # precisa de pelo menos 2 testes
+GANHO_MINIMO_SOBRE_INGENUO = 10.0  # % de erro a menos para dizer que o modelo "ganha"
+EMPATE_DE_ERRO = 0.02  # erros até 2% maiores que o melhor empatam: vence o mais simples
+
+
+def _prever_ingenuo(anos, y, horizonte):
+    return np.full(horizonte, float(y[-1]))
+
+
+def _prever_media3(anos, y, horizonte):
+    return np.full(horizonte, float(np.mean(y[-3:])))
+
+
+def _prever_reta(anos, y, horizonte, janela=None):
+    anos, y = (anos[-janela:], y[-janela:]) if janela else (anos, y)
+    futuros = [anos[-1] + i for i in range(1, horizonte + 1)]
+    ponto, _, _ = prever(ajustar_tendencia(anos, y), futuros)
+    return ponto
+
+
+def _prever_tendencia(anos, y, horizonte):
+    return _prever_reta(anos, y, horizonte)
+
+
+def _prever_tendencia_recente(anos, y, horizonte):
+    return _prever_reta(anos, y, horizonte, janela=6)
+
+
+def _holt(y, alfa, beta, phi):
+    """Nível e tendência finais, e o erro quadrático de 1 passo dentro da amostra."""
+    nivel, tend = float(y[0]), float(y[1] - y[0])
+    erro2 = 0.0
+    for valor in y[1:]:
+        previsto = nivel + phi * tend
+        erro2 += (valor - previsto) ** 2
+        novo = alfa * valor + (1 - alfa) * (nivel + phi * tend)
+        tend = beta * (novo - nivel) + (1 - beta) * phi * tend
+        nivel = novo
+    return nivel, tend, erro2
+
+
+def _prever_holt(anos, y, horizonte):
+    melhor = None
+    for alfa in (0.3, 0.5, 0.7, 0.9):
+        for beta in (0.1, 0.3, 0.5):
+            for phi in (0.8, 0.9, 1.0):
+                nivel, tend, erro2 = _holt(y, alfa, beta, phi)
+                if melhor is None or erro2 < melhor[0]:
+                    melhor = (erro2, nivel, tend, phi)
+    _, nivel, tend, phi = melhor
+    return np.array([nivel + tend * sum(phi ** j for j in range(1, h + 1)) for h in range(1, horizonte + 1)])
+
+
+_PREVISORES = {"ingenuo": _prever_ingenuo, "media3": _prever_media3, "tendencia": _prever_tendencia,
+               "tendencia_recente": _prever_tendencia_recente, "holt": _prever_holt}
+
+
+def _retroteste(anos, y, modelo, horizonte):
+    """Erros (real - previsto) por horizonte: {1: [...], 2: [...], 3: [...]}."""
+    erros = {h: [] for h in range(1, horizonte + 1)}
+    for corte in range(ANOS_MINIMOS_TREINO, len(y)):
+        previsto = np.clip(_PREVISORES[modelo](anos[:corte], y[:corte], horizonte), 0, None)
+        for h in range(1, horizonte + 1):
+            if corte + h - 1 < len(y):
+                erros[h].append(float(y[corte + h - 1] - previsto[h - 1]))
+    return erros
+
+
+def validar_modelos(dados, horizonte=3, coluna="internacoes"):
+    """Tabela com o erro de cada modelo nos anos que já conhecemos
+    (menor erro primeiro): erro médio absoluto (MAE), raiz do erro
+    quadrático médio (RMSE), viés (média do erro: negativo = o modelo
+    costuma prever a mais) e quantas previsões foram testadas."""
+    dados = dados.sort_values("ano")
+    anos = dados["ano"].astype(int).to_numpy()
+    y = dados[coluna].to_numpy(dtype=float)
+    if len(y) < ANOS_MINIMOS_PREVISAO:
+        return None
+    linhas = []
+    for modelo in MODELOS_PREVISAO:
+        todos = np.array([e for lista in _retroteste(anos, y, modelo, horizonte).values() for e in lista])
+        linhas.append({"modelo": modelo, "descricao": MODELOS_PREVISAO[modelo],
+                       "mae": float(np.abs(todos).mean()), "rmse": float(np.sqrt((todos ** 2).mean())),
+                       "vies": float(todos.mean()), "testes": int(len(todos))})
+    return pd.DataFrame(linhas).sort_values("mae").reset_index(drop=True)
+
+
+def prever_com_validacao(dados, horizonte=3, coluna="internacoes"):
+    """Previsão de tendência com o modelo que melhor acertou nos testes.
+
+    Devolve None se há poucos anos. Senão: o modelo escolhido, a tabela
+    de erros, a previsão (ponto e faixa de ~90% pelo erro medido nos
+    testes, por horizonte), o ganho sobre "repetir o último ano" e se a
+    previsão é frágil (modelo não ganha do ingênuo, ou poucas
+    internações por ano)."""
+    tabela = validar_modelos(dados, horizonte, coluna)
+    if tabela is None:
+        return None
+    dados = dados.sort_values("ano")
+    anos = dados["ano"].astype(int).to_numpy()
+    y = dados[coluna].to_numpy(dtype=float)
+    melhor_mae = float(tabela["mae"].min())
+    ordem = list(MODELOS_PREVISAO)  # do mais simples ao mais elaborado
+    candidatos = tabela[tabela["mae"] <= melhor_mae * (1 + EMPATE_DE_ERRO) + 1e-9]["modelo"].tolist()
+    escolhido = min(candidatos, key=ordem.index)
+    linha = tabela[tabela["modelo"] == escolhido].iloc[0]
+    mae_ingenuo = float(tabela[tabela["modelo"] == "ingenuo"]["mae"].iloc[0])
+    ganho = (1 - linha["mae"] / mae_ingenuo) * 100 if mae_ingenuo > 0 else 0.0
+
+    ponto = np.clip(_PREVISORES[escolhido](anos, y, horizonte), 0, None)
+    erros = _retroteste(anos, y, escolhido, horizonte)
+    todos = np.array([e for lista in erros.values() for e in lista])
+    rmse_geral = float(np.sqrt((todos ** 2).mean()))
+    anos_previstos, minimos, maximos = [], [], []
+    rmse_anterior = 1.0  # série quase exata nos testes não vira certeza
+    for h in range(1, horizonte + 1):
+        por_h = np.array(erros[h])
+        rmse = float(np.sqrt((por_h ** 2).mean())) if len(por_h) >= 3 else rmse_geral * np.sqrt(h)
+        rmse = max(rmse, rmse_anterior)  # com poucos testes o erro a 2 anos pode sair menor que a 1: a faixa nunca encolhe
+        rmse_anterior = rmse
+        anos_previstos.append(int(anos[-1]) + h)
+        minimos.append(max(ponto[h - 1] - Z_90 * rmse, 0.0))
+        maximos.append(ponto[h - 1] + Z_90 * rmse)
+    previsao = pd.DataFrame({"ano": anos_previstos, coluna: ponto, "minimo": minimos, "maximo": maximos})
+    pequeno = float(y.mean()) < MEDIA_PEQUENA
+    supera = escolhido != "ingenuo" and ganho >= GANHO_MINIMO_SOBRE_INGENUO
+    return {"modelo": escolhido, "descricao": MODELOS_PREVISAO[escolhido], "tabela": tabela,
+            "previsao": previsao, "mae": float(linha["mae"]), "mae_ingenuo": mae_ingenuo,
+            "ganho_pct": float(ganho), "supera_ingenuo": bool(supera), "pequeno": bool(pequeno),
+            "fragil": bool(pequeno or not supera), "testes": int(linha["testes"]),
+            "ano_fim": int(anos[-1]), "atual": float(y[-1])}
+
+
+def previsao_todos(serie, horizonte=3):
+    """Previsão validada de cada câncer, maior variação primeiro.
+    Cada item: tipo_cancer, doenca e o dict de prever_com_validacao."""
+    itens = []
+    for codigo in resumo_doencas(serie)["tipo_cancer"]:
+        prev = prever_com_validacao(serie_doenca(serie, codigo), horizonte)
+        if prev:
+            itens.append({"tipo_cancer": codigo, "doenca": nome_doenca(codigo), **prev})
+    return sorted(itens, key=lambda p: -abs(_variacao_pct(p)))
+
+
+def _variacao_pct(prev):
+    final = float(prev["previsao"]["internacoes"].iloc[-1])
+    return (final / prev["atual"] - 1) * 100 if prev["atual"] > 0 else 0.0
+
+
+def leitura_previsao(prev, cancer):
+    """Frases sobre a previsão de um câncer. Nunca "vai": é o que a
+    tendência aponta se o passado continuar."""
+    final = prev["previsao"].iloc[-1]
+    frases = [
+        f"Testei {len(MODELOS_PREVISAO)} modelos prevendo anos que já conheço. Errou menos: "
+        f"**{prev['descricao']}** (erro médio de {formatar_numero(prev['mae'], 1)} internações por ano).",
+        f"Se o comportamento passado continuar, a tendência aponta para cerca de {formatar_numero(final['internacoes'])} "
+        f"internações em {int(final['ano'])} (faixa de {formatar_numero(final['minimo'])} a "
+        f"{formatar_numero(final['maximo'])}), contra {formatar_numero(prev['atual'])} em {prev['ano_fim']}.",
+    ]
+    if prev["supera_ingenuo"]:
+        frases.append(f"O modelo errou {formatar_numero(prev['ganho_pct'])}% menos do que simplesmente repetir o último ano "
+                      f"({formatar_numero(prev['mae_ingenuo'], 1)} por ano).")
+    else:
+        frases.append("O modelo não ganhou de forma clara de simplesmente repetir o último ano: "
+                      "trate esta previsão como frágil.")
+    if prev["pequeno"]:
+        frases.append("São poucas internações por ano, então a faixa é larga e o acaso pesa.")
+    return frases

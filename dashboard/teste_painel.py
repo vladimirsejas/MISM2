@@ -362,6 +362,126 @@ def main():
         inteligencia.fluxo_da_cidade = cidade_original
         streamlit.cache_data.clear()
 
+    # ---- J. previsão com validação (aba Evolução, projeção ligada) ----
+    at = abrir()
+    at.session_state["aba"] = "Evolução"
+    at.session_state["ver_projecao"] = True
+    at.run()
+    rotulos = [e.label for e in at.expander]
+    checar("J. com a projeção ligada, a aba Evolução mostra como o modelo de previsão foi escolhido",
+           not erros(at) and "Como o Escudo escolheu o modelo de previsão (aprendizado de máquina simples)" in rotulos)
+    tabelas = [d.value for d in at.dataframe if "Modelo" in d.value.columns]
+    checar("J. a tabela compara os 5 modelos, com o escolhido marcado, e a leitura diz 'tendência aponta'",
+           tabelas and len(tabelas[-1]) == 5 and (tabelas[-1]["Escolhido"] == "✔").sum() == 1
+           and "tendência aponta" in " ".join(str(m.value) for m in at.markdown))
+    at.session_state["ver_projecao"] = False
+    at.run()
+    checar("J. com a projeção desligada o bloco não aparece",
+           "Como o Escudo escolheu o modelo de previsão (aprendizado de máquina simples)" not in [e.label for e in at.expander])
+
+    # ---- I. Pergunte à Lia: a caixa de texto no painel real ----
+    import assistente
+    gravadas = []
+    conversa.registrar_pergunta = lambda banco, pergunta, assunto: gravadas.append((pergunta, assunto))
+    obter_ia_original = assistente.obter_ia
+
+    def perguntar_na_caixa(at, texto):
+        at.text_input(key="caixa_texto").set_value(texto)
+        at.button(key="caixa_enviar").click().run()
+
+    def textos_da_lateral(at):
+        return " ".join(str(c.value) for c in at.sidebar.caption) + " " + " ".join(str(m.value) for m in at.sidebar.markdown)
+
+    try:
+        at = abrir()
+        at.button(key="bv_fechar").click().run()
+        checar("I. a caixa 'Pergunte à Lia' está na lateral, junto da Lia, e o painel abre sem erro",
+               not erros(at) and at.text_input(key="caixa_texto") is not None and "Pergunte à Lia" in textos_da_lateral(at))
+        checar("I. sem chave do Gemini a caixa avisa que está sem IA de linguagem",
+               "IA de linguagem desligada" in textos_da_lateral(at))
+
+        perguntar_na_caixa(at, "o câncer de mama está aumentando?")
+        atual = at.session_state["lia"]["atual"]
+        lateral = textos_da_lateral(at)
+        checar("I. pergunta escrita: a Lia responde (evolução da mama) e o painel vai ao gráfico dela",
+               not erros(at) and (atual.intencao, atual.cancer) == ("evolucao", "MAMA") and at.session_state["aba"] == "Evolução"
+               and at.session_state["doenca"] == "MAMA")
+        checar("I. a resposta mostra o que foi perguntado, o selo (sem IA) e a fonte dos dados",
+               "Você perguntou: “o câncer de mama está aumentando?”" in lateral and "sem IA" in lateral and "SIH/SUS" in lateral)
+        checar("I. a pergunta foi registrada com o assunto entendido", ("o câncer de mama está aumentando?", "evolucao") in gravadas)
+
+        perguntar_na_caixa(at, "e no estado?")
+        atual = at.session_state["lia"]["atual"]
+        checar("I. contexto: 'e no estado?' continua na mama e liga a comparação com o Estado no gráfico",
+               not erros(at) and (atual.intencao, atual.cancer) == ("estado", "MAMA") and at.session_state["ver_estado"] is True)
+
+        perguntar_na_caixa(at, "e o de pulmão?")
+        atual = at.session_state["lia"]["atual"]
+        checar("I. contexto: 'e o de pulmão?' mantém o assunto e troca o câncer (o painel acompanha)",
+               (atual.intencao, atual.cancer) == ("estado", "PULMAO") and at.session_state["doenca"] == "PULMAO")
+
+        at.button(key="lia_discreto_inicio").click().run()
+        checar("I. 'Começar de novo' esquece o contexto da caixa", "lia_memoria" not in at.session_state)
+
+        perguntar_na_caixa(at, "me explica o negócio dos números do hospital das moças")
+        atual = at.session_state["lia"]["atual"]
+        botoes = botoes_da_lia(at)
+        checar("I. pergunta obscura: a Lia não chuta; oferece palpites em botões", atual.tipo in ("palpites", "fora") and len(botoes) >= 1)
+        if atual.tipo == "palpites":
+            botoes[0].click().run()
+            checar("I. clicar num palpite responde o assunto escolhido", not erros(at) and at.session_state["lia"]["atual"].tipo == "intencao")
+
+        gravadas.clear()
+        perguntar_na_caixa(at, "meu marido me bate")
+        atual = at.session_state["lia"]["atual"]
+        checar("I. segurança: relato de violência mostra 190 e 180, leva ao Apoio e NÃO é gravado",
+               not erros(at) and "190" in atual.fala and "180" in atual.fala and len(atual.links) == 1 and gravadas == [])
+        perguntar_na_caixa(at, "senti um caroço no peito")
+        checar("I. sintoma pessoal: texto fixo sem diagnóstico e também não é gravado",
+               "Eu não faço diagnóstico" in at.session_state["lia"]["atual"].fala and gravadas == [])
+
+        antes = at.session_state["lia"]["atual"]
+        perguntar_na_caixa(at, "   ")
+        checar("I. enviar vazio não faz nada e não quebra", not erros(at) and at.session_state["lia"]["atual"] is antes)
+
+        at.button(key="caixa_exemplo_0").click().run()
+        checar("I. botão de exemplo ('Qual câncer mais interna?') responde sem digitar",
+               not erros(at) and at.session_state["lia"]["atual"].intencao == "mais_aparece")
+
+        # ---- com o Gemini (simulado) ----
+        recebidos = []
+
+        def explicar_falso(pergunta, base, perfil):
+            recebidos.append((pergunta, perfil))
+            return "Em Rio Claro, a tendência aponta para o aumento das internações por câncer de mama; veja os números abaixo."
+
+        assistente.obter_ia = lambda: assistente.IA(explicar=explicar_falso, classificar=lambda p, o: None, ligada=True)
+        at = abrir()
+        at.button(key="bv_fechar").click().run()
+        checar("I. com o Gemini ligado a caixa diz que ele está ligado", "Gemini) ligada" in textos_da_lateral(at))
+        at.radio(key="caixa_linguagem").set_value("Simples").run()
+        perguntar_na_caixa(at, "o câncer de mama está aumentando?")
+        atual = at.session_state["lia"]["atual"]
+        rotulos_expanders = [e.label for e in at.sidebar.expander]
+        checar("I. IA redigiu: selo do Gemini, base calculada guardada e perfil 'Simples' enviado",
+               not erros(at) and atual.usou_ia and "Redigido pela IA" in textos_da_lateral(at)
+               and "O que o Escudo calculou (base da resposta)" in rotulos_expanders and recebidos[-1][1] == "SIMPLES")
+
+        assistente.obter_ia = lambda: assistente.IA(explicar=lambda p, b, pf: (_ for _ in ()).throw(ConnectionError("sem rede")),
+                                                    classificar=lambda p, o: None, ligada=True)
+        perguntar_na_caixa(at, "o câncer de mama está aumentando?")
+        checar("I. Gemini fora do ar: a resposta direta aparece, sem erro na tela",
+               not erros(at) and not at.session_state["lia"]["atual"].usou_ia and at.session_state["lia"]["atual"].fala.strip())
+
+        assistente.obter_ia = lambda: assistente.IA(explicar=explicar_falso, classificar=lambda p, o: None, ligada=True)
+        at.session_state["lia_perguntas_ia"] = 40
+        perguntar_na_caixa(at, "o câncer de mama está aumentando?")
+        checar("I. passou do limite de perguntas com IA na sessão: segue sem Gemini, e avisa",
+               not erros(at) and not at.session_state["lia"]["atual"].usou_ia and "IA de linguagem desligada" in textos_da_lateral(at))
+    finally:
+        assistente.obter_ia = obter_ia_original
+        conversa.registrar_pergunta = lambda *a: None
+
     print(f"\n({time.time() - inicio:.0f} s)")
     if falhas:
         print(f"{len(falhas)} checagem(ns) falharam.")

@@ -1,7 +1,10 @@
 # Plano: a IA volta ao Escudo (caixa de perguntas) — 17/10/2026
 
-**Estado: PROPOSTA para combinar com o autor. Nada deste plano foi codado.**
-Este arquivo é só um documento novo; nenhum arquivo existente foi alterado.
+**Estado (17/10/2026): IMPLEMENTADO, depois de o autor aprovar ("a caixa deve ficar junto da Lia").**
+O que foi feito, como foi medido e o que falta comprovar no computador do autor está em
+`docs/IA_DO_ESCUDO.md`. O texto abaixo é o plano original e fica como registro da decisão.
+Desvios do plano: não usa LSA (corpus pequeno demais; o Gemini faz esse papel na segunda chance) e
+o motor aproveitou a árvore da Lia em vez de criar um segundo sistema de cálculo.
 
 ## 1. Por que voltar
 

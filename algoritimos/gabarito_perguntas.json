@@ -1,0 +1,1340 @@
+[
+ {
+  "pergunta": "qual tipo de câncer leva mais mulheres pro hospital aqui?",
+  "esperado": "mais_aparece",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "me fala quais são os cânceres que mais aparecem em rio claro",
+  "esperado": "mais_aparece",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quantas internações ao todo?",
+  "esperado": "mais_aparece",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quero um resumão da situação",
+  "esperado": "mais_aparece",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "qual a doença que mais interna as mulheres da cidade",
+  "esperado": "mais_aparece",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "ranking de câncer por internação",
+  "esperado": "mais_aparece",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "qual é o câncer campeão de internações?",
+  "esperado": "mais_aparece",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "me mostra a situação geral dos cânceres femininos",
+  "esperado": "mais_aparece",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "o câncer mais frequente no municipio qual é",
+  "esperado": "mais_aparece",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "quais cânceres pesam mais nos hospitais?",
+  "esperado": "mais_aparece",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "o câncer de mama tá aumentando?",
+  "esperado": "evolucao",
+  "cancer": "MAMA",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "as internações por pulmão estão subindo ou descendo?",
+  "esperado": "evolucao",
+  "cancer": "PULMAO",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "isso vem piorando com os anos?",
+  "esperado": "evolucao",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "como mudaram os números desde 2013",
+  "esperado": "evolucao",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "cresceu muito o colorretal?",
+  "esperado": "evolucao",
+  "cancer": "COLORRETAL",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "a situação melhorou nos últimos anos?",
+  "esperado": "evolucao",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "tem crescido o numero de internaçoes",
+  "esperado": "evolucao",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "o câncer de ovário aumentou nos últimos tempos",
+  "esperado": "evolucao",
+  "cancer": "OVARIO",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "tá subindo ou caindo a tireoide?",
+  "esperado": "evolucao",
+  "cancer": "TIREOIDE",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "evolução do colo do útero",
+  "esperado": "evolucao",
+  "cancer": "COLO_UTERO",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "como vai estar a mama em 2028?",
+  "esperado": "futuro",
+  "cancer": "MAMA",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "tem previsão pros próximos anos?",
+  "esperado": "futuro",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "o que a IA prevê para o futuro",
+  "esperado": "futuro",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quantas internações teremos em 2027",
+  "esperado": "futuro",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "vcs fazem projeção?",
+  "esperado": "futuro",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "daqui uns anos vai piorar o câncer de pulmão?",
+  "esperado": "futuro",
+  "cancer": "PULMAO",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "qual a estimativa de internações pro ano que vem",
+  "esperado": "futuro",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "me dá uma previsão do colorretal",
+  "esperado": "futuro",
+  "cancer": "COLORRETAL",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "como será o cenário até 2028",
+  "esperado": "futuro",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "existe algum modelo que prevê as internações?",
+  "esperado": "futuro",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "quantas mulheres morrem de câncer de mama?",
+  "esperado": "obitos",
+  "cancer": "MAMA",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "qual câncer é o mais letal",
+  "esperado": "obitos",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "morre muita gente nas internações?",
+  "esperado": "obitos",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quantos óbitos de pulmão",
+  "esperado": "obitos",
+  "cancer": "PULMAO",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "taxa de mortalidade hospitalar do colo do útero",
+  "esperado": "obitos",
+  "cancer": "COLO_UTERO",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quantas não saem vivas do hospital",
+  "esperado": "obitos",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quantas mortes teve em rio claro",
+  "esperado": "obitos",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "o ovário mata muito?",
+  "esperado": "obitos",
+  "cancer": "OVARIO",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "letalidade por tipo de câncer",
+  "esperado": "obitos",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "qual a chance de óbito na internação por colorretal",
+  "esperado": "obitos",
+  "cancer": "COLORRETAL",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "quanto o sus gasta com câncer de mama?",
+  "esperado": "valores",
+  "cancer": "MAMA",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quanto custa uma internação em média",
+  "esperado": "valores",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "qual o valor total das internaçoes",
+  "esperado": "valores",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "gasto por tipo de câncer",
+  "esperado": "valores",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "o pulmão é caro pro SUS?",
+  "esperado": "valores",
+  "cancer": "PULMAO",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quantos reais foram pagos no colo do útero",
+  "esperado": "valores",
+  "cancer": "COLO_UTERO",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "custo hospitalar do câncer de pele",
+  "esperado": "valores",
+  "cancer": "PELE_NAO_MELANOMA",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "cada internação sai por quantos reais?",
+  "esperado": "valores",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "quanto dinheiro vai em internações de câncer",
+  "esperado": "valores",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "quantos dias a mulher fica internada com câncer de mama",
+  "esperado": "tempo",
+  "cancer": "MAMA",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "tempo médio de internação",
+  "esperado": "tempo",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quanto tempo ocupam o leito?",
+  "esperado": "tempo",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "essas internações costumam ser demoradas?",
+  "esperado": "tempo",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quantos dias de hospital no colorretal",
+  "esperado": "tempo",
+  "cancer": "COLORRETAL",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "permanência média das pacientes",
+  "esperado": "tempo",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "ficam muitos dias internadas por pulmão?",
+  "esperado": "tempo",
+  "cancer": "PULMAO",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "qual a idade das mulheres com câncer de mama internadas?",
+  "esperado": "idade",
+  "cancer": "MAMA",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "tem muita mulher jovem sendo internada",
+  "esperado": "idade",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "faixa etária do colo do útero",
+  "esperado": "idade",
+  "cancer": "COLO_UTERO",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "as internadas são mais velhas hoje?",
+  "esperado": "idade",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "com que idade as mulheres são internadas por ovário",
+  "esperado": "idade",
+  "cancer": "OVARIO",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "distribuição por idade",
+  "esperado": "idade",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "a idade mudou entre os períodos?",
+  "esperado": "idade",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "como rio claro está comparado ao estado?",
+  "esperado": "estado",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "a mama cresce mais aqui do que em sp?",
+  "esperado": "estado",
+  "cancer": "MAMA",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "estamos pior que o resto de são paulo",
+  "esperado": "estado",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "comparar o ritmo com o estado inteiro",
+  "esperado": "estado",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "o colorretal aqui é diferente do estado?",
+  "esperado": "estado",
+  "cancer": "COLORRETAL",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "e no estado, como está?",
+  "esperado": "estado",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "a cidade cresce mais rápido que a média paulista",
+  "esperado": "estado",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "onde a prefeitura deveria olhar com mais cuidado?",
+  "esperado": "atencao",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "qual câncer merece prioridade no planejamento",
+  "esperado": "atencao",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "onde investir mais recursos",
+  "esperado": "atencao",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "tem algum alerta pra cidade",
+  "esperado": "atencao",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "o que a secretaria de saúde precisa priorizar?",
+  "esperado": "atencao",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "qual o orçamento que devemos destinar ao câncer",
+  "esperado": "atencao",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quais cânceres me preocupam",
+  "esperado": "atencao",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "onde a cidade pode ter problema nos próximos anos",
+  "esperado": "atencao",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "preciso apresentar prioridades pro gestor",
+  "esperado": "atencao",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "pra onde mandar verba da saúde da mulher?",
+  "esperado": "atencao",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "teve algum ano esquisito nos dados?",
+  "esperado": "fora_padrao",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "por que 2025 disparou?",
+  "esperado": "fora_padrao",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "anos fora do padrão do pulmão",
+  "esperado": "fora_padrao",
+  "cancer": "PULMAO",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "houve algum pico?",
+  "esperado": "fora_padrao",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "tem ano anormal na mama",
+  "esperado": "fora_padrao",
+  "cancer": "MAMA",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "algum salto repentino nas internações",
+  "esperado": "fora_padrao",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "detectou alguma anomalia",
+  "esperado": "fora_padrao",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "tem mulher de outro estado se tratando em são paulo?",
+  "esperado": "fluxo",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quantas pacientes vêm de minas gerais",
+  "esperado": "fluxo",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "as moradoras de rio claro se tratam na cidade ou vão pra outro lugar?",
+  "esperado": "fluxo",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "barretos atende gente de fora?",
+  "esperado": "fluxo",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "fluxo de pacientes entre cidades",
+  "esperado": "fluxo",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "de onde vem quem é atendida nos hospitais daqui",
+  "esperado": "fluxo",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "qual hospital recebe mais mulheres de fora do estado",
+  "esperado": "fluxo",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "os dados de 2025 estão completos?",
+  "esperado": "completude",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "tem mês faltando na base?",
+  "esperado": "completude",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "posso confiar nesses números?",
+  "esperado": "completude",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "o datasus não publicou todos os meses?",
+  "esperado": "completude",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "por que alguns anos parecem menores",
+  "esperado": "completude",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "os dados estão certos ou tem falhas",
+  "esperado": "completude",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "ano incompleto atrapalha a análise?",
+  "esperado": "completude",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "de onde vocês tiraram esses dados?",
+  "esperado": "metodo",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "internação é a mesma coisa que caso novo?",
+  "esperado": "metodo",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "como vocês calculam a tendência",
+  "esperado": "metodo",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "pode explicar o que é uma AIH?",
+  "esperado": "metodo",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "qual a metodologia usada",
+  "esperado": "metodo",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "o que esses números não conseguem dizer",
+  "esperado": "metodo",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "fonte das informações",
+  "esperado": "metodo",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "essa análise mede incidência?",
+  "esperado": "metodo",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "vocês usam inteligência artificial de verdade?",
+  "esperado": "sobre_ia",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "então a Lia é uma máquina?",
+  "esperado": "sobre_ia",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "mas afinal, quem é você?",
+  "esperado": "sobre_ia",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "o gemini participa de que parte",
+  "esperado": "sobre_ia",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "você pode estar errada?",
+  "esperado": "sobre_ia",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "que tecnologia tem por trás desse sistema",
+  "esperado": "sobre_ia",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "como a previsão funciona por dentro",
+  "esperado": "sobre_ia",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "quero comparar rio claro com campinas",
+  "esperado": "comparar_cidades",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "tem como ver outras cidades?",
+  "esperado": "comparar_cidades",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "cidades parecidas com a nossa",
+  "esperado": "comparar_cidades",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "como estamos em relação a piracicaba",
+  "esperado": "comparar_cidades",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "comparação entre municípios",
+  "esperado": "comparar_cidades",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "onde faço mamografia aqui perto?",
+  "esperado": "onde_atendida",
+  "cancer": "MAMA",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "qual o telefone do hospital",
+  "esperado": "onde_atendida",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "tem posto de saúde no meu bairro",
+  "esperado": "onde_atendida",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "onde fico internada se precisar de tratamento",
+  "esperado": "onde_atendida",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "endereço da UPA",
+  "esperado": "onde_atendida",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "onde consigo marcar o preventivo?",
+  "esperado": "onde_atendida",
+  "cancer": "COLO_UTERO",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "qual hospital trata câncer em rio claro",
+  "esperado": "onde_atendida",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "unidade básica mais próxima",
+  "esperado": "onde_atendida",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "fui diagnosticada com câncer de mama e agora?",
+  "esperado": "apoio",
+  "cancer": "MAMA",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quais são os meus direitos como paciente de câncer",
+  "esperado": "apoio",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "como funciona a carreta da mamografia?",
+  "esperado": "apoio",
+  "cancer": "MAMA",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "minha mãe vai começar a quimio, o que o SUS cobre",
+  "esperado": "apoio",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "como sou encaminhada para o hospital de amor",
+  "esperado": "apoio",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "posso sacar o FGTS por causa do câncer",
+  "esperado": "apoio",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "tem ajuda psicológica pra quem está em tratamento",
+  "esperado": "apoio",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "como evitar o câncer do colo do útero",
+  "esperado": "apoio",
+  "cancer": "COLO_UTERO",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "como faço pra entrar na fila da regulação",
+  "esperado": "apoio",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "senti um caroço no peito, o que pode ser",
+  "esperado": "sintoma",
+  "cancer": "MAMA",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "tô com sangramento depois da menopausa, é câncer?",
+  "esperado": "sintoma",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quais os sinais do câncer de mama",
+  "esperado": "sintoma",
+  "cancer": "MAMA",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "apareceu uma mancha na pele e está crescendo",
+  "esperado": "sintoma",
+  "cancer": "PELE_NAO_MELANOMA",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "meu papanicolau veio alterado, é grave?",
+  "esperado": "sintoma",
+  "cancer": "COLO_UTERO",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "acho que tenho um nódulo na mama",
+  "esperado": "sintoma",
+  "cancer": "MAMA",
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "tô com medo de estar com câncer",
+  "esperado": "sintoma",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "o que eu posso te perguntar?",
+  "esperado": "ajuda",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "não sei por onde começar",
+  "esperado": "ajuda",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "como funciona essa caixa de perguntas",
+  "esperado": "ajuda",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "me ajuda a usar o painel",
+  "esperado": "ajuda",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "o que você sabe responder",
+  "esperado": "ajuda",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "qual a previsão do tempo amanhã",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quem ganhou o jogo ontem",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "me conta uma piada",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "como faço bolo de cenoura",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quanto está o dólar",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "qual a capital da frança",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "me indica um filme bom",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "como trocar o pneu do carro",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "escreve um poema",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "oi",
+  "esperado": "saudacao",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "bom dia lia",
+  "esperado": "saudacao",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "obrigada",
+  "esperado": "saudacao",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "boa tarde",
+  "esperado": "saudacao",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "valeu",
+  "esperado": "saudacao",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "meu marido me bate",
+  "esperado": "risco",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "quero morrer",
+  "esperado": "risco",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "estou passando mal agora",
+  "esperado": "risco",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "fui estuprada",
+  "esperado": "risco",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "não aguento mais viver",
+  "esperado": "risco",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "meu namorado me ameaça de morte",
+  "esperado": "risco",
+  "cancer": null,
+  "conjunto": "teste"
+ },
+ {
+  "pergunta": "qual o motivo desse aumento todo?",
+  "esperado": "causa",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "o que está provocando isso nas internações",
+  "esperado": "causa",
+  "cancer": null,
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "por que a mama subiu tanto?",
+  "esperado": "causa",
+  "cancer": "MAMA",
+  "conjunto": "desenvolvimento"
+ },
+ {
+  "pergunta": "O câncer de mama piorou aqui?",
+  "esperado": "evolucao",
+  "cancer": "MAMA",
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "Estamos em situação pior que o estado?",
+  "esperado": "estado",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "Qual doença merece mais atenção da gestão?",
+  "esperado": "atencao",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "Por que o resultado deste ano parece tão diferente?",
+  "esperado": "causa",
+  "cancer": null,
+  "conjunto": "final",
+  "aceitavel": [
+   "fora_padrao"
+  ]
+ },
+ {
+  "pergunta": "Dá para afirmar que a situação vai piorar?",
+  "esperado": "futuro",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "O que esses números permitem concluir e o que não permitem?",
+  "esperado": "metodo",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "Como evoluíram as internações por câncer de mama em Rio Claro?",
+  "esperado": "evolucao",
+  "cancer": "MAMA",
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "qual desses cânceres tá lotando mais o hospital?",
+  "esperado": "mais_aparece",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "a coisa tá ficando mais feia com o passar dos anos?",
+  "esperado": "evolucao",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "daqui a pouco vai ter mais gente internada?",
+  "esperado": "futuro",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "morre muita mulher internada com pulmão?",
+  "esperado": "obitos",
+  "cancer": "PULMAO",
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "o governo gasta quanto com isso?",
+  "esperado": "valores",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "quanto tempo a paciente fica no leito, em média?",
+  "esperado": "tempo",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "são as mais velhas que internam ou tem gente nova também?",
+  "esperado": "idade",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "a gente cresce mais rápido que são paulo?",
+  "esperado": "estado",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "tem algum ano que fugiu do normal?",
+  "esperado": "fora_padrao",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "tem paciente que vem de fora tratar aqui?",
+  "esperado": "fluxo",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "esses números estão fechados ou faltou mês?",
+  "esperado": "completude",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "isso é caso novo ou o que?",
+  "esperado": "metodo",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "a Lia usa que tipo de inteligência?",
+  "esperado": "sobre_ia",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "e as cidades da redondeza, como estão?",
+  "esperado": "comparar_cidades",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "preciso de um posto pra fazer exame perto de casa",
+  "esperado": "onde_atendida",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "recebi o resultado da biópsia, o que o SUS oferece",
+  "esperado": "apoio",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "notei um caroço no seio ontem",
+  "esperado": "sintoma",
+  "cancer": "MAMA",
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "por onde eu começo aqui?",
+  "esperado": "ajuda",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "cancer de mama aumentou?",
+  "esperado": "evolucao",
+  "cancer": "MAMA",
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "qnts mulheres morrem de cancer de pulmao",
+  "esperado": "obitos",
+  "cancer": "PULMAO",
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "previsao pra colorretal em 2028",
+  "esperado": "futuro",
+  "cancer": "COLORRETAL",
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "quanto custa a internaçao por ovario",
+  "esperado": "valores",
+  "cancer": "OVARIO",
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "os dados estao completos de 2025?",
+  "esperado": "completude",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "quanto custa e quantos dias ficam internadas por mama?",
+  "esperado": "valores",
+  "cancer": "MAMA",
+  "conjunto": "final",
+  "aceitavel": [
+   "tempo"
+  ]
+ },
+ {
+  "pergunta": "está aumentando e o que posso esperar para frente?",
+  "esperado": "evolucao",
+  "cancer": null,
+  "conjunto": "final",
+  "aceitavel": [
+   "futuro"
+  ]
+ },
+ {
+  "pergunta": "morrem muito e quanto o SUS gasta com isso",
+  "esperado": "obitos",
+  "cancer": null,
+  "conjunto": "final",
+  "aceitavel": [
+   "valores"
+  ]
+ },
+ {
+  "pergunta": "qual a incidência de câncer de mama em Rio Claro?",
+  "esperado": "metodo",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "qual a taxa por 100 mil mulheres?",
+  "esperado": "metodo",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "quantas mulheres com HIV tiveram câncer?",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "qual a cor ou raça das internadas?",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "quantas sobreviveram cinco anos depois do diagnóstico?",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "qual o melhor time do brasileirão",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "me ensina a fazer um site",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "que horas são",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "como declarar imposto de renda",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "o que é inflação",
+  "esperado": "fora",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "olá lia, tudo bem?",
+  "esperado": "saudacao",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "muito obrigada pela ajuda",
+  "esperado": "saudacao",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "meu companheiro me agrediu ontem",
+  "esperado": "risco",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "estou pensando em me matar",
+  "esperado": "risco",
+  "cancer": null,
+  "conjunto": "final"
+ },
+ {
+  "pergunta": "minha mãe desmaiou agora",
+  "esperado": "risco",
+  "cancer": null,
+  "conjunto": "final"
+ }
+]

@@ -349,6 +349,48 @@ Estado atual:
   `etl/teste_carga_robusta.py`. Testes do sistema atual
   rodam no GitHub (`.github/workflows/testes.yml`).
 
+## Pergunte à Lia — a IA do Escudo (10/2026, pedido do autor)
+
+Requisito do trabalho (Fatec): o projeto precisa ter IA de verdade, e o autor
+quis a caixa de perguntas de volta, **junto da Lia, sem mexer no que já existia**.
+Documento completo, com a avaliação e os limites: `docs/IA_DO_ESCUDO.md`.
+Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente.py`
+(reaproveita `lia.responder`: mesmos números dos botões; monta o que a Lia não tinha)
+-> Gemini redige (`ia_linguagem.redigir_resposta`) -> conferência -> balão da Lia.
+- `algoritimos/entendimento.py`: 21 assuntos fechados com vocabulário popular escrito à
+  mão; busca por palavras (radicais) + letras (aguenta erro de digitação), sem
+  dependências novas; câncer por sinônimo popular ("seio", "preventivo"); ano futuro
+  = previsão; segurança PRIMEIRO (violência, suicídio, emergência -> 190/180/188/192);
+  contexto mínimo ("e no estado?", "e o de colo do útero?"); o Gemini só entra como
+  segunda chance, escolhendo numa lista fechada, e o que ele devolve é conferido.
+  Modelo da cidade: o nome da cidade do painel é ignorado; outra cidade = comparar.
+- `algoritimos/assistente.py`: respostas. Gemini só reescreve respostas de DADOS; segurança,
+  sintoma, apoio, onde ser atendida, causa e "sem dados" são texto fixo. Todo texto da IA é
+  conferido (`conferir`): número que não está nos cálculos, "vai ficar/aumentar" ou explicação
+  de causa -> descartado e a resposta direta da Lia aparece. Sem chave/rede/cota: resposta direta.
+- `inteligencia.py` (seção "PREVISÃO COM VALIDAÇÃO"): 5 modelos pequenos, escolhidos por
+  backtest (treina até t, prevê t+1..t+3, anda um ano), faixa pelo erro medido, sempre
+  comparada com "repetir o último ano"; sem anos suficientes, não prevê. É projeção de
+  tendência de internações, nunca previsão de casos novos. `previsao_todos` ordena por variação.
+- `ia_linguagem.py`: `MODELO` vem de `GEMINI_MODEL` no `.env` (padrão `gemini-3.8-flash`, **nunca
+  confirmado com a chave do autor**); timeout; `classificar_pergunta`; `redigir_resposta`.
+- Painel (`dashboard/app.py`): caixa na lateral logo abaixo do balão (chaves `caixa_*`, não
+  `lia_*`: o teste do painel trata `lia_*` como botão da árvore). A resposta entra no balão da Lia
+  (`RespostaIA` herda de `Resposta`), o painel vai ao gráfico, e o balão mostra a pergunta, o selo
+  (IA ou "sem IA"), a fonte e, se a IA redigiu, "O que o Escudo calculou". Limite de 40 perguntas
+  com IA por sessão. Relato de violência/sintoma pessoal **não é gravado** em `perguntas_usuarios`.
+- Regras que valem para qualquer mudança aqui: nunca "vai"/"deve ficar" (só "a tendência aponta");
+  nada de causa; nada de orçamento; texto de IA nunca vai a segurança/sintoma; gabarito em 3 conjuntos
+  (`gabarito_perguntas.json`): ajustar regras olhando só o desenvolvimento, e NÃO reaproveitar o
+  conjunto "final" (já foi medido e consertado) -- criar um novo conjunto às cegas para medir de novo.
+- **O que a nuvem NÃO comprovou (só o autor, no Windows):** o Gemini real (chave, nome do modelo,
+  texto redigido passar na conferência) -> `py algoritimos\testar_gemini.py` (ou o .bat) e
+  `py algoritimos\teste_entendimento.py --com-gemini`; o painel com o banco real. Os testes na nuvem
+  usam a base pública de Rio Claro e um Gemini simulado. Testes: `teste_previsao.py`,
+  `teste_entendimento.py`, `teste_assistente.py` e o cenário I de `dashboard/teste_painel.py`.
+- Ainda não feito (combinar): caixa na lâmina Apoio à mulher (catálogo de 75 itens como destinos
+  do mesmo motor); população do IBGE; testar com pessoas de verdade.
+
 ## Notas de contexto do domínio
 
 - Banco de dados: `banco/escudo_feminino.db` (SQLite). O caminho é

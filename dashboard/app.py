@@ -11,6 +11,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "algoritimos"))
 
 from configuracao_geografica import BANCO, listar_municipios_disponiveis, obter_municipio, UF_REFERENCIA
 from lia import INICIO, Contexto, responder as lia_responder
+from assistente import IA, acao as acao_assistente, obter_ia, responder_escolha, responder_pergunta
+from conversa import registrar_pergunta
 from passeio import PARADAS, parada as passeio_parada
 from lia_rosto import img as rosto_lia
 from estilo import CSS
@@ -35,6 +37,7 @@ from inteligencia import (
     evolucao_fluxo,
     leitura_cidade,
     leitura_evolucao,
+    leitura_previsao,
     leitura_evolucao_fluxo,
     leitura_faixas,
     leitura_fluxo,
@@ -52,6 +55,7 @@ from inteligencia import (
     ligacoes_fluxo,
     mix_comparacao,
     nome_doenca,
+    prever_com_validacao,
     projetar,
     perfil_cidade,
     por_cancer_fluxo,
@@ -374,6 +378,7 @@ st.session_state.setdefault("lia", {"cidade": None, "atual": None, "pilha": []})
 lia_estado = st.session_state["lia"]
 if lia_estado["cidade"] != ORIGEM:  # trocou de cidade: a Lia recomeça
     lia_estado.update({"cidade": ORIGEM, "atual": lia_responder(ctx_lia, INICIO), "pilha": []})
+    st.session_state.pop("lia_memoria", None)
 
 
 def lia_mostrar(resposta):
@@ -401,7 +406,62 @@ def aplicar_destino(destino):
         definir(camada, valor)
 
 
+# ------------------------------------------------------------
+# PERGUNTE À LIA (caixa de texto; algoritimos/assistente.py, docs/IA_DO_ESCUDO.md)
+# Mais uma forma de chegar a uma resposta da Lia: a pergunta é entendida
+# (entendimento.py), respondida com os MESMOS cálculos dos botões e
+# redigida pelo Gemini quando ele está ligado. A resposta entra no balão
+# da Lia, e o painel vai ao gráfico dela. Sem chave, sem rede ou sem cota,
+# a resposta direta aparece. A árvore de botões não muda.
+# ------------------------------------------------------------
+
+LIMITE_PERGUNTAS_COM_IA = 40  # por sessão: protege a cota paga do Gemini
+
+
+def ia_da_sessao():
+    ia = obter_ia()
+    if ia.ligada and st.session_state.get("lia_perguntas_ia", 0) >= LIMITE_PERGUNTAS_COM_IA:
+        return IA()  # passou do limite desta sessão: segue sem Gemini
+    return ia
+
+
+def perfil_da_lia():
+    return "SIMPLES" if st.session_state.get("caixa_linguagem") == "Simples" else "TECNICO"
+
+
+def guardar_resposta_da_caixa(resposta, ia):
+    """Memória mínima para 'e no estado?': só o assunto e o câncer da última resposta, na sessão."""
+    if ia.ligada:
+        st.session_state["lia_perguntas_ia"] = st.session_state.get("lia_perguntas_ia", 0) + 1
+    if getattr(resposta, "intencao", None):
+        st.session_state["lia_memoria"] = {"intencao": resposta.intencao, "cancer": resposta.cancer}
+    lia_mostrar(resposta)
+
+
+def perguntar_a_lia(texto):
+    ia = ia_da_sessao()
+    outras = [m["nome"] for m in lista_municipios if m["origem"] != ORIGEM]
+    resposta = responder_pergunta(ctx_lia, texto, doenca, memoria=st.session_state.get("lia_memoria"),
+                                  perfil=perfil_da_lia(), ia=ia, outras_cidades=outras)
+    if resposta.tipo != "risco" and resposta.intencao != "sintoma":  # relato pessoal não é guardado
+        registrar_pergunta(BANCO, texto, resposta.intencao or resposta.tipo)
+    guardar_resposta_da_caixa(resposta, ia)
+
+
+def enviar_pergunta():
+    """Botão do formulário: guarda o texto; a resposta é feita no começo da próxima execução."""
+    texto = (st.session_state.get("caixa_texto") or "").strip()
+    if texto:
+        st.session_state["lia_pergunta_pendente"] = texto[:300]
+
+
 def lia_clicar(acao):
+    if acao.get("tipo") == "assistente":  # palpite ou exemplo da caixa: o assunto já foi escolhido
+        ia = ia_da_sessao()
+        guardar_resposta_da_caixa(responder_escolha(ctx_lia, acao, doenca, perfil_da_lia(), ia), ia)
+        return
+    if acao.get("tipo") == "inicio":
+        st.session_state.pop("lia_memoria", None)  # recomeçar esquece o contexto
     lia_mostrar(lia_responder(ctx_lia, acao))
 
 
@@ -439,6 +499,11 @@ def rosto(expressao, tamanho):
     """O rosto da Lia, "respirando" devagar (ver CSS)."""
     return f'<div class="lia-rosto">{rosto_lia(expressao, tamanho)}</div>'
 
+
+_pergunta_pendente = st.session_state.pop("lia_pergunta_pendente", None)
+if _pergunta_pendente:
+    with st.spinner("A Lia está pensando..."):
+        perguntar_a_lia(_pergunta_pendente)
 
 # ------------------------------------------------------------
 # BOAS-VINDAS DA LIA (primeiro acesso)
@@ -663,6 +728,25 @@ if aba == "Evolução":
         ponta = leitura_ponta_projecao(mun)
         if ponta:
             st.markdown(f'<div class="escudo-dica">{ponta}</div>', unsafe_allow_html=True)
+
+        # Previsão com validação (aprendizado de máquina simples; inteligencia.prever_com_validacao):
+        # 5 modelos testados em anos que já conhecemos, e vale o que errou menos. Não muda o gráfico acima.
+        prev = prever_com_validacao(mun)
+        if prev:
+            with st.expander("Como o Escudo escolheu o modelo de previsão (aprendizado de máquina simples)"):
+                pergunta("Qual modelo errou menos ao prever anos que já conhecemos?", "cidade",
+                         f"internações por {cancer_de(doenca)} de mulheres de {html.escape(nome_cidade)}")
+                tabela_modelos = prev["tabela"].assign(
+                    Escolhido=lambda t: t["modelo"].map(lambda m: "✔" if m == prev["modelo"] else ""))
+                st.dataframe(
+                    tabela_modelos[["descricao", "mae", "vies", "testes", "Escolhido"]].rename(columns={
+                        "descricao": "Modelo", "mae": "Erro médio (internações/ano)", "vies": "Viés (negativo: prevê a mais)",
+                        "testes": "Previsões testadas"}).round(1),
+                    hide_index=True, use_container_width=True)
+                leitura("O que a validação mostra", [f.replace("**", "") for f in leitura_previsao(prev, doenca)])
+                st.caption("Cada modelo é ajustado só com os anos anteriores a cada teste e prevê 1, 2 e 3 anos à frente; "
+                           "o erro é a média dessas previsões. É projeção de tendência de internações, não previsão de "
+                           "casos novos, e não indica causa.")
 
     # Confiabilidade: a casa dos avisos é aqui, junto da tendência.
     avisos = confiabilidade(serie, doenca, duplicados_municipio(ORIGEM))
@@ -1192,7 +1276,22 @@ with st.sidebar:
             # a saudação já está no centro da tela: aqui não se repete
             st.markdown("Estou ali no centro da tela. Escolha um caminho por lá.")
         else:
+            if getattr(atual, "pergunta", None):
+                st.caption(f"Você perguntou: “{atual.pergunta}”")
             st.markdown(atual.fala)
+            if getattr(atual, "selo", None):
+                st.caption(atual.selo)
+            if getattr(atual, "fonte", None):
+                st.caption(atual.fonte)
+            if getattr(atual, "base", None):
+                with st.expander("O que o Escudo calculou (base da resposta)"):
+                    st.markdown(atual.base)
+                    st.caption("O texto acima foi redigido pela IA a partir disto; os números são os mesmos.")
+            for rotulo_link, pagina in getattr(atual, "links", None) or []:
+                try:
+                    st.page_link(pagina, label=rotulo_link)
+                except Exception:  # Streamlit antigo, sem page_link
+                    pass
             if atual.destino and atual.destino.get("aba") and lia_estado["pilha"]:
                 st.caption(f"O painel foi para a aba {atual.destino['aba']}"
                            + (f" · {nome_doenca(atual.destino['cancer'])}" if atual.destino.get("cancer") else "")
@@ -1208,6 +1307,27 @@ with st.sidebar:
             if lia_estado["pilha"]:
                 c_voltar.button("← Voltar", key="lia_discreto_voltar", on_click=lia_voltar)
             c_inicio.button("Começar de novo", key="lia_discreto_inicio", on_click=lia_clicar, args=(INICIO,))
+
+    # Caixa de perguntas, junto da Lia. O Gemini (se ligado) entende o que a pessoa escreveu e redige a
+    # resposta; os números sempre vêm dos cálculos do Escudo.
+    st.markdown("**Pergunte à Lia**")
+    with st.form("caixa_form", clear_on_submit=True):
+        st.text_input("Pergunte à Lia", key="caixa_texto", max_chars=300, label_visibility="collapsed",
+                      placeholder=f"Ex.: o câncer de mama está aumentando em {nome_cidade}?")
+        st.form_submit_button("Perguntar", key="caixa_enviar", on_click=enviar_pergunta, use_container_width=True)
+    ia_atual = ia_da_sessao()
+    st.caption("🤖 IA de linguagem (Gemini) ligada. Os números vêm sempre dos cálculos do Escudo." if ia_atual.ligada else
+               "IA de linguagem desligada: respondo direto dos cálculos do Escudo.")
+    st.radio("Linguagem das respostas", ["Técnica", "Simples"], horizontal=True, key="caixa_linguagem")
+    with st.expander("Não sabe o que perguntar?"):
+        for i, (rotulo, assunto) in enumerate([("Qual câncer mais interna?", "mais_aparece"),
+                                               ("O que a tendência aponta para os próximos anos?", "futuro"),
+                                               ("Onde podemos ter problema?", "atencao"),
+                                               ("Por que os números mudam?", "causa"),
+                                               ("Como a IA funciona?", "sobre_ia")]):
+            st.button(rotulo, key=f"caixa_exemplo_{i}", on_click=lia_clicar,
+                      args=(acao_assistente(assunto, pergunta=rotulo),), use_container_width=True)
+    st.caption("Não escreva dados pessoais. A pergunta só é enviada ao Gemini quando ele está ligado.")
 
     indice_passeio = st.session_state.get("passeio")
     if indice_passeio is None:

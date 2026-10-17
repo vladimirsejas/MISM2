@@ -39,6 +39,15 @@ jobs:
       - name: Conversa (fora do painel)
         working-directory: algoritimos
         run: python teste_conversa.py
+      - name: Previsão com validação (backtest, comparação com repetir o último ano)
+        working-directory: algoritimos
+        run: python teste_previsao.py
+      - name: Entendimento da pergunta (gabarito em 3 conjuntos x caixa antiga)
+        working-directory: algoritimos
+        run: python teste_entendimento.py
+      - name: Assistente da Lia (Gemini simulado, conferência do texto, segurança)
+        working-directory: algoritimos
+        run: python teste_assistente.py
       - name: Carga e ferramentas do ETL
         working-directory: etl
         run: |
