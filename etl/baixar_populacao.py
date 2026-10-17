@@ -1,3 +1,4 @@
+import gzip
 import json
 import os
 import sqlite3
@@ -28,10 +29,18 @@ RIO_CLARO = "3543907"
 FONTE = "IBGE, Censo 2022, tabela 9514 (população residente, mulheres)"
 
 
+def decodificar(corpo):
+    """A API do IBGE pode responder comprimida (gzip) mesmo sem pedir: reconhece pelos 2 primeiros bytes e descomprime."""
+    if corpo[:2] == b"\x1f\x8b":
+        corpo = gzip.decompress(corpo)
+    return json.loads(corpo.decode("utf-8"))
+
+
 def obter_json(url):
-    pedido = urllib.request.Request(url, headers={"User-Agent": "EscudoFeminino/1.0 (trabalho academico)"})
+    pedido = urllib.request.Request(url, headers={"User-Agent": "EscudoFeminino/1.0 (trabalho academico)",
+                                                  "Accept-Encoding": "identity"})
     with urllib.request.urlopen(pedido, timeout=120) as resposta:
-        return json.loads(resposta.read().decode("utf-8"))
+        return decodificar(resposta.read())
 
 
 def escolher_categorias(meta):

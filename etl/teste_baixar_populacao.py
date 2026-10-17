@@ -41,6 +41,14 @@ def falso(resposta_dados):
 
 
 def main():
+    import gzip
+    import json
+    corpo = json.dumps(META).encode("utf-8")
+    checar("a resposta do IBGE vem comprimida (gzip) ou não: as duas são lidas (bug do notebook do autor, 17/10/2026)",
+           bp.decodificar(gzip.compress(corpo)) == META and bp.decodificar(corpo) == META)
+    checar("acentos sobrevivem à descompressão",
+           bp.decodificar(gzip.compress(json.dumps({"n": "Piracicaba - Ribeirão Preto"}, ensure_ascii=False).encode("utf-8")))["n"]
+           == "Piracicaba - Ribeirão Preto")
     checar("categorias escolhidas pelo nome: Sexo=Mulheres e as demais =Total (sem código decorado)",
            bp.escolher_categorias(META) == "2[5]|286[113635]|287[6653]")
     try:
