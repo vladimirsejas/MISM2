@@ -96,6 +96,30 @@ async def amostrar(pysus):
             print(f"  NÃO FUNCIONOU: {type(erro).__name__}: {str(erro)[:300]}")
 
 
+async def amostrar_sim(pysus):
+    """O SIM se oferece sem grupo: Mortalidade_Geral_ANO e DO<UF><ANO>. Mostra os nomes de SP em 2022 e as colunas do DOSP."""
+    from baixar_sih_sp import caminho_local, remover
+    import pandas as pd
+    print("\n=== COLUNAS do SIM (óbitos) de SP em 2022")
+    try:
+        arquivos = list(await pysus.query(dataset="sim", state=ESTADO, year=2022))
+        nomes = [str(getattr(a, "name", a)) for a in arquivos]
+        print(f"  {len(arquivos)} arquivo(s): " + ", ".join(nomes[:12]))
+        alvo = next((a for a in arquivos if str(getattr(a, "name", a)).upper().startswith("DOSP")), None)
+        if alvo is None:
+            print("  nenhum arquivo DOSP; Mortalidade_Geral pode ser o do Brasil inteiro (grande): não baixei")
+            return
+        local = caminho_local(await pysus.download(alvo))
+        try:
+            tabela = pd.read_parquet(local)
+        finally:
+            remover(local)
+        print(f"  arquivo: {getattr(alvo, 'name', alvo)} | {len(tabela):,} linhas".replace(",", "."))
+        print("  colunas: " + ", ".join(f"{c}({t})" for c, t in tabela.dtypes.astype(str).items()))
+    except Exception as erro:  # noqa: BLE001
+        print(f"  NÃO FUNCIONOU: {type(erro).__name__}: {str(erro)[:300]}")
+
+
 async def tudo(pysus_cls, com_amostra):
     await reconhecer(pysus_cls)
     if pysus_cls is None:
@@ -104,6 +128,7 @@ async def tudo(pysus_cls, com_amostra):
         await sondar_sim(pysus)
         if com_amostra:
             await amostrar(pysus)
+            await amostrar_sim(pysus)
 
 
 def main(pysus_cls=None, com_amostra=None):

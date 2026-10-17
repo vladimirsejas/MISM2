@@ -353,6 +353,12 @@ Estado atual:
   os meses que o DATASUS não oferece são compensados) e a Lia responde "quais cidades têm mais ... proporcionalmente?" com o ranking e a
   posição da cidade do painel (`Contexto.ranking`, `rankings_por_100_mil` em `app.py`); sem a tabela no banco ela diz o que falta
   (`SEM_POPULACAO`). Testes: `teste_inteligencia.py` (N) e `teste_assistente.py` (7e). Falta conferir com os dados reais do notebook.
+  **Quimio e radio ambulatoriais (SIA, APACs AQ e AR; 17/10/2026):** `py -3.12 etl\baixar_sia_oncologia.py` (só 2023; `--anos 2013-2025` para
+  tudo) grava SÓ agregados em `oncologia_ambulatorial` (modalidade, ano, mes, codigo_residencia, tipo_cancer, faixa, estadiamento,
+  raca_cor, apacs, pacientes; nenhum cartão SUS, CEP ou nascimento) e imprime o perfil dos códigos reais; teste
+  `etl/teste_baixar_sia_oncologia.py`. As colunas reais (AP_SEXO, AP_CIDPRI, AP_MUNPCN, AP_NUIDADE, AP_RACACOR, AQ_ESTADI/AR_ESTADI) vieram
+  do `explorar_pysus --amostra`; falta usar a tabela em `inteligencia.py` e na Lia depois de conferir o perfil. O SIM se oferece sem grupo
+  (`Mortalidade_Geral_ANO` e `DO<UF><ANO>`). CNES EQ (TIPEQUIP, CODEQUIP, QT_EXIST) e LT (TP_LEITO, CODLEITO, QT_SUS) têm as colunas.
   **Carga robusta (24/09/2026):** a carga antiga apagava a tabela no 1º arquivo
   e parava no 2º que desse erro -- por isso o banco do autor ficou só com colo
   do útero. Agora ela lê e confere os 7 arquivos antes de gravar, um arquivo com
