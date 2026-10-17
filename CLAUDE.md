@@ -383,8 +383,8 @@ Estado atual:
   `distancia_km` (haversine) e `hospitais_proximos` (hospitais da lâmina Hospitais no Estado + Hospital de Amor, até 2 por cidade;
   cidade fora da tabela = nenhuma distância, nunca posição inventada). A Lia diz sempre que é **linha reta entre centros de cidades**,
   não rota nem tempo, e que quem decide é a regulação (CROSS). Cidade que já tem hospital no catálogo lista o dela, sem km. Teste:
-  `etl/teste_baixar_centroides.py` e 7h de `teste_assistente.py`. **Falta rodar no notebook** (a nuvem não alcança o IBGE) e conferir os
-  nomes de campo da API (`codarea` na malha). **Segurança (teste humano, 17/10/2026):** "meu marido tá me agredindo, me ajuda" virava
+  `etl/teste_baixar_centroides.py` e 7h de `teste_assistente.py`. **Rodado no notebook em 17/10/2026 com a API real do IBGE:** 645
+  municípios gravados, centro de Rio Claro em (-22,373; -47,580), nomes de campo da API conferidos. **Segurança (teste humano, 17/10/2026):** "meu marido tá me agredindo, me ajuda" virava
   pedido de ajuda genérico, sem 190/180; o padrão de violência agora pega gerúndio, voz passiva e "violência doméstica" (não pega
   "violência sexual" sozinha: essa é consulta do catálogo do Apoio). Testes em `teste_entendimento.py`.
   **Carga robusta (24/09/2026):** a carga antiga apagava a tabela no 1º arquivo
