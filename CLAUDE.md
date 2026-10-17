@@ -35,7 +35,8 @@ e testada -> `main` -> ele faz `git pull` em `C:\MISM2` e abre o
 commit), não cópia de pasta. Antes de qualquer instrução para o notebook,
 pedir o estado real (`git branch --show-current` e `git status`): a
 `C:\MISM2` dele já esteve numa branch do ChatGPT (`cnes-geografia-mism2-main`)
-e o `git pull` não mostrava nada. O banco (`banco\`) nunca é tocado.
+e o `git pull` não mostrava nada. O banco (`banco\`) nunca é tocado. **Não criar atalho `.bat` novo** (o autor já tem vários e pediu para não
+multiplicar, 10/2026): rodar por comando (`py ...`) e usar os `.bat` que já existem.
 
 ## Arquitetura territorial (código IBGE)
 
@@ -365,7 +366,7 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   segunda chance, escolhendo numa lista fechada, e o que ele devolve é conferido. **Regra de concordância
   (17/10/2026, enviada ao `main` pelos números do `algoritimos/comparar_regras.py`, ver `docs/IA_DO_ESCUDO.md` 6b):** a escolha do Gemini só vira resposta direta se estiver entre os palpites da busca local; se só
   o Gemini apontou (`origem = "gemini_sem_apoio"`), vira palpite para a pessoa confirmar (id válido ainda pode ser o
-  assunto errado). `py algoritimos\comparar_regras.py` (ou `Testar tudo no notebook.bat`) compara as duas regras com as mesmas respostas do Gemini.
+  assunto errado). `py algoritimos\comparar_regras.py` compara as duas regras com as mesmas respostas do Gemini.
   **Conversa (17/10/2026, `origem` "explicar" e "composta"):** "me explica isso melhor", "não entendi", "como assim?" retomam a
   resposta de dados anterior (a memória guarda assunto e câncer) com `assistente.EXPLICACAO_SIMPLES` + os mesmos números +
   `COMO_LER`, texto fixo, sem IA; sem resposta anterior, ou depois de assunto de texto fixo, continua pedindo/oferecendo palpites; frase
