@@ -340,6 +340,11 @@ Estado atual:
   24/09/2026 o banco do autor ficou só com colo do útero -- a carga
   provavelmente parou no 2º arquivo; falta ver a mensagem de erro);
   (2) população do IBGE para comparar cidades.
+  **Outras bases do PySUS (17/10/2026, o autor perguntou por que o Escudo só usa o SIH):** hoje só o SIH/RD vem do PySUS. Candidatas, cada
+  uma respondendo uma pergunta que falta: população (taxa por 100 mil e ranking proporcional entre cidades: a pergunta que a Lia não soube
+  responder no teste com pessoa), SIM (mortalidade real por município, dentro e fora do hospital), SIA (quimio, radio, mamografia e
+  biópsia ambulatoriais: o maior ponto cego declarado) e CNES (mamógrafos e leitos). A nuvem não alcança o DATASUS nem o IBGE; antes
+  de escrever cada ETL, rodar no notebook `py -3.12 etl\explorar_pysus.py` (não baixa nada) para ter os nomes reais das bases e grupos.
   **Carga robusta (24/09/2026):** a carga antiga apagava a tabela no 1º arquivo
   e parava no 2º que desse erro -- por isso o banco do autor ficou só com colo
   do útero. Agora ela lê e confere os 7 arquivos antes de gravar, um arquivo com
