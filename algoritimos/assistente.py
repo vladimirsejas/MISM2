@@ -3,6 +3,7 @@ from decimal import Decimal
 from dataclasses import dataclass, field, replace
 
 import entendimento as ent
+import glossario
 import localizacao
 from inteligencia import (
     MODELOS_PREVISAO,
@@ -386,8 +387,9 @@ def _ajuda(ctx, ia):
     fala = (f"Pergunte do seu jeito. Com os números de **{ctx.cidade}**, sei responder: quais cânceres mais internam, "
             "se estão aumentando, o que a tendência aponta para os próximos anos, óbitos na internação, valores "
             "hospitalares registrados, tempo de internação, idade, comparação com o Estado, anos fora do padrão, "
-            "mulheres de outros estados, se os dados estão completos e como tudo é calculado. Também encaminho para "
-            "**Apoio à mulher** e **Onde ser atendida**. Não faço diagnóstico.")
+            "mulheres de outros estados, se os dados estão completos e como tudo é calculado. Se algum termo técnico "
+            "não ficou claro (APAC, valor hospitalar, letalidade, UNACON...), pergunte \"o que é ...?\" que eu explico. Também "
+            "encaminho para **Apoio à mulher** e **Onde ser atendida**. Não faço diagnóstico.")
     return Resposta(fala=fala, expressao="acolhedora", botoes=[(r, acao(i, pergunta=r)) for r, i in EXEMPLOS])
 
 
@@ -639,6 +641,12 @@ def montar(ctx, e, pergunta, foco, perfil="TECNICO", ia=None):
             fala=(f"Essa pergunta foge do que sei responder: falo dos dados de câncer feminino em {ctx.cidade} e do caminho "
                   "para encontrar cuidado. Tente, por exemplo:"),
             expressao="acolhedora", botoes=[(r, acao(i, pergunta=r)) for r, i in EXEMPLOS], **comum))
+
+    if e.intencao == "glossario" and e.termos:  # "o que são APACs?": definição em texto fixo, sem IA (glossario.py)
+        return _finalizar(RespostaIA(
+            fala=glossario.responder_termos(e.termos), expressao="explicando", intencao="glossario",
+            botoes=[("Como esses dados funcionam?", caminho("metodo")), ("O que posso perguntar?", acao("ajuda", pergunta="O que posso perguntar?"))],
+            selo="Texto fixo do Escudo (as definições são escritas pelo projeto; a IA não improvisa).", **comum))
 
     # pedido composto: responde os dois assuntos, um depois do outro, sem descartar nenhum
     if e.tambem:

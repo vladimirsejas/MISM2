@@ -435,6 +435,17 @@ def main():
         at.button(key="lia_discreto_inicio").click().run()
         checar("I. 'Começar de novo' esquece o contexto da caixa", "lia_memoria" not in at.session_state)
 
+        perguntar_na_caixa(at, "o que são APACs?")
+        atual = at.session_state["lia"]["atual"]
+        checar("I. glossário: 'o que são APACs?' é explicado (texto fixo, sem IA) e não muda a aba",
+               not erros(at) and atual.intencao == "glossario" and "Autorização de Procedimento Ambulatorial" in atual.fala
+               and "Texto fixo" in textos_da_lateral(at))
+        perguntar_na_caixa(at, "qual o preço da diária de internação?")
+        atual = at.session_state["lia"]["atual"]
+        checar("I. glossário: o preço da diária é explicado (o Escudo não calcula), sem devolver o total de valores",
+               not erros(at) and atual.intencao == "glossario" and "não calcula nem informa o preço da diária" in atual.fala)
+        at.button(key="lia_discreto_inicio").click().run()
+
         perguntar_na_caixa(at, "me explica o negócio dos números do hospital das moças")
         atual = at.session_state["lia"]["atual"]
         botoes = botoes_da_lia(at)

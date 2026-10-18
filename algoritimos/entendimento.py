@@ -4,6 +4,8 @@ import unicodedata
 from collections import Counter
 from dataclasses import dataclass, field
 
+import glossario
+
 # =====================================
 # ENTENDIMENTO DA PERGUNTA (caixa "Pergunte à Lia", 10/2026)
 #
@@ -296,7 +298,8 @@ ROTULOS = {
     "onde_atendida": "Onde ser atendida", "apoio": "Apoio à mulher", "sintoma": "Estou com um sintoma",
     "ajuda": "O que posso perguntar?", "causa": "Por que mudou?", "sem_dados": "O que os dados não têm",
 }
-ROTULOS_POR_GATILHO = {"tratamento": "Quimio e radioterapia", "mortalidade_real": "Mortes por câncer (todas)", "polos": "Cidades que mais tratam"}  # fora do índice (ver _por_gatilho)
+ROTULOS_POR_GATILHO = {"tratamento": "Quimio e radioterapia", "mortalidade_real": "Mortes por câncer (todas)", "polos": "Cidades que mais tratam",
+                       "glossario": "O que significa um termo"}  # fora do índice (ver _por_gatilho)
 ROTULOS_TODOS = {**ROTULOS, **ROTULOS_POR_GATILHO}
 
 
@@ -489,6 +492,7 @@ class Entendimento:
     cancer_citado: bool = False
     foco: bool = False        # "esse câncer": usar o câncer em foco no painel
     tambem: str = None        # pedido composto ("está aumentando e o que esperar?"): o segundo assunto, respondido junto
+    termos: list = None       # glossário: ids dos termos cujo significado a pessoa pediu (intencao == "glossario")
 
 
 # ---------- conversa: "me explica isso melhor" e pedidos compostos ----------
@@ -602,6 +606,9 @@ def compreender(pergunta, disponiveis=None, memoria=None, classificar=None, cida
     ano = detectar_ano(pergunta)
     base = dict(cancer=codigos[0] if len(codigos) == 1 else None, ano=ano, nao_acompanhado=nao,
                 varios_canceres=len(codigos) > 1, cancer_citado=bool(codigos), foco=cita_o_foco(pergunta))
+    termos = glossario.achar_termos(pergunta)
+    if termos:  # "o que são APACs?": definição em texto fixo (glossario.py); fica fora do índice para não mudar os outros assuntos
+        return Entendimento("intencao", intencao="glossario", origem="regras", termos=termos, **base)
     texto_busca, citou_outra = sem_nomes_de_cidade(pergunta, cidade, outras_cidades)
     if (memoria and memoria.get("cancer") and base["cancer"] is None and not base["varios_canceres"] and not base["foco"]
             and len(fichas(pergunta)) <= 4 and re.match(r"^\s*(e|mas|agora|tambem|entao)\b", sem_acento(pergunta))):
