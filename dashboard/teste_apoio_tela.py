@@ -296,9 +296,14 @@ try:
     checar("F. fora do assunto: diz que não achou e mostra as portas de novo", not erros(at) and at.session_state["ap_lia"]["atual"].tipo == "nada"
            and len(botoes_lia(at)) >= 8)
 
-    at.button(key="caixa_ap_exemplo_0").click().run()
-    checar("F. botão de exemplo ('Onde faço mamografia pelo SUS?') responde sem digitar",
-           not erros(at) and at.session_state["ap_lia"]["atual"].tipo in ("itens", "palpites"))
+    botao_assunto = next((b for b in at.sidebar.button if b.key == "assunto_caminho_mama"), None)
+    checar("F. assunto de prevenção oferece botão no grupo dinâmico", botao_assunto is not None)
+    if botao_assunto:
+        botao_assunto.click().run()
+    resposta_assunto = at.session_state["ap_lia"]["atual"]
+    checar("F. atalho usa pergunta-modelo e mostra resposta do guia sem IA",
+           not erros(at) and at.session_state["caixa_ap_texto"] == "Quero orientação sobre câncer de mama."
+           and resposta_assunto.destino.get("caminho") == "mama" and bool(resposta_assunto.botoes))
 
     at.button(key="lia_discreto_voltar_ap").click().run()
     checar("F. '← Voltar' continua funcionando depois de perguntas", not erros(at))
@@ -359,6 +364,55 @@ try:
         apoio_busca.obter_classificador = original
 finally:
     sqlite3.connect = sqlite_original
+
+# ---------- G. Atalhos dinâmicos: caminhos, etapas e lâminas, sem IA ----------
+assuntos_teste = [
+    ("caminho", id, rotulo, f"Quero orientação sobre {rotulo.lower()}.")
+    for id, rotulo, _, _ in apoio.CAMINHOS
+    if id in {"mama", "colo", "diagnostico", "regulacao", "tratamento", "rede", "direitos"}
+]
+assuntos_teste += [
+    ("etapa", id, rotulo, f"Minha situação é: {rotulo.lower()}.")
+    for id, rotulo, _, _, _ in apoio.ETAPAS
+    if id in {"nao_fiz", "alterado", "diagnostico_cancer", "encaminhada", "em_tratamento", "violencia"}
+]
+assuntos_teste += [
+    ("lamina", id, apoio.LAMINAS[id], f"Quero consultar {apoio.LAMINAS[id].lower()}.")
+    for id in ("hospitais", "rio_claro", "barretos", "carretas")
+]
+
+chamadas_assuntos = []
+original_classificador_assuntos = apoio_busca.obter_classificador
+apoio_busca.obter_classificador = lambda: (lambda *a, **k: chamadas_assuntos.append(a[0]) or {"intencao": "mama"})
+try:
+    at = abrir()
+    at.toggle(key="caixa_ap_gemini_ativo").set_value(True).run()
+    for tipo, id, rotulo, pergunta_modelo in assuntos_teste:
+        botao_assunto = next((b for b in at.sidebar.button if b.key == f"assunto_{tipo}_{id}"), None)
+        if botao_assunto:
+            botao_assunto.click().run()
+        resposta = at.session_state["ap_lia"]["atual"]
+        destino = resposta.destino or {}
+        if tipo == "caminho":
+            destino_valido = destino.get("aba") == apoio.LAMINAS["caminho"] and destino.get("caminho") == id
+        elif tipo == "etapa":
+            destino_valido = destino.get("aba") == apoio.LAMINAS["caminho"] and destino.get("etapa") == id
+        else:
+            destino_valido = destino.get("aba") == apoio.LAMINAS[id]
+        checar(f"G. assunto {rotulo} responde com destino válido, botões e pergunta-modelo", botao_assunto is not None
+               and not erros(at) and destino_valido and bool(resposta.botoes)
+               and at.session_state["caixa_ap_texto"] == pergunta_modelo
+               and getattr(resposta, "pergunta", None) == pergunta_modelo)
+    botao_urgencia = next((b for b in at.sidebar.button if b.key == "assunto_urgencia_agora"), None)
+    if botao_urgencia:
+        botao_urgencia.click().run()
+    resposta_urgencia = at.session_state["ap_lia"]["atual"]
+    checar("G. perigo imediato usa orientação fixa 190/180 sem chamar Gemini", botao_urgencia is not None
+           and not erros(at) and "190" in resposta_urgencia.fala and "180" in resposta_urgencia.fala
+           and chamadas_assuntos == [])
+finally:
+    apoio_busca.obter_classificador = original_classificador_assuntos
+
 checar("F. a página do Apoio não abriu banco de dados em nenhum momento (perguntas não são gravadas)", abriu_banco == [])
 
 print(f"\n({time.time() - inicio:.0f} s)")

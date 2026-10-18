@@ -208,6 +208,55 @@ def enviar_pergunta(texto=None):
         st.session_state["caixa_ap_pendente"] = texto[:300]
 
 
+def assuntos_do_guia():
+    """Gera a lista de atalhos a partir dos caminhos, etapas e lâminas do catálogo."""
+    caminhos = {id: rotulo for id, rotulo, _, _ in apoio.CAMINHOS}
+    etapas = apoio.NOME_ETAPA
+    grupos = [
+        ("Prevenção e exames", [("caminho", "mama"), ("caminho", "colo"), ("etapa", "nao_fiz")]),
+        ("Exame alterado e diagnóstico", [("caminho", "diagnostico"), ("etapa", "alterado"),
+                                         ("etapa", "diagnostico_cancer")]),
+        ("Tratamento e direitos", [("caminho", "regulacao"), ("caminho", "tratamento"),
+                                   ("caminho", "rede"), ("caminho", "direitos"),
+                                   ("etapa", "encaminhada"), ("etapa", "em_tratamento")]),
+        ("Onde procurar (hospitais, Rio Claro, Barretos, carretas)",
+         [("lamina", "hospitais"), ("lamina", "rio_claro"), ("lamina", "barretos"),
+          ("lamina", "carretas")]),
+        ("Proteção", [("etapa", "violencia")]),
+    ]
+    for titulo, referencias in grupos:
+        assuntos = []
+        for tipo, id in referencias:
+            if tipo == "caminho" and id in caminhos:
+                rotulo = caminhos[id]
+                acao = apoio.caminho(id)
+                pergunta_modelo = f"Quero orientação sobre {rotulo.lower()}."
+            elif tipo == "etapa" and id in etapas:
+                rotulo = etapas[id]
+                acao = apoio.etapa(id)
+                pergunta_modelo = f"Minha situação é: {rotulo.lower()}."
+            elif tipo == "lamina" and id in apoio.LAMINAS:
+                rotulo = apoio.LAMINAS[id]
+                acao = apoio.lamina(id)
+                pergunta_modelo = f"Quero consultar {rotulo.lower()}."
+            else:
+                continue
+            assuntos.append({"tipo": tipo, "id": id, "rotulo": rotulo,
+                             "pergunta": pergunta_modelo, "acao": acao})
+        yield titulo, assuntos
+
+
+def mostrar_assunto(pergunta_modelo, acao=None):
+    """Mostra resposta do guia a partir de um atalho, sem classificador de IA."""
+    st.session_state["caixa_ap_texto"] = pergunta_modelo
+    if acao is None:
+        resposta = apoio_busca.responder_pergunta(pergunta_modelo, classificar=None)
+    else:
+        resposta = apoio.responder(acao)
+        resposta.pergunta = pergunta_modelo
+    lia_mostrar(resposta)
+
+
 def classificador_da_sessao():
     if not st.session_state.get("caixa_ap_gemini_ativo", False):
         return None
@@ -738,10 +787,16 @@ with st.sidebar:
                        "ou outros dados pessoais.")
     else:
         st.caption("Busca no guia; o Gemini está indisponível nesta sessão. A resposta vem do catálogo conferido.")
-    with st.expander("Não sabe o que perguntar?"):
-        for n, exemplo in enumerate(["Onde faço mamografia pelo SUS?", "Meu exame deu alterado, e agora?",
-                                     "Quais são os meus direitos?", "Como pedir ajuda em situação de violência?"]):
-            st.button(exemplo, key=f"caixa_ap_exemplo_{n}", on_click=enviar_pergunta, args=(exemplo,), width="stretch")
+    st.markdown("**Assuntos**")
+    for titulo, assuntos in assuntos_do_guia():
+        with st.expander(titulo):
+            for assunto in assuntos:
+                st.button(assunto["rotulo"], key=f"assunto_{assunto['tipo']}_{assunto['id']}",
+                          on_click=mostrar_assunto, args=(assunto["pergunta"], assunto["acao"]),
+                          width="stretch")
+            if titulo == "Proteção":
+                st.button("Estou em perigo agora", key="assunto_urgencia_agora", on_click=mostrar_assunto,
+                          args=("meu marido me bate", None), width="stretch")
     st.caption("Não escreva dados pessoais. Esta página não guarda as perguntas. "
                + ("Com o Gemini desligado, a busca é feita localmente no guia."
                   if not st.session_state.get("caixa_ap_gemini_ativo", False)
