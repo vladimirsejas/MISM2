@@ -123,13 +123,17 @@ ITENS = [
                     "de idade ao agendar."),
     _item("colo_utero", "colo", "caminho", "SUS (todo o Brasil)",
           "Exame preventivo do colo do útero (Papanicolau e teste de DNA-HPV)",
-          "de 25 a 64 anos, na unidade de saúde; o teste de DNA-HPV está substituindo o Papanicolau aos poucos",
+          "marque na unidade de saúde do seu bairro (UBS ou USF), de 25 a 64 anos; leve o Cartão SUS e um documento com foto",
           "Ministério da Saúde",
           "https://bvsms.saude.gov.br/papanicolau-exame-preventivo-de-colo-de-utero/",
-          para_quem="Mulheres de 25 a 64 anos.",
-          como="Na unidade de saúde do bairro (UBS ou USF). O SUS está trocando, aos poucos, o Papanicolau pelo teste "
-               "de DNA-HPV, que é mais sensível; São Paulo está entre os estados que já têm o teste. Com o teste de "
-               "DNA-HPV negativo, o próximo exame é em 5 anos.",
+          para_quem="Mulheres de 25 a 64 anos que já iniciaram vida sexual.",
+          como="Onde ir: a UBS ou USF do seu bairro (veja unidades, telefones e como chegar pelo link no topo da página). "
+               "Como marcar: na recepção da unidade ou com a agente comunitária de saúde, pergunte os dias de coleta do preventivo. "
+               "Em Rio Claro, a consulta também pode ser marcada pelo Cadu (0800 019 0505). "
+               "O que levar: Cartão SUS e documento com foto; algumas unidades pedem comprovante de residência. "
+               "Com que frequência: o Papanicolau se repete a cada 3 anos, depois de dois exames anuais normais. O SUS está "
+               "trocando, aos poucos, o Papanicolau pelo teste de DNA-HPV, que é mais sensível; São Paulo está entre os estados "
+               "que já têm o teste. Com o teste de DNA-HPV negativo, o próximo exame é em 5 anos.",
           confirmar="A troca é gradual: pergunte na sua unidade qual exame ela faz hoje. Em Rio Claro, a disponibilidade do teste de "
                     "DNA-HPV deve ser confirmada com a equipe da sua UBS."),
     _item("vacina_hpv", "colo", "caminho", "SUS (todo o Brasil)",
