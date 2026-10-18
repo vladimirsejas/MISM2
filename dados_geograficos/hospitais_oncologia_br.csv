@@ -1,0 +1,362 @@
+﻿cnes;uf;municipio;regiao_de_saude;nome_ministerio;codigo_habilitacao;habilitacao;tipo
+2001586;AC;Rio Branco;Macro Única - AC;Hospital da Fundação Hospitalar Estadual do Acre;17.07;UNACON com Serviço de Radioterapia;UNACON
+2005417;AL;Arapiraca;2ª Macrorregião de Saúde;Complexo Hospitalar Manoel André - CHAMA;17.07;UNACON com Serviço de Radioterapia;UNACON
+2007037;AL;Maceió;1ª Macrorregião de Saúde;Hospital da Santa Casa de Misericórdia de Maceió;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2006197;AL;Maceió;1ª Macrorregião de Saúde;Hospital Universitário Alberto Antunes/Universidade Federal de Alagoas;17.12;CACON;CACON
+2006448;AL;Maceió;1ª Macrorregião de Saúde;Hospital do Açúcar/Fundação  da Agro-Indústria de Açúcar e do Álcool de Alagoas- Hospital veredas;17.11;UNACON Exclusiva de Oncologia Pediátrica;UNACON
+2020645;AP;Macapá;Macro Única - AP;Hospital de Clínicas Dr. Alberto Lima;17.06;UNACON;UNACON
+2012677;AM;Manaus;Central;Hospital da Fundação Centro de Controle de Oncologia/CECON;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+2017644;AM;Manaus;Central;Hospital Universitário Getúlio Vargas;17.14;Hospital Geral com Cirurgia Oncológica de Complexo Hospitalar;Hospital geral com cirurgia oncológica
+3400557;AM;Manaus;Central;Instituto de Mama do Amazonas - SENSUMED;17.15;Serviço de Radioterapia de Complexo Hospitalar;Serviço isolado de radioterapia
+6602533;BA;Feira de Santana;Centro-Leste;Hospital Estadual da Criança;17.11;UNACON exclusiva de oncologia pediátrica;UNACON
+2601680;BA;Feira de Santana;Centro-Leste;Hospital Dom Pedro de Alcântara/Santa Casa de Misericórdia de Feira de Santana;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2772280;BA;Itabuna;Sul;Hospital Calixto Midlej Filho;17.06;UNACON com Serviço de Radioterapia;UNACON
+2525569;BA;Itabuna;Sul;Hospital Manoel Novaes;17.14 e 17.15;;Hospital geral com cirurgia oncológica
+2802112;BA;Ihéus;Sul;Hospital São José Maternidade Santa Helena/Santa Casa de Mis.;17.06;UNACON;UNACON
+4028155;BA;Juazeiro;Norte;Hospital Regional de Juazeiro;17.06;UNACON;UNACON
+0003816;BA;Salvador;Leste;Hospital Professor Edgard Santos/Hospital Universitário MEC - Universidade Federal da Bahia/FAPEX;17.08;UNACON com Serviço de Hematologia;UNACON
+0003786;BA;Salvador;Leste;Hospital Aristidez Maltez/Liga Baiana Contra o Câncer;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+0003832;BA;Salvador;Leste;Hospital Santa Isabel/Santa Casa de Misericórdia da Bahia;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+0004278;BA;Salvador;Leste;Hospital Martagão Gesteira/Liga Álvaro Bahia Contra a Mortalidade Infantil;17.11;UNACON exclusiva de Oncologia Pediátrica;UNACON
+0003859;BA;Salvador;Leste;Hospital Geral Roberto Santos;17.14;UNACON;UNACON
+0003921;BA;Salvador;Leste;Centro Estadual de Oncologia - CICAN;17.06;;UNACON
+2802104;BA;Salvador;Leste;Hospital Santo Antônio/Obras Sociais Irmã Dulce;17.07;UNACON com Serviço de Radioterapia;UNACON
+2799286;BA;Santo Antonio de Jesus;Leste;Hospital Maternidade Luiz Argolo- Irmandade da Sta Casa de Miser De S Ant de Jesus;17.06;UNACON;UNACON
+2301318;BA;Teixeira de Freitas;Extremo Sul;Hospital Municipal de Teixeira de Freitas/Prefeitura Municipal de T. de Freitas;17.06;UNACON;UNACON
+2402076;BA;Vitória da Conquista;Sudoeste;Hospital Geral de Vitória da Conquista;17.06 e 17.15;UNACON com Serviço de Radioterapia;UNACON
+2772566;BA;Vitória da Conquista;Sudoeste;Conquista Assistência Medica LTDA/ONCO-MED RAC;;;Tipo não informado
+2407205;BA;Vitória da Conquista;Sudoeste;Serviço de Assistência Médica de Urgencia S. A. (SAMUR);17.07;UNACON com Serviço de Radioterapia;UNACON
+2564211;CE;Barbalha;3ª Macro - Cariri;Hospital e Maternidade São Vicente de Paulo;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2563681;CE;Fortaleza;1ª Macro-Fortaleza;Hospital Infantil Albert Sabin;17.11;UNACON Exclusiva de Oncologia Pediátrica;UNACON
+2561492;CE;Fortaleza;1ª Macro-Fortaleza;Hospital Universitário Walter Cantídio;17.08;UNACON com Serviço de Hematologia;UNACON
+2723220;CE;Fortaleza;1ª Macro-Fortaleza;Instituto de Câncer do Ceará;17.12;CACON;CACON
+2651394;CE;Fortaleza;1ª Macro-Fortaleza;Hospital da Irmandade Beneficente Santa Casa de Misericórdia de Fortaleza;17.06;UNACON;UNACON
+2611686;CE;Fortaleza;1ª Macro-Fortaleza;Hospital Cura D'ars/Beneficência Camiliana;17.06;UNACON;UNACON
+2497654;CE;Fortaleza;1ª Macro-Fortaleza;HGF- Hospital Geral de Fortaleza/Secretaria de Estado da Saude;17.08;UNACON com Serviço de Hematologia;UNACON
+2528843;CE;Fortaleza;1ª Macro-Fortaleza;Hospital Distrital Dr. Fernandes Távora/Instituto Clínico de Fortaleza;17.14;UNACON com Serviço de Radioterapia;UNACON
+2723190;CE;Fortaleza;1ª Macro-Fortaleza;Centro Regional Integrado de Oncologia/CRIO;17.15 e 17.16;;Serviço isolado de radioterapia
+3021114;CE;Sobral;2ª Macro - Sobral;Hospital da Santa Casa de Misericórdia de Sobral;17.12;CACON;CACON
+0010510;DF;Brasília;Distrito Federal;Hospital Universitário de Brasília/Fundação da Universidade de Brasília;17.07;UNACON com Serviço de Radioterapia;UNACON
+0010499;DF;Brasília;Distrito Federal;Hospital Regional de Taguatinga;17.06;UNACON;UNACON
+0010456;DF;Brasília;Distrito Federal;Hospital de Base do Distrito Federal;17.13;CACON;CACON
+0010464;DF;Brasília;Distrito Federal;Hospital Regional da Asa Norte;17.14;;Hospital geral com cirurgia oncológica
+0010480;DF;Brasília;Distrito Federal;Hospital Regional de Ceilândia;17.14;;Hospital geral com cirurgia oncológica
+0010472;DF;Brasília;Distrito Federal;Hospital Regional do Gama;17.14;;Hospital geral com cirurgia oncológica
+0010502;DF;Brasília;Distrito Federal;Hospital Regional de Sobradinho;17.14;;Hospital geral com cirurgia oncológica
+6876617;DF;Brasília;Distrito Federal;Hospital da Criança de Brasília Jose Alencar - HCB;17.11;UNACON Exclusiva de Oncologia Pediátrica;UNACON
+2547821;ES;Cachoeiro de Itapemirim;Sul;Hospital Evangélico de Cachoeiro de Itapemirim;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2448521;ES;Colatina;Central;Hospital São José;17.06;UNACON;UNACON
+2465833;ES;Linhares;Central;Hospital Rio Doce;17.06;UNACON;UNACON
+2494442;ES;Vila Velha;Metropolitana;Hospital Evangélico de Vila Velha;17.08;UNACON com Serviço de Hematologia;UNACON
+0011738;ES;Vitória;Metropolitana;Hospital Santa Rita de Cássia/Associação Feminina Educacional de Combate ao Câncer;17.12;CACON;CACON
+0011800;ES;Vitória;Metropolitana;Hospital Infantil Nossa Senhora da Glória;17.11;UNACON Exclusiva de Oncologia Pediátrica;UNACON
+0011746;ES;Vitória;Metropolitana;Hospital da Santa Casa de Misericórdia de Vitória;17.08;UNACON com Serviço de Hematologia;UNACON
+4044916;ES;Vitória;Metropolitana;Hospital Universitário Cassiano Antônio de Moraes;17.08;UNACON com Serviço de Hematologia;UNACON
+2442108;GO;Anápolis;Macrorregião Centro-Norte;Hospital Evangélico Anápolis/Fundação James Fanstone;17.07;UNACON com Serviço de Radioterapia;UNACON
+2361787;GO;Anápolis;Macrorregião Centro-Norte;Santa Casa de Misericórdia  de Anápolis/Fundação de Assistencia Social de Anápolis;17.06;UNACON;UNACON
+2506815;GO;Goiânia;Macrorregião Centro-Oeste;Hospital Araújo Jorge/Hospital do Câncer/Associação de Combate ao Câncer em Goiás;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2338424;GO;Goiânia;Macrorregião Centro-Oeste;Hospital das Clínicas da Universidade Federal Goiás;17.08;UNACON com Serviço de Hematologia;UNACON
+2338351;GO;Goiânia;Macrorregião Centro-Oeste;Hospital da Santa Casa de Misericórdia de Goiânia;17.07;UNACON com Serviço de Radioterapia;UNACON
+7891067;MA;Caxias;Macrorregião Leste;Hospital Regional de Caxias Dr Everaldo Ferreira Aragão;17.06;UNACON;UNACON
+2531348;MA;Imperatriz;Macrorregião Sul;Hospital São Rafael;17.06 e 17.15;UNACON com Serviço de Radioterapia;UNACON
+6497489;MA;Imperatriz;Macrorregião Sul;ONCORADIUM;;;Tipo não informado
+2697696;MA;São Luís;Macrorregião Norte;Instituto Maranhense de Oncologia Aldenora Belo IMOAB/Fundação Antônio Jorge Dino;17.12;CACON;CACON
+2726653;MA;São Luís;Macrorregião Norte;Hospital Universitário Federal do Maranhão (HUUFM);17.14;Hospital Geral com Cirurgia Oncológica de Complexo Hospitalar;Hospital geral com cirurgia oncológica
+2646536;MA;São Luís;Macrorregião Norte;Hospital Geral Tarquínio Lopes Filho/SES;17.08;Unacon com Serviço de Hematologia;UNACON
+2171945;MG;Alfenas;Sul;Casa de Caridade de Alfenas Nossa Senhora do Perpétuo Socorro;17.07 e 17.08;Unacon com Serviços de Radioterapia e de Hematologia;UNACON
+2098938;MG;Barbacena;Centro Sul;Hospital Ibiapaba S/A;17.06;UNACON;UNACON
+2200457;MG;Belo Horizonte;Centro;Hospital Luxemburgo/Associação dos Amigos do Hospital Mário Penna;17.12;CACON;CACON
+2695324;MG;Belo Horizonte;Centro;Hospital da Baleia/Fundação Benjamin Guimarães;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+0026859;MG;Belo Horizonte;Centro;Hospital Felício Rocho/Fundação Felice Rosso;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+0027049;MG;Belo Horizonte;Centro;Hospital das Clínicas da UFMG;17.08 e 17.09;UNACON com Serviços de Hematologia e de Oncologia Pediátrica;UNACON
+0027014;MG;Belo Horizonte;Centro;Hospital da Santa Casa de Misericórdia de Belo Horizonte;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+0026840;MG;Belo Horizonte;Centro;Hospital São Francisco de Assis;17.07;UNACON com Serviço de Radioterapia;UNACON
+0026964;MG;Belo Horizonte;Centro;Hospital Alberto Cavalcanti/Fundação Hospitalar do Estado de Minas Gerais;17.07;UNACON com Serviço de Radioterapia;UNACON
+2126494;MG;Betim;Centro;Hospital Professor Osvaldo R. Franco/Prefeitura de Betim/Fundo Municipal de Betim;17.07;UNACON com Serviço de Radioterapia;UNACON
+2148293;MG;Curvelo;Centro;Hospital Imaculada Conceição;17.07;UNACON com serviço de radioterapia;UNACON
+2159252;MG;Divinópolis;Oeste;Hospital São João de Deus/Fundação Geraldo Corrêa;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2118661;MG;Gov. Valadares;Leste;Hospital Bom Samaritano/Beneficência Social Bom Samaritano;17.07;UNACON com Serviço de Radioterapia e de Hematologia;UNACON
+2205440;MG;Ipatinga;Vale do Aço;Hospital Márcio Cunha/Fundação São Francisco Xavier;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+2215586;MG;Itabira;Centro;Hospital Nossa Senhora das Dores;17.06;UNACON;UNACON
+2105780;MG;Itaúna;Oeste;Hospital Manoel Goncalves;17.06;UNACON;UNACON
+2153025;MG;Juiz de Fora;Sudeste;Hospital Maria José Baeta Reis/ASCOMCER;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2153114;MG;Juiz de Fora;Sudeste;Hospital Dr. João Felício S/A;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2153106;MG;Juiz de Fora;Sudeste;Instituto Oncológico;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2149990;MG;Montes Claros;Norte;Hospital da Santa Casa  de Montes Claros /Irmandade Nossa Senhora das Mercês de Montes Claros;17.07;UNACON com Serviço de Radioterapia;UNACON
+2219646;MG;Montes Claros;Norte;Hospital Dílson de Quadros  Godinho/Fundação Dílson de Quadros Godinho;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2195453;MG;Muriaé;Sudeste;Hospital do Câncer de Muriaé/Fundação Cristiano Varella;17.12;CACON;CACON
+2775999;MG;Passos;Sul;Hospital da Santa Casa de Misericórdia de Passos;17.13;CACON com serviço de oncologia pediátrica;CACON
+9650105;MG;Patos de Minas;Noroeste;Santa Casa de Misericórdia de Patos de Minas;17.06;UNACON;UNACON
+6442560;MG;Patos de Minas;Noroeste;Centro Oncológico AZ/ Patos de Minas/MG;17.15;Serviço de radioterapia de complexo hospitalar;Serviço isolado de radioterapia
+2209195;MG;Patrocínio;Triângulo do Norte;Hospital Santa Casa de Patrocínio;17.06;UNACON;UNACON
+2129469;MG;Poços de Caldas;Sul;Hospital da Santa Casa de Misericórdia de Poços de Caldas;17.06;UNACON com Serviço de Radioterapia;UNACON
+2110075;MG;Poços de Caldas;Sul;Clínica Memorial;17.15;;Serviço isolado de radioterapia
+2111640;MG;Ponte Nova;Leste do Sul;Hospital Nossa Senhora das Dores/Irmandade Hospital N. Sra das Dores;17.07;UNACON com Serviço de Radioterapia;UNACON
+2127989;MG;Pouso Alegre;Sul;Hospital das Clinicas Samuel Libânio;17.08 e 17.09;UNACON com Serviços de Hematologia e de Oncologia Pediátrica;UNACON
+3145425;MG;Pouso Alegre;Sul;Instituto Sul Mineiro de Oncologia;17.15;Serviço de radioterapia de complexo hospitalar;Serviço isolado de radioterapia
+2161354;MG;São João Del Rei;Centro Sul;Hospital da Santa Casa de Misericórdia de São João Del Rei;17.07;UNACON com serviço de Radioterapia;UNACON
+2206528;MG;Sete Lagoas;Centro;Hospital Nossa Senhora das Graças;17.06;UNACON;UNACON
+2184834;MG;Teófilo Otoni;Nordeste;Hospital Bom Samaritano;17.06;UNACON;UNACON
+7474482;MG;Teófilo Otoni;Nordeste;N E O Núcleo de Especialistas em Oncologia;17.15;Serviço de Radioterapia de Complexo Hospitalar;Serviço isolado de radioterapia
+2165058;MG;Uberaba;Triângulo do Sul;Hospital Dr. Hélio Angotti/Associação de Combate ao Câncer do Brasil Central;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2206595;MG;Uberaba;Triângulo do Sul;Hospital Escola da Universidade Federal do Triângulo Mineiro - Universidade Federal do Triângulo Mineiro;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2146355;MG;Uberlândia;Triângulo do Norte;Hospital de Clínicas de Uberlândia/Universidade Federal de Uberlândia;17.07, 17.08 E 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+6601804;MG;Uberlândia;Triângulo do Norte;Hospital e Maternidade Municipal Dr. Odelmo Leão Carneiro;17.14;Hospital geral com cirurgia oncológica de complexo hospitalar;Hospital geral com cirurgia oncológica
+2761092;MG;Varginha;Sul;Hospital Bom Pastor/Fundação Hospitalar do Município de Varginha;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+0009709;MS;Campo Grande;Campo Grande;Hospital Universitário Maria Aparecida Pedrossian/UFMS;17.07;UNACON com Serviço de Radioterapia;UNACON
+0009776;MS;Campo Grande;Campo Grande;Hospital do Câncer Professor Dr. Alfredo Abrão/Fundação Carmem Prudente de Mato Grosso do Sul;17.07;UNACON com Serviço de Radioterapia;UNACON
+0009725;MS;Campo Grande;Campo Grande;Hospital Regional de Mato Grosso do Sul/Fundação Serviços de Saúde de Mato Grosso do Sul;17.09;UNACON com Serviço de Oncologia Pediátrica;UNACON
+0009717;MS;Campo Grande;Campo Grande;Hospital da Santa Casa/Associação Beneficente de Campo Grande;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2376334;MS;Corumbá;Corumbá;Santa Casa de Misericórdia de Corumbá/Associação Beneficente de Corumbá;17.06;UNACON;UNACON
+6201059;MS;Dourados;Dourados;Hospital CASSEMS Unidade Dourados;17.06;UNACON;UNACON
+6583326;MS;Dourados;Dourados;Centro de Tratamento de Câncer de Dourados;17.15;Serviço de radioterapia de complexo hospitalar;Serviço isolado de radioterapia
+2756951;MS;Três Lagoas;Três Lagoas;Hospital Nossa Senhora Auxiliadora de Três Lagoas;17.06;UNACON;UNACON
+2534444;MT;Cuiabá;Macrorregião Centro-Norte;Hospital do Câncer de Mato Grosso/Associação Matogrossense de Combate ao Câncer - AMCC;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+2659107;MT;Cuiabá;Macrorregião Centro-Norte;Hospital Geral Universitário/Associação de  Proteção a Maternidade e a Infância Cuiabá;17.08;UNACON com Serviço de Hematologia;UNACON
+2655519;MT;Cuiabá;Macrorregião Centro-Norte;Hospital da Sociedade Beneficente Santa Casa de Misericórdia de Cuiabá;17.07 e 17.09;UNACON com Serviços de Radioterapia e de Oncologia Pediátrica;UNACON
+2396866;MT;Rondonópolis;Macrorregião Sul;Santa Casa de Misericórdia e Maternidade de Rondonópolis;17.06;UNACON;UNACON
+2795671;MT;Sinop;Macrorregião Norte;Hospital Santo Antonio/Fundação de Saúde Comunitária de Sinop;17.06;UNACON;UNACON
+2334321;PA;Belém;Macrorregional I;Hospital Ofir Loyola;17.13;Cacon com Serviço de Oncologia Pediátrica;CACON
+7871902;PA;Belém;Macrorregional I;Hospital Oncológico Infantil Octávio Lobo;17.11;UNACON Exclusiva de Oncologia Pediátrica;UNACON
+2332981;PA;Belém;Macrorregional I;Hospital Universitário João de Barros Barreto;17.06;UNACON;UNACON
+5585422;PA;Santarém;Macrorregional III;Hospital Regional do Baixo Amazonas Dr. Waldemar Penna;17.07;Unacon com Serviço de Radioterapia;UNACON
+2315793;PB;Campina Grande;Macrorregião II - Campina Grande;Hospital da Fundação Assistência da Paraíba/FAP;17.07;UNACON com Serviço de Radioterapia;UNACON
+2676060;PB;Campina Grande;Macrorregião II - Campina Grande;Hospital Universitário Alcides Carneiro/Universidade Federal de Campina Grande;17.09;Unacon com Serviço de Oncologia Pediátrica;UNACON
+2399776;PB;João Pessoa;Macrorregião I - João Pessoa;Hospital São Vicente de Paula/Instituto Walfredo Guedes Pereira;17.06;UNACON;UNACON
+2399741;PB;João Pessoa;Macrorregião I - João Pessoa;Hospital Napoleão Laureano;17.13;Cacon com Serviço de Oncologia Pediátrica;CACON
+2605473;PB;Patos;Macrorregião III - Serõa/Alto Sertão;Hospital Regional Dep. Janduhy Carneiro;17.06;UNACON;UNACON
+3369293;PE;Arcoverde;Sertão;Hospital Memorial de Arcoverde;17.06;UNACON;UNACON
+2427419;PE;Caruaru;Agreste;Hospital Regional do Agreste Dr. Waldemiro Ferrreira/Fund. Saude Amaury de Medeiros;17.07;UNACON com Serviço de Radioterapia;UNACON
+7498810;PE;Caruaru;Agreste;Hospital Mestre Vitalino;17.06;UNACON;UNACON
+2639009;PE;Garanhuns;Agreste;Casa de Saúde e Maternidade Nossa Senhora do Perpétuo Socorro;17.06;UNACON;UNACON
+9262407;PE;Petrolina;Vale do S. Francisco e Araripe;Hospital Dom Tomas;17.06;UNACON;UNACON
+0000809;PE;Recife;Metropolitana;Hospital da Fundação de Hematologia e Hemoterapia de Pernambuco/HEMOPE;17.10;UNACON Exclusiva de Hematologia;UNACON
+0000477;PE;Recife;Metropolitana;Hospital Universitário Oswaldo Cruz;17.08 e 17.09;UNACON com Serviços de Hematologia e de Oncologia Pediátrica;UNACON
+0000434;PE;Recife;Metropolitana;Instituto de Medicina Integral Prof. Fernando Figueira - IMIP;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+0000582;PE;Recife;Metropolitana;Hospital de Câncer de Pernambuco/Sociedade Pernambucana do Combate ao Câncer;17.07 e 17.09;UNACON com Serviços de Radioterapia e de Oncologia Pediátrica;UNACON
+2427427;PE;Recife;Metropolitana;Hospital Barão de Lucena/Fundação de Saúde Amaury de Medeiros;17.06;UNACON;UNACON
+0000396;PE;Recife;Metropolitana;Hospital das Clínicas/Universidade Federal de Pernambuco;17.06;UNACON;UNACON
+4009444;PI;Parnaíba;Litoral;Maternidade Dr. Marques Bastos e Hospital Infantil Dr. Mirócles Véras;17.06;UNACON;UNACON
+2726998;PI;Teresina;Meio Norte;Hospital São Marcos/Sociedade Piauiense Combate ao Câncer;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+3285391;PI;Teresina;Meio Norte;Hospital Universitário da Universidade Federal do Piaui;17.07;UNACON com Serviço de Radioterapia de Complexo hospitalar;UNACON
+7445571;PI;Teresina;Meio Norte;ONCOCENTER;17.15;;Serviço isolado de radioterapia
+2439360;PR;Apucarana;Macrorregional Norte;Hospital da Providência/Província Brasileira da Congregação Irmãs Filhas da Caridade de São Vicente de Paulo;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2576341;PR;Arapongas;Macrorregional Norte;Hospital Regional João de Freitas/Associação Norte Paranaense de Combate ao Câncer ao Câncer;17.08;UNACON com Serviço de Hematologia;UNACON
+0013633;PR;Campina Grande do Sul;Macrorregional Leste;Hospital Angelina Caron/Sociedade Hospitalar Angelina Caron;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+0013838;PR;Campo Largo;Macrorregional Leste;Hospital São Lucas;17.06;UNACON;UNACON
+0013846;PR;Campo Largo;Macrorregional Leste;Hospital do Rocio;17.06;UNACON;UNACON
+0014109;PR;Campo Mourão;Macrorregional Noroeste;Hospital Santa Casa de Misericórdia/Associação Beneficiente Hospitalar Santa Casa de Misericórdia;17.07;UNACON com Serviço de Radioterapia;UNACON
+2737434;PR;Cascavel;Macrorregional Oeste;CEONC;17.07;UNACON com Serviço de Radioterapia;UNACON
+2740338;PR;Cascavel;Macrorregional Oeste;Hospital do Câncer de Cascavel UOPECCAN;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2384299;PR;Curitiba;Macrorregional Leste;Hospital de Clínicas/Universidade Federal do Paraná;17.08 e 17.09;UNACON com Serviços de Hematologia e de Oncologia Pediátrica;UNACON
+0015563;PR;Curitiba;Macrorregional Leste;Hospital Infantil Pequeno Príncipe/Associação Hospitalar de Proteção à Infância Dr. Raul Carneiro;17.11;Unacon Exclusiva de Oncologia Pediátrica;UNACON
+0015334;PR;Curitiba;Macrorregional Leste;Hospital Santa Casa/Irmandade da Santa Casa de Misericórdia de Curitiba;17.06;UNACON;UNACON
+0015644;PR;Curitiba;Macrorregional Leste;Hospital Erasto Gaertner/Liga Paranaense de Combate ao Câncer;17.13;Cacon com Serviço de Oncologia Pediátrica;CACON
+3075516;PR;Curitiba;Macrorregional Leste;Hospital São Vicente;17.06;UNACON;UNACON
+0015245;PR;Curitiba;Macrorregional Leste;Hospital Universitário Evangélico Mackenzie;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+9130780;PR;Curitiba;Macrorregional Leste;Clinica RADION;17.15;Serviço de Radioterapia de Complexo Hospitalar;Serviço isolado de radioterapia
+2591049;PR;Foz do Iguaçu;Macrorregional Oeste;Hospital Ministro Costa Cavalcante/Fundação de Saúde Itaiguapy;17.12;Cacon;CACON
+5373190;PR;Francisco Beltrão;Macrorregional Oeste;CEONC;17.06;UNACON;UNACON
+2741989;PR;Guarapuava;Macrorregional Leste;Hospital de Caridade São Vicente de Paulo;17.06;UNACON;UNACON
+2781859;PR;Londrina;Macrorregional Norte;Hospital Universitário Regional Norte do Paraná/Universidade Estadual de Londrina;17.08 e 17.09;UNACON com Serviços de Hematologia e de Oncologia Pediátrica;UNACON
+2577623;PR;Londrina;Macrorregional Norte;Instituto de Câncer de Londrina;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2743469;PR;Maringá;Macrorregional Noroeste;Hospital e Maternidade Santa Rita;17.06;UNACON;UNACON
+2586797;PR;Maringá;Macrorregional Noroeste;Centro de Oncologia e Radioterapia Santana Ltda;17.15;Serviço de Radioterapia de Complexo Hospitalar;Serviço isolado de radioterapia
+2586169;PR;Maringá;Macrorregional Noroeste;Hospital do Câncer de Maringá/Instituto de  Oncologia e  Hematologia Maringá SC Ltda;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+0017868;PR;Pato Branco;Macrorregional Oeste;Hospital Policlínica Pato Branco AS;17.07;UNACON com Serviço de Radioterapia;UNACON
+2686953;PR;Ponta Grossa;Macrorregional Leste;Hospital da Santa Casa de Misericórdia de Ponta Grossa;17.07;UNACON;UNACON
+7205686;PR;Ponta Grossa;Macrorregional Leste;Instituto Sul Paranense de Radioterapia;17.15;Serviço de Radioterapia de Complexo Hospitalar;Serviço isolado de radioterapia
+7845138;PR;Umuarama;Macrorregional Noroeste;UOPECCAN - Filial Umuarama;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2280051;RJ;Barra Mansa;Macrroregião I;Santa Casa de Misericórdia de Barra Mansa;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2278286;RJ;Cabo Frio;Macrroregião III;Hospital Santa Isabel;17.07;UNACON com Serviço de Radioterapia;UNACON
+2287250;RJ;Campos dos Goytacazes;Macrroregião III;Sociedade Portuguesa de Beneficiencia de Campos;17.06;UNACON;UNACON
+2287447;RJ;Campos dos Goytacazes;Macrroregião III;Hospital Universitário Álvaro Alvim;17.06;UNACON com Serviço de Radioterapia;UNACON
+2287285;RJ;Campos dos Goytacazes;Macrroregião III;Hospital Dr. Beda;17.07;UNACON com Serviço de Radioterapia;UNACON
+2278855;RJ;Itaperuna;Macrroregião III;Hospital São José do Avaí/Conferência São José do Avaí;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+0012556;RJ;Niterói;Macrroregião II;Hospital Municipal Orêncio de Freitas;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
+0012505;RJ;Niterói;Macrroregião II;Hospital Universitário Antônio Pedro - HUAP/UFF;17.08;UNACON com Serviço de Hematologia;UNACON
+2275562;RJ;Petropolis;Macrroregião II;Hospital Alcides Carneiro;17.06;UNACON com Serviço de Radioterapia de Complexo hospitalar;UNACON
+2268779;RJ;Petropolis;Macrroregião II;Centro de Terapia Oncológica;17.15;;Serviço isolado de radioterapia
+2296241;RJ;Rio Bonito;Macrroregião II;Hospital Regional Darcy Vargas;17.06;UNACON;UNACON
+2269988;RJ;Rio de Janeiro;Macrroregião II;Hospital dos Servidores do Estado;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+2269384;RJ;Rio de Janeiro;Macrroregião II;Hospital Geral do Andaraí;17.06;UNACON;UNACON
+2269880;RJ;Rio de Janeiro;Macrroregião II;Hospital Geral de Bonsucesso;17.08;UNACON com Serviço de Hematologia;UNACON
+2295423;RJ;Rio de Janeiro;Macrroregião II;Hospital Federal Cardoso Fontes;17.06;UNACON;UNACON
+2269775;RJ;Rio de Janeiro;Macrroregião II;Hospital Geral de Ipanema;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
+2273659;RJ;Rio de Janeiro;Macrroregião II;Hospital Geral da Lagoa;17.09;UNACON com Serviço de Oncologia Pediátrica;UNACON
+2269899;RJ;Rio de Janeiro;Macrroregião II;Hospital Mário Kroeff;17.07;UNACON com Serviço de Radioterapia;UNACON
+2295415;RJ;Rio de Janeiro;Macrroregião II;Hospital Universitário Gaffrée e Guinle;17.06;UNACON;UNACON
+2269783;RJ;Rio de Janeiro;Macrroregião II;Hospital Universitário Pedro Ernesto-HUPE/UERJ;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2280167;RJ;Rio de Janeiro;Macrroregião II;Hospital Universitário Clementino Fraga Filho/UFRJ;17.12;CACON;CACON
+2296616;RJ;Rio de Janeiro;Macrroregião II;Instituto de Puericultura e Pediatria Martagão Gesteira/UFRJ;17.11;UNACON Exclusiva de Oncologia Pediátrica;UNACON
+7185081;RJ;Rio de Janeiro;Macrroregião II;Hospital Estadual Transplante Câncer e Cirurgia Infantil;17.11;UNACON Exclusiva de Oncologia Pediátrica;UNACON
+2295067;RJ;Rio de Janeiro;Macrroregião II;Instituto Estadual de Hematologia Arthur Siqueira Cavalcanti;17.10;UNACON Exclusiva de Hematologia;UNACON
+2273454;RJ;Rio de Janeiro;Macrroregião II;Instituto Nacional de Câncer/INCA - Hospital de Câncer I;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2269821;RJ;Rio de Janeiro;Macrroregião II;Instituto Nacional de Câncer/INCA - Hospital de Câncer II;17.06;;UNACON
+2273462;RJ;Rio de Janeiro;Macrroregião II;Instituto Nacional de Câncer/INCA - Hospital de Câncer III;17.07;;UNACON
+2292386;RJ;Teresópolis;Macrroregião II;Hospital São José/Associação Congregação de Santa Catarina;17.06;UNACON;UNACON
+2273748;RJ;Vassouras;Macrroregião I;Hospital Universitário de Vassouras;17.08;UNACON com Serviço de Hematologia;UNACON
+0025186;RJ;Volta Redonda;Macrroregião I;Hospital Jardim Amália Ltda - HINJA;17.07;UNACON com Serviço de Radioterapia;UNACON
+3675580;RN;Mossoró;Macrroregião II;Hospital da LMECC;17.07;UNACON com Serviço de Radioterapia;UNACON
+2371707;RN;Mossoró;Macrroregião II;Hospital Wilson Rosado;17.06;UNACON;UNACON
+2409194;RN;Natal;Macrroregião I;Hospital Dr. Luiz Antônio/Liga Norteriograndense Contra o Câncer;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2409151;RN;Natal;Macrroregião I;Hospital Infantil Varela Santiago;17.11;UNACON Exclusiva de Oncologia Pediátrica;UNACON
+2656930;RN;Natal;Macrroregião I;Hospital Rio Grande;17.06;UNACON;UNACON
+8003629;RN;Natal;Macrroregião I;Hospital do Coração de Natal Ltda;17.06;UNACON;UNACON
+2653982;RN;Natal;Macrroregião I;Hospital Universitário Onofre Lopes - HUOL;17.06;UNACON;UNACON
+6599877;RO;Cacoal;Macrorregional II (Cacoal);Hospital Regional de Cacoal - HRC;17.07;UNACON com Serviço de Radioterapia;UNACON
+4001303;RO;Porto Velho;Macrorregião I - Porto Velho;Hospital de Base Dr. Ary Pinheiro/Hospital de Base Porto Velho;17.14;UNACON com Serviço de Radioterapia;UNACON
+2515377;RO;Porto Velho;Macrorregião I - Porto Velho;Instituto de Oncologia e Radioterapia São Pellegrino;17.15, 17.16;;Serviço isolado de radioterapia
+7068336;RO;Porto Velho;Macrorregião I - Porto Velho;Hospital de Amor da Amazônia;17.12;CACON;CACON
+2319659;RR;Boa Vista;Macro-Roraima;Hospital Geral de Roraima/HGR;17.06;UNACON;UNACON
+2261987;RS;Bagé;Sul;Santa Casa de Caridade de Bagé;17.07;UNACON com Serviço de Radioterapia;UNACON
+2241021;RS;Bento Gonçalves;Serra;Hospital Tacchini;17.07;UNACON com Serviço de Radioterapia;UNACON
+2266474;RS;Cachoeira do Sul;Vales;Hospital Caridade Beneficência Cachoeira do Sul;17.06;UNACON;UNACON
+2232014;RS;Canoas;Metropolitana;Hospital Nossa Senhora das Graças;17.08;UNACON com Serviço de Hematologia;UNACON
+2262274;RS;Carazinho;Norte;Hospital de Caridade e Beneficência;17.06;UNACON;UNACON
+2223538;RS;Caxias do Sul;Serra;Hospital Geral/Fundação UCS Hospital Geral de Caxias do Sul;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+2223546;RS;Caxias do Sul;Serra;Hospital Pompéia;17.06;UNACON;UNACON
+2263858;RS;Cruz Alta;Missioneira;Hospital São Vicente de Paulo/Associação das Damas de Caridade;17.08;UNACON com Serviço de Hematologia;UNACON
+2707918;RS;Erechim;Norte;Hospital da Fundação Hospitalar Santa Terezinha de Erechim;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2261057;RS;Ijuí;Missioneira;Hospital da Associação Hospital de Caridade de Ijuí;17.12;CACON;CACON
+2252287;RS;Lajeado;Vales;Hospital Bruno Born;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2246988;RS;Passo Fundo;Norte;Hospital São Vicente de Paulo;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+2246929;RS;Passo Fundo;Norte;Hospital de Clínicas de Passo Fundo;17.06;UNACON;UNACON
+2252694;RS;Pelotas;Sul;Hospital Escola da UFPEL;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2253054;RS;Pelotas;Sul;Hospital da Santa Casa de Misericórdia de Pelotas;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2237601;RS;Porto Alegre;Metropolitana;Hospital de Clínicas de Porto Alegre;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2262568;RS;Porto Alegre;Metropolitana;Hospital São Lucas da PUCRS;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+2265052;RS;Porto Alegre;Metropolitana;Hospital Fêmina S/A;17.06;UNACON;UNACON
+2237253;RS;Porto Alegre;Metropolitana;Hospital da Santa Casa de Misericórdia de Porto Alegre;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2237571;RS;Porto Alegre;Metropolitana;Hospital Nossa Senhora da Conceição S/A;17.08 e 17.09;UNACON com Serviços de Hematologia e de Oncologia Pediátrica;UNACON
+2232995;RS;Rio Grande;Sul;Santa Casa do Rio Grande;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2255936;RS;Santa Cruz do Sul;Vales;Hospital Ana Nery;17.07;UNACON com Serviço de Radioterapia;UNACON
+2244306;RS;Santa Maria;Centro-Oeste;Hospital Universitário de Santa Maria;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+2254611;RS;Santa Rosa;Missioneira;Hospital Vida Saúde;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2244357;RS;Santiago;Centro-Oeste;Hospital de Caridade de Santiago;17.06;UNACON;UNACON
+2259907;RS;Santo Ângelo;Missioneira;Hospital Santo Angelo;17.06;UNACON;UNACON
+2248298;RS;São Borja;Missioneira;Hospital Ivan Goulart;17.06;UNACON;UNACON
+2248204;RS;São Gabriel;Centro-Oeste;Santa Casa de São Gabriel;17.06;UNACON;UNACON
+2232022;RS;São Leopoldo;Metropolitana;Hospital Centenário;17.07;UNACON com Serviço de Radioterapia;UNACON
+2227932;RS;Taquara;Metropolitana;Hospital Bom Jesus;17.06;UNACON;UNACON
+2248190;RS;Uruguaiana;Centro-Oeste;Santa Casa de Uruguaiana;17.07;UNACON com Serviço de Radioterapia;UNACON
+2558246;SC;Blumenau;Alto Vale do Itajaí;Hospital Santa Isabel;17.07;UNACON com Serviço de Radioterapia;UNACON
+2558254;SC;Blumenau;Alto Vale do Itajaí;Hospital Santo Antonio;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+2537788;SC;Chapecó;Grande Oeste;Hospital Regional do Oeste;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2758164;SC;Criciúma;Sul;Hospital São José/Sociedade Caritativa Santo Agostinho;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+0019445;SC;Florianópolis;Grande Florianópolis;Centro de Pesquisas Oncológicas/CEPON;17.15, 17.16;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2691841;SC;Florianópolis;Grande Florianópolis;Hospital Governador Celso Ramos;17.10, 17.14;;UNACON
+0019283;SC;Florianópolis;Grande Florianópolis;Hospital Carmela Dutra;17.14;;Hospital geral com cirurgia oncológica
+2691868;SC;Florianópolis;Grande Florianópolis;Hospital Infantil Joana de Gusmão;17.11;UNACON exclusiva de Oncologia Pediátrica;UNACON
+3157245;SC;Florianópolis;Grande Florianópolis;Hospital Univ. Professor Polydoro Ernani de São Thiago;17.08;UNACON com Serviço de Hematologia;UNACON
+2522691;SC;Itajaí;Foz do Rio Itajaí;Hospital e Maternidade Marieta Konder Bornhausen;17.07;UNACON com Serviço de Radioterapia;UNACON
+2306336;SC;Jaraguá do Sul;Planalto Norte e Nordeste;Hospital São José /Sociedade Divina Providência;17.07;UNACON com Serviço de Radioterapia;UNACON
+2560771;SC;Joaçaba;Meio Oeste e Serra Catarinense;Hospital Universitário Santa Terezinha;17.06;UNACON;UNACON
+2436469;SC;Joinville;Planalto Norte e Nordeste;Hospital Municipal São José;17.12;CACON;CACON
+6048692;SC;Joinville;Planalto Norte e Nordeste;Hospital Materno Infantil Dr. Jesser Amarante Faria;17.11;UNACON exclusiva de Oncologia Pediátrica;UNACON
+2504332;SC;Lages;Meio Oeste e Serra Catarinense;Hospital e Maternidade Tereza Ramos;17.07;UNACON com Serviço de Radioterapia;UNACON
+2543044;SC;Porto União;Planalto Norte e Nordeste;Hospital de Caridade São Braz de Porto União;17.06;UNACON;UNACON
+2568713;SC;Rio do Sul;Alto Vale do Itajaí;Hospital Regional Alto Vale;17.06;UNACON;UNACON
+2521792;SC;São Bento do Sul;Planalto Norte e Nordeste;Hospital e Maternidade Sagrada Família;17.06;UNACON;UNACON
+6683134;SC;São Miguel do Oeste;Grande Oeste;Hospital Regional Terezinha Gaio Basso;17.06;Unidade de Assistência de Alta Complexidade em Oncologia – UNACON;UNACON
+2491710;SC;Tubarão;Sul;Hospital Nossa Senhora da Conceição/Sociedade Divina Providência;17.07;UNACON com Serviço de Radioterapia;UNACON
+0002283;SE;Aracaju;Macro Única;Hospital de Cirurgia/Fundação de Beneficência Hospital de Cirurgia;17.07;UNACON com Serviço de Radioterapia;UNACON
+2816210;SE;Aracaju;Macro Única;Hospital Governador João Alves Filho;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+0002534;SE;Aracaju;Macro Única;Hospital Universitário De Sergipe Huse;17.08;UNACON com Serviço de Hematologia;UNACON
+2058790;SP;Americana;RRAS 15;Hospital Municipal Dr. Waldemar Tebaldi;17.06;UNACON;UNACON
+2078775;SP;Araçatuba;RRAS 12;Hospital Sagrado Coração de Jesus/Santa Casa de Misericórdia de Araçatuba;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2082527;SP;Araraquara;RRAS 13;Santa Casa de Araraquara;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2081253;SP;Araras;RRAS 14;Hospital São Luiz de Araras;17.06;UNACON;UNACON
+2083094;SP;Assis;RRAS 10;Hospital Regional de Assis;17.06;UNACON;UNACON
+2083604;SP;Avaré;RRAS 9;Santa Casa de Avaré;17.06;UNACON;UNACON
+2090236;SP;Barretos;RRAS 13;Fundação Pio XII Barretos;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2790602;SP;Bauru;RRAS 9;Hospital Estadual de Bauru;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+2748223;SP;Botucatu;RRAS 9;Hospital das Clínicas da Faculdade de Medicina de Botucatu;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+2704900;SP;Bragança Paulista;RRAS 16;Hospital Universitário São Francisco na Prov. De Deus;17.06;UNACON com Serviço de Radioterapia;UNACON
+2081482;SP;Campinas;RRAS 15;Boldrini Campinas;17.07 e 17.11;UNACON Exclusiva de Oncologia Pediátrica com Serviço de Radioterapia;UNACON
+2082128;SP;Campinas;RRAS 15;Hospital e Maternidade Celso Pierro;17.08;UNACON com Serviço de Hematologia;UNACON
+2079798;SP;Campinas;RRAS 15;Hospital das Clínicas da UNICAMP;17.12;CACON;CACON
+2081490;SP;Campinas;RRAS 15;Hospital Municipal Dr. Mário Gatti;17.07;UNACON com Serviço de Radioterapia;UNACON
+2089327;SP;Catanduva;RRAS 12;Hospital Padre Albino Catanduva;17.06;UNACON;UNACON
+2089335;SP;Catanduva;RRAS 12;Hospital Escola Emílio Carlos Catanduva;17.15;Serviço de Radioterapia de Complexo Hospitalar;Serviço isolado de radioterapia
+2084163;SP;Diadema;RRAS 1;Hospital Estadual de Diadema – Hospital Serraria;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
+2705982;SP;Franca;RRAS 13;Santa Casa de Franca;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2081512;SP;Guaratinguetá;RRAS 17;Santa Casa de Misericórdia de Guaratinguetá;17.06;UNACON;UNACON
+2080338;SP;Guarulhos;RRAS 2;Hospital Geral de Guarulhos Prof. Waldemar de Carvalho Pinto Filho;17.07;UNACON com Serviço de Radioterapia;UNACON
+2754843;SP;Guarujá;RRAS 7;Hospital Santo Amaro;17.06;UNACON;UNACON
+2784602;SP;Indaiatuba;RRAS 15;Hospital Augusto de Oliveira Camargo;17.06;UNACON;UNACON
+2027186;SP;Itapeva;RRAS 8;Santa Casa de Misericórdia de Itapeva;17.06;UNACON;UNACON
+2085194;SP;Jacareí;RRAS 17;Hospital São Francisco de Assis;17.06;UNACON;UNACON
+7066376;SP;Jales;RRAS 12;Hospital de Amor Jales;17.07;UNACON com Serviço de Radioterapia;UNACON
+2083086;SP;Jaú;RRAS 9;Hospital Amaral Carvalho;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2786435;SP;Jundiaí;RRAS 16;HCSVP Hospital São Vicente;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2716801;SP;Jundiaí;RRAS 16;GRENDACC;17.11;UNACON Exclusiva de Oncologia Pediátrica;UNACON
+2081458;SP;Limeira;RRAS 14;Santa Casa de Limeira;17.07;UNACON com Serviço de Radioterapia;UNACON
+2025507;SP;Marília;RRAS 10;Hospital das Clínicas HCFAMEMA;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2083116;SP;Marília;RRAS 10;Santa Casa de Marília;17.08 e 17.09;UNACON com Serviços de Hematologia e de Oncologia Pediátrica;UNACON
+2080680;SP;Mogi das Cruzes;RRAS 2;Hospital das Clínicas Luzia de Pinho Melo;17.08;Unacon com Serviço de Hematologia;UNACON
+2096498;SP;Mogi Guaçu;RRAS 15;Hospital Municipal Dr. Tabajara Ramos;17.07;UNACON com Serviço de Radioterapia;UNACON
+4049020;SP;Ourinhos;RRAS 10;Santa Casa de Ourinhos;17.07;UNACON com Serviço de Radioterapia;UNACON
+2077434;SP;Pariquera-Açu;RRAS 7;Hospital Regional Dr. Leopoldo Bevilacqua;17.06;UNACON;UNACON
+2087057;SP;Piracicaba;RRAS 14;Hospital Fornecedores de Cana de Piracicaba;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2772310;SP;Piracicaba;RRAS 14;Santa Casa de Piracicaba;17.07;UNACON com Serviço de Radioterapia;UNACON
+7400926;SP;Presidente Prudente;RRAS 11;Fundação Hospital Regional do Câncer;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+2755130;SP;Presidente Prudente;RRAS 11;Hospital Domingos Leonardo Cerávolo Presidente Prudente;17.06 e 17.08;UNACON com Serviço de Hematologia;UNACON
+2082187;SP;Ribeirão Preto;RRAS 13;Hospital das Clínicas FAEPA;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2080400;SP;Ribeirão Preto;RRAS 13;Hospital Imaculada Conceição;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2084414;SP;Ribeirão Preto;RRAS 13;Santa Casa de Ribeirão Preto;17.06;UNACON;UNACON
+7361289;SP;Ribeirão Preto;RRAS 13;CTR;17.15;Serviço de Radioterapia de Complexo Hospitalar;Serviço isolado de radioterapia
+2082888;SP;Rio Claro;RRAS 14;Santa Casa de Rio Claro;17.06;UNACON;UNACON
+2080273;SP;Santo André;RRAS 14;Hospital Estadual Mário Covas de Santo André;17.07, 17.08 e 17.09;UNACON com Serviço Radioterapia, Hematologia e Oncologia Pediátrica;UNACON
+0008923;SP;Santo André;RRAS 1;Centro Hospitalar de Santo André Dr. Newton da Costa Brandão;17.06;UNACON;UNACON
+0008753;SP;Santo André;RRAS 1;Instituto de Radioterapia do ABC;17.15;Serviço de Radioterapia de Complexo Hospitalar;Serviço isolado de radioterapia
+2025752;SP;Santos;RRAS 7;Santa Casa de Santos;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2080354;SP;Santos;RRAS 7;Hospital Santo Antônio Santos;17.07;UNACON com Serviço de Radioterapia;UNACON
+2079720;SP;Santos;RRAS 7;Hospital Guilherme Álvaro;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2025361;SP;São Bernardo do Campo;RRAS 14;Hospital Anchieta;17.07;UNACON com Serviço de Radioterapia;UNACON
+2027356;SP;São Bernardo do Campo;RRAS 14;Hospital Municipal Universitário;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
+2082594;SP;São Caetano do Sul;RRAS 1;Complexo Hospitalar Municipal;17.06;UNACON;UNACON
+2080931;SP;São Carlos;RRAS 13;Santa Casa de São Carlos;17.07;UNACON com Serviço de Radioterapia;UNACON
+2084228;SP;São João da Boa Vista;RRAS 15;Hospital da Santa Casa de Misericórdia Dona Carolina Malheiros;17.07;UNACON com Serviço de Radioterapia;UNACON
+2798298;SP;São José do Rio Preto;RRAS 12;Santa Casa de Misericórdia de São José do Rio Preto;17.12;CACON;CACON
+2077396;SP;São José do Rio Preto;RRAS 12;Hospital de Base de São José do Rio Preto;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+0009601;SP;São José dos Campos;RRAS 17;Hospital Pio XII;17.08;UNACON com Serviço de Hematologia;UNACON
+2748029;SP;São José dos Campos;RRAS 17;Santa Casa de Misericórdia;17.08;UNACON com Serviço de Hematologia;UNACON
+5869412;SP;São José dos Campos;RRAS 17;Centro de Tratamento Fabiana Macedo de Morais;17.11;UNACON Exclusiva de Oncologia Pediátrica;UNACON
+2078287;SP;São Paulo;RRAS 6;Centro de Referência da Saúde da Mulher;17.06;UNACON;UNACON
+2688573;SP;São Paulo;RRAS 6;Hospital Geral de Vila Nova Cachoeirinha;17.14;Hospital Geral com Cirurgia Oncológica de Complexo Hospitalar;Hospital geral com cirurgia oncológica
+2077574;SP;São Paulo;RRAS 6;Conjunto Hospitalar do Mandaqui;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
+2088576;SP;São Paulo;RRAS 6;Hosp de Transp. do Estado de SP Eurycles de Jesus Zerbini;17.08;UNACON com Serviço de Hematologia;UNACON
+2078015;SP;São Paulo;RRAS 6;HC da FMUSP Hopsital das Clínicas São Paulo;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2077531;SP;São Paulo;RRAS 6;A C Camargo Cancer Center;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2071371;SP;São Paulo;RRAS 6;Hospital Infantil Darcy Vargas UGA III São Paulo;17.11;UNACON Exclusiva de Oncologia Pediátrica;UNACON
+2066572;SP;São Paulo;RRAS 6;Hospital Heliópolis;17.06;UNACON;UNACON
+2077523;SP;São Paulo;RRAS 6;Hospital Ipiranga/Unidade de Gestão Assistencial II;17.06;UNACON;UNACON
+2688689;SP;São Paulo;RRAS 6;Santa Casa de São Paulo Hospital Central São Paulo;17.08 e 17.09;UNACON com Serviços de Hematologia e de Oncologia Pediátrica;UNACON
+7711980;SP;São Paulo;RRAS 6;O Hospital Municipal Gilson de Cássia Marques;17.06;UNACON;UNACON
+2058391;SP;São Paulo;RRAS 6;Hospital Israelita Albert Einstein;17.15;Serviço de Radioterapia de Complexo Hospitalar;Serviço isolado de radioterapia
+2077477;SP;São Paulo;RRAS 6;Hospital Santa Marcelina São Paulo;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2077485;SP;São Paulo;RRAS 6;Hospital São Paulo Hospital de Ensino da UNIFESP;17.12;CACON;CACON
+2077590;SP;São Paulo;RRAS 6;IBCC;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2089696;SP;São Paulo;RRAS 6;Hospital GRAACC Instituto de Oncologia Pediátrica IOP;17.07 e 17.11;UNACON Exclusiva de Oncologia Pediátrica com Serviço de Radioterapia;UNACON
+2080125;SP;São Paulo;RRAS 6;Instituto do Câncer Arnaldo Vieira de Carvalho;17.12;CACON;CACON
+6123740;SP;São Paulo;RRAS 6;Instituto do Câncer do Estado de São Paulo/SES;17.12;CACON;CACON
+2091755;SP;São Paulo;RRAS 6;Hospital Geral de Vila Penteado Dr Jose Pangella São Paulo;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
+2081695;SP;Sorocaba e Itu;RRAS 8;Conjunto Hospitalar de Sorocaba;17.08;UNACON com Serviço de Hematologia;UNACON
+2092298;SP;Sorocaba e Itu;RRAS 8;Santa Casa de Itu;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
+2708779;SP;Sorocaba;RRAS 8;Santa Casa de Sorocaba;17.07;UNACON com Serviço de Radioterapia;UNACON
+2079321;SP;Sorocaba;RRAS 8;Hospital GPACI;17.11;UNACON exclusiva de Oncologia Pediátrica;UNACON
+2079828;SP;Taboão da Serra;RRAS 4;Hospital Geral de Pirajussara;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
+3126838;SP;Taubaté;RRAS 17;Hospital Regional do Vale do Paraíba/Sociedade Beneficente São Camilo;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2749319;SP;Taubaté;RRAS 17;Hospital Municipal Universitário de Taubaté;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
+2080664;SP;Tupã;RRAS 10;Santa Casa;17.06;UNACON;UNACON
+2600536;TO;Araguaína;Macrorregião Norte;Hospital de Regional de Araguaína;17.07;UNACON com Serviço de Radioterapia;UNACON
+2786117;TO;Palmas;Macrorregião Centro-Sul;Hospital Geral de Palmas;17.07;UNACON com Serviço de Radioterapia;UNACON
+9255400;TO;Palmas;Macrorregião Centro-Sul;Clínica Irradiar;17.06;Serviço de Radioterapia de Complexo Hospitalar;UNACON
+0004251;BA;Salvador;Leste;Hospital Português/Real Sociedade Portuguesa de Beneficiência;17.04;Serviço Isolado de Radioterapia;Serviço isolado de radioterapia
+0001023;PE;Recife;Metropolitana;Instituto de Radium e Supervoltagem Ivo Roesler/IRSIR;17.04;Serviço Isolado de Radioterapia;Serviço isolado de radioterapia
+2430843;PE;Recife;Metropolitana;Instituto de Radioterapia Waldemir Miranda LTDA/IRWAM;17.04;Serviço Isolado de Radioterapia;Serviço isolado de radioterapia
+3477371;RJ;Niterói;Macrroregião II;Clínica de Radioterapia Ingá;17.04;Serviço Isolado de Radioterapia;Serviço isolado de radioterapia
+2281821;RJ;Nova Iguaçu;Macrroregião I;Instituto Oncológico LTDA;17.04;Serviço Isolado de Radioterapia;Serviço isolado de radioterapia
+0019402;SC;Florianópolis;Grande Florianópolis;Irmandade do Senhor Jesus dos Passos e Hospital de Caridade;17.04;Serviço Isolado de Radioterapia;Serviço isolado de radioterapia
+0009369;SP;São José dos Campos;RRAS 17;Instituto de Radioterapia Vale do Paraíba/CENON - Centro de Oncologia Radioterápica do Vale do Paraíba;17.04;Serviço Isolado de Radioterapia;Serviço isolado de radioterapia

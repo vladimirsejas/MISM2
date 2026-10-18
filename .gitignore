@@ -17,6 +17,8 @@ env/
 *.csv
 # exceção: lista oficial de hospitais habilitados em oncologia (dado público de estabelecimento, sem paciente)
 !dados_geograficos/hospitais_oncologia_sp.csv
+!dados_geograficos/hospitais_oncologia_br.csv
+!dados_geograficos/hospitais_oncologia_br_geo.csv
 .streamlit/secrets.toml
 
 .DS_Store
