@@ -362,6 +362,50 @@ def _servicos_cnes(caminho_estabelecimento, unidades, tamanho_pedaco=TAMANHO_PED
         return {}, f"Não foi possível ler as relações de serviços do CNES: {erro}"
 
 
+def _medicos_cnes(caminho_estabelecimento, unidades, tamanho_pedaco=TAMANHO_PEDACO):
+    """Especialidades médicas cadastradas por unidade ("MEDICO DERMATOLOGISTA (2 cadastrados)").
+
+    Só CONTA: o código do profissional é usado na memória para não contar a mesma pessoa duas vezes e
+    não é guardado; nenhum nome, registro de conselho ou carga horária sai desta função. Conta quem tem
+    carga horária ambulatorial no cadastro. É cadastro, não agenda: não diz que há consulta marcada.
+    """
+    unidades = {so_digitos(u) for u in unidades if so_digitos(u)}
+    if not unidades:
+        return {}, ""
+    mes = re.search(r"(\d{6})\.csv$", os.path.basename(caminho_estabelecimento), re.IGNORECASE)
+    if not mes:
+        return {}, "O mês do arquivo de estabelecimentos não foi reconhecido; especialidades médicas não carregadas."
+    pasta = os.path.dirname(caminho_estabelecimento)
+    carga = os.path.join(pasta, f"tbCargaHorariaSus{mes.group(1)}.csv")
+    ocupacoes = os.path.join(pasta, f"tbAtividadeProfissional{mes.group(1)}.csv")
+    if not all(os.path.isfile(p) for p in (carga, ocupacoes)):
+        return {}, "Os arquivos de profissionais do CNES do mesmo mês não estão disponíveis; só serviços e exames são buscados."
+    try:
+        sep_o, cod_o, cols_o = _colunas_por_nome(ocupacoes)
+        col_cbo, col_nome = cols_o[_chave("CO_CBO")], cols_o[_chave("DS_ATIVIDADE_PROFISSIONAL")]
+        tabela = pd.read_csv(ocupacoes, sep=sep_o, encoding=cod_o, dtype=str, usecols=[col_cbo, col_nome],
+                             keep_default_na=False)
+        medicas = {str(r[col_cbo]).strip(): str(r[col_nome]).strip() for _, r in tabela.iterrows()
+                   if _sem_acento(str(r[col_nome])).upper().startswith("MEDICO")}
+        sep_c, cod_c, cols_c = _colunas_por_nome(carga)
+        c_unidade, c_pessoa, c_cbo, c_horas = (cols_c[_chave(k)] for k in (
+            "CO_UNIDADE", "CO_PROFISSIONAL_SUS", "CO_CBO", "QT_CARGA_HORARIA_AMBULATORIAL"))
+        pessoas = {}  # (unidade, cbo) -> {profissionais}; só na memória
+        for pedaco in pd.read_csv(carga, sep=sep_c, encoding=cod_c, dtype=str, usecols=[c_unidade, c_pessoa, c_cbo, c_horas],
+                                  chunksize=tamanho_pedaco, keep_default_na=False, low_memory=False):
+            pedaco = pedaco.loc[pedaco[c_unidade].map(so_digitos).isin(unidades) & pedaco[c_cbo].str.strip().isin(medicas)]
+            horas = pd.to_numeric(pedaco[c_horas].str.replace(",", ".", regex=False), errors="coerce").fillna(0)
+            for u, p, c in zip(pedaco.loc[horas > 0, c_unidade], pedaco.loc[horas > 0, c_pessoa], pedaco.loc[horas > 0, c_cbo]):
+                pessoas.setdefault((so_digitos(u), c.strip()), set()).add(p)
+        por_unidade = {}
+        for (u, cbo), quem in pessoas.items():
+            n = len(quem)
+            por_unidade.setdefault(u, []).append(f"{medicas[cbo]} ({n} cadastrado{'s' if n != 1 else ''})")
+        return {u: " | ".join(sorted(v)) for u, v in por_unidade.items()}, ""
+    except (OSError, ValueError, KeyError, pd.errors.ParserError, pd.errors.EmptyDataError) as erro:
+        return {}, f"Não foi possível ler os profissionais do CNES: {erro}"
+
+
 def _vazio(aviso):
     df = pd.DataFrame()
     df.attrs["aviso"] = aviso
@@ -431,6 +475,9 @@ def carregar_unidades(pasta=PASTA_CNES, codigo_ibge=CODIGO_IBGE_PADRAO, nome_cid
     desabilitados = int((~ativo).sum())
     ids_unidade = (coluna("unidade") if "unidade" in achados else pd.Series("", index=bruto.index))
     servicos_por_unidade, aviso_servicos = _servicos_cnes(caminho, ids_unidade[ativo], tamanho_pedaco)
+    medicos_por_unidade, aviso_medicos = _medicos_cnes(caminho, ids_unidade[ativo], tamanho_pedaco)
+    for u, texto in medicos_por_unidade.items():
+        servicos_por_unidade[u] = " | ".join(x for x in (servicos_por_unidade.get(u, ""), texto) if x)
 
     df = pd.DataFrame({
         "cnes": coluna("cnes").map(so_digitos).str.zfill(7),
@@ -470,7 +517,7 @@ def carregar_unidades(pasta=PASTA_CNES, codigo_ibge=CODIGO_IBGE_PADRAO, nome_cid
         "aviso": ("" if len(df) else
                   f"O arquivo {os.path.basename(caminho)} foi lido, mas nenhum estabelecimento tem o código "
                   f"{so_digitos(codigo_ibge)} na coluna de município ({achados[campo_municipio]})."),
-        "aviso_servicos": aviso_servicos,
+        "aviso_servicos": aviso_servicos, "aviso_medicos": aviso_medicos,
     })
     return df
 

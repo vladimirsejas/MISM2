@@ -172,6 +172,36 @@ def main():
         assert not df.attrs["aviso_servicos"]
         print("[OK] serviços CNES associados pela chave composta e pelo mesmo mês")
 
+    # médicos especialistas: conta profissionais distintos com carga ambulatorial, só de ocupações "MEDICO ..."
+    with tempfile.TemporaryDirectory() as pasta:
+        escrever(pasta, "tbEstabelecimento202608.csv",
+                 "CO_UNIDADE;CO_CNES;CO_IBGE;NO_FANTASIA;TP_UNIDADE;CO_MOTIVO_DESAB",
+                 ["1001;2080001;3543907;AME RIO CLARO;04;", "1002;2080002;3543907;UBS SEM MEDICO;02;",
+                  "9001;2090001;3550308;CLINICA EM SAO PAULO;04;"])
+        escrever(pasta, "tbAtividadeProfissional202608.csv",
+                 "CO_CBO;DS_ATIVIDADE_PROFISSIONAL;TP_CLASSIFICACAO_PROFISSIONAL",
+                 ["225135;MEDICO DERMATOLOGISTA;", "225120;MEDICO CARDIOLOGISTA;", "322205;TECNICO DE ENFERMAGEM;"])
+        escrever(pasta, "tbCargaHorariaSus202608.csv",
+                 "CO_UNIDADE;CO_PROFISSIONAL_SUS;CO_CBO;TP_SUS_NAO_SUS;QT_CARGA_HORARIA_AMBULATORIAL",
+                 ["1001;P1;225135;S;20", "1001;P1;225135;S;10",   # a mesma pessoa em dois vínculos conta uma vez
+                  "1001;P2;225135;S;20", "1001;P3;225135;S;0",    # sem carga ambulatorial: não conta
+                  "1001;P4;225120;S;8", "1001;P5;322205;S;40",    # só ocupações médicas
+                  "9001;P6;225135;S;20"])                         # unidade de outra cidade: ignorada
+        df = us.carregar_unidades(pasta, tamanho_pedaco=2)
+        ame = df[df["nome"].str.contains("Ame", case=False)].iloc[0]["servicos"]
+        assert "MEDICO DERMATOLOGISTA (2 cadastrados)" in ame and "MEDICO CARDIOLOGISTA (1 cadastrado)" in ame, ame
+        assert "ENFERMAGEM" not in ame, ame
+        assert df[df["nome"].str.contains("Sem Medico", case=False)].iloc[0]["servicos"] == ""
+        assert "P1" not in " ".join(df["servicos"]), "nenhum código de profissional pode sair"
+        assert not df.attrs["aviso_medicos"]
+        print("[OK] especialistas médicos: contagem por unidade, sem identificar pessoas")
+    with tempfile.TemporaryDirectory() as pasta:
+        escrever(pasta, "tbEstabelecimento202608.csv", "CO_UNIDADE;CO_CNES;CO_IBGE;NO_FANTASIA;TP_UNIDADE;CO_MOTIVO_DESAB",
+                 ["1001;2080001;3543907;AME RIO CLARO;04;"])
+        df = us.carregar_unidades(pasta)
+        assert len(df) == 1 and df.attrs["aviso_medicos"], "sem os arquivos de profissionais: aviso, sem quebrar"
+        print("[OK] sem arquivos de profissionais: aviso, sem exceção")
+
     print("\nTodas as checagens das unidades de saúde passaram.")
 
 

@@ -80,6 +80,10 @@ def main():
          "natureza": "publica", "endereco": "Rua Saúde, 10", "bairro": "Centro", "cep": "", "telefone": "",
          "lat": float("nan"), "lon": float("nan"), "mapa": False,
          "servicos": "MAMOGRAFIA | ULTRASONOGRAFIA | EXAMES CITOPATOLOGICOS | DO APARELHO GINECOLOGICO"},
+        {"cnes": "2080005", "nome": "Clinica da Pele", "tipo": "Clínica", "grupo": "especialidade",
+         "natureza": "publica", "endereco": "Rua 9, 1", "bairro": "Centro", "cep": "", "telefone": "",
+         "lat": float("nan"), "lon": float("nan"), "mapa": False,
+         "servicos": "MEDICO DERMATOLOGISTA (2 cadastrados) | MEDICO CARDIOLOGISTA (1 cadastrado)"},
     ])
     cnes.attrs.update({"tem_natureza": True, "arquivo": "tbEstabelecimento202608.csv"})
     df = oa.unificar(cnes, servicos)
@@ -97,6 +101,11 @@ def main():
     assert list(oa.filtrar(df, "especialidade", busca="preventivo papanicolau")["nome"]) == ["AME Rio Claro"]
     assert list(oa.filtrar(df, "especialidade", busca="ginecologista")["nome"]) == ["AME Rio Claro"]
     assert oa.termos_servico_buscados("onde fazer mamo pelo sus") == ("MAMOGRAFIA",)
+    # especialista: vem do cadastro de profissionais; a unidade só aparece se tiver o médico cadastrado
+    for pedido in ("dermatologista", "preciso de um dermatologista", "dermatologia", "problema de pele"):
+        assert list(oa.filtrar(df, "especialidade", busca=pedido)["nome"]) == ["Clinica da Pele"], pedido
+    assert list(oa.filtrar(df, "especialidade", busca="cardiologista")["nome"]) == ["Clinica da Pele"]
+    assert oa.filtrar(df, "especialidade", busca="neurologia").empty
     print("[OK] busca por serviço CNES e nomes populares de exames/especialistas")
 
     # filtros

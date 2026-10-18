@@ -69,17 +69,23 @@ SINONIMOS_SERVICOS = {
     "ultrassom": ("ULTRASONOGRAFIA",), "ultra som": ("ULTRASONOGRAFIA",), "usg": ("ULTRASONOGRAFIA",),
     "preventivo": ("EXAMES CITOPATOLOGICOS",), "papanicolau": ("EXAMES CITOPATOLOGICOS",),
     "papanicolaou": ("EXAMES CITOPATOLOGICOS",),
-    "ginecologista": ("DO APARELHO GINECOLOGICO",), "ginecologia": ("DO APARELHO GINECOLOGICO",),
+    "ginecologista": ("DO APARELHO GINECOLOGICO", "GINECOLOGISTA"), "ginecologia": ("DO APARELHO GINECOLOGICO", "GINECOLOGISTA"),
+    # especialidades médicas: vêm do cadastro de profissionais do CNES (ocupação "MEDICO ...")
+    "dermatologia": ("DERMATOLOG",), "pele": ("DERMATOLOG",),
+    "cardiologia": ("CARDIOLOG",), "ortopedia": ("ORTOPED",), "ortopedista": ("ORTOPED",),
+    "oftalmologia": ("OFTALMOLOG",), "oculista": ("OFTALMOLOG",), "mastologia": ("MASTOLOG",),
+    "endocrinologia": ("ENDOCRINOLOG",), "psiquiatria": ("PSIQUIATR",), "neurologia": ("NEUROLOG",),
     "raio x": ("RADIOLOGIA",), "raiox": ("RADIOLOGIA",), "radiografia": ("RADIOLOGIA",),
     "laboratorio": ("SERVICO DE DIAGNOSTICO DE LABORATORIO CLINICO",),
     "exame de sangue": ("SERVICO DE DIAGNOSTICO DE LABORATORIO CLINICO",),
     "exames de sangue": ("SERVICO DE DIAGNOSTICO DE LABORATORIO CLINICO",),
-    "oncologista": ("ONCOLOGIA CLINICA",),
+    "oncologista": ("ONCOLOGIA CLINICA", "ONCOLOGISTA"),
 }
 PARADA_BUSCA = {"A", "AO", "AOS", "AS", "COM", "DA", "DAS", "DE", "DO", "DOS", "E", "EM", "NA", "NAS", "NO", "NOS",
                 "O", "OS", "PARA", "PELO", "PELA", "POR", "QUERO", "PRECISO", "PROCURO", "PROCURE", "BUSCAR", "CONSIGO",
                 "ONDE", "FAZER", "FAZ", "TEM", "UM", "UMA", "SUS", "CONSULTA", "CONSULTAR", "AGENDAR", "AGENDAMENTO",
-                "MARCAR", "MARCACAO", "ATENDIMENTO", "ATENDER", "EXAME", "EXAMES"}
+                "MARCAR", "MARCACAO", "ATENDIMENTO", "ATENDER", "EXAME", "EXAMES", "PROBLEMA", "PROBLEMAS",
+                "MEDICO", "MEDICA", "DOUTOR", "DOUTORA", "ESPECIALISTA", "TRATAMENTO"}
 
 
 def link_como_chegar(nome, endereco, cidade="Rio Claro"):

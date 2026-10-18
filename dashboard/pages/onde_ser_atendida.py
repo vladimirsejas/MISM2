@@ -85,7 +85,8 @@ def versoes_cnes(arquivo):
     if mes:
         pasta = os.path.dirname(arquivo)
         relacionados.extend(os.path.join(pasta, f"{prefixo}{mes.group(1)}.csv")
-                            for prefixo in ("rlEstabServClass", "tbClassificacaoServico", "tbServicoEspecializado"))
+                            for prefixo in ("rlEstabServClass", "tbClassificacaoServico", "tbServicoEspecializado",
+                                            "tbCargaHorariaSus", "tbAtividadeProfissional"))
     return tuple((p, os.path.getmtime(p) if os.path.exists(p) else None) for p in relacionados)
 
 
@@ -159,7 +160,7 @@ def cartao(u, n_internacoes, busca=""):
         texto_servicos = ", ".join(html.escape(t) for t in visiveis)
         if len(termos_servico) > len(visiveis):
             texto_servicos += f" e mais {len(termos_servico) - len(visiveis)} registro(s)"
-        corpo += (f'<div class="un-linha"><b>Serviços registrados no CNES</b>: {texto_servicos}</div>'
+        corpo += (f'<div class="un-linha"><b>Serviços e especialidades registrados no CNES</b>: {texto_servicos}</div>'
                   '<div class="un-aviso">Cadastro não confirma vaga, atendimento pelo SUS ou disponibilidade hoje.</div>')
     if u.aviso:
         corpo += f'<div class="un-aviso">⚠ {html.escape(u.aviso)}</div>'
@@ -189,6 +190,8 @@ df = lista(arquivo or "", versoes_cnes(arquivo))
 tem_cnes = bool(df.attrs.get("tem_cnes"))
 if tem_cnes and df.attrs.get("aviso_servicos"):
     st.caption("Busca por exames/especialidades indisponível: " + str(df.attrs["aviso_servicos"]))
+if tem_cnes and df.attrs.get("aviso_medicos"):
+    st.caption("Busca por médico especialista indisponível: " + str(df.attrs["aviso_medicos"]))
 
 if df.empty:
     st.warning("Não encontrei lugares para mostrar. O catálogo conferido (dados_geograficos) e o arquivo do CNES (banco\\cnes) "
