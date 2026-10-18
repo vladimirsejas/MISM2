@@ -168,7 +168,7 @@ def ler_cnes(pasta, cnes, tamanho_pedaco=us.TAMANHO_PEDACO):
                 "endereco": us.endereco_legivel(campo("logradouro"), campo("numero"), campo("bairro")),
                 "cep": us.cep_legivel(campo("cep")), "telefone": telefone_do_cnes(campo("telefone")),
                 "lat": None if pd.isna(lat) else float(lat), "lon": None if pd.isna(lon) else float(lon),
-                "ativo": motivo == "",
+                "ativo": motivo == "", "unidade": us.so_digitos(campo("unidade")),
             }
     return saida, ""
 
