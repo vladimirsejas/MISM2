@@ -151,6 +151,27 @@ def main():
     assert us.classificar_tipo("2")[1] == "basica" and us.classificar_tipo("", "HOSPITAL DIA ISOLADO")[1] == "hospital"
     print("[OK] nomes, telefone, CEP, natureza e tipo (código com ou sem zero à esquerda, ou texto)")
 
+    # serviços CNES: os quatro arquivos precisam ter o mesmo mês; a classificação é chave composta
+    # serviço+classificação, para não associar rótulos de outro serviço com o mesmo código.
+    with tempfile.TemporaryDirectory() as pasta:
+        escrever(pasta, "tbEstabelecimento202608.csv",
+                 "CO_UNIDADE;CO_CNES;CO_IBGE;NO_FANTASIA;TP_UNIDADE;CO_MOTIVO_DESAB",
+                 ["1001;2080001;3543907;AME RIO CLARO;04;"])
+        escrever(pasta, "rlEstabServClass202608.csv", "CO_UNIDADE;CO_SERVICO;CO_CLASSIFICACAO",
+                 ["1001;151;002"])
+        escrever(pasta, "tbClassificacaoServico202608.csv",
+                 "CO_CLASSIFICACAO_SERVICO;CO_SERVICO_ESPECIALIZADO;DS_CLASSIFICACAO_SERVICO",
+                 ["002;151;MAMOGRAFIA", "002;152;MEDICINA NUCLEAR IN VITRO"])
+        escrever(pasta, "tbServicoEspecializado202608.csv",
+                 "CO_SERVICO_ESPECIALIZADO;DS_SERVICO_ESPECIALIZADO",
+                 ["151;SERVICO DE DIAGNOSTICO POR IMAGEM", "152;SERVICO DE MEDICINA NUCLEAR"])
+        df = us.carregar_unidades(pasta, tamanho_pedaco=1)
+        servicos = df.iloc[0]["servicos"]
+        assert "MAMOGRAFIA" in servicos and "SERVICO DE DIAGNOSTICO POR IMAGEM" in servicos, servicos
+        assert "MEDICINA NUCLEAR" not in servicos, servicos
+        assert not df.attrs["aviso_servicos"]
+        print("[OK] serviços CNES associados pela chave composta e pelo mesmo mês")
+
     print("\nTodas as checagens das unidades de saúde passaram.")
 
 

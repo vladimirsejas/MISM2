@@ -1,5 +1,6 @@
 import html
 import os
+import re
 import sqlite3
 import sys
 
@@ -74,6 +75,20 @@ PAGINA = 12
 NOME_CIDADE = "Rio Claro"
 
 
+def versoes_cnes(arquivo):
+    """Invalida o cache quando muda qualquer CSV usado na busca por serviços."""
+    if not arquivo:
+        return ()
+    nome = os.path.basename(arquivo)
+    mes = re.search(r"(\d{6})\.csv$", nome, re.IGNORECASE)
+    relacionados = [arquivo]
+    if mes:
+        pasta = os.path.dirname(arquivo)
+        relacionados.extend(os.path.join(pasta, f"{prefixo}{mes.group(1)}.csv")
+                            for prefixo in ("rlEstabServClass", "tbClassificacaoServico", "tbServicoEspecializado"))
+    return tuple((p, os.path.getmtime(p) if os.path.exists(p) else None) for p in relacionados)
+
+
 @st.cache_data(show_spinner="Lendo o cadastro do CNES…")
 def lista(arquivo, modificado):
     # `arquivo` e `modificado` só entram na chave do cache: ao trocar o CSV, a lista é lida de novo.
@@ -118,7 +133,7 @@ def pergunta(texto, detalhe):
                 unsafe_allow_html=True)
 
 
-def cartao(u, n_internacoes):
+def cartao(u, n_internacoes, busca=""):
     selos = f'<span class="un-selo {u.natureza}">{html.escape(us.NATUREZA_CURTA.get(u.natureza, "Não informada"))}</span>'
     if u.conferido_em:
         selos += f'<span class="un-selo conferido" title="Telefone e horário conferidos na fonte oficial">conferido em {html.escape(u.conferido_em)}</span>'
@@ -134,6 +149,18 @@ def cartao(u, n_internacoes):
     if u.horario:
         linhas.append(f"🕒 {html.escape(u.horario)}")
     corpo = "".join(f'<div class="un-linha">{l}</div>' for l in linhas)
+    termos_servico = [t.strip() for t in str(getattr(u, "servicos", "") or "").split("|") if t.strip()]
+    if termos_servico:
+        alvos = [us._chave(t).replace("_", " ") for t in oa.termos_servico_buscados(busca)]
+        correspondentes = [t for t in termos_servico
+                           if any(alvo in us._chave(t).replace("_", " ") for alvo in alvos)]
+        termos_servico = correspondentes + [t for t in termos_servico if t not in correspondentes]
+        visiveis = termos_servico[:6]
+        texto_servicos = ", ".join(html.escape(t) for t in visiveis)
+        if len(termos_servico) > len(visiveis):
+            texto_servicos += f" e mais {len(termos_servico) - len(visiveis)} registro(s)"
+        corpo += (f'<div class="un-linha"><b>Serviços registrados no CNES</b>: {texto_servicos}</div>'
+                  '<div class="un-aviso">Cadastro não confirma vaga, atendimento pelo SUS ou disponibilidade hoje.</div>')
     if u.aviso:
         corpo += f'<div class="un-aviso">⚠ {html.escape(u.aviso)}</div>'
     botoes = (f'<a class="un-chegar" title="Abre a rota no Google Maps" href="{html.escape(u.link_chegar)}" target="_blank" rel="noopener noreferrer">'
@@ -158,8 +185,10 @@ st.markdown('<div class="escudo-alerta"><b>Risco imediato:</b> ligue <b>190</b> 
             unsafe_allow_html=True)
 
 arquivo = us.achar_arquivo()
-df = lista(arquivo or "", os.path.getmtime(arquivo) if arquivo else 0)
+df = lista(arquivo or "", versoes_cnes(arquivo))
 tem_cnes = bool(df.attrs.get("tem_cnes"))
+if tem_cnes and df.attrs.get("aviso_servicos"):
+    st.caption("Busca por exames/especialidades indisponível: " + str(df.attrs["aviso_servicos"]))
 
 if df.empty:
     st.warning("Não encontrei lugares para mostrar. O catálogo conferido (dados_geograficos) e o arquivo do CNES (banco\\cnes) "
@@ -182,8 +211,9 @@ with caixa:
 st.caption(oa.ESCOLHAS[escolha][1])
 
 c1, c2 = st.columns([2.2, 1.6])
-busca = c1.text_input("Ou procure pelo nome, rua ou bairro (em todas as opções)", key="un_busca",
-                      placeholder="ex.: Jardim, Santa Casa, Av. 1")
+busca = c1.text_input("Busque um exame, especialista, serviço ou unidade (em todas as opções)", key="un_busca",
+                      placeholder="ex.: mamografia, preventivo, ultrassom, ginecologista, AME")
+c1.caption("A busca usa serviços registrados no CNES. Ela localiza unidades; não informa nomes de profissionais nem agenda de consultas.")
 so_publicos = False
 if tem_cnes and df.attrs.get("tem_natureza", False):
     so_publicos = c2.checkbox("Só públicas e sem fins lucrativos", value=True, key="un_publicos",
@@ -198,11 +228,11 @@ if st.session_state.get("un_assinatura") != assinatura:
 limite = st.session_state.setdefault("un_limite", PAGINA)
 
 if mostrar.empty:
-    st.info("Nenhum lugar com esse pedido. Tente outras palavras, apague a busca ou escolha outra opção.")
+    st.info("Não encontrei uma unidade com esse cadastro. Tente ‘mamografia’, ‘ultrassom’, ‘preventivo’, o nome do exame ou da unidade; confirme a disponibilidade antes de ir.")
 else:
     titulo = f"{len(mostrar)} lugar(es)" + (" encontrados na busca" if busca.strip() else f": {oa.ESCOLHAS[escolha][0].lower()}")
     pergunta(titulo, "sem ranking de qualidade")
-    cartoes = "".join(cartao(u, internacoes.get(u.cnes)) for u in mostrar.head(limite).itertuples())
+    cartoes = "".join(cartao(u, internacoes.get(u.cnes), busca) for u in mostrar.head(limite).itertuples())
     st.markdown(f'<div class="un-grade">{cartoes}</div>', unsafe_allow_html=True)
     if len(mostrar) > limite:
         if st.button(f"Mostrar mais ({len(mostrar) - limite} restantes)", key="un_mais"):
@@ -217,7 +247,7 @@ else:
         st.caption(f"{len(pontos)} no mapa" + (f"; para os outros {sem_ponto}, use o botão “Como chegar”." if sem_ponto else "."))
 
     st.markdown('<div class="escudo-leitura"><b>Antes de ir</b><ul>'
-                '<li>Estar na lista <b>não garante</b> vaga nem que o serviço esteja aberto agora: ligue ou confirme na fonte.</li>'
+                '<li>Cadastro de unidade ou serviço <b>não garante</b> vaga, atendimento pelo SUS nem que esteja aberto agora: ligue ou confirme na fonte.</li>'
                 '<li>A lista descreve onde procurar; não diz qual lugar é melhor.</li>'
                 + ('<li>Para pedir mamografia e Papanicolau, comece pelo <b>Posto de saúde</b>.</li>' if escolha == "basica" else '')
                 + '</ul></div>', unsafe_allow_html=True)

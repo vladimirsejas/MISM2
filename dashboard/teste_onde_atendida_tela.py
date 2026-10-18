@@ -19,14 +19,15 @@ RAIZ = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
 PAGINA = os.path.join(RAIZ, "dashboard", "pages", "onde_ser_atendida.py")
 falhas = []
 
-CABECALHO = ("CO_CNES;CO_IBGE;NO_FANTASIA;TP_UNIDADE;CO_NATUREZA_JUR;NO_LOGRADOURO;NU_ENDERECO;NO_BAIRRO;"
+CABECALHO = ("CO_UNIDADE;CO_CNES;CO_IBGE;NO_FANTASIA;TP_UNIDADE;CO_NATUREZA_JUR;NO_LOGRADOURO;NU_ENDERECO;NO_BAIRRO;"
              "CO_CEP;NU_TELEFONE;NU_LATITUDE;NU_LONGITUDE;CO_MOTIVO_DESAB")
 LINHAS = [
-    "2080001;3543907;UBS JARDIM DAS FLORES;02;1244;AV PAULISTA;120;JARDIM FLORES;13500100;1935341234;-22.41;-47.56;",
-    "2080002;3543907;SANTA CASA DE RIO CLARO;05;3999;RUA 3;0;CENTRO;13500000;1935345000;-22.405;-47.561;",
-    "2080003;3543907;CLINICA ESTRELA LTDA;36;2062;RUA 7;45;VILA NOVA;13506000;19999998888;-10.0;-40.0;",
-    "2080004;3543907;UPA CENTRAL;73;1244;RUA 8;10;CENTRO;13500000;1935000001;-22.40;-47.57;",
-    "2080005;3543907;FARMACIA POPULAR;43;1244;RUA 9;11;CENTRO;13500000;;;;",
+    "1001;2080001;3543907;UBS JARDIM DAS FLORES;02;1244;AV PAULISTA;120;JARDIM FLORES;13500100;1935341234;-22.41;-47.56;",
+    "1002;2080002;3543907;SANTA CASA DE RIO CLARO;05;3999;RUA 3;0;CENTRO;13500000;1935345000;-22.405;-47.561;",
+    "1003;2080003;3543907;CLINICA ESTRELA LTDA;36;2062;RUA 7;45;VILA NOVA;13506000;19999998888;-10.0;-40.0;",
+    "1004;2080004;3543907;UPA CENTRAL;73;1244;RUA 8;10;CENTRO;13500000;1935000001;-22.40;-47.57;",
+    "1005;2080005;3543907;FARMACIA POPULAR;43;1244;RUA 9;11;CENTRO;13500000;;;;",
+    "1006;2080006;3543907;AME RIO CLARO;04;1244;RUA SAUDE;10;CENTRO;13500000;1935000002;;;;",
 ]
 
 
@@ -79,6 +80,12 @@ def main():
         # B. com CNES sintético
         with open(os.path.join(cheia, "tbEstabelecimento202608.csv"), "w", encoding="latin-1", newline="") as f:
             f.write(CABECALHO + "\n" + "\n".join(LINHAS) + "\n")
+        with open(os.path.join(cheia, "rlEstabServClass202608.csv"), "w", encoding="latin-1", newline="") as f:
+            f.write("CO_UNIDADE;CO_SERVICO;CO_CLASSIFICACAO\n1006;151;002\n")
+        with open(os.path.join(cheia, "tbClassificacaoServico202608.csv"), "w", encoding="latin-1", newline="") as f:
+            f.write("CO_CLASSIFICACAO_SERVICO;CO_SERVICO_ESPECIALIZADO;DS_CLASSIFICACAO_SERVICO\n002;151;MAMOGRAFIA\n")
+        with open(os.path.join(cheia, "tbServicoEspecializado202608.csv"), "w", encoding="latin-1", newline="") as f:
+            f.write("CO_SERVICO_ESPECIALIZADO;DS_SERVICO_ESPECIALIZADO\n151;SERVICO DE DIAGNOSTICO POR IMAGEM\n")
         os.environ["ESCUDO_CNES_PASTA"] = cheia
         esquecer_modulos()
         at = abrir()
@@ -110,10 +117,14 @@ def main():
         next(i for i in at.text_input if i.key == "un_busca").set_value("jardim").run()
         t = texto(at)
         checar("C. busca 'jardim' (em todas as opções): a UBS do CNES", "UBS Jardim das Flores" in t and not at.exception)
+        next(i for i in at.text_input if i.key == "un_busca").set_value("mamo pelo SUS").run()
+        t = texto(at)
+        checar("C. busca em linguagem comum encontra mamografia pelo CNES",
+               "AME Rio Claro" in t and "MAMOGRAFIA" in t and not at.exception)
         next(i for i in at.text_input if i.key == "un_busca").set_value("farmacia").run()
         checar("C. a busca acha a farmácia (grupo que não é botão)", "Farmacia Popular" in texto(at))
         next(i for i in at.text_input if i.key == "un_busca").set_value("zzzz").run()
-        checar("C. busca sem resultado: mensagem, sem quebrar", any("Nenhum lugar" in str(i.value) for i in at.info) and not at.exception)
+        checar("C. busca sem resultado: mensagem, sem quebrar", any("Não encontrei" in str(i.value) for i in at.info) and not at.exception)
 
     if falhas:
         print("\nFALHARAM:", *falhas, sep="\n  - ")
