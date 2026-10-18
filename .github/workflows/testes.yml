@@ -63,6 +63,7 @@ jobs:
           python teste_carga_robusta.py
           python teste_carga_territorial.py
           python teste_selecao_csv.py
+          python teste_listar_hospitais_por_cidade.py
           python teste_deteccao_separador.py
           python teste_completude_meses.py
           python teste_investigar_2025.py

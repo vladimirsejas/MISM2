@@ -518,6 +518,11 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   (a página não traz) e o catálogo não afirma. ICESP com as 4 unidades. A busca separa pedido de caminho ("onde faço colonoscopia pelo SUS?" -> jornada) de visão geral
   ("o que é o FIT?" -> cartão do câncer) (`apoio.JORNADA_DO_TIPO`, `apoio_busca._PEDE_CAMINHO`). A lista de centros sugerida pelo autor ficou **triada, não cadastrada**
   (sem fonte; ver `docs/APOIO_COBERTURA_ONCOLOGICA.md`). Teste: seção I de `teste_apoio_cancer.py` (o C4 passou a aceitar "50 a 75 anos" só no intestino).
+- **CNES dos hospitais de referência (autor, 18/10/2026): conferidos com o banco real.** Uma lista de IA trouxe 8 CNES; `select` no banco do autor: **7 certos** (ICESP 6123740, A.C.Camargo
+  2077531, Inst. do Câncer Arnaldo Vieira de Carvalho 2080125, H. Estadual Mário Covas 2080273, Amaral Carvalho 2083086, HC Unicamp 2079798, HC FAEPA Ribeirão Preto 2082187; nome oficial e
+  município do hospital batem) e **1 errado: 9662561 (Hospital de Amor) não existe no banco**. Regra: CNES só entra no catálogo depois de conferido no banco (`hospitais` + `internacoes`);
+  nunca de lista de terceiros. Ferramenta só de leitura: `py etl\listar_hospitais_por_cidade.py [cidades]` (top hospitais por internações de câncer, com CNES e nome oficial); teste
+  `etl/teste_listar_hospitais_por_cidade.py`. O catálogo do Apoio AINDA não guarda CNES por hospital (próximo passo, depois de conferir o de Barretos).
 - Ainda não feito (combinar): população do IBGE; testar com pessoas de verdade; revisar com o autor o
   vocabulário popular do Apoio (`apoio_busca.VOCABULARIO`/`EXTRA`).
 
