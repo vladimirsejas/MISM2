@@ -22,11 +22,11 @@ def checar(nome, ok):
 # ---------- a lista oficial guardada no projeto ----------
 oficiais = c.ler_oficiais()
 cnes = [o["cnes"] for o in oficiais]
-checar("lista oficial de SP: 80 estabelecimentos, CNES de 7 dígitos, sem repetir",
-       len(oficiais) == 80 and all(x.isdigit() and len(x) == 7 for x in cnes) and len(set(cnes)) == 80)
-checar("tipos conhecidos (61 UNACON, 14 CACON, 4 hospitais gerais com cirurgia, 1 serviço de radioterapia)",
+checar("lista oficial de SP: 88 estabelecimentos, CNES de 7 dígitos, sem repetir",
+       len(oficiais) == 88 and all(x.isdigit() and len(x) == 7 for x in cnes) and len(set(cnes)) == 88)
+checar("tipos conhecidos (61 UNACON, 14 CACON, 8 hospitais gerais com cirurgia, 5 serviços de radioterapia)",
        sorted((t, sum(1 for o in oficiais if o["tipo"] == t)) for t in {o["tipo"] for o in oficiais})
-       == [("CACON", 14), ("Hospital geral com cirurgia oncológica", 4), ("Serviço isolado de radioterapia", 1), ("UNACON", 61)])
+       == [("CACON", 14), ("Hospital geral com cirurgia oncológica", 8), ("Serviço isolado de radioterapia", 5), ("UNACON", 61)])
 por_cnes = {o["cnes"]: o for o in oficiais}
 checar("CNES conferidos no banco do autor (18/10/2026) batem com a lista do Ministério",
        all(x in por_cnes for x in ("6123740", "2077531", "2080125", "2080273", "2083086", "2079798", "2082187", "2090236",
@@ -86,7 +86,7 @@ with tempfile.TemporaryDirectory() as pasta:
         codigo = c.main(["--salvar"], banco=banco, pasta_cnes=pasta_cnes, saida=saida)
     texto = relatorio.getvalue()
     checar("relatório traz a lista, o cadastro desabilitado e o hospital fora da lista",
-           "80 estabelecimentos" in texto and "DESABILITADO" in texto and "5550874" in texto and "todos os CNES do catálogo" in texto
+           "88 estabelecimentos" in texto and "DESABILITADO" in texto and "5550874" in texto and "todos os CNES do catálogo" in texto
            and "COORDENADA SUSPEITA" in texto and "Internações por câncer no SIH em hospitais da lista oficial: 7 de 307" in texto)
     checar("main roda, grava o CSV e não altera o banco", codigo == 0 and os.path.exists(saida) and os.path.getmtime(banco) == antes)
     # sem banco e sem CNES: nada quebra

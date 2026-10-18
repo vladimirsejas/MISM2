@@ -94,3 +94,5 @@ jobs:
       - name: Caixa de busca de Onde ser atendida (frases reais, erro de digitação, exame x médico)
         working-directory: algoritimos
         run: python teste_busca_caixa.py
+      - name: Lista de hospitais habilitados em oncologia (leitor da planilha, células mescladas)
+        run: python etl/teste_gerar_lista_hospitais_oncologia.py

@@ -1,81 +1,89 @@
 ﻿cnes;municipio;regiao_de_saude;nome_ministerio;codigo_habilitacao;habilitacao;tipo
 2058790;Americana;RRAS 15;Hospital Municipal Dr. Waldemar Tebaldi;17.06;UNACON;UNACON
+2078775;Araçatuba;RRAS 12;Hospital Sagrado Coração de Jesus/Santa Casa de Misericórdia de Araçatuba;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
 2082527;Araraquara;RRAS 13;Santa Casa de Araraquara;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
 2081253;Araras;RRAS 14;Hospital São Luiz de Araras;17.06;UNACON;UNACON
-2078775;Araçatuba;RRAS 12;Hospital Sagrado Coração de Jesus/Santa Casa de Misericórdia de Araçatuba;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
 2083094;Assis;RRAS 10;Hospital Regional de Assis;17.06;UNACON;UNACON
 2083604;Avaré;RRAS 9;Santa Casa de Avaré;17.06;UNACON;UNACON
 2090236;Barretos;RRAS 13;Fundação Pio XII Barretos;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
 2790602;Bauru;RRAS 9;Hospital Estadual de Bauru;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
 2748223;Botucatu;RRAS 9;Hospital das Clínicas da Faculdade de Medicina de Botucatu;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
 2704900;Bragança Paulista;RRAS 16;Hospital Universitário São Francisco na Prov. De Deus;17.06;UNACON com Serviço de Radioterapia;UNACON
-2079798;Campinas;RRAS 15;Hospital das Clínicas da UNICAMP;17.12;CACON;CACON
 2081482;Campinas;RRAS 15;Boldrini Campinas;17.07 e 17.11;UNACON Exclusiva de Oncologia Pediátrica com Serviço de Radioterapia;UNACON
-2081490;Campinas;RRAS 15;Hospital Municipal Dr. Mário Gatti;17.07;UNACON com Serviço de Radioterapia;UNACON
 2082128;Campinas;RRAS 15;Hospital e Maternidade Celso Pierro;17.08;UNACON com Serviço de Hematologia;UNACON
+2079798;Campinas;RRAS 15;Hospital das Clínicas da UNICAMP;17.12;CACON;CACON
+2081490;Campinas;RRAS 15;Hospital Municipal Dr. Mário Gatti;17.07;UNACON com Serviço de Radioterapia;UNACON
 2089327;Catanduva;RRAS 12;Hospital Padre Albino Catanduva;17.06;UNACON;UNACON
+2089335;Catanduva;RRAS 12;Hospital Escola Emílio Carlos Catanduva;17.15;Serviço de Radioterapia de Complexo Hospitalar;Serviço isolado de radioterapia
 2084163;Diadema;RRAS 1;Hospital Estadual de Diadema – Hospital Serraria;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
 2705982;Franca;RRAS 13;Santa Casa de Franca;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
 2081512;Guaratinguetá;RRAS 17;Santa Casa de Misericórdia de Guaratinguetá;17.06;UNACON;UNACON
-2754843;Guarujá;RRAS 7;Hospital Santo Amaro;17.06;UNACON;UNACON
 2080338;Guarulhos;RRAS 2;Hospital Geral de Guarulhos Prof. Waldemar de Carvalho Pinto Filho;17.07;UNACON com Serviço de Radioterapia;UNACON
+2754843;Guarujá;RRAS 7;Hospital Santo Amaro;17.06;UNACON;UNACON
 2784602;Indaiatuba;RRAS 15;Hospital Augusto de Oliveira Camargo;17.06;UNACON;UNACON
 2027186;Itapeva;RRAS 8;Santa Casa de Misericórdia de Itapeva;17.06;UNACON;UNACON
 2085194;Jacareí;RRAS 17;Hospital São Francisco de Assis;17.06;UNACON;UNACON
 7066376;Jales;RRAS 12;Hospital de Amor Jales;17.07;UNACON com Serviço de Radioterapia;UNACON
 2083086;Jaú;RRAS 9;Hospital Amaral Carvalho;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
-2716801;Jundiaí;RRAS 16;GRENDACC;17.11;UNACON Exclusiva de Oncologia Pediátrica;UNACON
 2786435;Jundiaí;RRAS 16;HCSVP Hospital São Vicente;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2716801;Jundiaí;RRAS 16;GRENDACC;17.11;UNACON Exclusiva de Oncologia Pediátrica;UNACON
 2081458;Limeira;RRAS 14;Santa Casa de Limeira;17.07;UNACON com Serviço de Radioterapia;UNACON
 2025507;Marília;RRAS 10;Hospital das Clínicas HCFAMEMA;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
 2083116;Marília;RRAS 10;Santa Casa de Marília;17.08 e 17.09;UNACON com Serviços de Hematologia e de Oncologia Pediátrica;UNACON
-2096498;Mogi Guaçu;RRAS 15;Hospital Municipal Dr. Tabajara Ramos;17.07;UNACON com Serviço de Radioterapia;UNACON
 2080680;Mogi das Cruzes;RRAS 2;Hospital das Clínicas Luzia de Pinho Melo;17.08;Unacon com Serviço de Hematologia;UNACON
+2096498;Mogi Guaçu;RRAS 15;Hospital Municipal Dr. Tabajara Ramos;17.07;UNACON com Serviço de Radioterapia;UNACON
 4049020;Ourinhos;RRAS 10;Santa Casa de Ourinhos;17.07;UNACON com Serviço de Radioterapia;UNACON
 2077434;Pariquera-Açu;RRAS 7;Hospital Regional Dr. Leopoldo Bevilacqua;17.06;UNACON;UNACON
 2087057;Piracicaba;RRAS 14;Hospital Fornecedores de Cana de Piracicaba;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
 2772310;Piracicaba;RRAS 14;Santa Casa de Piracicaba;17.07;UNACON com Serviço de Radioterapia;UNACON
-2755130;Presidente Prudente;RRAS 11;Hospital Domingos Leonardo Cerávolo Presidente Prudente;17.06 e 17.08;UNACON com Serviço de Hematologia;UNACON
 7400926;Presidente Prudente;RRAS 11;Fundação Hospital Regional do Câncer;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
-2080400;Ribeirão Preto;RRAS 13;Hospital Imaculada Conceição;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2755130;Presidente Prudente;RRAS 11;Hospital Domingos Leonardo Cerávolo Presidente Prudente;17.06 e 17.08;UNACON com Serviço de Hematologia;UNACON
 2082187;Ribeirão Preto;RRAS 13;Hospital das Clínicas FAEPA;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2080400;Ribeirão Preto;RRAS 13;Hospital Imaculada Conceição;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
 2084414;Ribeirão Preto;RRAS 13;Santa Casa de Ribeirão Preto;17.06;UNACON;UNACON
+7361289;Ribeirão Preto;RRAS 13;CTR;17.15;Serviço de Radioterapia de Complexo Hospitalar;Serviço isolado de radioterapia
 2082888;Rio Claro;RRAS 14;Santa Casa de Rio Claro;17.06;UNACON;UNACON
-0008923;Santo André;RRAS 1;Centro Hospitalar de Santo André Dr. Newton da Costa Brandão;17.06;UNACON;UNACON
 2080273;Santo André;RRAS 14;Hospital Estadual Mário Covas de Santo André;17.07, 17.08 e 17.09;UNACON com Serviço Radioterapia, Hematologia e Oncologia Pediátrica;UNACON
+0008923;Santo André;RRAS 1;Centro Hospitalar de Santo André Dr. Newton da Costa Brandão;17.06;UNACON;UNACON
+0008753;Santo André;RRAS 1;Instituto de Radioterapia do ABC;17.15;Serviço de Radioterapia de Complexo Hospitalar;Serviço isolado de radioterapia
 2025752;Santos;RRAS 7;Santa Casa de Santos;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
-2079720;Santos;RRAS 7;Hospital Guilherme Álvaro;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
 2080354;Santos;RRAS 7;Hospital Santo Antônio Santos;17.07;UNACON com Serviço de Radioterapia;UNACON
-2079321;Sorocaba;RRAS 8;Hospital GPACI;17.11;UNACON exclusiva de Oncologia Pediátrica;UNACON
-2708779;Sorocaba;RRAS 8;Santa Casa de Sorocaba;17.07;UNACON com Serviço de Radioterapia;UNACON
-2081695;Sorocaba e Itu;RRAS 8;Conjunto Hospitalar de Sorocaba;17.08;UNACON com Serviço de Hematologia;UNACON
+2079720;Santos;RRAS 7;Hospital Guilherme Álvaro;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
 2025361;São Bernardo do Campo;RRAS 14;Hospital Anchieta;17.07;UNACON com Serviço de Radioterapia;UNACON
 2027356;São Bernardo do Campo;RRAS 14;Hospital Municipal Universitário;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
 2082594;São Caetano do Sul;RRAS 1;Complexo Hospitalar Municipal;17.06;UNACON;UNACON
 2080931;São Carlos;RRAS 13;Santa Casa de São Carlos;17.07;UNACON com Serviço de Radioterapia;UNACON
-2077396;São José do Rio Preto;RRAS 12;Hospital de Base de São José do Rio Preto;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
+2084228;São João da Boa Vista;RRAS 15;Hospital da Santa Casa de Misericórdia Dona Carolina Malheiros;17.07;UNACON com Serviço de Radioterapia;UNACON
 2798298;São José do Rio Preto;RRAS 12;Santa Casa de Misericórdia de São José do Rio Preto;17.12;CACON;CACON
-0009369;São José dos Campos;RRAS 17;Instituto de Radioterapia Vale do Paraíba/CENON - Centro de Oncologia Radioterápica do Vale do Paraíba;17.04;Serviço Isolado de Radioterapia;Serviço isolado de radioterapia
+2077396;São José do Rio Preto;RRAS 12;Hospital de Base de São José do Rio Preto;17.07, 17.08 e 17.09;UNACON com Serviços de Radioterapia, de Hematologia e de Oncologia Pediátrica;UNACON
 0009601;São José dos Campos;RRAS 17;Hospital Pio XII;17.08;UNACON com Serviço de Hematologia;UNACON
 2748029;São José dos Campos;RRAS 17;Santa Casa de Misericórdia;17.08;UNACON com Serviço de Hematologia;UNACON
 5869412;São José dos Campos;RRAS 17;Centro de Tratamento Fabiana Macedo de Morais;17.11;UNACON Exclusiva de Oncologia Pediátrica;UNACON
-2084228;São João da Boa Vista;RRAS 15;Hospital da Santa Casa de Misericórdia Dona Carolina Malheiros;17.07;UNACON com Serviço de Radioterapia;UNACON
-2066572;São Paulo;RRAS 6;Hospital Heliópolis;17.06;UNACON;UNACON
+2078287;São Paulo;RRAS 6;Centro de Referência da Saúde da Mulher;17.06;UNACON;UNACON
+2688573;São Paulo;RRAS 6;Hospital Geral de Vila Nova Cachoeirinha;17.14;Hospital Geral com Cirurgia Oncológica de Complexo Hospitalar;Hospital geral com cirurgia oncológica
+2077574;São Paulo;RRAS 6;Conjunto Hospitalar do Mandaqui;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
+2088576;São Paulo;RRAS 6;Hosp de Transp. do Estado de SP Eurycles de Jesus Zerbini;17.08;UNACON com Serviço de Hematologia;UNACON
+2078015;São Paulo;RRAS 6;HC da FMUSP Hopsital das Clínicas São Paulo;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
+2077531;São Paulo;RRAS 6;A C Camargo Cancer Center;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
 2071371;São Paulo;RRAS 6;Hospital Infantil Darcy Vargas UGA III São Paulo;17.11;UNACON Exclusiva de Oncologia Pediátrica;UNACON
+2066572;São Paulo;RRAS 6;Hospital Heliópolis;17.06;UNACON;UNACON
+2077523;São Paulo;RRAS 6;Hospital Ipiranga/Unidade de Gestão Assistencial II;17.06;UNACON;UNACON
+2688689;São Paulo;RRAS 6;Santa Casa de São Paulo Hospital Central São Paulo;17.08 e 17.09;UNACON com Serviços de Hematologia e de Oncologia Pediátrica;UNACON
+7711980;São Paulo;RRAS 6;O Hospital Municipal Gilson de Cássia Marques;17.06;UNACON;UNACON
+2058391;São Paulo;RRAS 6;Hospital Israelita Albert Einstein;17.15;Serviço de Radioterapia de Complexo Hospitalar;Serviço isolado de radioterapia
 2077477;São Paulo;RRAS 6;Hospital Santa Marcelina São Paulo;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
 2077485;São Paulo;RRAS 6;Hospital São Paulo Hospital de Ensino da UNIFESP;17.12;CACON;CACON
-2077523;São Paulo;RRAS 6;Hospital Ipiranga/Unidade de Gestão Assistencial II;17.06;UNACON;UNACON
-2077531;São Paulo;RRAS 6;A C Camargo Cancer Center;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
-2077574;São Paulo;RRAS 6;Conjunto Hospitalar do Mandaqui;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
 2077590;São Paulo;RRAS 6;IBCC;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
-2078015;São Paulo;RRAS 6;HC da FMUSP Hopsital das Clínicas São Paulo;17.13;CACON com Serviço de Oncologia Pediátrica;CACON
-2078287;São Paulo;RRAS 6;Centro de Referência da Saúde da Mulher;17.06;UNACON;UNACON
-2080125;São Paulo;RRAS 6;Instituto do Câncer Arnaldo Vieira de Carvalho;17.12;CACON;CACON
-2088576;São Paulo;RRAS 6;Hosp de Transp. do Estado de SP Eurycles de Jesus Zerbini;17.08;UNACON com Serviço de Hematologia;UNACON
 2089696;São Paulo;RRAS 6;Hospital GRAACC Instituto de Oncologia Pediátrica IOP;17.07 e 17.11;UNACON Exclusiva de Oncologia Pediátrica com Serviço de Radioterapia;UNACON
-2688689;São Paulo;RRAS 6;Santa Casa de São Paulo Hospital Central São Paulo;17.08 e 17.09;UNACON com Serviços de Hematologia e de Oncologia Pediátrica;UNACON
+2080125;São Paulo;RRAS 6;Instituto do Câncer Arnaldo Vieira de Carvalho;17.12;CACON;CACON
 6123740;São Paulo;RRAS 6;Instituto do Câncer do Estado de São Paulo/SES;17.12;CACON;CACON
-7711980;São Paulo;RRAS 6;O Hospital Municipal Gilson de Cássia Marques;17.06;UNACON;UNACON
+2091755;São Paulo;RRAS 6;Hospital Geral de Vila Penteado Dr Jose Pangella São Paulo;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
+2081695;Sorocaba e Itu;RRAS 8;Conjunto Hospitalar de Sorocaba;17.08;UNACON com Serviço de Hematologia;UNACON
+2092298;Sorocaba e Itu;RRAS 8;Santa Casa de Itu;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
+2708779;Sorocaba;RRAS 8;Santa Casa de Sorocaba;17.07;UNACON com Serviço de Radioterapia;UNACON
+2079321;Sorocaba;RRAS 8;Hospital GPACI;17.11;UNACON exclusiva de Oncologia Pediátrica;UNACON
 2079828;Taboão da Serra;RRAS 4;Hospital Geral de Pirajussara;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
 3126838;Taubaté;RRAS 17;Hospital Regional do Vale do Paraíba/Sociedade Beneficente São Camilo;17.07 e 17.08;UNACON com Serviços de Radioterapia e de Hematologia;UNACON
+2749319;Taubaté;RRAS 17;Hospital Municipal Universitário de Taubaté;17.14;Hospital Geral com Cirurgia Oncológica;Hospital geral com cirurgia oncológica
 2080664;Tupã;RRAS 10;Santa Casa;17.06;UNACON;UNACON
+0009369;São José dos Campos;RRAS 17;Instituto de Radioterapia Vale do Paraíba/CENON - Centro de Oncologia Radioterápica do Vale do Paraíba;17.04;Serviço Isolado de Radioterapia;Serviço isolado de radioterapia
