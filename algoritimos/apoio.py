@@ -131,7 +131,8 @@ ITENS = [
           como="Na unidade de saúde do bairro (UBS ou USF). O SUS está trocando, aos poucos, o Papanicolau pelo teste "
                "de DNA-HPV, que é mais sensível; São Paulo está entre os estados que já têm o teste. Com o teste de "
                "DNA-HPV negativo, o próximo exame é em 5 anos.",
-          confirmar="A troca é gradual: pergunte na sua unidade qual exame ela faz hoje."),
+          confirmar="A troca é gradual: pergunte na sua unidade qual exame ela faz hoje. A notícia do Ministério da Saúde pode pedir "
+                    "login ao abrir; se isso acontecer, pergunte na unidade de saúde."),
     _item("vacina_hpv", "colo", "caminho", "SUS (todo o Brasil)",
           "Vacina contra o HPV",
           "dose única de 9 a 14 anos; protege contra o vírus que causa o câncer do colo do útero",
@@ -141,7 +142,8 @@ ITENS = [
           para_quem="Meninas e meninos de 9 a 14 anos, em dose única. Houve um resgate para jovens de 15 a 19 anos "
                     "não vacinados, prorrogado até o 1º semestre de 2026.",
           como="Nas unidades de saúde (e em ações em escolas e outros locais).",
-          confirmar="Confirme na unidade se o resgate de 15 a 19 anos ainda está valendo."),
+          confirmar="Confirme na unidade se o resgate de 15 a 19 anos ainda está valendo. A notícia do Ministério da Saúde pode "
+                    "pedir login ao abrir."),
 
     # ---------------- DESCOBRIR ----------------
     _item("caminho_do_exame", "mama", "caminho", "Estado de SP",
