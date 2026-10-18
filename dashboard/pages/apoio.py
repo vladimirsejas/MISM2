@@ -539,6 +539,11 @@ with col_titulo:
                 'Um guia de onde procurar, não orientação médica.</div>', unsafe_allow_html=True)
 with col_link:
     botao_inicio(st, "topo")
+    # Telefones, endereços e "Como chegar" das unidades ficam na página Onde ser atendida (uma casa só): o Apoio aponta para ela.
+    try:
+        st.page_link("pages/onde_ser_atendida.py", label="📍 Unidades, telefones e como chegar")
+    except Exception:  # Streamlit antigo, sem page_link
+        st.markdown('<a href="/onde_ser_atendida" target="_self">Unidades, telefones e como chegar</a>', unsafe_allow_html=True)
     st.caption("Cada cartão informa sua fonte e data de conferência. Itens marcados “a confirmar” precisam ser verificados antes de usar.")
 
 # Entrada guiada: poucas escolhas principais; o catálogo completo continua nas abas abaixo.
@@ -567,7 +572,7 @@ if not st.session_state.get("ap_boas_vindas_fechada"):
         st.markdown("**Por onde você quer começar?**")
         a1, a2 = st.columns(2)
         a1.button("Prevenção e exames", key="bv_ap_prevencao", help="Mamografia, Papanicolau, vacina e prevenção.",
-                  on_click=lia_clicar, args=(apoio.caminho("mama"),), width="stretch")
+                  on_click=lia_clicar, args=(apoio.etapa("nao_fiz"),), width="stretch")
         a2.button("Meu exame deu alterado", key="bv_ap_alterado",
                   help="Um resultado alterado precisa ser explicado pela equipe de saúde; não significa, por si só, câncer.",
                   on_click=lia_clicar, args=(apoio.etapa("alterado"),), width="stretch")

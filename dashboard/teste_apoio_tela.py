@@ -64,7 +64,7 @@ checar("A. contadores internos não ocupam a entrada de quem procura atendimento
                for m in at.metric))
 checar("A. mesma Lia na lateral (rosto + nome)",
        any("lia-nome" in m.value for m in at.sidebar.markdown) and any("lia-rosto" in m.value for m in at.sidebar.markdown))
-for entrada, caminho, etapa in (("prevencao", "mama", None), ("alterado", "ajuda", "alterado"),
+for entrada, caminho, etapa in (("prevencao", "ajuda", "nao_fiz"), ("alterado", "ajuda", "alterado"),
                                 ("diagnostico", "ajuda", "diagnostico_cancer"), ("ajuda", "ajuda", None)):
     at = abrir()
     botao(at, f"bv_ap_{entrada}").click().run()
