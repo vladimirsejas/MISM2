@@ -7,6 +7,7 @@ import pandas as pd
 
 RAIZ_PROJETO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(RAIZ_PROJETO, "algoritimos"))
+import localizacao  # noqa: E402
 import unidades_saude as us  # noqa: E402
 
 # =====================================
@@ -29,6 +30,8 @@ ARQUIVO_OFICIAL = os.path.join(RAIZ_PROJETO, "dados_geograficos", "hospitais_onc
 BANCO = os.path.join(RAIZ_PROJETO, "banco", "escudo_feminino.db")
 SAIDA = os.path.join(RAIZ_PROJETO, "analises", "hospitais_oncologia_sp_cruzado.csv")
 MINIMO_FORA_DA_LISTA = 200  # internações para um hospital fora da lista aparecer no relatório
+LIMITE_KM_DO_CENTRO = 35    # coordenada do CNES a mais que isso do centro do município do hospital é apontada como suspeita
+CAIXA_SP = (-25.5, -19.6, -53.3, -44.0)  # lat_min, lat_max, lon_min, lon_max (com folga): fora disso é erro de cadastro
 
 
 def ler_oficiais(caminho=ARQUIVO_OFICIAL):
@@ -82,6 +85,61 @@ def maiores_fora_da_lista(banco, cnes_oficiais, minimo=MINIMO_FORA_DA_LISTA, lim
         conexao.close()
 
 
+def centros_dos_municipios(banco, cnes):
+    """{cnes: (latitude, longitude)} do centro do município DO HOSPITAL (internacoes.municipio_hospital x municipios_localizacao).
+    Só serve para conferir a coordenada do CNES: não é a posição do hospital."""
+    if not os.path.exists(banco):
+        return {}
+    conexao = sqlite3.connect(f"file:{banco}?mode=ro", uri=True)
+    try:
+        saida = {}
+        for c in cnes:
+            formas = (c, c.lstrip("0"))
+            linha = conexao.execute(
+                f"SELECT m.latitude, m.longitude FROM internacoes i JOIN municipios_localizacao m ON m.codigo6 = i.municipio_hospital "
+                f"WHERE i.cnes IN ({','.join('?' * len(formas))}) LIMIT 1", formas).fetchone()
+            if linha:
+                saida[c] = (float(linha[0]), float(linha[1]))
+        return saida
+    except sqlite3.Error:
+        return {}
+    finally:
+        conexao.close()
+
+
+def total_de_internacoes(banco):
+    """Internações por câncer com hospital identificado no banco (para a parcela dos hospitais habilitados); 0 se não der."""
+    if not os.path.exists(banco):
+        return 0
+    conexao = sqlite3.connect(f"file:{banco}?mode=ro", uri=True)
+    try:
+        return int(conexao.execute("SELECT COUNT(*) FROM internacoes WHERE cnes IS NOT NULL").fetchone()[0])
+    except sqlite3.Error:
+        return 0
+    finally:
+        conexao.close()
+
+
+def telefone_do_cnes(valor):
+    """Telefone legível. O CNES às vezes junta dois números ou um ramal no mesmo campo: mostra o 1º e o resto à parte."""
+    d = us.so_digitos(valor)
+    if len(d) > 11:
+        return f"{us.telefone_legivel(d[:10])} (+ {d[10:]})"
+    return us.telefone_legivel(d)
+
+
+def coordenada_confere(lat, lon, centro):
+    """'ok', 'sem' (não tem), 'fora de SP' ou 'longe do município' (a mais de LIMITE_KM_DO_CENTRO do centro dele)."""
+    if lat is None or lon is None:
+        return "sem"
+    la0, la1, lo0, lo1 = CAIXA_SP
+    if not (la0 <= lat <= la1 and lo0 <= lon <= lo1):
+        return "fora de SP"
+    if centro is not None and localizacao.distancia_km(lat, lon, centro[0], centro[1]) > LIMITE_KM_DO_CENTRO:
+        return "longe do município"
+    return "ok"
+
+
 def ler_cnes(pasta, cnes, tamanho_pedaco=us.TAMANHO_PEDACO):
     """{cnes: {nome, endereco, cep, telefone, lat, lon, ativo}} dos estabelecimentos pedidos no arquivo nacional do CNES.
     Devolve ({}, aviso) se o arquivo não existe ou não tem a coluna do CNES."""
@@ -108,7 +166,7 @@ def ler_cnes(pasta, cnes, tamanho_pedaco=us.TAMANHO_PEDACO):
             saida[us.so_digitos(campo("cnes")).zfill(7)] = {
                 "nome": us.nome_legivel(campo("nome")),
                 "endereco": us.endereco_legivel(campo("logradouro"), campo("numero"), campo("bairro")),
-                "cep": us.cep_legivel(campo("cep")), "telefone": us.telefone_legivel(campo("telefone")),
+                "cep": us.cep_legivel(campo("cep")), "telefone": telefone_do_cnes(campo("telefone")),
                 "lat": None if pd.isna(lat) else float(lat), "lon": None if pd.isna(lon) else float(lon),
                 "ativo": motivo == "",
             }
@@ -128,6 +186,7 @@ def cruzar(oficiais, banco=BANCO, pasta_cnes=us.PASTA_CNES):
     cnes = [o["cnes"] for o in oficiais]
     no_banco = internacoes_por_cnes(banco, cnes)
     no_cnes, aviso = ler_cnes(pasta_cnes, set(cnes))
+    centros = centros_dos_municipios(banco, cnes)
     linhas = []
     for o in oficiais:
         n, nome_banco = no_banco.get(o["cnes"], (None, ""))
@@ -135,7 +194,8 @@ def cruzar(oficiais, banco=BANCO, pasta_cnes=us.PASTA_CNES):
         linhas.append({**o, "internacoes_cancer": n, "nome_no_banco": nome_banco,
                        "no_cnes": c is not None, "ativo_no_cnes": (c or {}).get("ativo"),
                        "endereco": (c or {}).get("endereco", ""), "telefone": (c or {}).get("telefone", ""),
-                       "lat": (c or {}).get("lat"), "lon": (c or {}).get("lon")})
+                       "lat": (c or {}).get("lat"), "lon": (c or {}).get("lon"),
+                       "coordenada": coordenada_confere((c or {}).get("lat"), (c or {}).get("lon"), centros.get(o["cnes"]))})
     return linhas, aviso
 
 
@@ -156,10 +216,21 @@ def main(argv=None, banco=BANCO, pasta_cnes=us.PASTA_CNES, arquivo_oficial=ARQUI
             cad = "não está no arquivo do CNES"
         else:
             ativo = "ativo" if r["ativo_no_cnes"] else "DESABILITADO"
-            geo = "com coordenada" if r["lat"] is not None and r["lon"] is not None else "sem coordenada"
+            geo = {"ok": "coordenada ok", "sem": "sem coordenada"}.get(r["coordenada"], f"COORDENADA SUSPEITA ({r['coordenada']})")
             cad = f"{ativo}, {geo}, tel {r['telefone'] or '-'}"
         print(f"{r['cnes']}  {r['municipio']:<22.22} {r['tipo']:<20.20} {n:>9} · {cad} · {r['nome_ministerio'][:45]}")
 
+    com_cnes = [r for r in linhas if r["no_cnes"]]
+    if com_cnes:
+        boas = sum(1 for r in com_cnes if r["coordenada"] == "ok")
+        suspeitas = [f"{r['municipio']} {r['cnes']} ({r['coordenada']})" for r in com_cnes if r["coordenada"] not in ("ok", "sem")]
+        print(f"\nCoordenadas do CNES: {boas} de {len(com_cnes)} dentro de SP e a até {LIMITE_KM_DO_CENTRO} km do centro do município do hospital"
+              + (f"; suspeitas: {'; '.join(suspeitas)}" if suspeitas else "") + ". Conferida só a plausibilidade; ponto no mapa só depois de olhar.")
+    total = total_de_internacoes(banco)
+    habilitados = sum(r["internacoes_cancer"] or 0 for r in linhas)
+    if total:
+        print(f"\nInternações por câncer no SIH em hospitais da lista oficial: {habilitados} de {total} "
+              f"({100 * habilitados / total:.1f}%). O resto acontece em hospitais sem habilitação em oncologia (cirurgias, hospital-dia).")
     sem = [r for r in linhas if r["internacoes_cancer"] == 0]
     if sem:
         print(f"\nHospitais da lista sem nenhuma internação por câncer no banco: {len(sem)} de {len(linhas)}"

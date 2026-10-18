@@ -1059,8 +1059,8 @@ ITENS = [
           "UNACON com hematologia, oncologia pediátrica e radioterapia pelo SUS",
           "Agência Brasil – credenciamento de 2021",
           "https://agenciabrasil.ebc.com.br/saude/noticia/2021-07/hospital-do-cancer-de-presidente-prudente-sera-credenciado-ao-sus",
-          como="Credenciado em 2021 como UNACON, com 122 leitos para o SUS. Na cidade, a Santa Casa de Presidente "
-               "Prudente também é UNACON.",
+          como="Credenciado em 2021 como UNACON, com 122 leitos para o SUS. Na cidade, a lista do Ministério da Saúde "
+               "(habilitação 2023) traz também o Hospital Regional Dr. Domingos Leonardo Cerávolo, UNACON com hematologia.",
           confirmar="Notícia de 2021 (o hospital hoje se chama Hospital de Esperança): confira na lista da FOSP.",
           grupo="Oeste, Sorocaba, Vale do Paraíba e Litoral"),
     _item("sorocaba_oncologia", "rede", "hospitais", "Sorocaba",
