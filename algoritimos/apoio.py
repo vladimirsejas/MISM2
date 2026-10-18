@@ -1112,8 +1112,7 @@ def responder_item(id):
 
 INTRO_LAMINA = {
     "barretos": ("**Barretos** reúne, no **Hospital de Amor**, hospitais de referência, prevenção, carretas, ensino e "
-                 "pesquisa em câncer. Aqui estão as informações e os links oficiais, e a ligação com a nossa cidade: "
-                 "em fevereiro de 2025 a carreta do hospital esteve em Rio Claro. Escolha um tema."),
+                 "pesquisa em câncer. Aqui estão as informações e os links oficiais. Escolha um tema."),
     "hospitais": ("Estes são **hospitais que tratam câncer pelo SUS no Estado de São Paulo**, por região. Eles não "
                   "são porta de entrada: chega-se a eles pela regulação (CROSS), a partir da unidade de saúde. Para "
                   "quem mora em Rio Claro, as referências são Rio Claro e Piracicaba, e o HC da Unicamp também atende "

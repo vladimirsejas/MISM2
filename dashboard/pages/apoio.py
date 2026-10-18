@@ -574,8 +574,6 @@ if aba == apoio.LAMINAS["barretos"]:
                 'referência da própria região (RRAS 14: Rio Claro e Piracicaba). Converse com a equipe que '
                 'acompanha você.</div>', unsafe_allow_html=True)
     leitura("A ligação com Rio Claro", [
-        "A carreta do Hospital de Amor já esteve em Rio Claro, com mamografia e Papanicolau agendados nas USF "
-        "(lâmina Rio Claro).",
         "Prevenção e tratamento têm portas diferentes: a prevenção chega pelas ações com a prefeitura; o "
         "tratamento, com o câncer confirmado, segue os fluxos do SUS.",
     ])

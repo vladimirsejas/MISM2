@@ -28,10 +28,36 @@ def checar(nome, condicao):
         falhas.append(nome)
 
 
+def textos(valor):
+    """Reúne textos aninhados de estruturas do guia para verificar conteúdo visível."""
+    if isinstance(valor, str):
+        return [valor]
+    if isinstance(valor, dict):
+        return sum((textos(v) for v in valor.values()), [])
+    if isinstance(valor, (list, tuple)):
+        return sum((textos(v) for v in valor), [])
+    return []
+
+
 # ---------- catálogo ----------
 ids = [i["id"] for i in apoio.ITENS]
 checar("ids únicos", len(ids) == len(set(ids)))
 checar("todo item tem fonte e link https", all(i["fonte"] and i["link"].startswith("https://") for i in apoio.ITENS))
+
+# ---------- ausência de itinerário histórico das carretas ----------
+textos_guia = textos(apoio.ITENS) + textos(apoio.INTRO_LAMINA) + textos(apoio.ETAPAS)
+textos_guia.extend([apoio.saudacao().fala])
+textos_guia.extend(apoio.responder_caminho(c).fala for c in apoio.NOME_CAMINHO)
+historicos = ("fevereiro de 2025", "esteve em rio claro", "araçoiaba", "bertioga", "serrana",
+              "avare", "itapura", "eldorado", "piquete", "bananal")
+normalizado = " ".join(textos_guia).casefold()
+checar("nenhum itinerário antigo aparece nos textos do guia ou da Lia",
+       not any(t in normalizado for t in historicos))
+with open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                       "dashboard", "pages", "apoio.py"), encoding="utf-8") as arquivo:
+    texto_tela = arquivo.read().casefold()
+checar("a página Apoio não apresenta a carreta histórica de Rio Claro",
+       not any(t in texto_tela for t in historicos))
 checar("todo item está num caminho válido (sem caminho só fora da lâmina dos caminhos)",
        all(i["caminho"] in apoio.NOME_CAMINHO or (i["caminho"] is None and i["lamina"] != "caminho")
            for i in apoio.ITENS))
