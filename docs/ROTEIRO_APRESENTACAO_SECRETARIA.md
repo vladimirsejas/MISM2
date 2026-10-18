@@ -15,7 +15,7 @@ Duas frases que protegem você: **"são internações, não casos novos"** e **"
 ## 2. Roteiro de 10 a 12 minutos (tela a tela)
 
 | Min | Onde | O que mostrar | O que dizer |
-|---|---|---|---|
+|-----|---------------|------------------------------|--------------------------------------------------|
 | 0–1 | Primeira tela | Município Rio Claro, os 3 números, a régua de meses | "1.668 internações por câncer em mulheres de Rio Claro, 140 óbitos durante a internação, R$ 4.022.281 de valor hospitalar registrado no SIH/SUS. Não é orçamento nem custo total: é o que o SIH registrou." Apontar a régua: "o vazio é mês que o DATASUS não oferece, não é zero." |
 | 1–3 | Aba **Panorama** | Barras por câncer; trocar a medida (internações, valor, óbitos, dias) | "Qual câncer mais leva as mulheres da cidade ao hospital." Ler o texto de leitura que está abaixo do gráfico. |
 | 3–4 | Aba **Evolução** | Linha da cidade e do Estado, anos fora do padrão, caixa de confiabilidade | "A projeção é de **tendência**, com teste de acerto: é um exercício, não uma previsão de casos novos." |
@@ -28,7 +28,7 @@ Duas frases que protegem você: **"são internações, não casos novos"** e **"
 ## 3. Números que podem ser ditos (e como dizê-los)
 
 | Número | Fonte | Como dizer / ressalva |
-|---|---|---|
+|-----------------------------------|-------------------------|----------------------------------------|
 | 1.668 internações, 140 óbitos, R$ 4.022.281 (Rio Claro) | SIH/SUS no banco, 7 cânceres | Internações, não pessoas nem casos novos; só os meses que o DATASUS oferece. Valor = valor hospitalar registrado, não custo do tratamento. |
 | 464.340 internações no Estado; 17.991 de mulheres de outros estados | Banco do autor | O Estado conta o atendimento nos hospitais de SP. |
 | **88,7%** das internações (411.908 de 464.340) foram em hospitais da lista oficial de habilitados em oncologia | `py etl\cruzar_hospitais_oncologia.py` | A lista é do Ministério da Saúde, **habilitação 2023**; o banco vai de 2013 a 2025. Contam internações. Não dizer o motivo do restante (11,3%). |
@@ -48,6 +48,7 @@ Duas frases que protegem você: **"são internações, não casos novos"** e **"
 ## 5. Três perguntas para a Lia na demonstração (ensaiar antes)
 
 Use perguntas que o sistema já foi testado para entender. **Ensaie no notebook, com o banco real**, e anote o que a Lia responde:
+
 1. "O câncer de mama está aumentando em Rio Claro?"
 2. "Quais cidades têm mais casos proporcionalmente?" (usa a população do IBGE; já respondeu com o banco real em 17/10)
 3. "Onde faço mamografia pelo SUS?" (no Apoio, texto fixo, sem IA)
