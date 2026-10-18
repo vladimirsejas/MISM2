@@ -1270,8 +1270,9 @@ GRUPOS = {"barretos": GRUPOS_BARRETOS, "hospitais": GRUPOS_HOSPITAIS, "carretas"
 ETAPAS = [
     ("nao_fiz", "Ainda não fiz o exame",
      "O começo é a unidade de saúde do seu bairro: lá se faz o preventivo e se pede a mamografia. De 50 a 69 anos "
-     "a mamografia pelo Estado não precisa de pedido médico, e as carretas atendem sem agendamento.",
-     ["mama", "colo"], ["rc_unidades", "mulheres_de_peito", "colo_utero"]),
+     "a mamografia pelo Estado não precisa de pedido médico, e as carretas atendem sem agendamento. Em Rio Claro, "
+     "a consulta também pode ser marcada pelo Cadu (0800 019 0505, telefone ou WhatsApp).",
+     ["mama", "colo"], ["rc_cadu_agendamento", "rc_unidades", "mulheres_de_peito", "colo_utero"]),
     ("alterado", "Meu exame deu alteração",
      "Um exame alterado não confirma câncer. Leve o laudo à equipe de saúde que pediu o exame e pergunte qual é o "
      "próximo passo. O prazo legal de até 30 dias se aplica quando câncer é a principal hipótese diagnóstica e o "
