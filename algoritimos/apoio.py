@@ -250,12 +250,30 @@ ITENS = [
           "maior hospital de saúde da mulher do interior; câncer ginecológico e de mama; só SUS",
           "CAISM – Unicamp",
           "https://www2.caism.unicamp.br/",
+          para_quem="Pacientes do SUS que chegam encaminhadas pela rede pública (a página do hospital fala em "
+                    "atendimento a pacientes \"referenciadas\").",
+          topicos=[
+              ("O que o hospital informa sobre si (site do CAISM)",
+               "Inaugurado em março de 1986 como o Hospital da Mulher da Unicamp, atende exclusivamente pelo SUS e "
+               "presta assistência em ginecologia, obstetrícia, oncologia e neonatologia. É a maior unidade "
+               "hospitalar de saúde da mulher do interior do Estado de São Paulo e se apresenta como referência "
+               "para o tratamento do câncer ginecológico e de mama. Tem 130 leitos e fez cerca de 70 mil atendimentos "
+               "ambulatoriais em 2023."),
+              ("O que a paciente encontra",
+               "Equipes médicas, de enfermagem, fisioterapia, assistência social, psicologia, nutrição e farmácia, "
+               "com exames de imagem e de laboratório. No hospital funcionam radioterapia, quimioterapia e as "
+               "unidades de internação de oncologia cirúrgica, oncologia clínica e ginecologia."),
+              ("Onde fica", "No Campus da Unicamp, em Campinas, na esquina das ruas Alexandre Fleming e Avenida "
+                            "Adolfo Lutz (o Bloco A reúne as internações). O site tem a página \"Atendimento ao "
+                            "paciente\" para quem vai ao hospital."),
+          ],
           como="Atende só pelo SUS. Tem ambulatórios de oncologia ginecológica (vulva, vagina, colo e corpo do útero, "
                "ovário) e de mastologia, referência para Campinas e região. As consultas são agendadas pelas "
                "unidades básicas de saúde e pela rede pública.",
           cuidado="O acesso é por encaminhamento da rede pública; para quem mora em Rio Claro, o caminho começa "
                   "na referência da própria região.",
           grupo="Campinas",
+          conferido="18/10/2026",
           tambem_caminhos=["mama", "colo"]),
     _item("hospital_base_rio_preto", "rede", "hospitais", "São José do Rio Preto",
           "Hospital de Base – Centro de Oncologia",

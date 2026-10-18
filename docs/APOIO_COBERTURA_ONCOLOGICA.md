@@ -98,7 +98,7 @@ Lista recebida em 18/10/2026, sem fonte. Regra do projeto: só entra serviço qu
 
 | Sugestão | Situação |
 |---|---|
-| CAISM/Unicamp (colo, endométrio, ovário) e ICESP | **Já estão** no catálogo (`caism_unicamp`, `icesp`). Os detalhes "cirurgia robótica", "quimioterapia intraperitoneal" e "pesquisa em síndromes hereditárias" não têm fonte aqui e **não foram incluídos**. |
+| CAISM/Unicamp (colo, endométrio, ovário) e ICESP | **Já estão** no catálogo (`caism_unicamp`, `icesp`); o CAISM foi completado em 18/10/2026 com o texto do site do hospital (só SUS, 130 leitos, ~70 mil atendimentos em 2023, radioterapia, quimioterapia, equipe multiprofissional, paciente referenciada). Os detalhes "cirurgia robótica", "quimioterapia intraperitoneal" e "pesquisa em síndromes hereditárias" não têm fonte aqui e **não foram incluídos**. |
 | HC da Unicamp (dermatologia oncológica) | O HC da Unicamp **já está** como hospital de câncer; o ambulatório de dermatologia oncológica **não foi confirmado**. |
 | HC da USP/ICESP (melanoma: Mohs, terapia-alvo BRAF) | Sem fonte; o guia trata câncer de pele **não melanoma** e não detalha tratamento por mutação. |
 | HCPA/UFRGS (Porto Alegre) e Hospital São Paulo/UNIFESP (colorretal) | **Não cadastrados.** O HCPA fica em outro estado e não é caminho de encaminhamento do SUS-SP; o HSP/UNIFESP precisa de página oficial e de regra de acesso. |

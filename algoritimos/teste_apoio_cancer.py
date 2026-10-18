@@ -424,6 +424,15 @@ def main():
                                       "Itaci", "Galeno de Almeida, 148", "exclusivo pela rede pública", "Não é porta de entrada"))
            and ic["conferido"] == "18/10/2026" and "(11) 3893-2000" in fala_ic)
 
+    cs = apoio.POR_ID["caism_unicamp"]
+    fala_cs = apoio.responder(apoio.item("caism_unicamp")).fala
+    checar("I10. CAISM: só SUS, 130 leitos, ~70 mil atendimentos em 2023, serviços do hospital, conferido em 18/10/2026 e continua não sendo porta de entrada",
+           all(t in fala_cs for t in ("exclusivamente pelo SUS", "130 leitos", "70 mil", "2023", "radioterapia", "quimioterapia",
+                                      "referenciadas", "encaminhamento"))
+           and cs["conferido"] == "18/10/2026" and "outros" in cs["tambem_caminhos"] and "lâmina" not in fala_cs.lower())
+    checar("I11. CAISM não promete o que o site não diz (sem 'melhor', 'robótica', 'cura')",
+           not any(t in fala_cs.lower() for t in ("melhor", "robótic", "cura", "garant")))
+
     print()
     if falhas:
         print(f"{len(falhas)} falha(s):")
