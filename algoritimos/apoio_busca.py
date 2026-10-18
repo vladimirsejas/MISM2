@@ -50,6 +50,7 @@ EXTRA = {
     # sozinhos não decidem o câncer; ver PISTAS e AMBIGUAS).
     "cancer_intestino": "câncer no intestino cólon reto colorretal câncer de intestino sangue nas fezes mudança no intestino "
                         "intestino preso intestino solto colonoscopia pólipo teste de sangue oculto nas fezes fit",
+    "gastrocentro_unicamp": "gastrocentro unicamp gastroenterologia hepatologia aparelho digestivo exames gratuitos campinas",
     "jornada_exame_intestino": "onde faço colonoscopia pelo sus como conseguir colonoscopia colonoscopia gratuita passo a passo exame de "
                                "intestino teste fit kit coleta em casa sangue oculto nas fezes preciso fazer exame de intestino "
                                "quem pode fazer o fit 50 a 75 anos resultado do fit deu positivo encaminhamento colonoscopia fila",

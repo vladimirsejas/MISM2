@@ -433,6 +433,18 @@ def main():
     checar("I11. CAISM não promete o que o site não diz (sem 'melhor', 'robótica', 'cura')",
            not any(t in fala_cs.lower() for t in ("melhor", "robótic", "cura", "garant")))
 
+    gc = apoio.POR_ID["gastrocentro_unicamp"]
+    fala_gc = apoio.responder(apoio.item("gastrocentro_unicamp")).fala
+    checar("I12. Gastrocentro: só o que a página diz (700 exames gratuitos/mês, hierarquizado) e o que NÃO diz fica marcado a confirmar",
+           "700 exames gratuitos" in fala_gc and "hierarquizado" in fala_gc and "Falta confirmar" in gc["confirmar"]
+           and "colonoscopia" in gc["confirmar"] and "Rio Claro" in gc["confirmar"] and gc["conferido"] == "18/10/2026"
+           and gc["lamina"] == "caminho" and gc["cancer"] == ("colorretal",))
+    checar("I13. Gastrocentro não afirma colonoscopia, vaga nem atendimento a Rio Claro, e não é cadastrado como hospital de câncer",
+           "faz colonoscopia" not in fala_gc.lower() and "atende rio claro" not in fala_gc.lower()
+           and not any(i["id"] == "gastrocentro_unicamp" for i in apoio.itens(lamina="hospitais")))
+    checar("I14. pergunta sobre o Gastrocentro abre o cartão e não mistura câncer",
+           "gastrocentro_unicamp" in ab.responder_pergunta("o que é o Gastrocentro da Unicamp?").candidatos)
+
     print()
     if falhas:
         print(f"{len(falhas)} falha(s):")

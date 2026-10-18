@@ -616,6 +616,33 @@ ITENS = [
                     "o teste, quais unidades de Rio Claro entregam o kit e onde é feita a colonoscopia pelo SUS na "
                     "região. Pergunte na unidade de saúde ou na Secretaria Municipal de Saúde.",
           conferido="18/10/2026", cancer=["colorretal"]),
+    _item("gastrocentro_unicamp", "outros", "caminho", "Campinas",
+          "Gastrocentro Unicamp: diagnóstico das doenças do aparelho digestivo",
+          "centro da Unicamp que faz cerca de 700 exames gratuitos por mês; a página não diz quais exames, quem é "
+          "encaminhada nem se atende a região de Rio Claro",
+          "Gastrocentro – Unicamp",
+          "https://gastrocentro.unicamp.br/",
+          topicos=[
+              ("O que a página informa", "O Centro de Diagnóstico de Doenças do Aparelho Digestivo (Gastrocentro) da "
+                                         "Unicamp presta assistência em gastroenterologia e hepatologia, dentro de um "
+                                         "sistema de saúde hierarquizado, além de formar profissionais e fazer "
+                                         "pesquisa. Tem como visão ser um centro de referência regional em doenças do "
+                                         "aparelho digestivo e na detecção e no tratamento do câncer do aparelho "
+                                         "digestivo e do fígado. Faz cerca de 700 exames gratuitos por mês, de quase "
+                                         "duas dezenas de procedimentos."),
+              ("Equipe e parceria", "Integra as áreas de cirurgia, pediatria, radiologia, anatomia patológica, "
+                                    "imunologia, metabologia e obesidade. A página cita uma parceria com a agência "
+                                    "japonesa Jica desde 1990, para capacitação e equipamentos voltados ao "
+                                    "diagnóstico precoce de tumores do estômago, do intestino e do fígado."),
+          ],
+          como="A página não explica como a paciente chega ao serviço. Pelo SUS, o caminho começa na unidade de saúde "
+               "do bairro, e a vaga em um serviço especializado vem pela regulação (veja \"Exame de intestino pelo "
+               "SUS\").",
+          cuidado="Este cartão é um cadastro, não uma vaga. O serviço não é porta de entrada confirmada.",
+          confirmar="Falta confirmar com o serviço: quais exames faz (por exemplo, colonoscopia), quem pode ser "
+                    "encaminhada e se atende pacientes da região de Rio Claro e Piracicaba. Conferido na página "
+                    "institucional em 18/10/2026.",
+          conferido="18/10/2026", cancer=["colorretal"]),
     _item("cancer_ovario", "outros", "caminho", "SUS (todo o Brasil)",
           "Câncer de ovário: sinais, exames e como buscar atendimento",
           "câncer nos ovários; no começo dá poucos sinais, e não existe exame de rastreamento para todas as mulheres",

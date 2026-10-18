@@ -103,6 +103,9 @@ Lista recebida em 18/10/2026, sem fonte. Regra do projeto: só entra serviço qu
 | HC da USP/ICESP (melanoma: Mohs, terapia-alvo BRAF) | Sem fonte; o guia trata câncer de pele **não melanoma** e não detalha tratamento por mutação. |
 | HCPA/UFRGS (Porto Alegre) e Hospital São Paulo/UNIFESP (colorretal) | **Não cadastrados.** O HCPA fica em outro estado e não é caminho de encaminhamento do SUS-SP; o HSP/UNIFESP precisa de página oficial e de regra de acesso. |
 
+| Gastrocentro/Unicamp (diagnóstico do aparelho digestivo) | **Cadastrado** na porta Outros cânceres (`gastrocentro_unicamp`, 18/10/2026), só com o que a página diz (cerca de 700 exames gratuitos por mês, sistema hierarquizado). **A página não informa** quais exames faz, quem é encaminhada nem se atende Rio Claro/Piracicaba: ficou "a confirmar". Não foi para a área de hospitais de câncer, porque não é hospital oncológico completo. |
+| Hospital Estadual Sumaré (HES-Unicamp) | **Não cadastrado.** Hospital geral 100% SUS; a página não menciona oncologia e a abrangência (Americana, Hortolândia, Monte Mor, Nova Odessa, Santa Bárbara d'Oeste e Sumaré, DRS 7) não inclui Rio Claro. Prêmios, orçamento e equipamentos da página não entram: não respondem "onde procurar cuidado". |
+
 Para entrar: página oficial do serviço, quem atende pelo SUS, se exige encaminhamento e abrangência. Hospital de ensino ou de pesquisa
 **não é porta de entrada**; a vaga vem pela regulação.
 
