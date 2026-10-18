@@ -264,10 +264,20 @@ so_publicos = False
 if tem_cnes and df.attrs.get("tem_natureza", False):
     so_publicos = c2.checkbox("Só públicas e sem fins lucrativos", value=True, key="un_publicos",
                               help="Onde é mais provável haver atendimento pelo SUS. Desmarque para ver também clínicas privadas.")
-    if procurando and so_publicos:
-        c2.caption("Na busca, as unidades particulares aparecem em separado, depois das públicas.")
+    c2.caption("Marcado: só a rede pública e as entidades sem fins lucrativos. Desmarque para ver também as particulares "
+               "(na busca, elas aparecem em grupo separado).")
 
-mostrar = oa.filtrar(df, escolha, busca_efetiva, so_publicos and not procurando)
+# o filtro vale SEMPRE, com ou sem busca; e a página diz quantas unidades ele está escondendo (sem isso, o botão parecia morto)
+mostrar = oa.filtrar(df, escolha, busca_efetiva, so_publicos)
+ocultas = (len(oa.filtrar(df, escolha, busca_efetiva, False)) - len(mostrar)) if so_publicos else 0
+
+
+def aviso_ocultas():
+    if ocultas > 0:
+        st.info(f"{ocultas} unidade{'s' if ocultas != 1 else ''} particular{'es' if ocultas != 1 else ''} também "
+                f"{'aparecem' if ocultas != 1 else 'aparece'} aqui e {'estão ocultas' if ocultas != 1 else 'está oculta'} pelo filtro "
+                "“Só públicas e sem fins lucrativos”. Desmarque a caixa para ver.")
+
 
 assinatura = (escolha, busca.strip().lower(), so_publicos)
 if st.session_state.get("un_assinatura") != assinatura:
@@ -278,6 +288,7 @@ limite = st.session_state.setdefault("un_limite", PAGINA)
 if mostrar.empty:
     st.info("Não encontrei uma unidade com esse cadastro. Veja as sugestões abaixo ou use a lista “Não sabe o nome?”, que traz o que de fato "
             "existe nos cadastros da cidade. Confirme a disponibilidade antes de ir.")
+    aviso_ocultas()
     if procurando:
         def _aplicar(termo):
             st.session_state["un_busca"] = termo
@@ -286,6 +297,7 @@ if mostrar.empty:
 else:
     titulo = f"{len(mostrar)} lugar(es)" + (" encontrados na busca" if busca.strip() else f": {oa.ESCOLHAS[escolha][0].lower()}")
     pergunta(titulo, "sem ranking de qualidade")
+    aviso_ocultas()
     if procurando and tem_cnes:
         publicas, particulares = oa.separar_por_natureza(mostrar)
         grupos = (("Rede pública e sem fins lucrativos", publicas),

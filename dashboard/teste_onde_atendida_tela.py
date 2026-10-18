@@ -137,10 +137,21 @@ def main():
                and "Serviço de diagnóstico por imagem" in t and "e mais" not in t and not at.exception)
         checar("C. unidade com muitos itens: o excedente fica em 'Ver os outros', não é cortado",
                "Ver os outros" in t and "Médico especialista numero 8" in t)
+        # o filtro "Só públicas" tem de valer TAMBÉM durante a busca (autor, 18/10/2026: "não se auto atualiza"):
+        # marcado, a particular some e a página diz quantas estão ocultas; desmarcado, aparece em grupo separado
         next(i for i in at.text_input if i.key == "un_busca").set_value("estrela").run()
         t = texto(at)
-        checar("C. na busca a clínica particular aparece, em grupo separado e avisado",
-               "Clinica Estrela" in t and "Particulares" in t and "não informa se atendem pelo SUS" in t and not at.exception)
+        avisos = " ".join(str(i.value) for i in at.info)
+        checar("C. busca com o filtro marcado: a particular fica oculta e a página AVISA quantas e como ver",
+               "Clinica Estrela" not in t and "oculta pelo filtro" in avisos and "Desmarque a caixa" in avisos and not at.exception)
+        next(c for c in at.checkbox if c.key == "un_publicos").set_value(False).run()
+        t = texto(at)
+        checar("C. desmarcar o filtro DURANTE a busca atualiza na hora: a particular aparece em grupo separado e avisado",
+               "Clinica Estrela" in t and "Particulares" in t and "não informa se atendem pelo SUS" in t
+               and not any("oculta" in str(i.value) for i in at.info) and not at.exception)
+        next(c for c in at.checkbox if c.key == "un_publicos").set_value(True).run()
+        checar("C. marcar de novo durante a busca esconde de novo",
+               "Clinica Estrela" not in texto(at) and not at.exception)
         next(i for i in at.text_input if i.key == "un_busca").set_value("").run()
         escolha_lista = next(x for x in at.selectbox if x.key == "un_escolha")
         checar("C. lista 'o que existe na cidade' oferece a especialidade com a contagem de unidades",
