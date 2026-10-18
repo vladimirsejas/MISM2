@@ -461,6 +461,25 @@ def main():
            {"rc_unidades", "cancer_ovario"} <= set(x.candidatos) and not any(
                apoio.POR_ID[i]["lamina"] == "hospitais" for i in x.candidatos))
 
+    # ---------- L. "cada página do INCA fala de uma doença, mas precisamos de mais" (autor, 18/10/2026) ----------
+    # O INCA continua no botão principal (ele ajuda); ao lado entram as páginas que uma mulher doente usa.
+    esperados = {"rc_unidades", "rc_cadu_agendamento", "como_chegar_cross", "fosp_hospitais_sus"}
+    for tipo, id in {**novos}.items():
+        i = apoio.POR_ID[id]
+        urls = {u for _, u in i["mais_links"]}
+        fala_l = apoio.responder(apoio.item(id)).fala
+        acoes = [a for _, a in apoio.responder(apoio.item(id)).botoes]
+        checar(f"L1. {tipo}: INCA continua no botão principal e entram 4 páginas de serviço ao lado",
+               "inca" in i["link"].lower() and urls == {apoio.POR_ID[o]["link"] for o in esperados})
+        checar(f"L2. {tipo}: a fala da Lia mostra 'Outras páginas que ajudam' com os links",
+               "Outras páginas que ajudam" in fala_l and all(u in fala_l for u in urls))
+        checar(f"L3. {tipo}: leva a agendar (Cadu), diagnóstico, como chegar ao hospital e direitos",
+               apoio.item("rc_cadu_agendamento") in acoes and apoio.etapa("diagnostico_cancer") in acoes
+               and apoio.item("como_chegar_cross") in acoes and apoio.caminho("direitos") in acoes)
+    checar("L4. jornada do intestino também recebe as páginas de serviço", len(apoio.POR_ID["jornada_exame_intestino"]["mais_links"]) == 4)
+    checar("L5. cartões de outras portas NÃO ganham links extras (nada mudou no que já existia)",
+           not any(i["mais_links"] for i in apoio.ITENS if i["id"] not in set(novos.values()) | {"jornada_exame_intestino"}))
+
     print()
     if falhas:
         print(f"{len(falhas)} falha(s):")

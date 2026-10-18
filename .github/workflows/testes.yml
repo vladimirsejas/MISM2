@@ -56,6 +56,7 @@ jobs:
         run: |
           python teste_apoio_cancer.py
           python teste_conversa_apoio.py
+          python teste_conferir_links.py
       - name: Carga e ferramentas do ETL
         working-directory: etl
         run: |

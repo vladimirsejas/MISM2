@@ -329,6 +329,16 @@ try:
     checar("F. depois da explicação, clicar numa porta leva a ela, sem erro", not erros(at)
            and at.session_state["ap_lia"]["atual"].destino.get("caminho") in apoio.NOME_CAMINHO)
 
+    # cartão com mais links (autor, 18/10/2026): o botão do INCA e as páginas de serviço aparecem no cartão da porta Outros cânceres
+    at.session_state["ap_aba"] = apoio.LAMINAS["caminho"]
+    at.session_state["ap_caminho"] = "outros"
+    at.run()
+    html_porta = " ".join(m.value for m in at.markdown)
+    checar("F. porta Outros cânceres: cada cartão mostra o botão do INCA e as 4 páginas de serviço ao lado, sem erro",
+           not erros(at) and html_porta.count("Abrir a página oficial") >= 7
+           and html_porta.count("Unidades de saúde de Rio Claro: onde começar") >= 6
+           and html_porta.count("Agendar consulta pelo Cadu") >= 6 and "saude-rioclaro.org.br/enderecos" in html_porta)
+
     antes = at.session_state["ap_lia"]["atual"]
     perguntar_no_apoio(at, "   ")
     checar("F. enviar vazio não faz nada e não quebra", not erros(at) and at.session_state["ap_lia"]["atual"] is antes)

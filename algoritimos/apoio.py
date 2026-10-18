@@ -89,7 +89,7 @@ FLUXO_REDE = [
 
 def _item(id, caminho, lamina, onde, titulo, resumo, fonte, link, para_quem=None, como=None, levar=None,
           contato=None, confirmar=None, cuidado=None, grupo=None, tambem=(), tambem_caminhos=(), conferido=None,
-          cancer=(), topicos=(), cnes=None):
+          cancer=(), topicos=(), cnes=None, mais_links=()):
     """caminho=None: item que não é passo da jornada da mulher (ensino,
     pesquisa, a região no Estado) -- mora só na lâmina dele. grupo: o
     tema (Barretos) ou a região (Hospitais no Estado) do item na lâmina.
@@ -100,12 +100,13 @@ def _item(id, caminho, lamina, onde, titulo, resumo, fonte, link, para_quem=None
     (rede, direitos, regulação...). A busca usa isto para nunca levar quem citou um câncer ao conteúdo de outro.
     topicos: [(rótulo, texto)] lidos no cartão depois de "Para quem" (o que é, sinais, exames, tratamento...).
     cnes: código CNES do hospital, SÓ se foi conferido no banco real (hospitais + internacoes); nunca de lista de terceiros.
-    Não aparece no cartão: serve para cruzar com os dados do Escudo (SIH/SIA)."""
+    Não aparece no cartão: serve para cruzar com os dados do Escudo (SIH/SIA).
+    mais_links: [(rótulo, url)] outros botões do cartão, ao lado do principal (cada página oficial fala de uma coisa só)."""
     return {"id": id, "caminho": caminho, "lamina": lamina, "onde": onde, "titulo": titulo, "resumo": resumo,
             "para_quem": para_quem, "como": como, "levar": levar, "contato": contato, "fonte": fonte,
             "link": link, "confirmar": confirmar, "cuidado": cuidado, "grupo": grupo, "tambem": list(tambem),
             "conferido": conferido or CONFERIDO,
-            "tambem_caminhos": list(tambem_caminhos), "cancer": tuple(cancer), "topicos": list(topicos), "cnes": cnes}
+            "tambem_caminhos": list(tambem_caminhos), "cancer": tuple(cancer), "topicos": list(topicos), "cnes": cnes, "mais_links": list(mais_links)}
 
 
 ITENS = [
@@ -1335,6 +1336,18 @@ _CNES_CONFERIDOS = {"icesp": "6123740", "amaral_carvalho": "2083086", "hc_unicam
                     "hc_ribeirao": "2082187", "ha_quem_e": "2090236"}
 for _id, _cnes in _CNES_CONFERIDOS.items():
     POR_ID[_id]["cnes"] = _cnes
+# Cada página do INCA fala de UMA doença (autor, 18/10/2026: "cada um fala de uma doença, mas precisamos de mais"). Os cartões de câncer da
+# porta Outros cânceres ganham, ao lado do botão do INCA, os serviços que uma mulher doente usa. Os endereços vêm dos próprios
+# cartões de serviço (uma casa só para cada link).
+_MAIS_PARA_QUEM_ESTA_DOENTE = [
+    ("Unidades de saúde de Rio Claro: onde começar", "rc_unidades"),
+    ("Agendar consulta pelo Cadu (Rio Claro)", "rc_cadu_agendamento"),
+    ("Como ser atendida num hospital de câncer (ICESP e HC Unicamp)", "como_chegar_cross"),
+    ("Lista oficial dos hospitais do SUS com atendimento em câncer", "fosp_hospitais_sus"),
+]
+for _id in ("cancer_intestino", "jornada_exame_intestino", "cancer_ovario", "cancer_pele", "cancer_pulmao", "cancer_tireoide",
+            "cancer_corpo_utero"):
+    POR_ID[_id]["mais_links"] = [(rotulo, POR_ID[outro]["link"]) for rotulo, outro in _MAIS_PARA_QUEM_ESTA_DOENTE]
 # Hospitais e a prevenção de Barretos que atendem câncer ginecológico também aparecem, em cartão curto, em "Outros cânceres".
 for _id in ("hospital_da_mulher_sp", "caism_unicamp", "ha_prevencao"):
     POR_ID[_id]["tambem_caminhos"] = POR_ID[_id]["tambem_caminhos"] + ["outros"]
@@ -1510,6 +1523,17 @@ def responder_caminho(c):
     )
 
 
+def _o_que_fazer(i):
+    """Cartão de um câncer da porta Outros cânceres: além de explicar, leva ao que a pessoa doente precisa fazer
+    (agendar, diagnóstico confirmado, como chegar ao hospital pela regulação, direitos). Não depende de link externo."""
+    if i["caminho"] == "outros" and i["cancer"]:
+        return [("Em Rio Claro: agendar consulta (Cadu)", item("rc_cadu_agendamento")),
+                ("Recebi o diagnóstico: o que fazer", etapa("diagnostico_cancer")),
+                ("Como se chega a um hospital de referência", item("como_chegar_cross")),
+                ("Meus direitos", caminho("direitos"))]
+    return []
+
+
 def _voltar(i):
     if i["grupo"]:
         return [(f"Voltar a {i['grupo']}", grupo(i["lamina"], i["grupo"]))]
@@ -1535,11 +1559,13 @@ def responder_item(id):
     if i["confirmar"]:
         partes.append(f"**A confirmar:** {i['confirmar']}")
     partes.append(f"[Abrir a página oficial]({i['link']})")
+    if i["mais_links"]:
+        partes.append("**Outras páginas que ajudam:** " + " · ".join(f"[{r}]({u})" for r, u in i["mais_links"]))
     partes.append(AVISO)
     return Resposta(
         fala="\n\n".join(partes),
         expressao="cautelosa" if i["confirmar"] else ("acolhedora" if i["caminho"] == "ajuda" else "explicando"),
-        botoes=_voltar(i) + _proximo(i["caminho"]),
+        botoes=_voltar(i) + _o_que_fazer(i) + _proximo(i["caminho"]),
         destino={"aba": LAMINAS[i["lamina"]], "caminho": i["caminho"], "grupo": i["grupo"], "item": id,
                  "etapa": "violencia" if i["caminho"] == "ajuda" and i["lamina"] == "caminho" else None},
         numeros=[f"Fonte: {i['fonte']}", f"Página: {i['link']}", f"Conferido em {i.get('conferido', CONFERIDO)}"],
