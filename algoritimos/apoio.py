@@ -580,7 +580,7 @@ ITENS = [
               ("Depois do diagnóstico", "O acompanhamento regular depois do tratamento faz parte do cuidado."),
           ],
           como="Comece pela unidade de saúde ou pelo ginecologista da rede: eles avaliam, pedem exames e encaminham. "
-               "O atendimento especializado em ginecologia oncológica é organizado pela regulação (CROSS). Na lâmina "
+               "O atendimento especializado em ginecologia oncológica é organizado pela regulação (CROSS). Na área "
                "Hospitais no Estado há centros com ginecologia oncológica, como o Hospital da Mulher (capital) e o "
                "CAISM da Unicamp.",
           cuidado="Não existe exame que \"garanta\" a ausência de câncer de ovário. Procure atendimento se os sinais "
@@ -732,7 +732,7 @@ ITENS = [
               ("Depois do diagnóstico", "O acompanhamento regular depois do tratamento faz parte do cuidado."),
           ],
           como="Comece pela unidade de saúde ou pelo ginecologista da rede: eles avaliam, pedem o ultrassom e "
-               "encaminham. O atendimento em ginecologia oncológica é organizado pela regulação (CROSS); na lâmina "
+               "encaminham. O atendimento em ginecologia oncológica é organizado pela regulação (CROSS); na área "
                "Hospitais no Estado há centros com ginecologia oncológica, como o CAISM da Unicamp e o Hospital da "
                "Mulher (capital).",
           cuidado="Sangramento forte ou com tontura: procure um pronto atendimento ou ligue 192.",
@@ -802,7 +802,7 @@ ITENS = [
           "Fundação Oncocentro de São Paulo (FOSP) – Espaço do Paciente",
           "https://fosp.saude.sp.gov.br/fosp/espaco-paciente/hospitais-do-sus-habilitadas-para-atendimento-em-"
           "cancer-no-estado-de-sao-paulo/",
-          como="A lista completa e atualizada pelo Estado. Os hospitais desta lâmina são os que a pesquisa encontrou "
+          como="A lista completa e atualizada pelo Estado. Os hospitais desta área são os que a pesquisa encontrou "
                "com fonte; a lista da FOSP tem todos.",
           tambem=[("hospitais", "Como chegar e listas oficiais")]),
     _item("inca_onde_tratar", "rede", "caminho", "SUS (todo o Brasil)",
@@ -1301,7 +1301,7 @@ def onde_mora(i):
     """Onde está o texto completo do item (para o cartão curto)."""
     if i["lamina"] == "caminho":
         return f"porta {NOME_CAMINHO[i['caminho']]}"
-    return f"lâmina {LAMINAS[i['lamina']]}"
+    return f"área {LAMINAS[i['lamina']]}"
 
 
 def itens_da_etapa(e):
@@ -1362,8 +1362,8 @@ def responder_caminho(c):
     partes = []
     for lam, fora in nas_laminas(c).items():
         if lam != "caminho" and len(fora) > MAX_APONTADOS:
-            partes.append(f"{len(fora)} itens na lâmina {LAMINAS[lam]}")
-            botoes.append((f"Ver a lâmina {LAMINAS[lam]}", lamina(lam)))
+            partes.append(f"{len(fora)} itens na área {LAMINAS[lam]}")
+            botoes.append((f"Ver a área {LAMINAS[lam]}", lamina(lam)))
         else:
             partes += [f"{i['titulo']} ({onde_mora(i)})" for i in fora]
             botoes += [(i["titulo"], item(i["id"])) for i in fora]
@@ -1443,7 +1443,7 @@ def responder_lamina(id):
         lista = itens(lamina=id)
         fala = (f"**Rio Claro** é a cidade do trabalho do Escudo. Aqui estão as portas da própria cidade. Rio Claro "
                 f"faz parte da **{REGIAO}**: as referências de câncer da região ficam em Rio Claro e em Piracicaba, "
-                "e o HC da Unicamp também atende a região (lâmina Hospitais no Estado).")
+                "e o HC da Unicamp também atende a região (área Hospitais no Estado).")
         fala += "\n\n" + "\n".join(f"- **{i['titulo']}**: {i['resumo']}." for i in lista)
         botoes = [(i["titulo"], item(i["id"])) for i in lista] + [
             ("Hospitais da região de Rio Claro", grupo("hospitais", "Rio Claro e Piracicaba (RRAS 14)"))]

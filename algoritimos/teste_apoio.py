@@ -118,6 +118,18 @@ checar("outras cidades entram só nos caminhos e na lista de hospitais (sem lâm
        and any(i["onde"].startswith("Piracicaba") for i in apoio.ITENS))
 checar("texto sem seta ASCII (->)", not any("->" in str(v) for i in apoio.ITENS for v in i.values()))
 
+# ---------- vocabulário da usuária: "lâmina" é termo interno (autor, 10/2026), ela lê "área" ----------
+_lidos = [apoio.saudacao().fala, apoio.responder_sobre().fala]
+for _c in apoio.NOME_CAMINHO:
+    _lidos.append(apoio.responder_caminho(_c).fala)
+    _lidos += [t for t, _ in apoio.responder_caminho(_c).botoes]
+for _i in apoio.POR_ID:
+    _lidos.append(apoio.responder_item(_i).fala)
+for _l in ("hospitais", "carretas", "rio_claro", "barretos"):
+    _lidos.append(apoio.responder_lamina(_l).fala)
+checar("nenhum texto lido pela usuária (cartões, botões, falas da Lia) usa a palavra 'lâmina'",
+       not any("lâmina" in t.lower() or "lamina" in t.lower() for t in _lidos))
+
 # ---------- a Lia: árvore inteira ----------
 inicio = apoio.responder(INICIO)
 checar("saudação diz onde a pessoa está", apoio.CIDADE in inicio.fala and inicio.expressao == "acolhedora")

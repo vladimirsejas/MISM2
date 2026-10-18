@@ -505,6 +505,8 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   (`caixa_ap_contexto`, "item:id" / "etapa:id"), nunca o relato; clicar, voltar, trocar de aba ou de atalho limpa. **Dois contextos convivem**
   em `responder_pergunta`: `contexto` (token do Codex) e `cancer_em_foco` (o câncer da resposta, para "e os sinais?"). Gemini não recebe histórico.
   Testes: `teste_conversa_apoio.py` e `dashboard/teste_conversa_apoio_tela.py` (regressão, não amostra independente).
+- **Vocabulário (autor, 18/10/2026): a usuária nunca lê "lâmina".** Hospitais no Estado, Carretas, Rio Claro e Barretos são **áreas**. "Lâmina" continua só como termo
+  interno (código, comentários, nomes de teste, `LAMINAS`); texto de cartão, botão, fala da Lia e página "Sobre" diz "área". Teste: `teste_apoio.py`.
 - Ainda não feito (combinar): população do IBGE; testar com pessoas de verdade; revisar com o autor o
   vocabulário popular do Apoio (`apoio_busca.VOCABULARIO`/`EXTRA`).
 

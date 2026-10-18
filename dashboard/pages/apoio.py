@@ -437,10 +437,10 @@ def lamina_por_grupos(lam, rotulo_seletor):
 def apontados(c):
     """O que serve a esta porta mas mora em outra porta ou lâmina."""
     for lam, fora in apoio.nas_laminas(c).items():
-        nome = "outras portas" if lam == "caminho" else f"lâmina {apoio.LAMINAS[lam]}"
+        nome = "outras portas" if lam == "caminho" else f"área {apoio.LAMINAS[lam]}"
         st.markdown(f'<div class="apoio-grupo">Também para esta porta: {nome}</div>', unsafe_allow_html=True)
         if lam != "caminho" and len(fora) > apoio.MAX_APONTADOS:
-            st.button(f"Ver os {len(fora)} itens na lâmina {apoio.LAMINAS[lam]} →", key=f"ir_{c}_{lam}",
+            st.button(f"Ver os {len(fora)} itens na área {apoio.LAMINAS[lam]} →", key=f"ir_{c}_{lam}",
                       type="primary", on_click=aplicar_destino, args=({"aba": apoio.LAMINAS[lam]},))
         else:
             for i in fora:
@@ -651,7 +651,7 @@ if aba == apoio.LAMINAS["hospitais"]:
         "pela CROSS, que encaminha a um centro perto de onde você mora.",
         "Se o tratamento for longe (mais de 50 km) e não existir na sua região, o SUS pode pagar transporte e "
         "diárias (TFD, na porta Direitos e acesso).",
-        "A lista completa e oficial é a da FOSP (primeira região desta lâmina).",
+        "A lista completa e oficial é a da FOSP (primeira região desta área).",
     ])
 
 
@@ -670,7 +670,7 @@ if aba == apoio.LAMINAS["carretas"]:
 if aba == apoio.LAMINAS["rio_claro"]:
     pergunta(f"O que {apoio.CIDADE} oferece às mulheres?")
     dica(f"{apoio.CIDADE} faz parte da {apoio.REGIAO}. As referências de câncer da região são Rio Claro e "
-         "Piracicaba, e o HC da Unicamp também atende a região (lâmina Hospitais no Estado).")
+         "Piracicaba, e o HC da Unicamp também atende a região (área Hospitais no Estado).")
     st.markdown(
         '<div class="escudo-cartao apoio-cartao"><h4>Carretas da Mamografia: veja a programação atual</h4>'
         '<div class="apoio-resumo">As cidades e datas das Carretas da Mamografia do Estado (Mulheres de Peito) mudam. '
@@ -741,13 +741,13 @@ if aba == apoio.LAMINAS["sobre"]:
   "a confirmar".
 - **O que isto não é:** não é orientação médica, não garante vaga e não substitui a unidade de saúde.
   A Lia não é médica.
-- **Cidades:** não há uma lâmina por cidade. Campinas, Ribeirão Preto, Rio Preto e Piracicaba entram nas portas
-  quando têm algo útil; Rio Claro (a cidade do trabalho) e Barretos (Hospital de Amor) têm lâmina própria.
+- **Cidades:** não há uma área por cidade. Campinas, Ribeirão Preto, Rio Preto e Piracicaba entram nas portas
+  quando têm algo útil; Rio Claro (a cidade do trabalho) e Barretos (Hospital de Amor) têm área própria.
 - **Para gestores:** o Plano Estadual de Oncologia 2025–2028 organiza a rede por região (RRAS); Rio Claro está na
   {apoio.REGIAO}.
 """)
     tabela = pd.DataFrame([{
-        "Item": i["titulo"], "Onde": i["onde"], "Lâmina": apoio.LAMINAS[i["lamina"]],
+        "Item": i["titulo"], "Onde": i["onde"], "Área": apoio.LAMINAS[i["lamina"]],
         "Caminho": ROTULO.get(i["caminho"], "—"), "Tema ou região": i["grupo"] or "—", "Fonte": i["fonte"], "Situação": "a confirmar" if i["confirmar"] else "conferido",
         "Página": i["link"]} for i in apoio.ITENS])
     st.dataframe(tabela, width="stretch", hide_index=True)

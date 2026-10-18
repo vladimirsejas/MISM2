@@ -482,7 +482,7 @@ def _resposta_base(ctx, intencao, cancer, foco, ano, ia):
         return Resposta(
             fala=("O Escudo estuda dados para quem planeja e pesquisa. Para quem **procura cuidado**, a página **Apoio à mulher** "
                   "reúne o caminho: mamografia e preventivo pelo SUS, rede oncológica, regulação (\"fui encaminhada, e agora?\"), "
-                  "tratamento, carretas, hospitais de câncer pelo SUS (lâmina **Hospitais no Estado**) e direitos (transporte para "
+                  "tratamento, carretas, hospitais de câncer pelo SUS (área **Hospitais no Estado**) e direitos (transporte para "
                   "tratamento, FGTS, INSS, reconstrução da mama). Cada item traz a fonte oficial e a data em que foi conferido."),
             expressao="acolhedora"), None, nota
     if intencao == "onde_atendida":
@@ -490,7 +490,7 @@ def _resposta_base(ctx, intencao, cancer, foco, ano, ia):
             fala=(f"Para saber **onde procurar atendimento** em {ctx.cidade} (postos de saúde, hospitais, UPA, exames e saúde "
                   "mental), use a página **Onde ser atendida**: tem endereço, telefone e como chegar. É um cadastro oficial (CNES): "
                   "não garante vaga nem que o serviço esteja aberto naquele momento. Para **hospital especializado em câncer** (os de "
-                  "referência da região), veja na página **Apoio à mulher** a lâmina **Hospitais no Estado**."), expressao="acolhedora"), None, nota
+                  "referência da região), veja na página **Apoio à mulher** a área **Hospitais no Estado**."), expressao="acolhedora"), None, nota
     return lia_responder(ctx, INICIO), None, nota
 
 
@@ -564,7 +564,7 @@ def _hospital_de_cancer(ctx, pergunta):
         fala = ("O Escudo **não classifica hospitais** nem diz qual é o melhor: os dados que tenho contam internações, não qualidade. "
                 "Pelo SUS, a escolha também não é da paciente: ela segue o encaminhamento.\n\n") + fala
     fala += ("**Como funciona pelo SUS:** hospital de câncer não se escolhe por proximidade. A paciente é encaminhada, pela unidade de "
-             "saúde e pela regulação (CROSS), ao serviço de referência da **região** onde mora. Na página **Apoio à mulher**, a lâmina "
+             "saúde e pela regulação (CROSS), ao serviço de referência da **região** onde mora. Na página **Apoio à mulher**, a área "
              "**Hospitais no Estado** reúne 23 hospitais por região, com a fonte oficial e como chegar pela CROSS. Se não achar a "
              "sua cidade, pergunte na unidade de saúde ou na Secretaria de Saúde a qual região (DRS) ela pertence: o Escudo ainda não "
              "tem essa lista por cidade.")
