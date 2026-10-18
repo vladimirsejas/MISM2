@@ -15,6 +15,7 @@ põe o ponto no centro da cidade como se fosse o hospital):
     py etl\\gerar_hospitais_oncologia_geo.py
 """
 import csv
+import math
 import os
 import sys
 import unicodedata
@@ -131,6 +132,17 @@ def municipios_candidatos(item, cadastro, caixas):
     return cands
 
 
+def _km_fora(lat, lon, caixas_candidatas):
+    """Distância aproximada (km), em linha reta, do ponto até o retângulo do município mais próximo (0 se estiver dentro)."""
+    melhor = None
+    for la0, la1, lo0, lo1 in caixas_candidatas:
+        dlat = max(la0 - lat, 0, lat - la1) * 111.0
+        dlon = max(lo0 - lon, 0, lon - lo1) * 111.0 * max(math.cos(math.radians(lat)), 0.1)
+        d = math.hypot(dlat, dlon)
+        melhor = d if melhor is None else min(melhor, d)
+    return melhor or 0.0
+
+
 def conferir(item, cadastro, centro=None, caixas=None):
     """(no_mapa, motivo): 'sim' + '' quando a posição passa em todas as conferências; senão 'não' + o que falhou."""
     if not cadastro:
@@ -157,7 +169,7 @@ def conferir(item, cadastro, centro=None, caixas=None):
                          for cx in (caixas["por_codigo"][k][0] for k in cands))
             if not dentro:
                 nomes = " / ".join(caixas["por_codigo"][k][1] for k in cands)
-                return "não", f"a coordenada cai fora do município ({nomes})"
+                return "não", f"a coordenada cai fora do município ({nomes}), a cerca de {_km_fora(lat, lon, [caixas['por_codigo'][k][0] for k in cands]):.0f} km do contorno"
     return "sim", ""
 
 
@@ -217,6 +229,9 @@ def main():
         print(f"\n{len(itens)} sem ponto: {motivo}")
         for l in itens[:12]:
             print(f"   - {l['uf']} | {l['municipio']} | {l['nome_ministerio'][:44]} | CNES {l['cnes']} | {l['motivo']}")
+            cad = cadastros.get(l["cnes"]) or {}
+            if cad.get("lat") is not None and cad.get("lon") is not None:
+                print(f"       onde o CNES diz que fica: https://www.google.com/maps?q={cad['lat']:.6f},{cad['lon']:.6f}")
     print("\nGravado em dados_geograficos\\hospitais_oncologia_br_geo.csv")
     return 0
 

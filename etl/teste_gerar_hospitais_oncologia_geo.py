@@ -105,6 +105,10 @@ checar("sem contornos (sem internet): como antes, só o retângulo do estado", g
 checar("a margem de ~3 km nas bordas é tolerada", g.conferir(hosp, dict(cad, lat=-22.46, lon=-47.55), None, caixas)[0] == "sim"
        and g.conferir(hosp, dict(cad, lat=-22.60, lon=-47.55), None, caixas)[0] == "não")
 via_montar = {l["cnes"]: l for l in g.montar([hosp], {"2000010": dict(cad, lat=-23.50, lon=-46.60, nome="Santa Casa", endereco="", cep="", telefone="")}, None, caixas)}
+caixa_teste = (-22.45, -22.30, -47.60, -47.50)
+checar("distância ao contorno: dentro = 0; 0,1 grau ao sul = ~11 km; o motivo mostra os km",
+       g._km_fora(-22.40, -47.55, [caixa_teste]) == 0 and 10 < g._km_fora(-22.55, -47.55, [caixa_teste]) < 12
+       and "km do contorno" in g.conferir(hosp, dict(cad, lat=-22.55, lon=-47.55), None, caixas)[1])
 checar("montar usa os contornos: sem ponto e com o motivo", via_montar["2000010"]["no_mapa"] == "não" and via_montar["2000010"]["lat"] == "")
 
 checar("todo estado tem retângulo e código IBGE (27)", len(g.CAIXA_UF) == 27 and len(g.UF_POR_CODIGO) == 27 and set(g.UF_POR_CODIGO.values()) == set(g.CAIXA_UF))
