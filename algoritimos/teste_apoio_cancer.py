@@ -478,7 +478,12 @@ def main():
                and apoio.item("como_chegar_cross") in acoes and apoio.caminho("direitos") in acoes)
     checar("L4. jornada do intestino também recebe as páginas de serviço", len(apoio.POR_ID["jornada_exame_intestino"]["mais_links"]) == 4)
     checar("L5. cartões de outras portas NÃO ganham links extras (nada mudou no que já existia)",
-           not any(i["mais_links"] for i in apoio.ITENS if i["id"] not in set(novos.values()) | {"jornada_exame_intestino"}))
+           not any(i["mais_links"] for i in apoio.ITENS
+                   if i["id"] not in set(novos.values()) | {"jornada_exame_intestino", "rc_cadu_agendamento"}))
+    checar("L6. Cadu: o cartão tem os botões do aplicativo (Android, iPhone) e a página da Prefeitura",
+           [r.split()[0] for r, _ in apoio.POR_ID["rc_cadu_agendamento"]["mais_links"]] == ["Baixar", "Baixar", "Sobre"]
+           and any("play.google.com" in u for _, u in apoio.POR_ID["rc_cadu_agendamento"]["mais_links"])
+           and any("apps.apple.com" in u for _, u in apoio.POR_ID["rc_cadu_agendamento"]["mais_links"]))
 
     print()
     if falhas:

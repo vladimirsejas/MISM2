@@ -389,7 +389,9 @@ def cartao_curto(i):
         f'<div class="escudo-cartao apoio-cartao curto"><h4>{e(i["titulo"])}<span class="apoio-selo">{e(i["onde"])}'
         f'</span></h4><div class="apoio-resumo">{e(i["resumo"][0].upper() + i["resumo"][1:])}.</div>'
         f'<a class="apoio-botao" href="{e(i["link"])}" target="_blank" rel="noopener">Abrir a página oficial ↗</a>'
-        f'<div class="apoio-fonte">Detalhes completos na {apoio.onde_mora(i)}.</div></div>',
+        + "".join(f'<br><a class="apoio-botao" href="{e(u)}" target="_blank" rel="noopener">{e(r)} ↗</a>'
+                  for r, u in i["mais_links"])
+        + f'<div class="apoio-fonte">Detalhes completos na {apoio.onde_mora(i)}.</div></div>',
         unsafe_allow_html=True,
     )
 
