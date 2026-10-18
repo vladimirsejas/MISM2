@@ -110,6 +110,7 @@ PADROES = {"ap_aba": ABAS[0], "ap_caminho": "mama", "ap_item": None, "ap_etapa":
 for chave, valor in PADROES.items():
     st.session_state.setdefault(chave, valor)
 st.session_state.setdefault("caixa_ap_gemini_ativo", False)
+st.session_state.setdefault("caixa_ap_contexto", None)
 st.session_state.setdefault("ap_lia", {"atual": apoio.responder(INICIO), "pilha": [], "falas": 0})
 lia_estado = st.session_state["ap_lia"]
 
@@ -127,6 +128,7 @@ def seletor(onde, rotulo, chave, opcoes, **kwargs):
     def sincronizar():
         st.session_state[chave] = st.session_state[k]
         st.session_state["ap_item"] = None
+        st.session_state["caixa_ap_contexto"] = None
     return onde.radio(rotulo, opcoes, index=indice, key=k,
                       on_change=sincronizar, **kwargs)
 
@@ -155,7 +157,21 @@ def lia_mostrar(resposta):
 
 
 def lia_clicar(acao):
+    st.session_state["caixa_ap_contexto"] = None
     lia_mostrar(apoio.responder(acao))
+
+
+def atualizar_contexto_conversa(resposta):
+    """Guarda só um identificador de catálogo; nunca guarda relatos anteriores como contexto."""
+    if getattr(resposta, "tipo", None) == "esclarecimento":
+        return
+    candidatos = getattr(resposta, "candidatos", []) or []
+    if getattr(resposta, "tipo", None) == "itens" and len(candidatos) == 1 and candidatos[0] in apoio.POR_ID:
+        st.session_state["caixa_ap_contexto"] = f"item:{candidatos[0]}"
+    elif getattr(resposta, "tipo", None) == "etapa" and (resposta.destino or {}).get("etapa") in apoio.NOME_ETAPA:
+        st.session_state["caixa_ap_contexto"] = f"etapa:{resposta.destino['etapa']}"
+    else:
+        st.session_state["caixa_ap_contexto"] = None
 
 
 def contexto_da_resposta(resposta):
@@ -248,6 +264,7 @@ def assuntos_do_guia():
 
 def mostrar_assunto(pergunta_modelo, acao=None):
     """Mostra resposta do guia a partir de um atalho, sem classificador de IA."""
+    st.session_state["caixa_ap_contexto"] = None
     st.session_state["caixa_ap_texto"] = pergunta_modelo
     if acao is None:
         resposta = apoio_busca.responder_pergunta(pergunta_modelo, classificar=None)
@@ -280,6 +297,7 @@ def lia_voltar():
     if lia_estado["pilha"]:
         lia_estado["atual"] = lia_estado["pilha"].pop()
         lia_estado["falas"] += 1
+        atualizar_contexto_conversa(lia_estado["atual"])
         aplicar_destino(lia_estado["atual"].destino)
 
 
@@ -526,9 +544,14 @@ _pergunta_pendente = st.session_state.pop("caixa_ap_pendente", None)
 if _pergunta_pendente:
     with st.spinner("A Lia está procurando no guia..."):
         _classificador = classificador_da_sessao()
-        # O câncer em foco na resposta que está na tela (só memória da sessão; o texto da pergunta nunca é guardado).
-        _resposta = apoio_busca.responder_pergunta(_pergunta_pendente, classificar=_classificador,
-                                                   contexto=getattr(lia_estado.get("atual"), "tipo_cancer", None))
+        # contexto: token do catálogo ("item:id") para "e agora?"; cancer_em_foco: o câncer da resposta na tela, para "e os sinais?".
+        # Só memória da sessão; o texto da pergunta nunca é guardado.
+        _resposta = apoio_busca.responder_pergunta(
+            _pergunta_pendente, classificar=_classificador,
+            contexto=st.session_state.get("caixa_ap_contexto"),
+            cancer_em_foco=getattr(lia_estado.get("atual"), "tipo_cancer", None),
+        )
+        atualizar_contexto_conversa(_resposta)
         lia_mostrar(_resposta)
 
 if not st.session_state.get("ap_boas_vindas_fechada"):
@@ -560,6 +583,7 @@ if not st.session_state.get("ap_boas_vindas_fechada"):
 def ir_aba(nome):
     st.session_state["ap_aba"] = nome
     st.session_state["ap_item"] = None
+    st.session_state["caixa_ap_contexto"] = None
 
 st.markdown("**Atendimento e orientação**")
 n1, n2 = st.columns(2)

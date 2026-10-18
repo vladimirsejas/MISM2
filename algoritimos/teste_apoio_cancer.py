@@ -239,18 +239,18 @@ def main():
     x = ab.responder_pergunta("quero saber sobre leucemia")
     checar("D7. leucemia: mesma resposta honesta", x.tipo == "nada" and "leucemia" in x.fala)
     primeiro = ab.responder_pergunta("quero saber sobre câncer de ovário")
-    seguinte = ab.responder_pergunta("e os sinais?", contexto=primeiro.tipo_cancer)
+    seguinte = ab.responder_pergunta("e os sinais?", cancer_em_foco=primeiro.tipo_cancer)
     checar("D8. segue o assunto: 'e os sinais?' depois do ovário volta ao ovário", primeiro.tipo_cancer == "ovario"
            and "cancer_ovario" in seguinte.candidatos and "Continuando sobre o câncer de ovário" in seguinte.fala)
-    sem = ab.responder_pergunta("e os sinais?", contexto=None)
+    sem = ab.responder_pergunta("e os sinais?", cancer_em_foco=None)
     checar("D9. sem assunto anterior, 'e os sinais?' não inventa um câncer", not sem.tipo_cancer and not sem.candidatos)
-    mudou = ab.responder_pergunta("e o de pulmão?", contexto="ovario")
+    mudou = ab.responder_pergunta("e o de pulmão?", cancer_em_foco="ovario")
     checar("D10. mudou de assunto: 'e o de pulmão?' deixa o ovário", mudou.tipo_cancer == "pulmao"
            and "cancer_pulmao" in destinos(mudou)[0] and "cancer_ovario" not in destinos(mudou)[0])
-    outro_assunto = ab.responder_pergunta("onde fica a delegacia da mulher em Rio Claro?", contexto="ovario")
+    outro_assunto = ab.responder_pergunta("onde fica a delegacia da mulher em Rio Claro?", cancer_em_foco="ovario")
     checar("D11. pergunta de outro assunto ignora o câncer anterior", outro_assunto.tipo_cancer is None
            and "cancer_ovario" not in destinos(outro_assunto)[0])
-    pesada = ab.responder_pergunta("e os sinais do câncer de pele?", contexto="ovario")
+    pesada = ab.responder_pergunta("e os sinais do câncer de pele?", cancer_em_foco="ovario")
     checar("D12. com o câncer dito, o contexto antigo não pesa", pesada.tipo_cancer == "pele")
     x = ab.responder_pergunta("meu marido tá me agredindo, me ajuda")
     checar("D13. segurança continua primeiro (violência)", x.tipo == "risco" and "190" in x.fala)

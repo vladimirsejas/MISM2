@@ -53,7 +53,9 @@ jobs:
         run: python teste_apoio_busca.py
       - name: Cobertura por tipo de câncer no Apoio (busca não mistura cânceres, sintomas, falhas, privacidade)
         working-directory: algoritimos
-        run: python teste_apoio_cancer.py
+        run: |
+          python teste_apoio_cancer.py
+          python teste_conversa_apoio.py
       - name: Carga e ferramentas do ETL
         working-directory: etl
         run: |

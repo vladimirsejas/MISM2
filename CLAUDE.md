@@ -500,6 +500,11 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   nuvem; o texto veio de conhecimento geral + busca e NÃO traz idade nem intervalo de rastreamento.** Conferir no Windows e
   tirar a marca. Teste: `algoritimos/teste_apoio_cancer.py` + `gabarito_apoio_cancer.json` (às cegas: 1ª medição 36/40 e
   25/28, depois das correções 40/40; já não é independente). O Gemini do Apoio segue só com dublê (API real não testada).
+- **Contexto temporário da caixa do Apoio (Codex, 18/10/2026, auditado e juntado pelo Claude):** "e agora?", "estou com medo", "não entendi" retomam o item ou a etapa da resposta anterior e pedem
+  o detalhe (`tipo = "esclarecimento"`, texto do catálogo, sem inventar o próximo passo). A sessão guarda só um token validado no catálogo
+  (`caixa_ap_contexto`, "item:id" / "etapa:id"), nunca o relato; clicar, voltar, trocar de aba ou de atalho limpa. **Dois contextos convivem**
+  em `responder_pergunta`: `contexto` (token do Codex) e `cancer_em_foco` (o câncer da resposta, para "e os sinais?"). Gemini não recebe histórico.
+  Testes: `teste_conversa_apoio.py` e `dashboard/teste_conversa_apoio_tela.py` (regressão, não amostra independente).
 - Ainda não feito (combinar): população do IBGE; testar com pessoas de verdade; revisar com o autor o
   vocabulário popular do Apoio (`apoio_busca.VOCABULARIO`/`EXTRA`).
 
