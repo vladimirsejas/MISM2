@@ -106,6 +106,9 @@ Lista recebida em 18/10/2026, sem fonte. Regra do projeto: só entra serviço qu
 | Gastrocentro/Unicamp (diagnóstico do aparelho digestivo) | **Cadastrado** na porta Outros cânceres (`gastrocentro_unicamp`, 18/10/2026), só com o que a página diz (cerca de 700 exames gratuitos por mês, sistema hierarquizado). **A página não informa** quais exames faz, quem é encaminhada nem se atende Rio Claro/Piracicaba: ficou "a confirmar". Não foi para a área de hospitais de câncer, porque não é hospital oncológico completo. |
 | Hospital Estadual Sumaré (HES-Unicamp) | **Não cadastrado.** Hospital geral 100% SUS; a página não menciona oncologia e a abrangência (Americana, Hortolândia, Monte Mor, Nova Odessa, Santa Bárbara d'Oeste e Sumaré, DRS 7) não inclui Rio Claro. Prêmios, orçamento e equipamentos da página não entram: não respondem "onde procurar cuidado". |
 
+| UNESP Botucatu (oncologia, quimioterapia, centro oncológico) | O **HC da Faculdade de Medicina de Botucatu já está** no catálogo (`hc_botucatu`, página oficial do serviço de oncologia). O **Hospital Estadual de Botucatu (HEBo)** como local de quimioterapia e imunoterapia **não foi cadastrado**: a única fonte da sugestão é um cartão do Poupatempo que a nuvem não abre; entra com a página oficial. "Centro oncológico" em expansão e terapia CAR-T: sem fonte, não entram. |
+| UNESP Botucatu (disciplina de oncologia, residência, Liga do Câncer, laboratório translacional, OncoToxLab, congresso) | **Ensino e pesquisa, não atendimento.** Não respondem "onde procurar cuidado" e o guia não os cadastra como serviço. O aconselhamento genético para famílias com histórico é um serviço possível: só entra com página oficial dizendo quem atende e como se chega. |
+
 Para entrar: página oficial do serviço, quem atende pelo SUS, se exige encaminhamento e abrangência. Hospital de ensino ou de pesquisa
 **não é porta de entrada**; a vaga vem pela regulação.
 
