@@ -86,6 +86,11 @@ def main():
             f.write("CO_CLASSIFICACAO_SERVICO;CO_SERVICO_ESPECIALIZADO;DS_CLASSIFICACAO_SERVICO\n002;151;MAMOGRAFIA\n")
         with open(os.path.join(cheia, "tbServicoEspecializado202608.csv"), "w", encoding="latin-1", newline="") as f:
             f.write("CO_SERVICO_ESPECIALIZADO;DS_SERVICO_ESPECIALIZADO\n151;SERVICO DE DIAGNOSTICO POR IMAGEM\n")
+        with open(os.path.join(cheia, "tbAtividadeProfissional202608.csv"), "w", encoding="latin-1", newline="") as f:
+            f.write("CO_CBO;DS_ATIVIDADE_PROFISSIONAL\n225135;MEDICO DERMATOLOGISTA\n225120;MEDICO CARDIOLOGISTA\n")
+        with open(os.path.join(cheia, "tbCargaHorariaSus202608.csv"), "w", encoding="latin-1", newline="") as f:
+            f.write("CO_UNIDADE;CO_PROFISSIONAL_SUS;CO_CBO;QT_CARGA_HORARIA_AMBULATORIAL\n"
+                    "1006;P1;225135;20\n1006;P2;225135;20\n1006;P3;225120;10\n")
         os.environ["ESCUDO_CNES_PASTA"] = cheia
         esquecer_modulos()
         at = abrir()
@@ -121,6 +126,11 @@ def main():
         t = texto(at)
         checar("C. busca em linguagem comum encontra mamografia pelo CNES",
                "AME Rio Claro" in t and "MAMOGRAFIA" in t and not at.exception)
+        next(i for i in at.text_input if i.key == "un_busca").set_value("dermatologista").run()
+        t = texto(at)
+        checar("C. busca de especialista mostra tudo da unidade: médicos e serviços, sem corte",
+               "AME Rio Claro" in t and "MEDICO DERMATOLOGISTA (2 cadastrados)" in t and "MEDICO CARDIOLOGISTA (1 cadastrado)" in t
+               and "SERVICO DE DIAGNOSTICO POR IMAGEM" in t and "e mais" not in t and not at.exception)
         next(i for i in at.text_input if i.key == "un_busca").set_value("farmacia").run()
         checar("C. a busca acha a farmácia (grupo que não é botão)", "Farmacia Popular" in texto(at))
         next(i for i in at.text_input if i.key == "un_busca").set_value("zzzz").run()

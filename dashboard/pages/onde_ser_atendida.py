@@ -152,16 +152,20 @@ def cartao(u, n_internacoes, busca=""):
     corpo = "".join(f'<div class="un-linha">{l}</div>' for l in linhas)
     termos_servico = [t.strip() for t in str(getattr(u, "servicos", "") or "").split("|") if t.strip()]
     if termos_servico:
-        alvos = [us._chave(t).replace("_", " ") for t in oa.termos_servico_buscados(busca)]
+        traduzidos, digitados = oa._interpretar_busca(busca)
+        alvos = [us._chave(t).replace("_", " ") for t in list(traduzidos) + list(digitados)]
         correspondentes = [t for t in termos_servico
                            if any(alvo in us._chave(t).replace("_", " ") for alvo in alvos)]
-        termos_servico = correspondentes + [t for t in termos_servico if t not in correspondentes]
-        visiveis = termos_servico[:6]
-        texto_servicos = ", ".join(html.escape(t) for t in visiveis)
-        if len(termos_servico) > len(visiveis):
-            texto_servicos += f" e mais {len(termos_servico) - len(visiveis)} registro(s)"
-        corpo += (f'<div class="un-linha"><b>Serviços e especialidades registrados no CNES</b>: {texto_servicos}</div>'
-                  '<div class="un-aviso">Cadastro não confirma vaga, atendimento pelo SUS ou disponibilidade hoje.</div>')
+        def _item(t):
+            return f"<b>{html.escape(t)}</b>" if t in correspondentes else html.escape(t)
+        especialistas = [t for t in termos_servico if "cadastrad" in t]
+        servicos_exames = [t for t in termos_servico if "cadastrad" not in t]
+        # tudo o que o CNES registra para a unidade, sem cortar; o que casou com a busca vai primeiro e em negrito
+        for titulo, lista_t in (("Especialistas cadastrados no CNES", especialistas), ("Serviços e exames registrados no CNES", servicos_exames)):
+            lista_t = [t for t in lista_t if t in correspondentes] + [t for t in lista_t if t not in correspondentes]
+            if lista_t:
+                corpo += f'<div class="un-linha"><b>{titulo} ({len(lista_t)})</b>: {", ".join(_item(t) for t in lista_t)}</div>'
+        corpo += '<div class="un-aviso">Cadastro não confirma vaga, atendimento pelo SUS ou disponibilidade hoje.</div>'
     if u.aviso:
         corpo += f'<div class="un-aviso">⚠ {html.escape(u.aviso)}</div>'
     botoes = (f'<a class="un-chegar" title="Abre a rota no Google Maps" href="{html.escape(u.link_chegar)}" target="_blank" rel="noopener noreferrer">'
