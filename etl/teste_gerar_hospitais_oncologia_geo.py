@@ -109,6 +109,10 @@ caixa_teste = (-22.45, -22.30, -47.60, -47.50)
 checar("distância ao contorno: dentro = 0; 0,1 grau ao sul = ~11 km; o motivo mostra os km",
        g._km_fora(-22.40, -47.55, [caixa_teste]) == 0 and 10 < g._km_fora(-22.55, -47.55, [caixa_teste]) < 12
        and "km do contorno" in g.conferir(hosp, dict(cad, lat=-22.55, lon=-47.55), None, caixas)[1])
+checar("onde_cai: o município do ponto, do menor para o maior retângulo; fora de tudo = vazio",
+       g.onde_cai(-22.40, -47.55, caixas, "SP") == ["Rio Claro"] and g.onde_cai(-10.0, -40.0, caixas, "SP") == [])
+checar("o motivo diz onde o ponto cai (pista para conferir)", "o ponto cai em" in g.conferir(item("2000020", "SP", "Araraquara"), dict(cad, unidade="3503202000020", lat=-22.40, lon=-47.55), None, caixas)[1]
+       or "o ponto não cai" in g.conferir(item("2000020", "SP", "Araraquara"), dict(cad, unidade="3503202000020", lat=-22.40, lon=-47.55), None, caixas)[1])
 checar("montar usa os contornos: sem ponto e com o motivo", via_montar["2000010"]["no_mapa"] == "não" and via_montar["2000010"]["lat"] == "")
 
 checar("todo estado tem retângulo e código IBGE (27)", len(g.CAIXA_UF) == 27 and len(g.UF_POR_CODIGO) == 27 and set(g.UF_POR_CODIGO.values()) == set(g.CAIXA_UF))

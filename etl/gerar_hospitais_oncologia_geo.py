@@ -132,6 +132,16 @@ def municipios_candidatos(item, cadastro, caixas):
     return cands
 
 
+def onde_cai(lat, lon, caixas, uf, limite=3):
+    """Nomes dos municípios do estado cujo retângulo contém o ponto, do menor para o maior (o mais específico primeiro).
+    Os retângulos se sobrepõem nas divisas: é uma pista, não um endereço."""
+    achados = []
+    for _, (cx, nome, u) in caixas["por_codigo"].items():
+        if u == uf and cx[0] <= lat <= cx[1] and cx[2] <= lon <= cx[3]:
+            achados.append(((cx[1] - cx[0]) * (cx[3] - cx[2]), nome))
+    return [n for _, n in sorted(achados)[:limite]]
+
+
 def _km_fora(lat, lon, caixas_candidatas):
     """Distância aproximada (km), em linha reta, do ponto até o retângulo do município mais próximo (0 se estiver dentro)."""
     melhor = None
@@ -169,7 +179,10 @@ def conferir(item, cadastro, centro=None, caixas=None):
                          for cx in (caixas["por_codigo"][k][0] for k in cands))
             if not dentro:
                 nomes = " / ".join(caixas["por_codigo"][k][1] for k in cands)
-                return "não", f"a coordenada cai fora do município ({nomes}), a cerca de {_km_fora(lat, lon, [caixas['por_codigo'][k][0] for k in cands]):.0f} km do contorno"
+                km = _km_fora(lat, lon, [caixas["por_codigo"][k][0] for k in cands])
+                onde = onde_cai(lat, lon, caixas, item["uf"])
+                pista = f"; o ponto cai em {', '.join(onde)}" if onde else "; o ponto não cai em nenhum município do estado"
+                return "não", f"a coordenada cai fora do município ({nomes}), a cerca de {km:.0f} km do contorno{pista}"
     return "sim", ""
 
 
