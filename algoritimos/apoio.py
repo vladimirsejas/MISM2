@@ -1136,13 +1136,22 @@ ITENS = [
     # ---------------- SEUS DIREITOS ----------------
     _item("tfd", "direitos", "caminho", "SUS (todo o Brasil)",
           "Tratamento Fora do Domicílio (TFD): transporte e diárias para tratar em outra cidade",
-          "se o tratamento é a mais de 50 km e não existe na sua região, o SUS pode pagar transporte e diárias",
-          "INCA – cartilha Direitos sociais da pessoa com câncer",
-          "https://www.inca.gov.br/publicacoes/cartilhas/direitos-sociais-da-pessoa-com-cancer-orientacoes-aos-usuarios",
+          "quando o tratamento não existe no município onde você mora, o SUS pode pagar transporte e diárias; o "
+          "médico do SUS pede e uma comissão autoriza",
+          "Ministério da Saúde – Portaria SAS/MS nº 55/1999 (rotina do TFD no SUS; cópia no portal da Ebserh)",
+          "https://www.gov.br/hubrasil/pt-br/hospitais-universitarios/regiao-centro-oeste/hc-ufg/saude/"
+          "consultas-e-retornos/Portaria_55_24021999.pdf",
+          para_quem="Pacientes do SUS que precisam de tratamento que não existe no município onde moram (a portaria "
+                    "fala em esgotados os meios de tratamento no próprio município).",
           como="O médico do SUS faz o pedido e uma comissão do município (ou do Estado) autoriza. Cobre transporte e "
-               "diárias de alimentação e pernoite para a paciente e, se preciso, um acompanhante, conforme o "
-               "orçamento. Depois da consulta, guarde o comprovante para a prestação de contas.",
-          confirmar="Em Rio Claro, pergunte à Fundação Municipal de Saúde onde se pede o TFD."),
+               "diárias de alimentação e pernoite para a paciente e, se preciso, um acompanhante, dentro do limite "
+               "financeiro do município ou do Estado. Depois da consulta, guarde o comprovante para a prestação de "
+               "contas.",
+          confirmar="O link abre o texto da portaria federal (um PDF), não uma página de orientação ao paciente. "
+                    "Regras, distância mínima e valores variam por município e por Estado, e há notícia de uma lei "
+                    "recente sobre o auxílio do TFD que não foi conferida: em Rio Claro, pergunte à Fundação "
+                    "Municipal de Saúde onde se pede o TFD e quais são as regras de hoje.",
+          conferido="18/10/2026"),
     _item("fgts_pis", "direitos", "caminho", "Todo o Brasil",
           "Saque do FGTS e do PIS/PASEP",
           "quem tem câncer pode sacar todo o FGTS e o PIS/PASEP na Caixa",

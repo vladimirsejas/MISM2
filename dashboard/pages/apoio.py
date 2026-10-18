@@ -649,8 +649,8 @@ if aba == apoio.LAMINAS["hospitais"]:
     leitura("Como chegar a um destes hospitais", [
         "Com suspeita ou diagnóstico de câncer, procure a unidade de saúde do bairro: o médico do SUS pede a vaga "
         "pela CROSS, que encaminha a um centro perto de onde você mora.",
-        "Se o tratamento for longe (mais de 50 km) e não existir na sua região, o SUS pode pagar transporte e "
-        "diárias (TFD, na porta Direitos e acesso).",
+        "Se o tratamento não existir no município onde você mora, o SUS pode pagar transporte e diárias (TFD, "
+        "na porta Direitos e acesso).",
         "A lista completa e oficial é a da FOSP (primeira região desta área).",
     ])
 
