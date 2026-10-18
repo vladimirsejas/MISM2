@@ -305,8 +305,15 @@ def _colunas_por_nome(caminho):
     return sep, cod, {_chave(c): c for c in colunas}
 
 
+# O CNES registra, em cada serviço da unidade, se ele é PRÓPRIO (TP_CARACTERISTICA = 1) ou feito por TERCEIRO (2: outro
+# estabelecimento, identificado em CO_CNPJCPF). Uma UBS "tem" radiologia, ultrassom e mamografia por terceiro, mas não faz
+# esses exames no local (visto no CNES real de Rio Claro, 18/10/2026; o autor, que trabalha na FMSRC, confirmou a rede).
+# O texto de serviços marca o que é por terceiro com esta etiqueta; a busca só conta o que é próprio.
+TAG_TERCEIRO = " [POR TERCEIRO]"
+
+
 def _servicos_cnes(caminho_estabelecimento, unidades, tamanho_pedaco=TAMANHO_PEDACO):
-    """Agrupa serviços e classificações pelas unidades selecionadas, sem ler dados profissionais."""
+    """Agrupa serviços e classificações pelas unidades selecionadas (próprios e por terceiro, estes com TAG_TERCEIRO), sem ler dados profissionais."""
     unidades = {so_digitos(u) for u in unidades if so_digitos(u)}
     if not unidades:
         return {}, ""
@@ -330,6 +337,8 @@ def _servicos_cnes(caminho_estabelecimento, unidades, tamanho_pedaco=TAMANHO_PED
         class_cols = [cols_c[_chave(k)] for k in ("CO_SERVICO_ESPECIALIZADO", "CO_CLASSIFICACAO_SERVICO", "DS_CLASSIFICACAO_SERVICO")]
         service_cols = [cols_s[_chave(k)] for k in ("CO_SERVICO_ESPECIALIZADO", "DS_SERVICO_ESPECIALIZADO")]
         relation_cols = [cols_r[_chave(k)] for k in ("CO_UNIDADE", "CO_SERVICO", "CO_CLASSIFICACAO")]
+        col_caracteristica = cols_r.get(_chave("TP_CARACTERISTICA"))  # arquivos antigos podem não ter: tudo conta como próprio
+        usar_relacao = relation_cols + ([col_caracteristica] if col_caracteristica else [])
         classes = pd.read_csv(classificacoes, sep=sep_c, encoding=cod_c, dtype=str, usecols=class_cols,
                               keep_default_na=False, low_memory=False)
         nomes_classes = {
@@ -342,8 +351,8 @@ def _servicos_cnes(caminho_estabelecimento, unidades, tamanho_pedaco=TAMANHO_PED
             so_digitos(r[service_cols[0]]): str(r[service_cols[1]]).strip()
             for _, r in tabela_servicos.iterrows() if str(r[service_cols[1]]).strip()
         }
-        por_unidade = {}
-        for pedaco in pd.read_csv(relacao, sep=sep_r, encoding=cod_r, dtype=str, usecols=relation_cols,
+        proprios, terceiros = {}, {}
+        for pedaco in pd.read_csv(relacao, sep=sep_r, encoding=cod_r, dtype=str, usecols=usar_relacao,
                                   chunksize=tamanho_pedaco, keep_default_na=False, low_memory=False):
             ids = pedaco[relation_cols[0]].map(so_digitos)
             pedaco = pedaco.loc[ids.isin(unidades)]
@@ -351,13 +360,17 @@ def _servicos_cnes(caminho_estabelecimento, unidades, tamanho_pedaco=TAMANHO_PED
                 unidade = so_digitos(r[relation_cols[0]])
                 servico = so_digitos(r[relation_cols[1]])
                 classificacao = so_digitos(r[relation_cols[2]])
-                rotulo = nomes_classes.get((servico, classificacao), "")
-                nome_servico = nomes_servicos.get(servico, "")
-                if rotulo:
-                    por_unidade.setdefault(unidade, set()).add(rotulo)
-                if nome_servico:
-                    por_unidade.setdefault(unidade, set()).add(nome_servico)
-        return {u: " | ".join(sorted(rotulos)) for u, rotulos in por_unidade.items()}, ""
+                por_terceiro = bool(col_caracteristica) and so_digitos(r[col_caracteristica]) == "2"
+                destino = terceiros if por_terceiro else proprios
+                for rotulo in (nomes_classes.get((servico, classificacao), ""), nomes_servicos.get(servico, "")):
+                    if rotulo:
+                        destino.setdefault(unidade, set()).add(rotulo)
+        por_unidade = {}
+        for u in set(proprios) | set(terceiros):
+            meus = proprios.get(u, set())
+            so_terceiro = terceiros.get(u, set()) - meus  # o que a unidade também faz por conta própria não é "só por terceiro"
+            por_unidade[u] = sorted(meus) + sorted(f"{x}{TAG_TERCEIRO}" for x in so_terceiro)
+        return {u: " | ".join(itens) for u, itens in por_unidade.items()}, ""
     except (OSError, ValueError, KeyError, pd.errors.ParserError, pd.errors.EmptyDataError) as erro:
         return {}, f"Não foi possível ler as relações de serviços do CNES: {erro}"
 

@@ -173,6 +173,14 @@ def cartao(u, n_internacoes, busca=""):
                           f'{junta.join(_item(t) for t in resto)}</details>')
             corpo += f'<div class="un-linha"><b>{titulo} ({len(lista_t)})</b>: {texto}</div>'
         corpo += '<div class="un-aviso">Cadastro não confirma vaga, atendimento pelo SUS ou disponibilidade hoje.</div>'
+    terceiros = oa.servicos_de_terceiros(getattr(u, "servicos", ""))
+    if terceiros:
+        corpo += ('<div class="un-linha"><details><summary>Serviços feitos por outro estabelecimento ('
+                  f'{len(terceiros)})</summary>{", ".join(html.escape(oa.rotulo_legivel(t)) for t in terceiros)}<br>'
+                  '<i>Segundo o CNES, a unidade oferece esses serviços por meio de terceiros: não são feitos no próprio local. '
+                  'Pergunte na unidade onde fazer.</i></details></div>')
+    if not (especialistas or servicos_exames) and terceiros:
+        corpo += '<div class="un-aviso">Cadastro não confirma vaga, atendimento pelo SUS ou disponibilidade hoje.</div>'
     if u.aviso:
         corpo += f'<div class="un-aviso">⚠ {html.escape(u.aviso)}</div>'
     botoes = (f'<a class="un-chegar" title="Abre a rota no Google Maps" href="{html.escape(u.link_chegar)}" target="_blank" rel="noopener noreferrer">'

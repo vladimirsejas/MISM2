@@ -32,7 +32,8 @@ UNIDADES = [
     un("UPA Central", "Pronto atendimento", "urgencia", "publica",
        "RADIOLOGIA | SERVICO DE DIAGNOSTICO POR IMAGEM | MEDICO CLINICO (9 no ambulatório, 9 cadastrados)"),
     un("UBS Dr Mario Fittipaldi", "Centro de saúde / Unidade básica", "basica", "publica",
-       "ACOMPANHAMENTO DO PRE-NATAL | " + MED_GIN + " | MEDICO PEDIATRA (2 no ambulatório, 2 cadastrados) | "
+       "ACOMPANHAMENTO DO PRE-NATAL | RADIOLOGIA [POR TERCEIRO] | ULTRASONOGRAFIA [POR TERCEIRO] | MAMOGRAFIA [POR TERCEIRO] | "
+       "SERVICO DE DIAGNOSTICO POR IMAGEM [POR TERCEIRO] | " + MED_GIN + " | MEDICO PEDIATRA (2 no ambulatório, 2 cadastrados) | "
        "ENFERMEIRO DA ESTRATEGIA DE SAUDE DA FAMILIA (3 no ambulatório, 3 cadastrados)", "Jardim Wenzel", "Rua 21, 4219"),
     un("UBS Dr Silvio Arnaldo Piva", "Centro de saúde / Unidade básica", "basica", "publica",
        "ACOMPANHAMENTO DO PRE-NATAL | " + MED_GIN + " | NUTRICIONISTA (1 no ambulatório, 1 cadastrado)", "Vila Paulista", "Av 3, 1784"),
@@ -159,6 +160,23 @@ def main():
     print(("OK  " if ok else "FALHOU") + " destaque: exame destaca serviço, nunca médico")
     if not ok:
         falhas.append("destaque")
+
+    # CASO REAL (CNES de Rio Claro, 18/10/2026): a UBS registra radiologia/ultrassom/mamografia POR TERCEIRO (TP_CARACTERISTICA=2);
+    # ela não faz esses exames no local e não pode aparecer na busca deles
+    ok = all(FITT not in set(oa.filtrar(DF, None, busca=q)["nome"]) for q in ("raio x", "ultrassom", "mamografia", "imagem", "diagnostico por imagem"))
+    print(("OK  " if ok else "FALHOU") + " UBS com serviço por terceiro não aparece como se fizesse o exame")
+    if not ok:
+        falhas.append("terceiro")
+    ok = oa.servicos_de_terceiros(DF[DF["nome"] == FITT].iloc[0]["servicos"]) == ["RADIOLOGIA", "ULTRASONOGRAFIA", "MAMOGRAFIA", "SERVICO DE DIAGNOSTICO POR IMAGEM"]
+    print(("OK  " if ok else "FALHOU") + " o que é por terceiro continua disponível para o cartão mostrar à parte")
+    if not ok:
+        falhas.append("terceiro_cartao")
+    esp, svc = oa.opcoes_de_busca(DF)
+    imagem = [q for _, t, q in svc if t == "SERVICO DE DIAGNOSTICO POR IMAGEM"]
+    ok = imagem == [4]  # AME, CEAD, UPA, Santa Casa: a UBS não entra na contagem da lista
+    print(("OK  " if ok else "FALHOU") + f" a lista 'o que existe' conta só quem faz ({imagem})")
+    if not ok:
+        falhas.append("lista_terceiro")
 
     # a ordem: o lugar cujo NOME bate com a busca vem primeiro
     primeiro = list(oa.filtrar(DF, None, busca="ame")["nome"])[:1]

@@ -81,7 +81,9 @@ def main():
         with open(os.path.join(cheia, "tbEstabelecimento202608.csv"), "w", encoding="latin-1", newline="") as f:
             f.write(CABECALHO + "\n" + "\n".join(LINHAS) + "\n")
         with open(os.path.join(cheia, "rlEstabServClass202608.csv"), "w", encoding="latin-1", newline="") as f:
-            f.write("CO_UNIDADE;CO_SERVICO;CO_CLASSIFICACAO\n1006;151;002\n")
+            f.write("CO_UNIDADE;CO_SERVICO;CO_CLASSIFICACAO;TP_CARACTERISTICA;CO_CNPJCPF\n"
+                    "1006;151;002;1;NAO INFORMADO\n"   # o AME FAZ a mamografia
+                    "1001;151;002;2;2047470\n")       # a UBS tem mamografia só por terceiro (caso real de Rio Claro)
         with open(os.path.join(cheia, "tbClassificacaoServico202608.csv"), "w", encoding="latin-1", newline="") as f:
             f.write("CO_CLASSIFICACAO_SERVICO;CO_SERVICO_ESPECIALIZADO;DS_CLASSIFICACAO_SERVICO\n002;151;MAMOGRAFIA\n")
         with open(os.path.join(cheia, "tbServicoEspecializado202608.csv"), "w", encoding="latin-1", newline="") as f:
@@ -169,6 +171,15 @@ def main():
         checar("C. busca sem nenhuma semelhança: mensagem, sem botões inventados",
                any("Não encontrei" in str(i.value) for i in at.info) and not at.exception
                and not [b for b in at.button if str(b.key).startswith("un_sug_")])
+        next(i for i in at.text_input if i.key == "un_busca").set_value("mamografia").run()
+        t = texto(at)
+        checar("C. mamografia: o AME (que faz) aparece e a UBS (só por terceiro) NÃO aparece como se fizesse",
+               "AME Rio Claro" in t and "UBS Jardim das Flores" not in t and not at.exception)
+        next(i for i in at.text_input if i.key == "un_busca").set_value("jardim das flores").run()
+        t = texto(at)
+        checar("C. o cartão da UBS mostra o serviço por terceiro À PARTE, dizendo que não é feito no local",
+               "Serviços feitos por outro estabelecimento (2)" in t and "não são feitos no próprio local" in t
+               and "Profissionais cadastrados" not in t.split("Serviços feitos por outro")[0].split("UBS Jardim das Flores")[-1] and not at.exception)
         next(i for i in at.text_input if i.key == "un_busca").set_value("farmacia").run()
         checar("C. a busca acha a farmácia (grupo que não é botão)", "Farmacia Popular" in texto(at))
         next(i for i in at.text_input if i.key == "un_busca").set_value("zzzz").run()

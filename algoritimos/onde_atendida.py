@@ -259,9 +259,18 @@ def rotulo_legivel(t):
 
 
 def separar_registros(texto):
-    """Do texto de uma unidade devolve (especialistas, servicos): listas de rótulos como o CNES os escreveu."""
+    """Do texto de uma unidade devolve (profissionais, servicos PRÓPRIOS). O que o CNES marca como serviço
+    por terceiro (outro estabelecimento faz) fica de fora: a unidade não faz aquilo no local."""
     itens = [t.strip() for t in str(texto or "").split("|") if t.strip()]
-    return [t for t in itens if "cadastrad" in t], [t for t in itens if "cadastrad" not in t]
+    prof = [t for t in itens if "cadastrad" in t]
+    proprios = [t for t in itens if "cadastrad" not in t and not t.endswith(us.TAG_TERCEIRO)]
+    return prof, proprios
+
+
+def servicos_de_terceiros(texto):
+    """Serviços que o CNES registra para a unidade, mas feitos por outro estabelecimento (sem a etiqueta)."""
+    itens = [t.strip() for t in str(texto or "").split("|") if t.strip()]
+    return [t[:-len(us.TAG_TERCEIRO)].strip() for t in itens if t.endswith(us.TAG_TERCEIRO)]
 
 
 def opcoes_de_busca(df):

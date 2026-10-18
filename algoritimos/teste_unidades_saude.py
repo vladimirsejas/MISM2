@@ -172,6 +172,32 @@ def main():
         assert not df.attrs["aviso_servicos"]
         print("[OK] serviços CNES associados pela chave composta e pelo mesmo mês")
 
+    # serviço PRÓPRIO x POR TERCEIRO (TP_CARACTERISTICA 1 x 2): o CNES real de Rio Claro registra a UBS com radiologia,
+    # ultrassom e mamografia por terceiro; ela não faz o exame no local
+    with tempfile.TemporaryDirectory() as pasta:
+        escrever(pasta, "tbEstabelecimento202608.csv",
+                 "CO_UNIDADE;CO_CNES;CO_IBGE;NO_FANTASIA;TP_UNIDADE;CO_MOTIVO_DESAB",
+                 ["1001;2080001;3543907;AME RIO CLARO;04;", "1002;2080002;3543907;UBS DO BAIRRO;02;"])
+        escrever(pasta, "rlEstabServClass202608.csv", "CO_UNIDADE;CO_SERVICO;CO_CLASSIFICACAO;TP_CARACTERISTICA;CO_CNPJCPF",
+                 ["1001;151;002;1;NAO INFORMADO",     # o AME faz mamografia
+                  "1002;151;002;2;2047470",           # a UBS tem mamografia por terceiro
+                  "1002;112;001;1;NAO INFORMADO",     # e pré-natal próprio
+                  "1002;151;003;1;NAO INFORMADO",     # radiologia própria E por terceiro: vale a própria
+                  "1002;151;003;2;2047470"])
+        escrever(pasta, "tbClassificacaoServico202608.csv",
+                 "CO_CLASSIFICACAO_SERVICO;CO_SERVICO_ESPECIALIZADO;DS_CLASSIFICACAO_SERVICO",
+                 ["002;151;MAMOGRAFIA", "003;151;RADIOLOGIA", "001;112;ACOMPANHAMENTO DO PRE-NATAL"])
+        escrever(pasta, "tbServicoEspecializado202608.csv", "CO_SERVICO_ESPECIALIZADO;DS_SERVICO_ESPECIALIZADO",
+                 ["151;SERVICO DE DIAGNOSTICO POR IMAGEM", "112;SERVICO DE ATENCAO AO PRE-NATAL"])
+        df = us.carregar_unidades(pasta, tamanho_pedaco=2)
+        ame = df[df["nome"].str.contains("Ame", case=False)].iloc[0]["servicos"]
+        ubs = df[df["nome"].str.contains("Ubs", case=False)].iloc[0]["servicos"]
+        assert "MAMOGRAFIA" in ame and us.TAG_TERCEIRO not in ame, ame
+        assert f"MAMOGRAFIA{us.TAG_TERCEIRO}" in ubs, ubs
+        assert "ACOMPANHAMENTO DO PRE-NATAL" in ubs and f"ACOMPANHAMENTO DO PRE-NATAL{us.TAG_TERCEIRO}" not in ubs, ubs
+        assert f"RADIOLOGIA{us.TAG_TERCEIRO}" not in ubs and "RADIOLOGIA" in ubs, ubs  # próprio vence terceiro
+        print("[OK] serviço próprio x por terceiro (TP_CARACTERISTICA): a UBS não 'faz' o exame que tem por terceiro")
+
     # médicos especialistas: conta profissionais distintos com carga ambulatorial, só de ocupações "MEDICO ..."
     with tempfile.TemporaryDirectory() as pasta:
         escrever(pasta, "tbEstabelecimento202608.csv",

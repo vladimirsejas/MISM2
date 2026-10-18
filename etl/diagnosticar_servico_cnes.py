@@ -63,10 +63,11 @@ def main():
             print(f"  ... na página aparecem {min(len(achadas), 12)} de cada vez ('Mostrar mais' traz o resto)")
             break
 
-    titulo("3. O que cada unidade REGISTROU de fato (serviço -> classificação)")
+    titulo("3. Quem FAZ o serviço (TP_CARACTERISTICA = 1) e quem o tem POR TERCEIRO (= 2)")
     bruto, ach = base.ler_unidades_cruas(caminho)
     cnes_de = {us.so_digitos(u): us.so_digitos(c).zfill(7) for u, c in zip(bruto[ach["unidade"]], bruto[ach["cnes"]])}
     unidade_de = {v: k for k, v in cnes_de.items()}
+    nome_de_cnes = dict(zip(df["cnes"], df["nome"]))
     rel = os.path.join(pasta, f"rlEstabServClass{mes}.csv")
     cla = os.path.join(pasta, f"tbClassificacaoServico{mes}.csv")
     ser = os.path.join(pasta, f"tbServicoEspecializado{mes}.csv")
@@ -75,29 +76,35 @@ def main():
     nome_classe = {(us.so_digitos(r["CO_SERVICO_ESPECIALIZADO"]), us.so_digitos(r["CO_CLASSIFICACAO_SERVICO"])): r["DS_CLASSIFICACAO_SERVICO"].strip()
                    for _, r in cc.iterrows()}
     nome_serv = {us.so_digitos(r["CO_SERVICO_ESPECIALIZADO"]): r["DS_SERVICO_ESPECIALIZADO"].strip() for _, r in cs.iterrows()}
-    unidades = set(unidade_de.get(c) for c in tem["cnes"]) - {None}
-    registros = {}
-    for p in pd.read_csv(rel, sep=us._separador(rel, "latin-1"), encoding="latin-1", dtype=str, usecols=["CO_UNIDADE", "CO_SERVICO", "CO_CLASSIFICACAO"],
+    todas = set(unidade_de.values())
+    proprio, terceiro, provedores = {}, {}, {}
+    colunas = ["CO_UNIDADE", "CO_SERVICO", "CO_CLASSIFICACAO", "TP_CARACTERISTICA", "CO_CNPJCPF"]
+    for p in pd.read_csv(rel, sep=us._separador(rel, "latin-1"), encoding="latin-1", dtype=str, usecols=colunas,
                          chunksize=500_000, keep_default_na=False):
-        p = p.loc[p["CO_UNIDADE"].map(us.so_digitos).isin(unidades)]
-        for u, s, c in zip(p["CO_UNIDADE"], p["CO_SERVICO"], p["CO_CLASSIFICACAO"]):
-            u, s, c = us.so_digitos(u), us.so_digitos(s), us.so_digitos(c)
-            registros.setdefault(u, set()).add((nome_serv.get(s, f"serviço {s}"), nome_classe.get((s, c), f"classificação {c}")))
-    contagem = {}
-    for u, regs in registros.items():
-        for sv, cl in regs:
-            if alvo in norm(sv):
-                contagem[cl] = contagem.get(cl, 0) + 1
-    print(f"Classificações registradas dentro de '{termo}', em quantas unidades (as {len(tem)} acima):")
-    for cl, q in sorted(contagem.items(), key=lambda x: -x[1])[:20]:
-        print(f"   {q:3d}  {cl}")
-
-    titulo("4. As UBS / postos (grupo 'basica') que aparecem para esse serviço, com o que registraram")
-    ubs = tem[tem["grupo"].astype(str) == "basica"]
-    print(f"{len(ubs)} unidade(s) de posto/UBS.")
-    for r in ubs.head(40).itertuples():
-        regs = sorted(cl for sv, cl in registros.get(unidade_de.get(r.cnes), set()) if alvo in norm(sv))
-        print(f"   - {r.nome} [{r.natureza}] -> registrou: {', '.join(regs) if regs else '(nenhuma classificação deste serviço)'}")
+        p = p.loc[p["CO_UNIDADE"].map(us.so_digitos).isin(todas)]
+        for u, sv, cl, car, quem in zip(p["CO_UNIDADE"], p["CO_SERVICO"], p["CO_CLASSIFICACAO"], p["TP_CARACTERISTICA"], p["CO_CNPJCPF"]):
+            u, sv, cl = us.so_digitos(u), us.so_digitos(sv), us.so_digitos(cl)
+            rot = (nome_serv.get(sv, ""), nome_classe.get((sv, cl), ""))
+            if alvo not in norm(rot[0]) and alvo not in norm(rot[1]):
+                continue
+            if us.so_digitos(car) == "2":
+                terceiro.setdefault(u, set()).add(rot[1] or rot[0])
+                provedores[us.so_digitos(quem).zfill(7)] = provedores.get(us.so_digitos(quem).zfill(7), 0) + 1
+            else:
+                proprio.setdefault(u, set()).add(rot[1] or rot[0])
+    so_terceiro = set(terceiro) - set(proprio)
+    print(f"Unidades que FAZEM (próprio): {len(proprio)} | só por terceiro: {len(so_terceiro)}")
+    cnes_da = {v: k for k, v in unidade_de.items()}
+    por_grupo = df.set_index("cnes")["grupo"].astype(str).to_dict()
+    print("\nQuem FAZ, com o que registrou:")
+    for u in sorted(proprio, key=lambda x: nome_de_cnes.get(unidade_de and next((c for c, uu in unidade_de.items() if uu == x), ""), "")):
+        c = next((c for c, uu in unidade_de.items() if uu == u), "")
+        print(f"   - {nome_de_cnes.get(c, u)} [{por_grupo.get(c, '?')}] -> {', '.join(sorted(proprio[u]))}")
+    print(f"\nQuem aparece SÓ POR TERCEIRO ({len(so_terceiro)} unidades). Por grupo:",
+          {k: int(v) for k, v in pd.Series([por_grupo.get(next((c for c, uu in unidade_de.items() if uu == u), ""), "?") for u in so_terceiro]).value_counts().items()})
+    print("\nQuem é o 'terceiro' (CO_CNPJCPF) e em quantos registros aparece; se for o CNES de uma unidade de Rio Claro, o nome:")
+    for cod, q in sorted(provedores.items(), key=lambda x: -x[1])[:15]:
+        print(f"   {cod}  {q:3d} registros  -> {nome_de_cnes.get(cod, '(não é uma unidade de Rio Claro no cadastro)')}")
     return 0
 
 
