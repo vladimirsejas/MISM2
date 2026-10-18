@@ -89,7 +89,7 @@ def main():
     titulo("3. Profissionais por unidade (tbCargaHorariaSus) - só contagens")
     if not os.path.isfile(carga):
         print("tbCargaHorariaSus não está na pasta."); return 1
-    cod_c = us._codificacao(carga)
+    cod_c = "latin-1"  # o arquivo é grande e tem bytes fora de UTF-8 depois do começo
     sep_c = us._separador(carga, cod_c)
     cols_c = {us._chave(c): c for c in pd.read_csv(carga, sep=sep_c, encoding=cod_c, dtype=str, nrows=0).columns}
     pedir = ["CO_UNIDADE", "CO_PROFISSIONAL_SUS", "CO_CBO", "TP_SUS_NAO_SUS", "IND_VINCULACAO",

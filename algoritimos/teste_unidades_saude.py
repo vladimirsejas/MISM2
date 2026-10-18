@@ -195,6 +195,23 @@ def main():
         assert "P1" not in " ".join(df["servicos"]), "nenhum código de profissional pode sair"
         assert not df.attrs["aviso_medicos"]
         print("[OK] especialistas médicos: contagem por unidade, sem identificar pessoas")
+    # arquivo REAL é de ~1 GB: os primeiros 200 KB são UTF-8 e um byte de latin-1 aparece depois (já quebrou no notebook)
+    with tempfile.TemporaryDirectory() as pasta:
+        escrever(pasta, "tbEstabelecimento202608.csv", "CO_UNIDADE;CO_CNES;CO_IBGE;NO_FANTASIA;TP_UNIDADE;CO_MOTIVO_DESAB",
+                 ["1001;2080001;3543907;AME RIO CLARO;04;"])
+        escrever(pasta, "tbAtividadeProfissional202608.csv", "CO_CBO;DS_ATIVIDADE_PROFISSIONAL", ["225135;MEDICO DERMATOLOGISTA"])
+        linhas = [f"7{i:06d};PX{i};322205;S;1;0;USUARIO" for i in range(12000)]  # outras unidades, ~250 KB de ASCII
+        linhas += ["1001;PA;225135;S;1;20;JOS\xba DA SILVA", "1001;PB;225135;S;1;20;MAR\xcdA"]
+        with open(os.path.join(pasta, "tbCargaHorariaSus202608.csv"), "wb") as f:
+            f.write("CO_UNIDADE;CO_PROFISSIONAL_SUS;CO_CBO;TP_SUS_NAO_SUS;IND_VINCULACAO;QT_CARGA_HORARIA_AMBULATORIAL;CO_USUARIO\n"
+                    .encode("latin-1"))
+            f.write(("\n".join(linhas) + "\n").encode("latin-1"))
+        assert os.path.getsize(os.path.join(pasta, "tbCargaHorariaSus202608.csv")) > 250_000
+        df = us.carregar_unidades(pasta)
+        assert not df.attrs["aviso_medicos"], df.attrs["aviso_medicos"]
+        assert "MEDICO DERMATOLOGISTA (2 cadastrados)" in df.iloc[0]["servicos"], df.iloc[0]["servicos"]
+        print("[OK] arquivo grande com byte fora de UTF-8 depois do começo: lido sem perder os médicos")
+
     with tempfile.TemporaryDirectory() as pasta:
         escrever(pasta, "tbEstabelecimento202608.csv", "CO_UNIDADE;CO_CNES;CO_IBGE;NO_FANTASIA;TP_UNIDADE;CO_MOTIVO_DESAB",
                  ["1001;2080001;3543907;AME RIO CLARO;04;"])

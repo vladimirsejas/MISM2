@@ -387,7 +387,11 @@ def _medicos_cnes(caminho_estabelecimento, unidades, tamanho_pedaco=TAMANHO_PEDA
                              keep_default_na=False)
         medicas = {str(r[col_cbo]).strip(): str(r[col_nome]).strip() for _, r in tabela.iterrows()
                    if _sem_acento(str(r[col_nome])).upper().startswith("MEDICO")}
-        sep_c, cod_c, cols_c = _colunas_por_nome(carga)
+        # tbCargaHorariaSus tem ~1 GB e traz bytes fora de UTF-8 (nomes de usuário do cadastro) bem depois do começo:
+        # a amostra de _codificacao (200 KB) não os vê. Só lemos códigos, então latin-1 (nunca falha) é seguro.
+        cod_c = "latin-1"
+        sep_c = _separador(carga, cod_c)
+        cols_c = {_chave(c): c for c in pd.read_csv(carga, sep=sep_c, encoding=cod_c, dtype=str, nrows=0).columns}
         c_unidade, c_pessoa, c_cbo, c_horas = (cols_c[_chave(k)] for k in (
             "CO_UNIDADE", "CO_PROFISSIONAL_SUS", "CO_CBO", "QT_CARGA_HORARIA_AMBULATORIAL"))
         pessoas = {}  # (unidade, cbo) -> {profissionais}; só na memória
