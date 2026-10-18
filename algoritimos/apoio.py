@@ -89,7 +89,7 @@ FLUXO_REDE = [
 
 def _item(id, caminho, lamina, onde, titulo, resumo, fonte, link, para_quem=None, como=None, levar=None,
           contato=None, confirmar=None, cuidado=None, grupo=None, tambem=(), tambem_caminhos=(), conferido=None,
-          cancer=(), topicos=()):
+          cancer=(), topicos=(), cnes=None):
     """caminho=None: item que não é passo da jornada da mulher (ensino,
     pesquisa, a região no Estado) -- mora só na lâmina dele. grupo: o
     tema (Barretos) ou a região (Hospitais no Estado) do item na lâmina.
@@ -98,12 +98,14 @@ def _item(id, caminho, lamina, onde, titulo, resumo, fonte, link, para_quem=None
     tambem_caminhos: outras portas onde o item aparece em cartão curto.
     cancer: tipos de câncer a que o item é ESPECÍFICO (chaves de TIPOS_CANCER); vazio = serve a qualquer câncer
     (rede, direitos, regulação...). A busca usa isto para nunca levar quem citou um câncer ao conteúdo de outro.
-    topicos: [(rótulo, texto)] lidos no cartão depois de "Para quem" (o que é, sinais, exames, tratamento...)."""
+    topicos: [(rótulo, texto)] lidos no cartão depois de "Para quem" (o que é, sinais, exames, tratamento...).
+    cnes: código CNES do hospital, SÓ se foi conferido no banco real (hospitais + internacoes); nunca de lista de terceiros.
+    Não aparece no cartão: serve para cruzar com os dados do Escudo (SIH/SIA)."""
     return {"id": id, "caminho": caminho, "lamina": lamina, "onde": onde, "titulo": titulo, "resumo": resumo,
             "para_quem": para_quem, "como": como, "levar": levar, "contato": contato, "fonte": fonte,
             "link": link, "confirmar": confirmar, "cuidado": cuidado, "grupo": grupo, "tambem": list(tambem),
             "conferido": conferido or CONFERIDO,
-            "tambem_caminhos": list(tambem_caminhos), "cancer": tuple(cancer), "topicos": list(topicos)}
+            "tambem_caminhos": list(tambem_caminhos), "cancer": tuple(cancer), "topicos": list(topicos), "cnes": cnes}
 
 
 ITENS = [
@@ -1318,6 +1320,12 @@ for _tipo, _ids in _MARCAS_CANCER.items():
         POR_ID[_id]["cancer"] = (_tipo,)
 for _id, _tipos in _MARCAS_VARIOS.items():
     POR_ID[_id]["cancer"] = _tipos
+# CNES conferidos no banco do autor em 18/10/2026 (nome oficial na tabela `hospitais` e município do hospital em `internacoes`
+# batem). Uma lista de IA trazia também 9662561 para o Hospital de Amor: NÃO existe no banco; o real é 2090236 (Fundação Pio XII).
+_CNES_CONFERIDOS = {"icesp": "6123740", "amaral_carvalho": "2083086", "hc_unicamp": "2079798",
+                    "hc_ribeirao": "2082187", "ha_quem_e": "2090236"}
+for _id, _cnes in _CNES_CONFERIDOS.items():
+    POR_ID[_id]["cnes"] = _cnes
 # Hospitais e a prevenção de Barretos que atendem câncer ginecológico também aparecem, em cartão curto, em "Outros cânceres".
 for _id in ("hospital_da_mulher_sp", "caism_unicamp", "ha_prevencao"):
     POR_ID[_id]["tambem_caminhos"] = POR_ID[_id]["tambem_caminhos"] + ["outros"]

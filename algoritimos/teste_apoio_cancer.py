@@ -445,6 +445,16 @@ def main():
     checar("I14. pergunta sobre o Gastrocentro abre o cartão e não mistura câncer",
            "gastrocentro_unicamp" in ab.responder_pergunta("o que é o Gastrocentro da Unicamp?").candidatos)
 
+    # ---------- J. CNES conferidos no banco real do autor (18/10/2026) ----------
+    com_cnes = {i["id"]: i["cnes"] for i in apoio.ITENS if i["cnes"]}
+    checar("J1. CNES do catálogo: 7 dígitos numéricos, sem repetir, só em hospitais",
+           all(c.isdigit() and len(c) == 7 for c in com_cnes.values()) and len(set(com_cnes.values())) == len(com_cnes)
+           and all(apoio.POR_ID[i]["lamina"] in ("hospitais", "barretos") for i in com_cnes))
+    checar("J2. os CNES são os conferidos no banco (7 digitos de hospitais reais), e o código errado da lista de IA NÃO está no catálogo",
+           com_cnes == {"icesp": "6123740", "amaral_carvalho": "2083086", "hc_unicamp": "2079798", "hc_ribeirao": "2082187",
+                        "ha_quem_e": "2090236"} and "9662561" not in str(apoio.ITENS))
+    checar("J3. o CNES é metadado: não aparece no texto lido pela usuária", not any(c in apoio.responder(apoio.item(i)).fala for i, c in com_cnes.items()))
+
     print()
     if falhas:
         print(f"{len(falhas)} falha(s):")

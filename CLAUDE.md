@@ -522,7 +522,7 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   2077531, Inst. do Câncer Arnaldo Vieira de Carvalho 2080125, H. Estadual Mário Covas 2080273, Amaral Carvalho 2083086, HC Unicamp 2079798, HC FAEPA Ribeirão Preto 2082187; nome oficial e
   município do hospital batem) e **1 errado: 9662561 (Hospital de Amor) não existe no banco**. Regra: CNES só entra no catálogo depois de conferido no banco (`hospitais` + `internacoes`);
   nunca de lista de terceiros. Ferramenta só de leitura: `py etl\listar_hospitais_por_cidade.py [cidades]` (top hospitais por internações de câncer, com CNES e nome oficial); teste
-  `etl/teste_listar_hospitais_por_cidade.py`. O catálogo do Apoio AINDA não guarda CNES por hospital (próximo passo, depois de conferir o de Barretos).
+  `etl/teste_listar_hospitais_por_cidade.py`. **Hospital de Amor = Fundação Pio XII Barretos, CNES 2090236** (37.974 internações; o 9662561 da lista de IA não existe). O catálogo do Apoio guarda o CNES conferido de 5 hospitais (`apoio._CNES_CONFERIDOS`: ICESP, Amaral Carvalho, HC Unicamp, HC Ribeirão Preto, Hospital de Amor), só como metadado (o cartão não o mostra; a página do Apoio não abre o banco).
 - Ainda não feito (combinar): população do IBGE; testar com pessoas de verdade; revisar com o autor o
   vocabulário popular do Apoio (`apoio_busca.VOCABULARIO`/`EXTRA`).
 
