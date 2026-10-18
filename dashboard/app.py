@@ -513,9 +513,10 @@ def perguntar_a_lia(texto):
     guardar_resposta_da_caixa(resposta, ia)
 
 
-def enviar_pergunta():
-    """Botão do formulário: guarda o texto; a resposta é feita no começo da próxima execução."""
-    texto = (st.session_state.get("caixa_texto") or "").strip()
+def enviar_pergunta(chave="caixa_texto"):
+    """Botão do formulário: guarda o texto; a resposta é feita no começo da próxima execução.
+    `chave` é a do campo de texto: a lateral usa "caixa_texto" e as boas-vindas do centro, "caixa_texto_bv"."""
+    texto = (st.session_state.get(chave) or "").strip()
     if texto:
         st.session_state["lia_pergunta_pendente"] = texto[:300]
 
@@ -589,6 +590,12 @@ if not st.session_state.get("lia_fechada"):
         for i, (rotulo, acao) in enumerate(a for a in boas_vindas.botoes if a[1].get("id") in principais):
             colunas[i % 2].button(rotulo, key=f"bv_{i}", on_click=lia_clicar, args=(acao,),
                               width="stretch")
+        # a lateral pode estar recolhida: a caixa de perguntas também fica aqui, na primeira tela
+        with st.form("caixa_form_bv", clear_on_submit=True):
+            st.text_input("Pergunte à Lia", key="caixa_texto_bv", max_chars=300, label_visibility="collapsed",
+                          placeholder=f"Ou escreva sua pergunta: o câncer de mama está aumentando em {nome_cidade}?")
+            st.form_submit_button("Perguntar", key="caixa_enviar_bv", on_click=enviar_pergunta,
+                                  args=("caixa_texto_bv",), width="stretch")
         st.button("Prefiro explorar sozinha", key="bv_fechar",
                   on_click=lambda: st.session_state.update(lia_fechada=True))
 

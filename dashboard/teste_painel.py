@@ -394,6 +394,13 @@ def main():
 
     try:
         at = abrir()
+        checar("I0. a caixa 'Pergunte à Lia' também aparece na primeira tela (lateral pode estar recolhida) e responde",
+               not erros(at) and at.text_input(key="caixa_texto_bv") is not None)
+        at.text_input(key="caixa_texto_bv").set_value("o câncer de mama está aumentando?")
+        at.button(key="caixa_enviar_bv").click().run()
+        checar("I0. a pergunta da primeira tela é respondida pela Lia", not erros(at) and "Você perguntou" in textos_da_lateral(at))
+        gravadas.clear()  # a contagem de assuntos do bloco I começa do zero
+        at = abrir()
         at.button(key="bv_fechar").click().run()
         checar("I. a caixa 'Pergunte à Lia' está na lateral, junto da Lia, e o painel abre sem erro",
                not erros(at) and at.text_input(key="caixa_texto") is not None and "Pergunte à Lia" in textos_da_lateral(at))

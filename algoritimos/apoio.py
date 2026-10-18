@@ -125,14 +125,13 @@ ITENS = [
           "Exame preventivo do colo do útero (Papanicolau e teste de DNA-HPV)",
           "de 25 a 64 anos, na unidade de saúde; o teste de DNA-HPV está substituindo o Papanicolau aos poucos",
           "Ministério da Saúde",
-          "https://www.gov.br/saude/pt-br/assuntos/noticias/2025/agosto/ministerio-da-saude-oferta-tecnologia-"
-          "inovadora-100-nacional-para-detectar-cancer-do-colo-do-utero-no-sus",
+          "https://bvsms.saude.gov.br/papanicolau-exame-preventivo-de-colo-de-utero/",
           para_quem="Mulheres de 25 a 64 anos.",
           como="Na unidade de saúde do bairro (UBS ou USF). O SUS está trocando, aos poucos, o Papanicolau pelo teste "
                "de DNA-HPV, que é mais sensível; São Paulo está entre os estados que já têm o teste. Com o teste de "
                "DNA-HPV negativo, o próximo exame é em 5 anos.",
-          confirmar="A troca é gradual: pergunte na sua unidade qual exame ela faz hoje. A notícia do Ministério da Saúde pode pedir "
-                    "login ao abrir; se isso acontecer, pergunte na unidade de saúde."),
+          confirmar="A troca é gradual: pergunte na sua unidade qual exame ela faz hoje. Em Rio Claro, a disponibilidade do teste de "
+                    "DNA-HPV deve ser confirmada com a equipe da sua UBS."),
     _item("vacina_hpv", "colo", "caminho", "SUS (todo o Brasil)",
           "Vacina contra o HPV",
           "dose única de 9 a 14 anos; protege contra o vírus que causa o câncer do colo do útero",
@@ -319,15 +318,6 @@ ITENS = [
           como="Agendamento pelo Disque Saúde 160. Exames no Centro de Referência e de Assistência Integral à Mulher "
                "(CRAIM), no CAISM Unicamp, em clínica conveniada e na carreta do Hospital de Amor.",
           confirmar="Regra da campanha de outubro de 2025: veja se há campanha neste ano."),
-    _item("ribeirao_agendamento", "mama", "caminho", "Ribeirão Preto",
-          "Mamografia agendada pelo site da Prefeitura de Ribeirão Preto",
-          "moradoras de 50 a 69 anos sem mamografia há 2 anos ou mais agendam pela internet",
-          "Prefeitura de Ribeirão Preto",
-          "https://www.ribeiraopreto.sp.gov.br/portal/sassom/prevencao-cancer-mama",
-          para_quem="Moradoras de Ribeirão Preto de 50 a 69 anos sem mamografia há 2 anos ou mais.",
-          como="Agendar no site da Prefeitura; quem não conseguir pode pedir na unidade de saúde mais próxima.",
-          confirmar="A página da Prefeitura não abriu na última conferência (18/10/2026): procure a unidade de saúde mais "
-                    "próxima ou o site da Prefeitura de Ribeirão Preto."),
     _item("rio_preto_mamografia", "mama", "caminho", "São José do Rio Preto",
           "Mamografia de rastreamento em Rio Preto a partir dos 40 anos",
           "pedido na UBS; rastreamento a cada 2 anos para mulheres a partir de 40 anos",
@@ -1196,11 +1186,10 @@ ITENS = [
           "AMEs – Ambulatórios Médicos de Especialidades",
           "especialistas e exames do Estado, marcados pela unidade básica de saúde",
           "Governo do Estado de SP",
-          "https://www.saopaulo.sp.gov.br/spnoticias/ultimas-noticias/veja-a-relacao-dos-ames-ambulatorios-medicos-"
-          "de-especialidades-no-estado/",
+          "https://saude.sp.gov.br/ses/perfil/cidadao/ambulatorio-medico-de-especialidades-ames/ambulatorio-medico-de-especialidades-ames",
           como="Os AMEs fazem consultas com especialistas e exames (muitos fazem mamografia). A consulta é marcada "
                "pela UBS do município, por sistema online.",
-          confirmar="A notícia com a lista dos AMEs foi retirada do ar: procure o AME da sua região na unidade de saúde."),
+          confirmar="Página da Secretaria de Estado da Saúde trocada em 18/10/2026 (ainda não conferida pelo programa de links): para saber qual AME atende a sua região, pergunte na unidade de saúde."),
     _item("rede_feminina", "tratamento", "caminho", "Estado de SP",
           "Rede Feminina de Combate ao Câncer",
           "entidade voluntária que apoia pacientes com câncer e divulga a prevenção",
@@ -1213,8 +1202,8 @@ ITENS = [
     _item("rc_ame", "mama", "rio_claro", "Rio Claro",
           "AME Rio Claro – Ambulatório Médico de Especialidades",
           "especialistas do Estado na cidade, inclusive mastologia (mama); marcado pela UBS",
-          "AME Rio Claro (Seconci-SP)",
-          "https://seconci-sp.org.br/amerioclaro/",
+          "AME Rio Claro",
+          "https://amerioclaro.org.br/",
           como="Tem especialidade dedicada às mamas, na prevenção e no tratamento. A consulta é marcada pela unidade "
                "de saúde do município.",
           contato="Rua 9 (esquina com a Avenida da Saudade), 165 – Bairro dos Estádios. (19) 3526-2300.",
@@ -1320,7 +1309,7 @@ TIPOS_CANCER = {"mama": "câncer de mama", "colo": "câncer do colo do útero",
                 "pele": "câncer de pele não melanoma", "pulmao": "câncer de pulmão",
                 "tireoide": "câncer de tireoide", "endometrio": "câncer do corpo do útero (endométrio)"}
 _MARCAS_CANCER = {
-    "mama": ("mulheres_de_peito", "caminho_do_exame", "carretas_estado", "campinas_craim", "ribeirao_agendamento",
+    "mama": ("mulheres_de_peito", "caminho_do_exame", "carretas_estado", "campinas_craim",
              "rio_preto_mamografia", "rc_central_vagas", "ha_mastologia", "mamografia_alterada", "mater_ribeirao",
              "reconstrucao_mamaria"),
     "colo": ("colo_utero", "vacina_hpv", "ha_colo_busca_ativa", "ha_pesquisa_hpv", "preventivo_alterado"),

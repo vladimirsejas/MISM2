@@ -591,14 +591,6 @@
   "conjunto": "final"
  },
  {
-  "pergunta": "mamografia pela prefeitura de ribeirão",
-  "tipo": "itens",
-  "aceitaveis": [
-   "ribeirao_agendamento"
-  ],
-  "conjunto": "final"
- },
- {
   "pergunta": "centro de referência da saúde da mulher mater",
   "tipo": "itens",
   "aceitaveis": [
