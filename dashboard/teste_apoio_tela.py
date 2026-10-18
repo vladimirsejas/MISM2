@@ -305,8 +305,16 @@ try:
 
     # O Gemini (simulado) só é chamado após consentimento explícito; o texto continua sendo do guia.
     recebidos = []
+    classificador_falso = {"resultado": {"intencao": "mama"}, "erro": False}
     original = apoio_busca.obter_classificador
-    apoio_busca.obter_classificador = lambda: (lambda p, o, contexto=None, com_cancer=True: recebidos.append(p) or {"intencao": "mama"})
+
+    def classificar_falso(p, o, contexto=None, com_cancer=True):
+        recebidos.append(p)
+        if classificador_falso["erro"]:
+            raise RuntimeError("falha simulada do classificador")
+        return classificador_falso["resultado"]
+
+    apoio_busca.obter_classificador = lambda: classificar_falso
     try:
         at = abrir()
         checar("F. Gemini configurado aparece desligado por padrão com aviso de privacidade",
@@ -323,11 +331,30 @@ try:
         atual = at.session_state["ap_lia"]["atual"]
         checar("F. com consentimento, Gemini escolhe a porta; o texto continua sendo o do guia",
                not erros(at) and atual.origem == "gemini" and recebidos == ["xyzzy plugh"] and apoio.responder(apoio.caminho("mama")).fala in atual.fala
-               and "não da IA" in lateral(at))
-        at.session_state["caixa_ap_ia"] = 40
-        perguntar_no_apoio(at, "xyzzy plugh dois")
-        checar("F. passou do limite de perguntas com IA na sessão: segue só com a busca", recebidos == ["xyzzy plugh"]
+               and "não da IA" in lateral(at) and at.session_state["caixa_ap_ia"] == 1)
+        classificador_falso["resultado"] = {"intencao": "destino_inexistente"}
+        perguntar_no_apoio(at, "xyzzy retorno inválido")
+        checar("F. retorno inválido do Gemini conta como chamada", at.session_state["caixa_ap_ia"] == 2
                and at.session_state["ap_lia"]["atual"].tipo == "nada")
+        classificador_falso["resultado"] = {"intencao": "nenhuma"}
+        perguntar_no_apoio(at, "xyzzy nenhuma")
+        checar("F. resposta nenhuma do Gemini conta como chamada", at.session_state["caixa_ap_ia"] == 3)
+        classificador_falso["erro"] = True
+        perguntar_no_apoio(at, "xyzzy erro")
+        checar("F. erro do Gemini também conta como chamada", at.session_state["caixa_ap_ia"] == 4
+               and not erros(at))
+        classificador_falso["erro"] = False
+        classificador_falso["resultado"] = {"intencao": "nenhuma"}
+        at.session_state["caixa_ap_ia"] = 39
+        perguntar_no_apoio(at, "xyzzy chamada quarenta")
+        chamadas_ate_quarenta = len(recebidos)
+        checar("F. 40a classificação incrementa o contador até o limite", at.session_state["caixa_ap_ia"] == 40
+               and chamadas_ate_quarenta == 5)
+        perguntar_no_apoio(at, "xyzzy plugh dois")
+        checar("F. 41a tentativa não chama Gemini e avisa que a busca local continua",
+               len(recebidos) == chamadas_ate_quarenta and at.session_state["caixa_ap_ia"] == 40
+               and at.session_state["ap_lia"]["atual"].tipo == "nada"
+               and any("Limite de 40 classificações" in str(i.value) for i in at.info))
     finally:
         apoio_busca.obter_classificador = original
 finally:

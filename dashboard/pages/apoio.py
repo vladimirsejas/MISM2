@@ -213,7 +213,18 @@ def classificador_da_sessao():
         return None
     if st.session_state.get("caixa_ap_ia", 0) >= LIMITE_PERGUNTAS_COM_IA:
         return None
-    return apoio_busca.obter_classificador()
+    classificar = apoio_busca.obter_classificador()
+    if classificar is None:
+        return None
+
+    def classificar_contando(*args, **kwargs):
+        chamadas = st.session_state.get("caixa_ap_ia", 0)
+        if chamadas >= LIMITE_PERGUNTAS_COM_IA:
+            return None
+        st.session_state["caixa_ap_ia"] = chamadas + 1
+        return classificar(*args, **kwargs)
+
+    return classificar_contando
 
 
 def lia_voltar():
@@ -467,8 +478,6 @@ if _pergunta_pendente:
     with st.spinner("A Lia está procurando no guia..."):
         _classificador = classificador_da_sessao()
         _resposta = apoio_busca.responder_pergunta(_pergunta_pendente, classificar=_classificador)
-        if _resposta.origem == "gemini":
-            st.session_state["caixa_ap_ia"] = st.session_state.get("caixa_ap_ia", 0) + 1
         lia_mostrar(_resposta)
 
 if not st.session_state.get("ap_boas_vindas_fechada"):
@@ -721,9 +730,12 @@ with st.sidebar:
         st.toggle("Permitir que o Google Gemini ajude a identificar o assunto", key="caixa_ap_gemini_ativo",
                   help="Opcional e desligado por padrão. A resposta continua sendo escrita pelo guia oficial.",
                   width="stretch")
-        st.caption("Se ligado e a busca local precisar de ajuda, o texto da pergunta vai ao Google Gemini "
-                   "somente para escolher o assunto. A IA não escreve a resposta. Não envie nomes, telefones "
-                   "ou outros dados pessoais.")
+        if st.session_state.get("caixa_ap_ia", 0) >= LIMITE_PERGUNTAS_COM_IA:
+            st.info("Limite de 40 classificações Gemini nesta sessão atingido. A busca local no guia continua disponível.")
+        else:
+            st.caption("Se ligado e a busca local precisar de ajuda, o texto da pergunta vai ao Google Gemini "
+                       "somente para escolher o assunto. A IA não escreve a resposta. Não envie nomes, telefones "
+                       "ou outros dados pessoais.")
     else:
         st.caption("Busca no guia; o Gemini está indisponível nesta sessão. A resposta vem do catálogo conferido.")
     with st.expander("Não sabe o que perguntar?"):
