@@ -216,6 +216,10 @@ PEDE_DEFINICAO = re.compile(
     r"|nao sei o que (e|sao|significa)|nao entendi o que (e|sao|significa)|(significa|significam)( o que)?|sigla"
     r"|(qual|quais) (e |sao )?(a |as )?diferencas? entre"
     r"|(qual|quanto) (e )?(o )?(preco|valor|custo|custa) (da|das|de cada) diarias?|quanto custa (a|uma) diarias?)\b")
+# Jeitos curtos de pedir o significado de uma SIGLA ("oq é unacon", "me explica cacon", "para que serve a APAC"). Só valem para siglas
+# (SIGLAS_SOZINHAS): "me explica a tendência" é pergunta de dados e não pode virar definição.
+PEDE_SIGLA = re.compile(r"\b(oq|oque|o q|que que|me explica(r)?|me explique|explica(r)?|explique|(para|pra) que serve|serve para que|quero saber|queria saber)\b")
+LIGACOES = {"e", "ou", "x", "vs", "versus", "e/ou", "a", "o", "as", "os", "da", "do", "das", "dos", "uma", "um", "sigla", "siglas", "de"}
 # Só estas siglas valem SOZINHAS ("APAC"): as outras expressões ("anos fora do padrão", "permanência média", "sim") também são
 # perguntas de dados ou palavras comuns, e só viram definição quando a pessoa pede o significado ("o que é ...").
 SIGLAS_SOZINHAS = {"apac", "apacs", "sia", "sia sus", "cnes", "cid", "cid 10", "cid10", "unacon", "unacons", "cacon", "cacons",
@@ -241,10 +245,11 @@ def achar_termos(pergunta, maximo=3):
     if not achados:
         return []
     achados.sort()
-    if pede:
+    if pede or (nomes_achados <= SIGLAS_SOZINHAS and PEDE_SIGLA.search(texto)):
         return [id for _, id in achados][:maximo]
-    # sem pedido explícito: só se a pergunta é a própria sigla ("APAC", "UNACON")
-    so_o_termo = len(texto.split()) <= 4 and not resto.split() and nomes_achados <= SIGLAS_SOZINHAS
+    # sem pedido explícito: só se a pergunta é a própria sigla, ou siglas ligadas por "e"/"ou" ("APAC", "UNACON e CACON")
+    so_o_termo = (len(texto.split()) <= 6 and not [w for w in resto.split() if w not in LIGACOES]
+                  and nomes_achados <= SIGLAS_SOZINHAS)
     return [id for _, id in achados][:maximo] if so_o_termo else []
 
 

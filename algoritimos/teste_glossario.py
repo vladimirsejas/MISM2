@@ -113,5 +113,12 @@ checar("ajuda: avisa que dá para perguntar o significado dos termos", "o que é
 r = asst.responder_pergunta(ctx, "qual câncer mais interna?", None)
 checar("pergunta de dados continua com os números", "internações" in r.fala and r.intencao == "mais_aparece")
 
+# Perguntas reais de quem escreve rápido (teste humano, 18/10/2026: "o que é unacon e cacon" funcionava, as variações não)
+for frase in ("oq é unacon e cacon", "unacon e cacon", "UNACON ou CACON?", "me explica unacon e cacon", "para que serve unacon e cacon", "oque é cacon"):
+    r = asst.responder_pergunta(ctx, frase, None, ia=ia)
+    checar(f"assistente: '{frase}' explica UNACON e CACON em texto fixo", r.intencao == "glossario" and "Alta Complexidade em Oncologia" in r.fala and chamadas == [])
+for frase in ("me explica a projeção de tendência", "explica como calculam a tendência", "quero saber a tendência do câncer de mama"):
+    checar(f"pergunta de dados não vira definição: '{frase}'", g.achar_termos(frase) == [])
+
 print("Todas as checagens passaram." if not falhas else f"{len(falhas)} falha(s).")
 sys.exit(1 if falhas else 0)
