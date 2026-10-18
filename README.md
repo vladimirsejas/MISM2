@@ -112,13 +112,15 @@ onde cada informação tem uma casa só:
 - **Investigar** — o que merece ser pesquisado? Anos fora do padrão,
   quando cada câncer aparece, faixa etária, **fluxo de pacientes**
   (mulheres de outros estados atendidas em SP, e para onde vão as
-  moradoras da cidade), **comparar cidades** e download dos dados.
+  moradoras da cidade) com um mapa de estados de origem que pode mostrar
+  também **onde ficam os hospitais habilitados em oncologia**, **comparar
+  cidades** e download dos dados.
 - **Planejamento** — se nada mudar, onde a cidade pode ter problema até
   daqui a 3 anos? O radar do futuro, sem valores de orçamento: quem
   decide é o gestor.
 - **Método** — como ler e o que os dados não permitem responder.
 
-Duas páginas à parte, abertas pelos botões no topo:
+Páginas à parte (as duas primeiras, pelos botões no topo; a terceira, por um link dentro do Apoio):
 
 - **Apoio à mulher** (`dashboard\pages\apoio.py`): para quem **procura
   cuidado**, não para quem planeja. Catálogo com fonte oficial e data de
@@ -129,7 +131,18 @@ Duas páginas à parte, abertas pelos botões no topo:
   (muda a cada ~15 dias): a página manda para o canal oficial.
 - **Onde ser atendida** (`dashboard\pages\onde_ser_atendida.py`): unidades
   de saúde da cidade (CNES) junto do catálogo conferido de Rio Claro, com
-  "Como chegar" e "Ligar". Cadastro não é vaga nem serviço aberto.
+  "Como chegar" e "Ligar". A busca de "Exames e especialistas" procura nos
+  serviços e nas especialidades médicas do cadastro, separa o que a unidade
+  faz sozinha do que só tem por terceiro, e mostra públicas e particulares em
+  dois grupos. Cadastro não é vaga nem serviço aberto.
+- **Hospitais habilitados em oncologia** (`dashboard\pages\hospitais_cancer.py`):
+  mapa dos hospitais que o Ministério da Saúde habilitou para tratar câncer
+  (lista de 2023: 361 no Brasil, 88 em SP), com nome, tipo (UNACON, CACON...),
+  telefone, "Como chegar" e os mais próximos de uma cidade de SP, em linha reta.
+  Só aparece no mapa o hospital cuja posição passou nas conferências; o resto
+  fica na lista, com o motivo. A página explica UNACON e CACON e lembra que
+  **habilitado não é vaga**: o acesso é pela regulação. O mapa mostra onde
+  ficam os hospitais, não explica por que as pacientes vêm de outros estados.
 
 Quem conduz é a **Lia** (`docs\LIA.md`): no primeiro acesso ela aparece
 no centro; depois fica na lateral com os caminhos em botões, e o painel
@@ -151,12 +164,37 @@ entre outros assuntos: o que mais aparece, se está aumentando, comparar com o
 Estado, óbitos, valores, idade, a tendência, **ranking por 100 mil mulheres**,
 **cidades que mais tratam** (hospital x residência), **quimio e radioterapia**,
 **mortalidade real (SIM)**, e onde procurar hospital de câncer a partir da
-cidade que a pessoa cita (com a distância em linha reta).
+cidade que a pessoa cita (com a distância em linha reta). Perguntas do tipo
+"o que é APAC?" ou "o que é UNACON?" são respondidas por um **glossário** de
+texto fixo (`glossario.py`): a IA não improvisa definição.
+
+### Onde está a inteligência artificial
+
+| Parte | O que é | Onde |
+|---|---|---|
+| **Gemini (modelo de linguagem)** | Reescreve em linguagem simples as respostas de **dados** e, quando as regras não entendem a pergunta, escolhe o assunto numa **lista fechada** (a escolha só vale se a busca local concordar). Tudo o que ele escreve é conferido; sem chave, rede ou cota, a resposta direta aparece | `ia_linguagem.py`, `assistente.py`, `entendimento.py` |
+| **Entendimento da pergunta** | Busca local por palavras e letras (aguenta erro de digitação), com vocabulário popular e segurança primeiro, sem dependências | `entendimento.py` |
+| **Projeção de tendência** | 5 modelos pequenos (ingênuo, média dos 3 últimos anos, tendência, tendência recente e Holt) escolhidos por **teste de acerto** sobre anos que já se conhecem; a faixa vem do erro medido e é sempre comparada com "repetir o último ano". Sem anos suficientes, não prevê | `inteligencia.py` (seção "Previsão com validação") |
+| **Anos fora do padrão** | Compara cada ano com o esperado pela tendência dos outros anos | `inteligencia.py` |
+
+O que **não** é IA, de propósito: textos de segurança (190/180/188/192), de
+sintomas, do catálogo do Apoio e do glossário são fixos. No **Apoio à mulher**
+nenhuma IA escreve sobre serviço; o Gemini fica desligado por padrão e, se
+ligado, só ajuda a escolher o assunto. A IA nunca afirma causa, nunca promete
+("vai ficar") e nunca fala de orçamento.
+
+Conferido: os testes dessa parte (`teste_previsao.py`, `teste_entendimento.py`,
+`teste_assistente.py`, `teste_glossario.py` e o cenário da caixa em
+`dashboard\teste_painel.py`) passam na nuvem com um Gemini simulado. O Gemini
+real foi testado pelo autor em 17/10/2026 (`Testar IA (Gemini).bat`; painel com
+o banco real). Só com as regras, o entendimento acerta direto 80 de 91, 47 de 62 e
+33 de 35 perguntas dos gabaritos; com o Gemini, 91, 62 e 35, sem resposta errada.
+Ressalva: as perguntas dos gabaritos foram escritas pela própria equipe.
 
 ### Testes
 
-A integração contínua roda tudo em `.github/workflows/testes.yml` (31
-testes, sem o banco real, com dados sintéticos). Os principais, da pasta
+A integração contínua roda tudo em `.github/workflows/testes.yml` (mais
+de 40 testes, sem o banco real, com dados sintéticos). Os principais, da pasta
 do projeto:
 
 ```powershell
@@ -169,6 +207,8 @@ python algoritimos\teste_apoio_busca.py
 python dashboard\teste_painel.py           # abre o painel e clica em tudo (~4 min)
 python dashboard\teste_apoio_tela.py
 python dashboard\teste_onde_atendida_tela.py
+python algoritimos\teste_hospitais_oncologia.py
+python dashboard\teste_hospitais_cancer_tela.py
 py -m streamlit run dashboard\app.py
 ```
 
@@ -188,15 +228,19 @@ Cuidados que a inteligência central já aplica:
 ## Estrutura do projeto
 
 ```
-dashboard/     → o painel (app.py), as páginas (pages/apoio.py, pages/onde_ser_atendida.py),
+dashboard/     → o painel (app.py), as páginas (pages/apoio.py, pages/onde_ser_atendida.py,
+                 pages/hospitais_cancer.py),
                  o rosto da Lia e os testes de aceitação
 algoritimos/   → inteligencia.py (única fonte dos números), lia.py, passeio.py,
                  entendimento.py + assistente.py + ia_linguagem.py (caixa "Pergunte à Lia"),
                  apoio.py + apoio_busca.py, onde_atendida.py + unidades_saude.py,
-                 localizacao.py, configuracao_geografica.py, conversa.py; testes e gabaritos
+                 hospitais_oncologia.py, glossario.py, localizacao.py,
+                 configuracao_geografica.py, conversa.py; testes e gabaritos
 etl/           → carga, download (SIH, população, SIA, SIM, CNES, centros), conferências e testes
 analises/      → base pública usada pelos testes (base_preditiva_2013_2025.csv)
-dados_geograficos/ → catálogo conferido de serviços de Rio Claro
+dados_geograficos/ → catálogo conferido de serviços de Rio Claro e a lista de hospitais
+                 habilitados em oncologia (Ministério da Saúde); o arquivo com as posições
+                 (hospitais_oncologia_br_geo.csv) é gerado no computador de quem usa
 docs/          → LIA.md, IA_DO_ESCUDO.md, FONTE_DOS_DADOS.md, INTEGRACAO_GEOGRAFICA.md, INVENTARIO_DO_CODIGO.md
 banco/         → escudo_feminino.db (não versionado)
 ```
@@ -226,6 +270,9 @@ terminal, scripts avulsos) e por quê: `docs\INVENTARIO_DO_CODIGO.md`.
 - A distância até um hospital é em **linha reta entre os centros das
   cidades**; hospital de câncer pelo SUS não se escolhe por proximidade, a
   regulação (CROSS) decide.
+- **Hospital habilitado não é vaga.** A lista do Ministério (habilitação 2023)
+  diz onde há serviço habilitado; o acesso é pela unidade de saúde e pela
+  regulação. Não se ranqueia hospital nem se diz qual é melhor.
 - Nada que identifique paciente entra no banco ou no GitHub.
 - Toda recomendação é apoio à decisão — a responsabilidade final é do
   gestor responsável.
