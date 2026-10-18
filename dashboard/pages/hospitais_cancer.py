@@ -4,6 +4,7 @@ import sqlite3
 import sys
 
 import pandas as pd
+import pydeck as pdk
 import streamlit as st
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
@@ -44,6 +45,9 @@ st.markdown("""
 .hc-botoes { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
 a.hc-chegar, a.hc-ligar { display: inline-block; text-align: center; border-radius: 999px; padding: 9px 18px; font-weight: 700; font-size: .92rem; text-decoration: none !important; }
 a.hc-chegar { background: #5b2a55; color: #ffffff !important; flex: 1 1 160px; }
+.hc-tipos { list-style: none; padding-left: 0; margin: .4rem 0 .6rem; }
+.hc-tipos li { margin: .25rem 0; }
+.hc-ponto { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; margin-right: .45rem; }
 a.hc-chegar:hover { background: #3c1a38; }
 a.hc-ligar { border: 1.5px solid #5b2a55; color: #5b2a55 !important; background: #ffffff; }
 .hc-perto { background: #fff; border: 1px solid #e6dceb; border-left: 6px solid #5b2a55; border-radius: 4px 14px 4px 14px; padding: 10px 16px; margin: 6px 0; color: #3d3852; }
@@ -56,6 +60,7 @@ a.hc-ligar { border: 1.5px solid #5b2a55; color: #5b2a55 !important; background:
 </style>
 """, unsafe_allow_html=True)
 
+ROTULOS_ATE = 15  # acima disso os nomes escritos se sobrepõem (conferido na tela); ficam só no balão ao passar o mouse
 PAGINA = 12
 
 
@@ -185,24 +190,74 @@ busca = c3.text_input("Procure pelo nome do hospital ou da cidade", key="hc_busc
 mostrar = h.filtrar(base, ufs=ufs, tipos=tipos, busca=busca)
 
 # ---------------- 2. mapa ----------------
+def _rgb(hexa):
+    hexa = hexa.lstrip("#")
+    return [int(hexa[i:i + 2], 16) for i in (0, 2, 4)]
+
+
+def _letras(rotulos):
+    """Letras que os nomes usam, como texto JS entre aspas (o TextLayer só desenha o que está aqui; sem isso, acento some).
+    O pydeck vira lista em expressão e quebra no navegador, por isso vai uma string literal."""
+    letras = sorted(set("".join(rotulos) + " 0123456789") - {"'", "\\"})
+    return "'" + "".join(letras) + "'"
+
+
+def desenhar_mapa(pontos, origem, escopo):
+    """Pontos coloridos pelo tipo, nome ao passar o mouse (ou tocar) e, com poucos hospitais na tela, o nome escrito ao lado.
+    Com centenas de pontos os nomes se atropelariam; por isso o rótulo só aparece quando o filtro deixa até ROTULOS_ATE."""
+    dados = pd.DataFrame({
+        "lon": pontos["lon"].astype(float).to_numpy(), "lat": pontos["lat"].astype(float).to_numpy(),
+        "nome": pontos["nome"].astype(str).to_numpy(),
+        "rotulo": [n if len(n) <= 30 else n[:29].rstrip() + "…" for n in pontos["nome"].astype(str)],
+        "detalhe": [f"{m} · {tp}" for m, tp in zip(pontos["municipio"].astype(str), pontos["tipo"].astype(str))],
+        "cor": [_rgb(h.TIPOS[str(tp)][0]) for tp in pontos["tipo"]]})
+    camadas = [pdk.Layer("ScatterplotLayer", dados, get_position="[lon, lat]", get_fill_color="cor", get_line_color=[255, 255, 255],
+                         stroked=True, line_width_min_pixels=1, get_radius=3500 if escopo == "sp" else 22000,
+                         radius_min_pixels=5, radius_max_pixels=13, pickable=True)]
+    coordenadas = dados[["lon", "lat"]].values.tolist()
+    if origem:
+        casa = pd.DataFrame({"lon": [origem[1]], "lat": [origem[0]], "nome": ["Sua cidade"], "detalhe": ["centro da cidade escolhida"]})
+        camadas.append(pdk.Layer("ScatterplotLayer", casa, get_position="[lon, lat]", get_fill_color=[31, 95, 181], get_line_color=[255, 255, 255],
+                                 stroked=True, line_width_min_pixels=2, get_radius=2500, radius_min_pixels=7, radius_max_pixels=15, pickable=True))
+        coordenadas.append([origem[1], origem[0]])
+    if len(dados) <= ROTULOS_ATE:
+        camadas.append(pdk.Layer("TextLayer", dados, get_position="[lon, lat]", get_text="rotulo", get_size=13, get_color=[40, 20, 40],
+                                 get_pixel_offset=[0, -16], get_text_anchor="'middle'", get_alignment_baseline="'bottom'",
+                                 background=True, get_background_color=[255, 255, 255, 215], background_padding=[3, 1],
+                                 character_set=_letras(dados["rotulo"]), pickable=False))
+    vista = pdk.ViewState(**h.vista_do_mapa(coordenadas))
+    st.pydeck_chart(pdk.Deck(layers=camadas, initial_view_state=vista, map_style=pdk.map_styles.CARTO_LIGHT, height=460,
+                             tooltip={"html": "<b>{nome}</b><br/>{detalhe}",
+                                      "style": {"backgroundColor": "#3c1a38", "color": "white", "fontSize": "13px"}}))
+
+
 pontos = mostrar[mostrar["no_mapa"]]
 if len(pontos):
-    tabela = pd.DataFrame({"latitude": pontos["lat"].astype(float), "longitude": pontos["lon"].astype(float),
-                           "cor": [h.TIPOS[str(t)][0] for t in pontos["tipo"]], "tamanho": 3500 if escopo == "sp" else 22000})
+    origem = None
     if cidade and local is not None:
         origem = h.loc._ponto(local, h.loc.ent.normalizar(cidade))
-        if origem:
-            tabela = pd.concat([tabela, pd.DataFrame({"latitude": [origem[0]], "longitude": [origem[1]], "cor": ["#1f5fb5"],
-                                                      "tamanho": [2500 if escopo == "sp" else 15000]})], ignore_index=True)
-    st.map(tabela, latitude="latitude", longitude="longitude", color="cor", size="tamanho", height=430)
+    desenhar_mapa(pontos, origem, escopo)
     legenda = "".join(f'<span><i style="background:{h.TIPOS[t][0]}"></i>{html.escape(t)}</span>' for t in h.contar_por_tipo(pontos))
     if cidade and local is not None:
         legenda += '<span><i style="background:#1f5fb5"></i>sua cidade</span>'
     st.markdown(f'<div class="hc-legenda">{legenda}</div>', unsafe_allow_html=True)
     sem_ponto = len(mostrar) - len(pontos)
-    st.caption(f"{len(pontos)} no mapa" + (f"; {sem_ponto} só na lista, porque a posição do cadastro não passou nas conferências." if sem_ponto else "."))
+    st.caption(f"{len(pontos)} no mapa" + (f"; {sem_ponto} só na lista, porque a posição do cadastro não passou nas conferências." if sem_ponto else ".")
+               + (" Os nomes aparecem escritos ao lado de cada ponto." if len(pontos) <= ROTULOS_ATE else
+                  f" Passe o mouse (ou toque) em um ponto para ver o nome; com até {ROTULOS_ATE} hospitais na tela (use os filtros) os nomes aparecem escritos."))
 elif df.attrs.get("tem_posicao"):
     st.info("Nenhum hospital com posição confirmada neste filtro.")
+
+# ---------------- 2b. o que significam os tipos ----------------
+if len(mostrar):
+    itens = "".join(f'<li><span class="hc-ponto" style="background:{h.TIPOS[t][0]}"></span><b>{html.escape(t)}</b>: {html.escape(h.TIPOS[t][1])}</li>'
+                    for t in h.ORDEM_TIPOS if t in set(mostrar["tipo"].astype(str)))
+    st.markdown('<div class="escudo-leitura"><b>O que significam UNACON e CACON (e os outros tipos)</b>'
+                f'<ul class="hc-tipos">{itens}</ul>'
+                '<p>Em resumo: o <b>CACON</b> trata todos os tipos de câncer e o <b>UNACON</b> os mais frequentes, por isso um caso menos comum '
+                'pode ser encaminhado de um UNACON para um CACON. Os dois são <b>habilitados pelo Ministério da Saúde</b>; '
+                'o tipo não diz qual hospital é melhor, e o acesso continua sendo pela unidade de saúde e pela regulação.</p></div>',
+                unsafe_allow_html=True)
 
 # ---------------- 3. leitura ----------------
 st.markdown('<div class="escudo-leitura"><b>Como ler</b><ul>'

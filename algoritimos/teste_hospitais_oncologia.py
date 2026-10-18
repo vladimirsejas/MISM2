@@ -78,6 +78,25 @@ with tempfile.TemporaryDirectory() as pasta:
            and "porque" in txt and "estáão" not in txt)
     checar("leitura sem nada: mensagem simples", h.leitura(h.filtrar(df, ufs=["AC"])) == "Nenhum estabelecimento com esse filtro.")
 
+import math  # noqa: E402
+
+
+def _cabe(coords, w=1000, a=460):
+    """Projeta cada ponto na tela com o centro e o zoom de vista_do_mapa (projeção web) e diz se todos caem dentro."""
+    v = h.vista_do_mapa(coords, w, a)
+    esc = 512 * 2 ** v["zoom"]  # o mapa (MapLibre) usa blocos de 512 px
+    px = lambda lon: (lon + 180) / 360 * esc
+    py = lambda lat: (1 - math.log(math.tan(math.pi / 4 + math.radians(lat) / 2)) / math.pi) / 2 * esc
+    cx, cy = px(v["longitude"]), py(v["latitude"])
+    return all(abs(px(lo) - cx) <= w / 2 and abs(py(la) - cy) <= a / 2 for lo, la in coords)
+
+
+barretos_jau_rc = [[-48.567, -20.557], [-48.558, -22.296], [-47.560, -22.410], [-47.070, -22.818], [-47.649, -22.725]]  # Barretos ao norte, Unicamp a leste
+brasil = [[-60.0, 2.8], [-34.9, -8.0], [-52.0, -32.0], [-70.5, -9.9], [-47.9, -15.8]]
+checar("enquadramento: Barretos (ao norte) não fica fora da tela, nem a visão Brasil", _cabe(barretos_jau_rc) and _cabe(brasil))
+checar("enquadramento: um ponto só dá zoom de cidade; sem pontos não quebra",
+       h.vista_do_mapa([[-47.5, -22.4]])["zoom"] == 10 and h.vista_do_mapa([])["zoom"] == 6)
+
 if falhas:
     print("\nFALHARAM:", *falhas, sep="\n  - ")
     sys.exit(1)

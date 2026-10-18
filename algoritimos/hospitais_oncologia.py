@@ -1,4 +1,5 @@
 import csv
+import math
 import os
 import re
 import unicodedata
@@ -28,8 +29,8 @@ ARQ_LISTA = "hospitais_oncologia_br.csv"
 
 # tipo -> (cor no mapa, o que quer dizer, em palavras de quem procura)
 TIPOS = {
-    "UNACON": ("#5b2a55", "Unidade de assistência de alta complexidade em oncologia: faz o diagnóstico e o tratamento da maioria dos cânceres."),
-    "CACON": ("#b0306a", "Centro de assistência de alta complexidade em oncologia: o nível mais completo, com ensino e pesquisa."),
+    "UNACON": ("#5b2a55", "Unidade de Assistência de Alta Complexidade em Oncologia: faz o diagnóstico e o tratamento dos cânceres mais frequentes (como mama, colo do útero e intestino)."),
+    "CACON": ("#b0306a", "Centro de Assistência de Alta Complexidade em Oncologia: o nível mais completo; atende todos os tipos de câncer, inclusive os raros, e costuma ter ensino e pesquisa."),
     "Hospital geral com cirurgia oncológica": ("#2f7f86", "Hospital geral habilitado para cirurgia de câncer; não trata sozinho todos os tipos."),
     "Serviço isolado de radioterapia": ("#c78a1c", "Serviço de radioterapia: faz só esse tratamento, em complemento a outro hospital."),
     "Tipo não informado": ("#8a8a99", "A planilha do Ministério não informa o tipo de habilitação deste estabelecimento."),
@@ -133,6 +134,31 @@ def link_ligar(telefone):
     """tel: do telefone '(DD) NNNN-NNNN' do CNES; vazio se não tiver DDD (nunca chuta o DDD de outro estado)."""
     achou = re.search(r"\((\d{2})\)\s*(9?\d{4})-?(\d{4})", str(telefone or ""))
     return f"tel:+55{achou.group(1)}{achou.group(2)}{achou.group(3)}" if achou else ""
+
+
+def vista_do_mapa(coordenadas, largura=1000, altura=460, margem=0.35):
+    """Centro e zoom (projeção web do mapa, blocos de 512 px) para que TODOS os pontos [lon, lat] caibam na tela, com uma folga.
+    O ajuste automático do pydeck deixava de fora o ponto mais ao norte (Barretos sumia). Um ponto só: zoom de cidade."""
+    lons = [c[0] for c in coordenadas]
+    lats = [c[1] for c in coordenadas]
+    if not lons:
+        return {"longitude": -47.0, "latitude": -22.0, "zoom": 6}
+
+    def merc(lat):
+        return math.log(math.tan(math.pi / 4 + math.radians(lat) / 2))
+
+    dx = max(lons) - min(lons)
+    dy = merc(max(lats)) - merc(min(lats))
+    if dx < 1e-6 and dy < 1e-9:
+        return {"longitude": lons[0], "latitude": lats[0], "zoom": 10}
+    zooms = []
+    if dx > 1e-6:
+        zooms.append(math.log2(largura * 360 / (512 * dx)))
+    if dy > 1e-9:
+        zooms.append(math.log2(altura * 2 * math.pi / (512 * dy)))
+    zoom = max(2.0, min(11.0, min(zooms) - margem))
+    meio_y = (merc(max(lats)) + merc(min(lats))) / 2
+    return {"longitude": (max(lons) + min(lons)) / 2, "latitude": math.degrees(2 * math.atan(math.exp(meio_y)) - math.pi / 2), "zoom": zoom}
 
 
 def leitura(df, total_no_pais=None):

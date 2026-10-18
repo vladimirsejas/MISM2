@@ -1,4 +1,5 @@
 import csv
+import json
 import os
 import sys
 import tempfile
@@ -88,7 +89,18 @@ def main():
                "HC da Famema" in t and "Sem ponto no mapa: a coordenada fica a 44 km" in t)
         checar("A. cartão tem Como chegar (Google Maps) e Ligar com DDD",
                "google.com/maps/dir" in t and 'href="tel:+551935357000"' in t)
-        checar("A. o mapa foi desenhado (st.map) e a legenda mostra os tipos", len(at.get("deck_gl_json_chart")) == 1 and "UNACON" in t and "sua cidade" in t)
+        checar("A. o mapa foi desenhado e a legenda mostra os tipos", len(at.get("deck_gl_json_chart")) == 1 and "UNACON" in t and "sua cidade" in t)
+        mapa = json.loads(at.get("deck_gl_json_chart")[0].proto.json)
+        tipos_camada = [c["@@type"] for c in mapa["layers"]]
+        checar("A. mapa: pontos + 'sua cidade' + nomes escritos (poucos hospitais), com nome no balão ao passar o mouse",
+               tipos_camada.count("ScatterplotLayer") == 2 and "TextLayer" in tipos_camada and "{nome}" in at.get("deck_gl_json_chart")[0].proto.tooltip)
+        nomes_no_mapa = {d["nome"] for c in mapa["layers"] if c["@@type"] == "ScatterplotLayer" for d in c["data"]}
+        checar("A. mapa: só tem ponto quem tem posição confirmada (o HC da Famema não entra) e cada ponto leva o nome do hospital",
+               "Santa Casa de Rio Claro" in nomes_no_mapa and "HC da Famema" not in nomes_no_mapa and "Sua cidade" in nomes_no_mapa)
+
+        checar("A. a página explica UNACON e CACON ali mesmo, com a diferença e o aviso de que o tipo não diz qual é melhor",
+               "O que significam UNACON e CACON" in t and "Unidade de Assistência de Alta Complexidade em Oncologia" in t
+               and "Centro de Assistência de Alta Complexidade em Oncologia" in t and "não diz qual hospital é melhor" in t)
 
         next(m for m in at.multiselect if m.key == "hc_tipos").set_value(["CACON"]).run()
         checar("A. filtro de tipo: só CACON (2 no SP)", cartoes(at) == 2 and not at.exception)
@@ -108,6 +120,25 @@ def main():
         checar("C. filtro por estado: RJ mostra só o INCA", cartoes(at) == 1 and "INCA" in texto(at))
         next(m for m in at.multiselect if m.key == "hc_ufs").set_value([]).run()
         checar("C. na visão Brasil a escolha de cidade some (só vale para SP)", not any(s.key == "hc_cidade" for s in at.selectbox))
+
+        # E. muitos pontos: o nome fica no balão; escrito ao lado só com poucos hospitais na tela
+        with tempfile.TemporaryDirectory() as muitos:
+            with open(os.path.join(muitos, "hospitais_oncologia_br_geo.csv"), "w", encoding="utf-8-sig", newline="") as f:
+                w = csv.writer(f, delimiter=";")
+                w.writerow(GEO_CAMPOS)
+                for i in range(60):
+                    w.writerow([f"{3000000 + i}", "SP", "Rio Claro", f"Hospital Numero {i}", f"Hospital Numero {i}", "UNACON", "UNACON", "", "", "",
+                                f"{-22.30 - i * 0.004}", f"{-47.50 - i * 0.004}", "sim", ""])
+            os.environ["ESCUDO_HOSPITAIS_PASTA"] = muitos
+            esquecer()
+            at = abrir()
+            mapa = json.loads(at.get("deck_gl_json_chart")[0].proto.json)
+            checar("E. com 60 hospitais na tela o mapa não escreve os nomes (só o balão), para não atropelar",
+                   not at.exception and "TextLayer" not in [c["@@type"] for c in mapa["layers"]] and "Passe o mouse" in texto(at))
+            next(i for i in at.text_input if i.key == "hc_busca").set_value("numero 7").run()
+            mapa = json.loads(at.get("deck_gl_json_chart")[0].proto.json)
+            checar("E. filtrando para poucos, os nomes passam a ser escritos ao lado dos pontos",
+                   "TextLayer" in [c["@@type"] for c in mapa["layers"]] and "aparecem escritos ao lado" in texto(at))
 
         # D. só a lista, sem posições
         os.environ["ESCUDO_HOSPITAIS_PASTA"] = so_lista
