@@ -489,6 +489,17 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   o cenário F de `dashboard/teste_apoio_tela.py`. O conjunto final já foi medido e corrigido: para medir de
   novo, escrever um conjunto novo às cegas. O Gemini real só foi provado no teste da caixa do painel principal, não no Apoio (lá ele só escolhe porta).
 - **Ajustes do Apoio (Codex, 18/10/2026, auditados pelo Claude e enviados ao `main`):** jornada do diagnóstico numerada, com "se a resposta demorar" (itens de regulação); a Lia avisa quando a resposta é de outra aba e oferece "Falar sobre <aba>"; **Gemini no Apoio desligado por padrão** (toggle `caixa_ap_gemini_ativo`, só classifica o assunto, nunca escreve; limite de 40 conta toda chamada); 17 atalhos "Assuntos" sem IA; a referência histórica da carreta em Rio Claro saiu. O `teste_painel.py` falhou no notebook do Codex por `MemoryError` do ambiente dele e passou na nuvem.
+- **Cobertura por tipo de câncer no Apoio (10/2026, o autor achou que o Apoio girava em torno do câncer de mama; relatório em
+  `docs/APOIO_COBERTURA_ONCOLOGICA.md`):** porta nova **Outros cânceres** na MESMA lâmina "Encontre um caminho" (as 8 portas de antes
+  seguem, na ordem), com um cartão por câncer (intestino, ovário, pele, pulmão, tireoide, corpo do útero/endométrio) e o das páginas do INCA
+  para tipos fora do guia. Item ganhou `cancer` (específico de quais cânceres; vazio = serve a todos) e `topicos`. **Trava na busca**
+  (`apoio_busca.tipos_citados`, `buscar(..., tipos=)`): quem cita um câncer nunca vê conteúdo específico de outro; dois cânceres ou
+  "câncer de útero" viram pergunta de volta; câncer fora do guia diz isso e aponta o INCA; palavra ambígua sozinha ("caroço",
+  "sangramento") pergunta onde; sintoma com pista mostra o texto fixo + botão dos sinais; "e os sinais?" segue o câncer em foco
+  (`RespostaApoio.tipo_cancer`, só memória da sessão). **Os seis cartões estão "a confirmar": as páginas do INCA não abrem na
+  nuvem; o texto veio de conhecimento geral + busca e NÃO traz idade nem intervalo de rastreamento.** Conferir no Windows e
+  tirar a marca. Teste: `algoritimos/teste_apoio_cancer.py` + `gabarito_apoio_cancer.json` (às cegas: 1ª medição 36/40 e
+  25/28, depois das correções 40/40; já não é independente). O Gemini do Apoio segue só com dublê (API real não testada).
 - Ainda não feito (combinar): população do IBGE; testar com pessoas de verdade; revisar com o autor o
   vocabulário popular do Apoio (`apoio_busca.VOCABULARIO`/`EXTRA`).
 

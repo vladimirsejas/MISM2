@@ -50,6 +50,10 @@ CAMINHOS = [
     ("colo", "Colo do útero", "Papanicolau, teste de HPV e vacina",
      "O câncer do colo do útero pode ser evitado: vacina contra o HPV, exame preventivo (Papanicolau ou teste de "
      "HPV) na unidade de saúde e acompanhamento quando algo aparece."),
+    ("outros", "Outros cânceres", "intestino, ovário, pele, pulmão, tireoide e corpo do útero",
+     "Cada câncer tem os seus sinais, exames e cuidados. Aqui estão o intestino (colorretal), o ovário, a pele, o "
+     "pulmão, a tireoide e o corpo do útero (endométrio), com onde buscar atendimento pelo SUS. Sinais e exames "
+     "mostrados aqui são informação geral: não servem para diagnosticar."),
     ("diagnostico", "Diagnóstico", "exame alterado, biópsia, especialista",
      "Quando um exame vem alterado, começa a investigação: exames complementares, biópsia e encaminhamento ao "
      "especialista. Alteração não quer dizer câncer."),
@@ -69,7 +73,8 @@ CAMINHOS = [
 ]
 NOME_CAMINHO = {c: r for c, r, _, _ in CAMINHOS}
 # O próximo passo de cada porta (a jornada da mulher na rede).
-PROXIMO = {"mama": "diagnostico", "colo": "diagnostico", "diagnostico": "regulacao", "regulacao": "tratamento",
+PROXIMO = {"mama": "diagnostico", "colo": "diagnostico", "outros": "diagnostico", "diagnostico": "regulacao",
+           "regulacao": "tratamento",
            "tratamento": "direitos"}
 # A rede oncológica em passos (porta Rede oncológica): (passo, o que é, porta)
 FLUXO_REDE = [
@@ -83,18 +88,22 @@ FLUXO_REDE = [
 
 
 def _item(id, caminho, lamina, onde, titulo, resumo, fonte, link, para_quem=None, como=None, levar=None,
-          contato=None, confirmar=None, cuidado=None, grupo=None, tambem=(), tambem_caminhos=(), conferido=None):
+          contato=None, confirmar=None, cuidado=None, grupo=None, tambem=(), tambem_caminhos=(), conferido=None,
+          cancer=(), topicos=()):
     """caminho=None: item que não é passo da jornada da mulher (ensino,
     pesquisa, a região no Estado) -- mora só na lâmina dele. grupo: o
     tema (Barretos) ou a região (Hospitais no Estado) do item na lâmina.
     tambem: [(lâmina, grupo)] onde o item também aparece, em cartão
     curto, sem repetir o texto (a casa dele continua sendo uma só).
-    tambem_caminhos: outras portas onde o item aparece em cartão curto."""
+    tambem_caminhos: outras portas onde o item aparece em cartão curto.
+    cancer: tipos de câncer a que o item é ESPECÍFICO (chaves de TIPOS_CANCER); vazio = serve a qualquer câncer
+    (rede, direitos, regulação...). A busca usa isto para nunca levar quem citou um câncer ao conteúdo de outro.
+    topicos: [(rótulo, texto)] lidos no cartão depois de "Para quem" (o que é, sinais, exames, tratamento...)."""
     return {"id": id, "caminho": caminho, "lamina": lamina, "onde": onde, "titulo": titulo, "resumo": resumo,
             "para_quem": para_quem, "como": como, "levar": levar, "contato": contato, "fonte": fonte,
             "link": link, "confirmar": confirmar, "cuidado": cuidado, "grupo": grupo, "tambem": list(tambem),
             "conferido": conferido or CONFERIDO,
-            "tambem_caminhos": list(tambem_caminhos)}
+            "tambem_caminhos": list(tambem_caminhos), "cancer": tuple(cancer), "topicos": list(topicos)}
 
 
 ITENS = [
@@ -486,6 +495,260 @@ ITENS = [
                "(Hospital de Amor) está entre os serviços de oncologia da região, ao lado da Santa Casa de Franca e "
                "do HC de Ribeirão Preto. Rio Claro fica em outra região, a RRAS 14.",
           grupo="No Estado de SP"),
+
+    # ---------------- OUTROS CÂNCERES (10/2026): cada um com sinais, exames e cuidados próprios ----------------
+    # Escritos a partir de conhecimento geral consolidado e de busca na web em 18/10/2026; as páginas do INCA não
+    # puderam ser abertas pela nuvem (gov.br inacessível), então todos levam "a confirmar" até alguém conferir o texto
+    # com a página oficial. Regras: nada de diagnóstico, de remédio ou de promessa de cura; rastreamento só quando a
+    # fonte o sustenta; idade e intervalo de exame NÃO entram aqui (dependem das diretrizes vigentes e do histórico).
+    _item("cancer_intestino", "outros", "caminho", "SUS (todo o Brasil)",
+          "Câncer de intestino (colorretal): sinais, exames e como buscar atendimento",
+          "câncer no cólon ou no reto; sangue nas fezes e mudança que dura no intestino merecem avaliação, mas não "
+          "confirmam câncer",
+          "INCA (Instituto Nacional de Câncer)",
+          "https://www.gov.br/inca/pt-br/assuntos/cancer/tipos/intestino/versao-para-populacao",
+          para_quem="Qualquer pessoa. Quem tem sintomas precisa de investigação com profissional de saúde. O "
+                    "rastreamento é para quem não tem sintomas e depende da idade, do histórico e das diretrizes do "
+                    "Ministério da Saúde.",
+          topicos=[
+              ("O que é", "Começa no intestino grosso (cólon) ou no reto. Muitos casos nascem de pólipos, pequenos "
+                          "caroços na parede do intestino, que podem ser retirados antes de se tornarem câncer."),
+              ("Fatores de risco", "Idade mais avançada, câncer de intestino ou pólipos na família, doenças "
+                                   "inflamatórias do intestino, excesso de peso, sedentarismo, alimentação com "
+                                   "pouca fibra e muita carne processada, bebida alcoólica e tabagismo. Ter um fator "
+                                   "não significa que a pessoa terá a doença."),
+              ("Sinais que merecem avaliação", "Sangue nas fezes, mudança que dura no funcionamento do intestino "
+                                               "(diarreia ou prisão de ventre), dor ou desconforto na barriga, "
+                                               "fraqueza ou anemia e perda de peso sem explicação. Têm muitas causas "
+                                               "comuns, como hemorroidas, e não confirmam câncer; mas não se deve "
+                                               "presumir a causa sem avaliação."),
+              ("Prevenção, diagnóstico precoce e rastreamento", "Rastreamento e sintomas são coisas diferentes. "
+                                                                 "Rastrear é procurar a doença em quem não tem "
+                                                                 "sintoma, por exemplo com a pesquisa de sangue "
+                                                                 "oculto nas fezes. Quem tem sintoma não espera o "
+                                                                 "rastreamento: faz a investigação. A idade, o "
+                                                                 "exame e o intervalo dependem das diretrizes do "
+                                                                 "Ministério da Saúde e do seu histórico; pergunte na "
+                                                                 "unidade de saúde. Este guia não define uma regra."),
+              ("Como se investiga", "A equipe avalia os sintomas e pode pedir exames de fezes, de sangue e a "
+                                    "colonoscopia, que olha o interior do intestino e permite retirar pólipos e "
+                                    "coletar material. A biópsia (análise desse material no laboratório) é o que "
+                                    "confirma ou afasta o câncer."),
+              ("Tratamento", "Depende do tamanho, do local e da extensão da doença. Costuma envolver cirurgia e, em "
+                             "alguns casos, quimioterapia e radioterapia. Quem define é a equipe de oncologia."),
+              ("Depois do diagnóstico", "O acompanhamento regular depois do tratamento faz parte do cuidado: a equipe "
+                                        "explica a frequência dos retornos e dos exames."),
+          ],
+          como="Comece pela unidade de saúde do bairro (UBS ou USF): ela avalia, pede exames e encaminha. Se houver "
+               "suspeita, o encaminhamento ao especialista e ao hospital habilitado em oncologia é feito pela "
+               "regulação (CROSS); veja \"Como se chega a um hospital de referência pelo SUS\".",
+          cuidado="Sangue nas fezes ou mudança do intestino que dura merece consulta, não espera. Com dor forte, "
+                  "sangramento intenso ou desmaio, procure um pronto atendimento ou ligue 192.",
+          confirmar="Texto escrito a partir de conhecimento geral e de busca na web em 18/10/2026; a página do INCA "
+                    "não pôde ser aberta pela nuvem. Conferir o texto e as regras atuais de rastreamento (idade, "
+                    "exame, intervalo) na página oficial antes de tirar esta marca.",
+          conferido="18/10/2026", cancer=["colorretal"]),
+    _item("cancer_ovario", "outros", "caminho", "SUS (todo o Brasil)",
+          "Câncer de ovário: sinais, exames e como buscar atendimento",
+          "câncer nos ovários; no começo dá poucos sinais, e não existe exame de rastreamento para todas as mulheres",
+          "INCA (Instituto Nacional de Câncer)",
+          "https://www.gov.br/inca/pt-br/assuntos/cancer/tipos/ovario/versao-para-populacao",
+          para_quem="Qualquer mulher. Quem tem sinais que duram precisa de avaliação; quem tem câncer de mama ou de "
+                    "ovário na família pode conversar com a equipe de saúde sobre o histórico.",
+          topicos=[
+              ("O que é", "Começa nos ovários, os órgãos dos dois lados do útero que produzem os óvulos e os "
+                          "hormônios femininos."),
+              ("Fatores de risco", "Câncer de ovário ou de mama na família, alterações genéticas herdadas (como BRCA1 "
+                                   "e BRCA2) e a idade, entre outros. Ter um fator não significa que a mulher terá a "
+                                   "doença."),
+              ("Sinais que merecem avaliação", "No começo costuma não dar sinais, ou dar sinais comuns a outras "
+                                               "condições: barriga inchada ou aumentada por muito tempo, dor ou "
+                                               "pressão na parte baixa da barriga (pelve), sensação de estar cheia "
+                                               "logo ao comer, mudanças no intestino ou na bexiga. Se duram, vale "
+                                               "avaliação. Não confirmam câncer."),
+              ("Prevenção, diagnóstico precoce e rastreamento", "Não há um exame de rastreamento recomendado para "
+                                                                 "todas as mulheres: nem o ultrassom nem o exame de "
+                                                                 "sangue servem para procurar câncer de ovário em "
+                                                                 "quem não tem sintomas. Por isso, o que mais ajuda "
+                                                                 "é não ignorar sinais que duram e conversar com a "
+                                                                 "equipe sobre o histórico da família."),
+              ("Como se investiga", "Exame ginecológico, ultrassom (muitas vezes pela via vaginal) e, quando indicado, "
+                                    "tomografia, ressonância e exames de sangue. A confirmação costuma vir da "
+                                    "análise do tecido retirado em biópsia ou cirurgia."),
+              ("Tratamento", "Em geral envolve cirurgia e, muitas vezes, quimioterapia. A equipe de ginecologia "
+                             "oncológica define o plano."),
+              ("Depois do diagnóstico", "O acompanhamento regular depois do tratamento faz parte do cuidado."),
+          ],
+          como="Comece pela unidade de saúde ou pelo ginecologista da rede: eles avaliam, pedem exames e encaminham. "
+               "O atendimento especializado em ginecologia oncológica é organizado pela regulação (CROSS). Na lâmina "
+               "Hospitais no Estado há centros com ginecologia oncológica, como o Hospital da Mulher (capital) e o "
+               "CAISM da Unicamp.",
+          cuidado="Não existe exame que \"garanta\" a ausência de câncer de ovário. Procure atendimento se os sinais "
+                  "duram ou pioram.",
+          confirmar="Texto escrito a partir de conhecimento geral e de busca na web em 18/10/2026; a página do INCA "
+                    "não pôde ser aberta pela nuvem. Conferir o texto na página oficial antes de tirar esta marca.",
+          conferido="18/10/2026", cancer=["ovario"]),
+    _item("cancer_pele", "outros", "caminho", "SUS (todo o Brasil)",
+          "Câncer de pele não melanoma: sinais, exames e como buscar atendimento",
+          "o tipo de câncer de pele mais comum; ferida que demora a cicatrizar ou que sangra merece avaliação, mas "
+          "nem toda lesão de pele é câncer",
+          "INCA (Instituto Nacional de Câncer)",
+          "https://www.gov.br/inca/pt-br/assuntos/cancer/tipos/pele-nao-melanoma/versao-para-populacao",
+          para_quem="Qualquer pessoa. Quem tem pele clara ou ficou muito tempo exposta ao sol precisa observar mais a "
+                    "própria pele.",
+          topicos=[
+              ("O que é", "Começa nas células da pele, mais nas áreas expostas ao sol (rosto, orelhas, pescoço, couro "
+                          "cabeludo, ombros e costas). Os tipos mais comuns são o carcinoma basocelular e o "
+                          "espinocelular. O melanoma é outro tipo de câncer de pele, mais raro e mais agressivo, com "
+                          "cuidados próprios; pintas que mudam de cor, forma ou tamanho merecem avaliação."),
+              ("Fatores de risco", "Exposição ao sol ao longo da vida, pele, olhos e cabelos claros, queimaduras de sol, "
+                                   "bronzeamento artificial, lesões de pele anteriores e histórico na família. Quem "
+                                   "trabalha ao ar livre fica mais exposto."),
+              ("Sinais que merecem avaliação", "Ferida que demora a cicatrizar, que sangra ou forma casca; mancha ou "
+                                               "caroço que cresce, muda de cor ou de forma, coça ou descama sem "
+                                               "melhorar. Muitas lesões de pele não são câncer: só quem examina pode "
+                                               "dizer."),
+              ("Prevenção, diagnóstico precoce e rastreamento", "O principal cuidado é a proteção contra o sol: evitar "
+                                                                 "os horários de sol mais forte (entre 10h e 16h), "
+                                                                 "usar chapéu, roupa e protetor solar. Este guia não "
+                                                                 "apresenta um exame de rastreamento para todas as "
+                                                                 "mulheres: o que ajuda é olhar a própria pele e "
+                                                                 "procurar avaliação quando algo muda."),
+              ("Como se investiga", "O médico examina a lesão (o dermatologista, quando disponível) e, se preciso, "
+                                    "retira um pedaço pequeno para biópsia, que confirma ou afasta o câncer."),
+              ("Tratamento", "Em geral, cirurgia para retirar a lesão; há outras técnicas conforme o caso. Costuma "
+                             "responder bem quando é tratado cedo."),
+              ("Depois do diagnóstico", "Continuar observando a pele e se proteger do sol; a equipe diz a frequência "
+                                        "dos retornos."),
+          ],
+          como="Comece pela unidade de saúde do bairro, que examina e, se preciso, encaminha ao dermatologista pela "
+               "regulação (CROSS). O Hospital de Amor, em Barretos, também faz teledermatologia nas ações de "
+               "prevenção (veja \"Prevenção do Hospital de Amor\").",
+          cuidado="Ferida que não fecha, que sangra ou muda rápido merece consulta, não espera.",
+          confirmar="Texto escrito a partir de conhecimento geral e de busca na web em 18/10/2026; a página do INCA "
+                    "não pôde ser aberta pela nuvem. Conferir o texto na página oficial antes de tirar esta marca. "
+                    "O melanoma tem página própria no INCA.",
+          conferido="18/10/2026", cancer=["pele"]),
+    _item("cancer_pulmao", "outros", "caminho", "SUS (todo o Brasil)",
+          "Câncer de pulmão: sinais, exames e como buscar atendimento",
+          "o tabaco é o principal fator de risco; tosse que dura, tosse com sangue e falta de ar merecem avaliação, "
+          "mas têm muitas causas",
+          "INCA (Instituto Nacional de Câncer)",
+          "https://www.gov.br/inca/pt-br/assuntos/cancer/tipos/pulmao/versao-para-populacao",
+          para_quem="Qualquer pessoa. Quem fuma, já fumou ou convive com a fumaça do tabaco tem mais motivo para "
+                    "observar a respiração e para procurar ajuda para parar de fumar.",
+          topicos=[
+              ("O que é", "Começa nas células do pulmão. Pode demorar a dar sinais."),
+              ("Fatores de risco", "O principal é o tabaco (cigarro, charuto, cachimbo, narguilé), inclusive a fumaça de "
+                                   "outras pessoas. Também pesam substâncias do trabalho (como o amianto), a poluição "
+                                   "e o histórico na família. Quem nunca fumou também pode ter, com menos frequência."),
+              ("Sinais que merecem avaliação", "Tosse que dura semanas ou muda de característica, tosse com sangue ou "
+                                               "catarro com sangue, falta de ar, chiado, dor no peito ao respirar, "
+                                               "rouquidão, cansaço e perda de peso sem explicação. Também são sinais de "
+                                               "muitas doenças do pulmão e do coração e não confirmam câncer."),
+              ("Prevenção, diagnóstico precoce e rastreamento", "Não começar a fumar e parar de fumar são as formas "
+                                                                 "mais eficazes de reduzir o risco, e as unidades de "
+                                                                 "saúde do SUS oferecem apoio para parar (pergunte pelo "
+                                                                 "programa de tratamento do tabagismo). O rastreamento "
+                                                                 "com tomografia de baixa dose, para pessoas de alto "
+                                                                 "risco e sem sintomas, é estudado, mas, pelas "
+                                                                 "informações consultadas, não é rotina do SUS e não é "
+                                                                 "um exame para todas as mulheres."),
+              ("Como se investiga", "Radiografia ou tomografia do tórax e, quando indicado, broncoscopia e biópsia, "
+                                    "que confirma ou afasta o câncer."),
+              ("Tratamento", "Depende do tipo e da fase: pode envolver cirurgia, radioterapia, quimioterapia e outros "
+                             "tratamentos. Quem define é a equipe de oncologia."),
+              ("Depois do diagnóstico", "Seguir o acompanhamento e, para quem fuma, parar de fumar faz parte do cuidado."),
+          ],
+          como="Comece pela unidade de saúde do bairro: ela avalia, pede os exames e encaminha. O encaminhamento ao "
+               "especialista e ao hospital de oncologia é feito pela regulação (CROSS).",
+          cuidado="Tosse com sangue ou falta de ar forte: procure um pronto atendimento ou ligue 192.",
+          confirmar="Texto escrito a partir de conhecimento geral e de busca na web em 18/10/2026; a página do INCA "
+                    "não pôde ser aberta pela nuvem. A situação do rastreamento com tomografia no SUS está em "
+                    "mudança: conferir na página oficial antes de tirar esta marca.",
+          conferido="18/10/2026", cancer=["pulmao"]),
+    _item("cancer_tireoide", "outros", "caminho", "SUS (todo o Brasil)",
+          "Câncer de tireoide: nódulo no pescoço, exames e como buscar atendimento",
+          "a maioria dos nódulos na tireoide não é câncer, mas um nódulo no pescoço merece avaliação",
+          "INCA (Instituto Nacional de Câncer)",
+          "https://www.gov.br/inca/pt-br/assuntos/cancer/tipos/tireoide/versao-para-populacao",
+          para_quem="Qualquer pessoa; é mais frequente em mulheres. Quem notou um nódulo ou uma mudança no pescoço "
+                    "deve ser avaliada.",
+          topicos=[
+              ("O que é", "A tireoide é uma glândula na frente do pescoço que regula o funcionamento do corpo. O câncer "
+                          "de tireoide começa nas células dessa glândula."),
+              ("Fatores de risco", "Radiação na região do pescoço (principalmente na infância), histórico de câncer de "
+                                   "tireoide na família e algumas alterações genéticas. Na maior parte dos casos, não "
+                                   "se identifica uma causa."),
+              ("Sinais que merecem avaliação", "Caroço ou nódulo no pescoço, rouquidão que não passa, dificuldade para "
+                                               "engolir ou respirar. Muitas vezes o nódulo é descoberto num exame feito "
+                                               "por outro motivo. Nódulo não significa câncer: a maioria é benigna."),
+              ("Prevenção, diagnóstico precoce e rastreamento", "Este guia não apresenta um exame de rastreamento da "
+                                                                 "tireoide para todas as mulheres: a indicação de "
+                                                                 "exames depende da avaliação do médico."),
+              ("Como se investiga", "Exame do pescoço, ultrassom da tireoide e, quando o médico indica, punção do nódulo "
+                                    "com agulha fina para análise. Os exames de sangue dos hormônios mostram como a "
+                                    "glândula funciona, não se há câncer."),
+              ("Tratamento", "Em geral, cirurgia, às vezes complementada por outros tratamentos. A equipe orienta o uso "
+                             "de qualquer medicamento."),
+              ("Depois do diagnóstico", "O acompanhamento é de longo prazo, com consultas e exames periódicos."),
+          ],
+          como="Comece pela unidade de saúde do bairro: ela examina, pede o ultrassom e encaminha ao endocrinologista "
+               "ou ao cirurgião de cabeça e pescoço pela regulação (CROSS).",
+          cuidado="Nódulo que cresce rápido, rouquidão que não passa ou dificuldade para engolir ou respirar pedem "
+                  "consulta sem demora.",
+          confirmar="Texto escrito a partir de conhecimento geral e de busca na web em 18/10/2026; a página do INCA "
+                    "não pôde ser aberta pela nuvem. Conferir o texto na página oficial antes de tirar esta marca.",
+          conferido="18/10/2026", cancer=["tireoide"]),
+    _item("cancer_corpo_utero", "outros", "caminho", "SUS (todo o Brasil)",
+          "Câncer do corpo do útero (endométrio): não é o mesmo que o do colo do útero",
+          "sangramento pela vagina depois da menopausa merece avaliação; o preventivo (Papanicolau) é do colo do "
+          "útero e não procura este câncer",
+          "INCA (Instituto Nacional de Câncer)",
+          "https://www.gov.br/inca/pt-br/assuntos/cancer/tipos/corpo-do-utero/versao-para-populacao",
+          para_quem="Mulheres que tiveram sangramento depois da menopausa ou sangramentos fora do padrão. Os fatores "
+                    "de risco aumentam com a idade.",
+          topicos=[
+              ("O que é", "Começa no corpo do útero, a parte de cima, geralmente no endométrio, o revestimento por "
+                          "dentro. O colo do útero é outra parte, a de baixo, que liga o útero à vagina: o câncer do "
+                          "colo é outra doença, ligada ao vírus HPV, com outros exames e cuidados."),
+              ("Fatores de risco", "Idade (é mais comum depois da menopausa), excesso de peso, diabetes, uso de "
+                                   "estrogênio sem acompanhamento e histórico na família. Ter um fator não significa "
+                                   "que a mulher terá a doença."),
+              ("Sinais que merecem avaliação", "O sinal mais importante é o sangramento pela vagina depois da "
+                                               "menopausa: qualquer sangramento, mesmo pouco, deve ser avaliado. Antes "
+                                               "da menopausa, sangramentos fora do período, muito intensos ou que se "
+                                               "repetem também. Têm várias causas, e a maioria não é câncer: só a "
+                                               "avaliação diz."),
+              ("Prevenção, diagnóstico precoce e rastreamento", "O preventivo (Papanicolau) e o teste de HPV procuram o "
+                                                                 "câncer do colo do útero, não o do corpo do útero. "
+                                                                 "Este guia não apresenta um exame de rastreamento "
+                                                                 "do corpo do útero para todas as mulheres sem sinais: "
+                                                                 "o sinal de alerta é o sangramento anormal."),
+              ("Como se investiga", "Ultrassom pela via vaginal e biópsia do endométrio (às vezes com histeroscopia, "
+                                    "que olha por dentro do útero). A biópsia confirma ou afasta o câncer."),
+              ("Tratamento", "Em geral, cirurgia, que pode ser complementada por radioterapia, quimioterapia ou "
+                             "tratamento hormonal, conforme a extensão. A equipe de ginecologia oncológica define."),
+              ("Depois do diagnóstico", "O acompanhamento regular depois do tratamento faz parte do cuidado."),
+          ],
+          como="Comece pela unidade de saúde ou pelo ginecologista da rede: eles avaliam, pedem o ultrassom e "
+               "encaminham. O atendimento em ginecologia oncológica é organizado pela regulação (CROSS); na lâmina "
+               "Hospitais no Estado há centros com ginecologia oncológica, como o CAISM da Unicamp e o Hospital da "
+               "Mulher (capital).",
+          cuidado="Sangramento forte ou com tontura: procure um pronto atendimento ou ligue 192.",
+          confirmar="Texto escrito a partir de conhecimento geral e de busca na web em 18/10/2026; a página do INCA "
+                    "não pôde ser aberta pela nuvem. Conferir o texto na página oficial antes de tirar esta marca.",
+          conferido="18/10/2026", cancer=["endometrio"]),
+    _item("inca_tipos_cancer", "outros", "caminho", "SUS (todo o Brasil)",
+          "Outros tipos de câncer: páginas do INCA para a população",
+          "o INCA tem uma página para cada tipo de câncer; use-a quando o tipo não estiver detalhado neste guia",
+          "INCA (Instituto Nacional de Câncer)",
+          "https://www.gov.br/inca/pt-br/assuntos/cancer/tipos/",
+          para_quem="Quem procura um tipo de câncer que este guia ainda não detalha.",
+          como="Na página, escolha o tipo de câncer. Para ser atendida, o caminho no SUS é o mesmo: unidade de saúde, "
+               "exames, regulação e hospital habilitado em oncologia (portas Diagnóstico, Regulação e Rede oncológica).",
+          confirmar="Link do INCA indicado pelo projeto; a página não pôde ser aberta pela nuvem.",
+          conferido="18/10/2026"),
 
     # ---------------- DIAGNÓSTICO: depois que aparece uma alteração ----------------
     _item("mamografia_alterada", "diagnostico", "caminho", "SUS (todo o Brasil)",
@@ -920,6 +1183,36 @@ ETAPAS = [
 NOME_ETAPA = {e: r for e, r, _, _, _ in ETAPAS}
 POR_ID = {i["id"]: i for i in ITENS}
 
+# Tipos de câncer que o guia distingue (chave -> nome): os sete que o Escudo acompanha mais o corpo do útero
+# (endométrio), que NÃO é o colo do útero nem o ovário. Item específico de um câncer leva `cancer`; o que não leva
+# serve a todos (rede, regulação, direitos). A busca (apoio_busca) usa isto para nunca levar quem citou um câncer ao
+# conteúdo de outro. Os itens de mama e colo já existiam: a marca é posta aqui, sem mexer em cada definição.
+TIPOS_CANCER = {"mama": "câncer de mama", "colo": "câncer do colo do útero",
+                "colorretal": "câncer de intestino (colorretal)", "ovario": "câncer de ovário",
+                "pele": "câncer de pele não melanoma", "pulmao": "câncer de pulmão",
+                "tireoide": "câncer de tireoide", "endometrio": "câncer do corpo do útero (endométrio)"}
+_MARCAS_CANCER = {
+    "mama": ("mulheres_de_peito", "caminho_do_exame", "carretas_estado", "campinas_craim", "ribeirao_agendamento",
+             "rio_preto_mamografia", "rc_central_vagas", "ha_mastologia", "mamografia_alterada", "mater_ribeirao",
+             "reconstrucao_mamaria"),
+    "colo": ("colo_utero", "vacina_hpv", "ha_colo_busca_ativa", "ha_pesquisa_hpv", "preventivo_alterado"),
+}
+_MARCAS_VARIOS = {   # itens que servem a mais de um tipo
+    "piracicaba_cesm": ("mama", "colo"),
+    "ha_prevencao": ("mama", "colo", "colorretal", "pele"),
+    "hospital_da_mulher_sp": ("mama", "colo", "ovario", "endometrio"),
+    "caism_unicamp": ("mama", "colo", "ovario", "endometrio"),
+    "ibcc": ("mama", "colo", "ovario", "endometrio"),
+}
+for _tipo, _ids in _MARCAS_CANCER.items():
+    for _id in _ids:
+        POR_ID[_id]["cancer"] = (_tipo,)
+for _id, _tipos in _MARCAS_VARIOS.items():
+    POR_ID[_id]["cancer"] = _tipos
+# Hospitais e a prevenção de Barretos que atendem câncer ginecológico também aparecem, em cartão curto, em "Outros cânceres".
+for _id in ("hospital_da_mulher_sp", "caism_unicamp", "ha_prevencao"):
+    POR_ID[_id]["tambem_caminhos"] = POR_ID[_id]["tambem_caminhos"] + ["outros"]
+
 
 def frase_carretas():
     """Orienta a consultar o itinerário oficial, sem reproduzir locais sujeitos a mudança."""
@@ -953,6 +1246,17 @@ def item(id):
 
 def lamina(id):
     return {"tipo": "apoio_lamina", "id": id}
+
+
+ITEM_PRINCIPAL = {"colorretal": "cancer_intestino", "ovario": "cancer_ovario", "pele": "cancer_pele",
+                  "pulmao": "cancer_pulmao", "tireoide": "cancer_tireoide", "endometrio": "cancer_corpo_utero"}
+
+
+def abertura_do_tipo(tipo):
+    """A ação que abre o conteúdo principal de um tipo de câncer: a porta (mama, colo) ou o cartão específico."""
+    if tipo in ("mama", "colo"):
+        return caminho(tipo)
+    return item(ITEM_PRINCIPAL[tipo])
 
 
 def grupo(lam, id):
@@ -1092,6 +1396,9 @@ def responder_item(id):
     partes = [f"**{i['titulo']}** · {i['onde']}"]
     for rotulo, chave in (("Para quem", "para_quem"), ("O que levar", "levar"), ("Como funciona", "como"),
                           ("Onde e contato", "contato")):
+        if chave == "como" and i["topicos"]:   # os tópicos (o que é, sinais, exames...) vêm antes do caminho no SUS
+            partes += [f"**{rotulo_t}:** {texto_t}" for rotulo_t, texto_t in i["topicos"]]
+            rotulo = "Como buscar atendimento pelo SUS"
         if i[chave]:
             partes.append(f"**{rotulo}:** {i[chave]}")
     if i["cuidado"]:

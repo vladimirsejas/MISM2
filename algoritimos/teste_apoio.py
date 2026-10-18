@@ -76,7 +76,11 @@ checar("todo tema/região tem pelo menos um item", all(sum(map(len, apoio.do_gru
                                                        for lam in apoio.GRUPOS for g in apoio.GRUPOS[lam]))
 checar("Hospitais no Estado: pelo menos 20 hospitais", len(apoio.itens(lamina="hospitais")) >= 20)
 checar("proteção à mulher (em Preciso de ajuda): pelo menos 8 canais", len(apoio.itens(caminho="ajuda")) >= 8)
-checar("as 8 portas combinadas com o autor", list(apoio.NOME_CAMINHO) == [
+# 10/2026: as 8 portas combinadas com o autor ganharam a porta "Outros cânceres" (intestino, ovário, pele, pulmão, tireoide e
+# corpo do útero), depois de o autor achar que o Apoio girava em torno do câncer de mama. As 8 de antes continuam, na ordem.
+checar("as portas combinadas com o autor (8) mais Outros cânceres, na mesma ordem", list(apoio.NOME_CAMINHO) == [
+    "mama", "colo", "outros", "diagnostico", "regulacao", "tratamento", "rede", "direitos", "ajuda"]
+       and [c for c in apoio.NOME_CAMINHO if c != "outros"] == [
     "mama", "colo", "diagnostico", "regulacao", "tratamento", "rede", "direitos", "ajuda"])
 checar("Preciso de ajuda: 6 pontos do caminho, com violência", len(apoio.ETAPAS) == 6
        and "violencia" in apoio.NOME_ETAPA)
@@ -117,7 +121,7 @@ checar("texto sem seta ASCII (->)", not any("->" in str(v) for i in apoio.ITENS 
 # ---------- a Lia: árvore inteira ----------
 inicio = apoio.responder(INICIO)
 checar("saudação diz onde a pessoa está", apoio.CIDADE in inicio.fala and inicio.expressao == "acolhedora")
-checar("saudação oferece as 8 portas", all(any(a == apoio.caminho(c) for _, a in inicio.botoes)
+checar("saudação oferece todas as portas", all(any(a == apoio.caminho(c) for _, a in inicio.botoes)
                                               for c in apoio.NOME_CAMINHO))
 
 vistos, fila, respostas = set(), deque([INICIO]), 0

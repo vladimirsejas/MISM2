@@ -213,7 +213,7 @@ def assuntos_do_guia():
     caminhos = {id: rotulo for id, rotulo, _, _ in apoio.CAMINHOS}
     etapas = apoio.NOME_ETAPA
     grupos = [
-        ("Prevenção e exames", [("caminho", "mama"), ("caminho", "colo"), ("etapa", "nao_fiz")]),
+        ("Prevenção e exames", [("caminho", "mama"), ("caminho", "colo"), ("caminho", "outros"), ("etapa", "nao_fiz")]),
         ("Exame alterado e diagnóstico", [("caminho", "diagnostico"), ("etapa", "alterado"),
                                          ("etapa", "diagnostico_cancer")]),
         ("Tratamento e direitos", [("caminho", "regulacao"), ("caminho", "tratamento"),
@@ -526,7 +526,9 @@ _pergunta_pendente = st.session_state.pop("caixa_ap_pendente", None)
 if _pergunta_pendente:
     with st.spinner("A Lia está procurando no guia..."):
         _classificador = classificador_da_sessao()
-        _resposta = apoio_busca.responder_pergunta(_pergunta_pendente, classificar=_classificador)
+        # O câncer em foco na resposta que está na tela (só memória da sessão; o texto da pergunta nunca é guardado).
+        _resposta = apoio_busca.responder_pergunta(_pergunta_pendente, classificar=_classificador,
+                                                   contexto=getattr(lia_estado.get("atual"), "tipo_cancer", None))
         lia_mostrar(_resposta)
 
 if not st.session_state.get("ap_boas_vindas_fechada"):

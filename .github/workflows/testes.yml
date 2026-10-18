@@ -51,6 +51,9 @@ jobs:
       - name: Pergunte à Lia no Apoio à mulher (busca no catálogo, segurança, sem gravar)
         working-directory: algoritimos
         run: python teste_apoio_busca.py
+      - name: Cobertura por tipo de câncer no Apoio (busca não mistura cânceres, sintomas, falhas, privacidade)
+        working-directory: algoritimos
+        run: python teste_apoio_cancer.py
       - name: Carga e ferramentas do ETL
         working-directory: etl
         run: |

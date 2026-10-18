@@ -288,6 +288,32 @@ try:
     perguntar_no_apoio(at, "senti um caroço no peito")
     checar("F. sintoma pessoal: texto fixo sem diagnóstico", "Eu não faço diagnóstico" in at.session_state["ap_lia"]["atual"].fala)
 
+    # cobertura por tipo de câncer (10/2026): quem pergunta de outro câncer não recebe mamografia
+    perguntar_no_apoio(at, "Tenho câncer no intestino. Onde procuro ajuda?")
+    atual = at.session_state["ap_lia"]["atual"]
+    rotulos = " ".join(b.label for b in botoes_lia(at)).lower()
+    checar("F. câncer de intestino: a Lia abre o cartão do intestino, a página vai para Outros cânceres e nada de mamografia",
+           not erros(at) and "cancer_intestino" in atual.candidatos and at.session_state["ap_caminho"] == "outros"
+           and "Sinais que merecem avaliação" in lateral(at) and "mamogra" not in rotulos and atual.tipo_cancer == "colorretal")
+    perguntar_no_apoio(at, "e os sinais?")
+    atual = at.session_state["ap_lia"]["atual"]
+    checar("F. 'e os sinais?' segue o câncer em foco (só memória da sessão)",
+           not erros(at) and "Continuando sobre o câncer de intestino" in atual.fala and atual.tipo_cancer == "colorretal")
+    perguntar_no_apoio(at, "e o de pulmão?")
+    atual = at.session_state["ap_lia"]["atual"]
+    checar("F. mudou de assunto: 'e o de pulmão?' abre o pulmão e deixa o intestino",
+           not erros(at) and "cancer_pulmao" in atual.candidatos and atual.tipo_cancer == "pulmao"
+           and "cancer_intestino" not in atual.candidatos)
+    perguntar_no_apoio(at, "Estou com uma ferida que não cicatriza.")
+    atual = at.session_state["ap_lia"]["atual"]
+    checar("F. ferida que não cicatriza: texto fixo de sintoma e botão para os sinais do câncer de pele, sem diagnosticar",
+           not erros(at) and atual.tipo == "sintoma" and "Eu não faço diagnóstico" in atual.fala
+           and any("pele" in b.label.lower() for b in botoes_lia(at)))
+    perguntar_no_apoio(at, "Qual a diferença entre câncer do colo do útero e câncer do endométrio?")
+    atual = at.session_state["ap_lia"]["atual"]
+    checar("F. colo do útero x endométrio: a Lia mostra os dois cânceres e não escolhe um",
+           not erros(at) and atual.tipo == "palpites" and len([b for b in botoes_lia(at) if b.label.startswith("Ver ")]) == 2)
+
     antes = at.session_state["ap_lia"]["atual"]
     perguntar_no_apoio(at, "   ")
     checar("F. enviar vazio não faz nada e não quebra", not erros(at) and at.session_state["ap_lia"]["atual"] is antes)
@@ -369,7 +395,7 @@ finally:
 assuntos_teste = [
     ("caminho", id, rotulo, f"Quero orientação sobre {rotulo.lower()}.")
     for id, rotulo, _, _ in apoio.CAMINHOS
-    if id in {"mama", "colo", "diagnostico", "regulacao", "tratamento", "rede", "direitos"}
+    if id in {"mama", "colo", "outros", "diagnostico", "regulacao", "tratamento", "rede", "direitos"}
 ]
 assuntos_teste += [
     ("etapa", id, rotulo, f"Minha situação é: {rotulo.lower()}.")
