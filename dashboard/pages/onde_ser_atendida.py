@@ -238,6 +238,9 @@ for _nome, _termo, _q in servicos_op[:150]:
 def _usar_escolha():
     if st.session_state.get("un_escolha"):
         st.session_state["un_busca"] = st.session_state["un_escolha"]
+    # a lista volta para "— escolher —": sem isso, escolher DE NOVO o mesmo item não dispara nada e a lista
+    # fica mostrando um item enquanto a caixa de busca mostra outro texto (visto no notebook, 18/10/2026)
+    st.session_state["un_escolha"] = ""
 
 
 if len(_rotulos) > 1:

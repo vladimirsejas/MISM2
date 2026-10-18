@@ -147,6 +147,14 @@ def main():
         t = texto(at)
         checar("C. escolher na lista preenche a busca e mostra a unidade",
                next(i for i in at.text_input if i.key == "un_busca").value == "DERMATOLOGISTA" and "AME Rio Claro" in t and not at.exception)
+        # regressão (notebook, 18/10/2026): digitar na caixa e escolher DE NOVO o mesmo item da lista não fazia nada,
+        # e a lista ficava mostrando um item enquanto a caixa mostrava outro texto
+        checar("C. depois de escolher, a lista volta a '— escolher —'",
+               next(x for x in at.selectbox if x.key == "un_escolha").value == "")
+        next(i for i in at.text_input if i.key == "un_busca").set_value("raio x").run()
+        next(x for x in at.selectbox if x.key == "un_escolha").set_value("DERMATOLOGISTA").run()
+        checar("C. escolher o MESMO item de novo, depois de digitar outra coisa, volta a preencher a caixa",
+               next(i for i in at.text_input if i.key == "un_busca").value == "DERMATOLOGISTA" and not at.exception)
         next(i for i in at.text_input if i.key == "un_busca").set_value("farmacia").run()
         checar("C. a busca acha a farmácia (grupo que não é botão)", "Farmacia Popular" in texto(at))
         next(i for i in at.text_input if i.key == "un_busca").set_value("zzzz").run()
