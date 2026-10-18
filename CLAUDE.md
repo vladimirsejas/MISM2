@@ -488,6 +488,7 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   Gabarito `gabarito_apoio.json` (86 perguntas, desenvolvimento e final); testes `teste_apoio_busca.py` e
   o cenário F de `dashboard/teste_apoio_tela.py`. O conjunto final já foi medido e corrigido: para medir de
   novo, escrever um conjunto novo às cegas. O Gemini real só foi provado no teste da caixa do painel principal, não no Apoio (lá ele só escolhe porta).
+- **Ajustes do Apoio (Codex, 18/10/2026, auditados pelo Claude e enviados ao `main`):** jornada do diagnóstico numerada, com "se a resposta demorar" (itens de regulação); a Lia avisa quando a resposta é de outra aba e oferece "Falar sobre <aba>"; **Gemini no Apoio desligado por padrão** (toggle `caixa_ap_gemini_ativo`, só classifica o assunto, nunca escreve; limite de 40 conta toda chamada); 17 atalhos "Assuntos" sem IA; a referência histórica da carreta em Rio Claro saiu. O `teste_painel.py` falhou no notebook do Codex por `MemoryError` do ambiente dele e passou na nuvem.
 - Ainda não feito (combinar): população do IBGE; testar com pessoas de verdade; revisar com o autor o
   vocabulário popular do Apoio (`apoio_busca.VOCABULARIO`/`EXTRA`).
 
