@@ -55,6 +55,58 @@ with tempfile.TemporaryDirectory() as pasta:
     g.gravar(list(linhas.values()), destino)
     checar("grava o CSV com o cabeçalho esperado", open(destino, encoding="utf-8-sig").readline().strip().split(";") == g.CAMPOS)
 
+# ---------- contorno do município (IBGE) ----------
+poligono = {"type": "Polygon", "coordinates": [[[-47.60, -22.45], [-47.50, -22.45], [-47.50, -22.30], [-47.60, -22.30], [-47.60, -22.45]]]}
+multi = {"type": "MultiPolygon", "coordinates": [[[[-48.0, -20.0], [-47.9, -20.0], [-47.9, -19.9], [-48.0, -20.0]]],
+                                                  [[[-48.5, -20.5], [-48.4, -20.5], [-48.4, -20.4], [-48.5, -20.5]]]]}
+checar("caixa de um Polygon", g.caixa_da_geometria(poligono) == (-22.45, -22.30, -47.60, -47.50))
+checar("caixa de um MultiPolygon cobre todas as partes", g.caixa_da_geometria(multi) == (-20.5, -19.9, -48.5, -47.9))
+
+
+def falso_ibge(url):
+    if "/malhas/estados/35" in url:
+        return {"features": [{"properties": {"codarea": "3543907"}, "geometry": poligono},
+                             {"properties": {"codarea": "3503208"}, "geometry": multi},
+                             {"properties": {"codarea": "9999999"}, "geometry": poligono}]}   # sem nome: ignorado
+    if "/localidades/estados/35/" in url:
+        return [{"id": 3543907, "nome": "Rio Claro"}, {"id": 3503208, "nome": "Araraquara"}]
+    if "/malhas/estados/33" in url:
+        return {"features": [{"properties": {"codarea": "3304557"}, "geometry": poligono}]}
+    if "/localidades/estados/33/" in url:
+        return [{"id": 3304557, "nome": "Rio de Janeiro"}]
+    raise AssertionError("URL inesperada: " + url)
+
+
+caixas = g.baixar_caixas({"SP", "RJ"}, obter=falso_ibge)
+checar("baixa os contornos por estado (ignora o que não tem nome) e indexa por código e por nome",
+       set(caixas["por_codigo"]) == {"354390", "350320", "330455"} and caixas["por_nome"][("SP", "rio claro")] == "354390")
+with tempfile.TemporaryDirectory() as pasta:
+    caminho = os.path.join(pasta, "caixas.csv")
+    g.gravar_caixas(caixas, caminho)
+    volta = g.ler_caixas(caminho)
+    checar("o cache grava e lê de volta a mesma coisa", volta["por_codigo"] == caixas["por_codigo"] and volta["por_nome"] == caixas["por_nome"])
+    checar("sem cache: devolve None (e o script baixa)", g.ler_caixas(os.path.join(pasta, "nao_existe.csv")) is None)
+
+hosp = item("2000010", "SP", "Rio Claro", "Santa Casa")
+cad = {"unidade": "3543902000010", "ativo": True, "lat": -22.40, "lon": -47.55}
+checar("candidatos: o do código do CNES e o do nome da planilha", g.municipios_candidatos(hosp, cad, caixas) == ["354390"])
+checar("planilha com dois nomes ('Rio Claro e Araraquara'): cada parte conta",
+       set(g.municipios_candidatos(item("2000011", "SP", "Rio Claro e Araraquara"), {"unidade": ""}, caixas)) == {"354390", "350320"})
+checar("município sem contorno conhecido: nenhum candidato", g.municipios_candidatos(item("2000012", "SP", "Cidade Nova"), {"unidade": "3599992000012"}, caixas) == [])
+checar("ponto dentro do município: confirmado", g.conferir(hosp, cad, None, caixas) == ("sim", ""))
+fora = dict(cad, lat=-23.50, lon=-46.60)  # dentro do estado de SP, mas em outra cidade
+ok, motivo = g.conferir(hosp, fora, None, caixas)
+checar("ponto no estado certo mas na CIDADE errada: rejeitado (o que o retângulo do estado não pegava)", ok == "não" and "fora do município (Rio Claro)" in motivo)
+checar("ponto no município do NOME da planilha, mas o código do CNES é de outro: aceito (basta um dos dois)",
+       g.conferir(item("2000013", "SP", "Araraquara"), dict(cad, unidade="3543902000013", lat=-20.0, lon=-47.95), None, caixas)[0] == "sim")
+checar("sem candidato conhecido: vale só o retângulo do estado (não rejeita por falta de contorno)",
+       g.conferir(item("2000014", "SP", "Cidade Nova"), dict(cad, unidade="3599992000014"), None, caixas)[0] == "sim")
+checar("sem contornos (sem internet): como antes, só o retângulo do estado", g.conferir(hosp, fora, None, None)[0] == "sim")
+checar("a margem de ~3 km nas bordas é tolerada", g.conferir(hosp, dict(cad, lat=-22.46, lon=-47.55), None, caixas)[0] == "sim"
+       and g.conferir(hosp, dict(cad, lat=-22.60, lon=-47.55), None, caixas)[0] == "não")
+via_montar = {l["cnes"]: l for l in g.montar([hosp], {"2000010": dict(cad, lat=-23.50, lon=-46.60, nome="Santa Casa", endereco="", cep="", telefone="")}, None, caixas)}
+checar("montar usa os contornos: sem ponto e com o motivo", via_montar["2000010"]["no_mapa"] == "não" and via_montar["2000010"]["lat"] == "")
+
 checar("todo estado tem retângulo e código IBGE (27)", len(g.CAIXA_UF) == 27 and len(g.UF_POR_CODIGO) == 27 and set(g.UF_POR_CODIGO.values()) == set(g.CAIXA_UF))
 if falhas:
     print("\nFALHARAM:", *falhas, sep="\n  - ")

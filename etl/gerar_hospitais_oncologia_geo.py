@@ -8,22 +8,28 @@ A posição só vira ponto no mapa quando PASSA nas conferências; senão o hosp
 põe o ponto no centro da cidade como se fosse o hospital):
   - o cadastro existe e está ativo no CNES;
   - o prefixo do CO_UNIDADE (2 primeiros dígitos = UF) bate com a UF da planilha do Ministério;
-  - a coordenada cai dentro do retângulo do estado (com folga) e, em SP, a até 35 km do centro do município do hospital.
+  - a coordenada cai dentro do retângulo do estado (com folga) e, em SP, a até 35 km do centro do município do hospital;
+  - a coordenada cai dentro do CONTORNO de um dos municípios candidatos (o do código do CNES ou o do nome da planilha),
+    com o contorno baixado do IBGE (uma vez; fica em analises\\municipios_ibge_caixas.csv). Sem internet, essa conferência é pulada.
 
     py etl\\gerar_hospitais_oncologia_geo.py
 """
 import csv
 import os
 import sys
+import unicodedata
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(RAIZ, "algoritimos"))
 sys.path.insert(0, os.path.join(RAIZ, "etl"))
+import baixar_centroides as bc  # noqa: E402
 import cruzar_hospitais_oncologia as c  # noqa: E402
 import unidades_saude as us  # noqa: E402
 
 LISTA = os.path.join(RAIZ, "dados_geograficos", "hospitais_oncologia_br.csv")
 SAIDA = os.path.join(RAIZ, "dados_geograficos", "hospitais_oncologia_br_geo.csv")
+CACHE_CAIXAS = os.path.join(RAIZ, "analises", "municipios_ibge_caixas.csv")
+MARGEM_MUNICIPIO = 0.03  # graus (~3 km) de tolerância nas bordas do contorno do município
 FOLGA = 0.15  # graus (~16 km) de tolerância nas bordas do retângulo do estado
 
 # Código IBGE da UF (2 primeiros dígitos do CO_UNIDADE) -> sigla
@@ -50,7 +56,82 @@ def ler_lista(caminho=LISTA):
         return list(csv.DictReader(f, delimiter=";"))
 
 
-def conferir(item, cadastro, centro=None):
+def _norm(t):
+    return "".join(ch for ch in unicodedata.normalize("NFD", str(t or "")) if unicodedata.category(ch) != "Mn").lower().strip()
+
+
+def caixa_da_geometria(geometria):
+    """(lat_min, lat_max, lon_min, lon_max) de um Polygon ou MultiPolygon do IBGE (coordenadas [lon, lat])."""
+    lats, lons = [], []
+
+    def anda(no):
+        if no and isinstance(no[0], (int, float)):
+            lons.append(no[0])
+            lats.append(no[1])
+        else:
+            for filho in no:
+                anda(filho)
+    anda(geometria["coordinates"])
+    if not lats:
+        raise ValueError("geometria sem coordenadas")
+    return min(lats), max(lats), min(lons), max(lons)
+
+
+def baixar_caixas(ufs, obter=bc.obter_json):
+    """{'por_codigo': {codigo6: (caixa, nome, uf)}, 'por_nome': {(uf, nome normalizado): codigo6}} dos municípios dos estados pedidos."""
+    codigo_da_uf = {v: k for k, v in UF_POR_CODIGO.items()}
+    por_codigo, por_nome = {}, {}
+    for uf in sorted(ufs):
+        cod = codigo_da_uf[uf]
+        malha = obter(f"https://servicodados.ibge.gov.br/api/v3/malhas/estados/{cod}?intrarregiao=municipio"
+                      "&formato=application/vnd.geo+json&qualidade=minima")
+        nomes = {str(m["id"]): m["nome"] for m in obter(f"https://servicodados.ibge.gov.br/api/v1/localidades/estados/{cod}/municipios")}
+        for f in malha["features"]:
+            codigo = str(f["properties"].get("codarea") or "")
+            if codigo not in nomes:
+                continue
+            por_codigo[codigo[:6]] = (caixa_da_geometria(f["geometry"]), nomes[codigo], uf)
+            por_nome[(uf, _norm(nomes[codigo]))] = codigo[:6]
+    return {"por_codigo": por_codigo, "por_nome": por_nome}
+
+
+def gravar_caixas(caixas, caminho=CACHE_CAIXAS):
+    os.makedirs(os.path.dirname(caminho), exist_ok=True)
+    with open(caminho, "w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f, delimiter=";")
+        w.writerow(["codigo6", "uf", "nome", "lat_min", "lat_max", "lon_min", "lon_max"])
+        for cod6, (cx, nome, uf) in caixas["por_codigo"].items():
+            w.writerow([cod6, uf, nome, *cx])
+
+
+def ler_caixas(caminho=CACHE_CAIXAS):
+    """O cache de contornos, ou None se não existe."""
+    if not os.path.isfile(caminho):
+        return None
+    por_codigo, por_nome = {}, {}
+    with open(caminho, encoding="utf-8", newline="") as f:
+        for r in csv.DictReader(f, delimiter=";"):
+            por_codigo[r["codigo6"]] = ((float(r["lat_min"]), float(r["lat_max"]), float(r["lon_min"]), float(r["lon_max"])), r["nome"], r["uf"])
+            por_nome[(r["uf"], _norm(r["nome"]))] = r["codigo6"]
+    return {"por_codigo": por_codigo, "por_nome": por_nome} if por_codigo else None
+
+
+def municipios_candidatos(item, cadastro, caixas):
+    """Códigos de 6 dígitos dos municípios onde o hospital pode estar: o do CO_UNIDADE do CNES e o do nome da planilha
+    (a planilha às vezes traz dois nomes, 'Sorocaba e Itu'; cada parte conta). Só os que existem nos contornos."""
+    cands = []
+    prefixo = ((cadastro or {}).get("unidade") or "")[:6]
+    if prefixo in caixas["por_codigo"]:
+        cands.append(prefixo)
+    nome = _norm(item.get("municipio"))
+    for parte in [nome] + [p.strip() for p in nome.replace(",", " e ").split(" e ") if p.strip()]:
+        cod = caixas["por_nome"].get((item["uf"], parte))
+        if cod and cod not in cands:
+            cands.append(cod)
+    return cands
+
+
+def conferir(item, cadastro, centro=None, caixas=None):
     """(no_mapa, motivo): 'sim' + '' quando a posição passa em todas as conferências; senão 'não' + o que falhou."""
     if not cadastro:
         return "não", "não achei o CNES no cadastro (banco\\cnes)"
@@ -69,15 +150,23 @@ def conferir(item, cadastro, centro=None):
         km = c.localizacao.distancia_km(lat, lon, centro[0], centro[1])
         if km > c.LIMITE_KM_DO_CENTRO:
             return "não", f"a coordenada fica a {km:.0f} km do centro do município"
+    if caixas:
+        cands = municipios_candidatos(item, cadastro, caixas)
+        if cands:  # sem candidato conhecido, vale só o retângulo do estado
+            dentro = any(cx[0] - MARGEM_MUNICIPIO <= lat <= cx[1] + MARGEM_MUNICIPIO and cx[2] - MARGEM_MUNICIPIO <= lon <= cx[3] + MARGEM_MUNICIPIO
+                         for cx in (caixas["por_codigo"][k][0] for k in cands))
+            if not dentro:
+                nomes = " / ".join(caixas["por_codigo"][k][1] for k in cands)
+                return "não", f"a coordenada cai fora do município ({nomes})"
     return "sim", ""
 
 
-def montar(lista, cadastros, centros=None):
+def montar(lista, cadastros, centros=None, caixas=None):
     centros = centros or {}
     saida = []
     for item in lista:
         cad = cadastros.get(item["cnes"])
-        ok, motivo = conferir(item, cad, centros.get(item["cnes"]))
+        ok, motivo = conferir(item, cad, centros.get(item["cnes"]), caixas)
         saida.append({
             "cnes": item["cnes"], "uf": item["uf"], "municipio": item["municipio"],
             "nome": (cad or {}).get("nome") or item["nome_ministerio"], "nome_ministerio": item["nome_ministerio"],
@@ -106,14 +195,24 @@ def main():
             centros = c.centros_dos_municipios(c.BANCO, [i["cnes"] for i in lista if i["uf"] == "SP"])
         except Exception as erro:  # sem banco/tabela de localização: só a conferência pelo retângulo do estado
             print("Sem os centros dos municípios de SP (", erro, "): em SP vale só o retângulo do estado.")
-    linhas = montar(lista, cadastros, centros)
+    caixas = ler_caixas()
+    if caixas is None:
+        print("Baixando os contornos dos municípios do IBGE (uma vez; 1 a 3 minutos)...")
+        try:
+            caixas = baixar_caixas({i["uf"] for i in lista if i["uf"] in CAIXA_UF})
+            gravar_caixas(caixas)
+        except Exception as erro:  # sem internet ou API fora do ar: só o retângulo do estado
+            print("AVISO: não consegui os contornos do IBGE (", erro, "): vale só o retângulo do estado.")
+            caixas = None
+    linhas = montar(lista, cadastros, centros, caixas)
     gravar(linhas)
     sim = sum(1 for l in linhas if l["no_mapa"] == "sim")
-    print(f"{len(linhas)} estabelecimentos | {sim} com posição confirmada no mapa | {len(linhas) - sim} só na lista")
+    print(f"{len(linhas)} estabelecimentos | {sim} com posição confirmada no mapa | {len(linhas) - sim} só na lista"
+          + ("" if caixas else " | SEM a conferência do contorno do município"))
     por_motivo = {}
     for l in linhas:
         if l["no_mapa"] != "sim":
-            por_motivo.setdefault(l["motivo"].split(" a ")[0] if "km" in l["motivo"] else l["motivo"], []).append(l)
+            por_motivo.setdefault(l["motivo"].split(" a ")[0] if "km" in l["motivo"] else l["motivo"].split(" (")[0], []).append(l)
     for motivo, itens in sorted(por_motivo.items(), key=lambda x: -len(x[1])):
         print(f"\n{len(itens)} sem ponto: {motivo}")
         for l in itens[:12]:
