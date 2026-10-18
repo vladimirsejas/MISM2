@@ -184,12 +184,13 @@ def main():
         escrever(pasta, "tbCargaHorariaSus202608.csv",
                  "CO_UNIDADE;CO_PROFISSIONAL_SUS;CO_CBO;TP_SUS_NAO_SUS;QT_CARGA_HORARIA_AMBULATORIAL",
                  ["1001;P1;225135;S;20", "1001;P1;225135;S;10",   # a mesma pessoa em dois vínculos conta uma vez
-                  "1001;P2;225135;S;20", "1001;P3;225135;S;0",    # sem carga ambulatorial: não conta
+                  "1001;P2;225135;S;20", "1001;P3;225135;S;0",    # sem carga ambulatorial: cadastrado, mas fora do ambulatório
                   "1001;P4;225120;S;8", "1001;P5;322205;S;40",    # só ocupações médicas
                   "9001;P6;225135;S;20"])                         # unidade de outra cidade: ignorada
         df = us.carregar_unidades(pasta, tamanho_pedaco=2)
         ame = df[df["nome"].str.contains("Ame", case=False)].iloc[0]["servicos"]
-        assert "MEDICO DERMATOLOGISTA (2 cadastrados)" in ame and "MEDICO CARDIOLOGISTA (1 cadastrado)" in ame, ame
+        assert "MEDICO DERMATOLOGISTA (2 no ambulatório, 3 cadastrados)" in ame, ame  # P3 sem horas: cadastrado, mas não no ambulatório
+        assert "MEDICO CARDIOLOGISTA (1 no ambulatório, 1 cadastrado)" in ame, ame
         assert "ENFERMAGEM" not in ame, ame
         assert df[df["nome"].str.contains("Sem Medico", case=False)].iloc[0]["servicos"] == ""
         assert "P1" not in " ".join(df["servicos"]), "nenhum código de profissional pode sair"
@@ -209,7 +210,7 @@ def main():
         assert os.path.getsize(os.path.join(pasta, "tbCargaHorariaSus202608.csv")) > 250_000
         df = us.carregar_unidades(pasta)
         assert not df.attrs["aviso_medicos"], df.attrs["aviso_medicos"]
-        assert "MEDICO DERMATOLOGISTA (2 cadastrados)" in df.iloc[0]["servicos"], df.iloc[0]["servicos"]
+        assert "MEDICO DERMATOLOGISTA (2 no ambulatório, 2 cadastrados)" in df.iloc[0]["servicos"], df.iloc[0]["servicos"]
         print("[OK] arquivo grande com byte fora de UTF-8 depois do começo: lido sem perder os médicos")
 
     with tempfile.TemporaryDirectory() as pasta:

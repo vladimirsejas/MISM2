@@ -394,17 +394,22 @@ def _medicos_cnes(caminho_estabelecimento, unidades, tamanho_pedaco=TAMANHO_PEDA
         cols_c = {_chave(c): c for c in pd.read_csv(carga, sep=sep_c, encoding=cod_c, dtype=str, nrows=0).columns}
         c_unidade, c_pessoa, c_cbo, c_horas = (cols_c[_chave(k)] for k in (
             "CO_UNIDADE", "CO_PROFISSIONAL_SUS", "CO_CBO", "QT_CARGA_HORARIA_AMBULATORIAL"))
-        pessoas = {}  # (unidade, cbo) -> {profissionais}; só na memória
+        pessoas = {}      # (unidade, cbo) -> profissionais cadastrados; só na memória
+        ambulatorio = {}  # (unidade, cbo) -> os que têm carga horária ambulatorial
         for pedaco in pd.read_csv(carga, sep=sep_c, encoding=cod_c, dtype=str, usecols=[c_unidade, c_pessoa, c_cbo, c_horas],
                                   chunksize=tamanho_pedaco, keep_default_na=False, low_memory=False):
             pedaco = pedaco.loc[pedaco[c_unidade].map(so_digitos).isin(unidades) & pedaco[c_cbo].str.strip().isin(medicas)]
             horas = pd.to_numeric(pedaco[c_horas].str.replace(",", ".", regex=False), errors="coerce").fillna(0)
-            for u, p, c in zip(pedaco.loc[horas > 0, c_unidade], pedaco.loc[horas > 0, c_pessoa], pedaco.loc[horas > 0, c_cbo]):
-                pessoas.setdefault((so_digitos(u), c.strip()), set()).add(p)
+            for u, p, c, h in zip(pedaco[c_unidade], pedaco[c_pessoa], pedaco[c_cbo], horas):
+                chave = (so_digitos(u), c.strip())
+                pessoas.setdefault(chave, set()).add(p)
+                if h > 0:
+                    ambulatorio.setdefault(chave, set()).add(p)
         por_unidade = {}
         for (u, cbo), quem in pessoas.items():
-            n = len(quem)
-            por_unidade.setdefault(u, []).append(f"{medicas[cbo]} ({n} cadastrado{'s' if n != 1 else ''})")
+            n, a = len(quem), len(ambulatorio.get((u, cbo), ()))
+            por_unidade.setdefault(u, []).append(
+                f"{medicas[cbo]} ({a} no ambulatório, {n} cadastrado{'s' if n != 1 else ''})")
         return {u: " | ".join(sorted(v)) for u, v in por_unidade.items()}, ""
     except (OSError, ValueError, KeyError, pd.errors.ParserError, pd.errors.EmptyDataError) as erro:
         return {}, f"Não foi possível ler os profissionais do CNES: {erro}"

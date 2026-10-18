@@ -216,6 +216,58 @@ def contar(df):
     return {g: int((df["grupo"].astype(str) == g).sum()) for g in ESCOLHAS}
 
 
+_ESPECIALISTA = re.compile(r"^(MEDICO\b.*?)\s*\((\d+) no ambulatório, (\d+) cadastrad")
+
+
+def rotulo_legivel(t):
+    """O CNES escreve em MAIÚSCULAS e sem acento; na tela vai em letra normal, e o médico em 'N no ambulatório, M cadastrados'."""
+    m = _ESPECIALISTA.match(t)
+    if m:
+        nome = m.group(1).replace("MEDICO ", "", 1).lower()
+        n = int(m.group(3))
+        return f"Médico {nome}: {m.group(2)} no ambulatório, {n} cadastrado{'s' if n != 1 else ''}"
+    return t.strip().capitalize()
+
+
+def separar_registros(texto):
+    """Do texto de uma unidade devolve (especialistas, servicos): listas de rótulos como o CNES os escreveu."""
+    itens = [t.strip() for t in str(texto or "").split("|") if t.strip()]
+    return [t for t in itens if "cadastrad" in t], [t for t in itens if "cadastrad" not in t]
+
+
+def opcoes_de_busca(df):
+    """O que existe de verdade nas unidades da cidade, para a pessoa ESCOLHER em vez de adivinhar a palavra.
+    Devolve (especialidades, servicos): listas de (rótulo, termo_de_busca, quantas_unidades), da mais comum à menos."""
+    if df is None or "servicos" not in df:
+        return [], []
+    espec, serv = {}, {}
+    for texto in df["servicos"].fillna("").astype(str):
+        esp, svc = separar_registros(texto)
+        for t in set(esp):
+            m = _ESPECIALISTA.match(t)
+            nome = (m.group(1) if m else t).strip()
+            espec[nome] = espec.get(nome, 0) + 1
+        for t in set(svc):
+            serv[t] = serv.get(t, 0) + 1
+
+    def bonito(nome):
+        return nome.title().replace(" Em ", " em ").replace(" Da ", " da ").replace(" De ", " de ").replace(" E ", " e ").replace(" Do ", " do ")
+
+    especialidades = [(bonito(n.replace("MEDICO ", "", 1)), n.replace("MEDICO ", "", 1), q)
+                      for n, q in espec.items()]
+    servicos = [(bonito(n), n, q) for n, q in serv.items()]
+    ordem = lambda x: (-x[2], x[0])  # noqa: E731
+    return sorted(especialidades, key=ordem), sorted(servicos, key=ordem)
+
+
+def separar_por_natureza(df):
+    """(rede pública e sem fins lucrativos, particulares): na busca os dois aparecem, nunca um escondido."""
+    if df.empty or "natureza" not in df:
+        return df, df.iloc[0:0]
+    particular = df["natureza"].astype(str) == "privada"
+    return df[~particular].reset_index(drop=True), df[particular].reset_index(drop=True)
+
+
 def _interpretar_busca(busca):
     normalizada = us._chave(busca).strip("_")
     termos = normalizada.split("_") if normalizada else []

@@ -83,7 +83,7 @@ def main():
         {"cnes": "2080005", "nome": "Clinica da Pele", "tipo": "Clínica", "grupo": "especialidade",
          "natureza": "publica", "endereco": "Rua 9, 1", "bairro": "Centro", "cep": "", "telefone": "",
          "lat": float("nan"), "lon": float("nan"), "mapa": False,
-         "servicos": "MEDICO DERMATOLOGISTA (2 cadastrados) | MEDICO CARDIOLOGISTA (1 cadastrado)"},
+         "servicos": "MEDICO DERMATOLOGISTA (2 no ambulatório, 8 cadastrados) | MEDICO CARDIOLOGISTA (1 no ambulatório, 1 cadastrado)"},
     ])
     cnes.attrs.update({"tem_natureza": True, "arquivo": "tbEstabelecimento202608.csv"})
     df = oa.unificar(cnes, servicos)
@@ -106,6 +106,19 @@ def main():
         assert list(oa.filtrar(df, "especialidade", busca=pedido)["nome"]) == ["Clinica da Pele"], pedido
     assert list(oa.filtrar(df, "especialidade", busca="cardiologista")["nome"]) == ["Clinica da Pele"]
     assert oa.filtrar(df, "especialidade", busca="neurologia").empty
+    # lista para escolher: só o que existe, com quantas unidades, da mais comum à menos
+    esp, svc = oa.opcoes_de_busca(df)
+    assert ("Dermatologista", "DERMATOLOGISTA", 1) in esp and ("Cardiologista", "CARDIOLOGISTA", 1) in esp, esp
+    assert any(n == "MAMOGRAFIA" and q == 1 for _, n, q in svc), svc  # só o AME
+    for _, termo, _ in esp + svc:  # todo item da lista, usado como busca, tem de achar pelo menos a unidade de onde veio
+        assert not oa.filtrar(df, None, busca=termo).empty, termo
+    assert oa.rotulo_legivel("MEDICO DERMATOLOGISTA (2 no ambulatório, 8 cadastrados)") == "Médico dermatologista: 2 no ambulatório, 8 cadastrados"
+    assert oa.rotulo_legivel("MEDICO CARDIOLOGISTA (1 no ambulatório, 1 cadastrado)") == "Médico cardiologista: 1 no ambulatório, 1 cadastrado"
+    assert oa.rotulo_legivel("SERVICO DE DIAGNOSTICO POR IMAGEM") == "Servico de diagnostico por imagem"
+    assert oa.separar_registros("MEDICO X (1 no ambulatório, 1 cadastrado) | MAMOGRAFIA") == (["MEDICO X (1 no ambulatório, 1 cadastrado)"], ["MAMOGRAFIA"])
+    mistura = pd.DataFrame({"nome": ["A", "B", "C", "D"], "natureza": ["publica", "privada", "sem_fins", "desconhecida"]})
+    publicas, particulares = oa.separar_por_natureza(mistura)
+    assert list(publicas["nome"]) == ["A", "C", "D"] and list(particulares["nome"]) == ["B"], "nada some: só se separa"
     print("[OK] busca por serviço CNES e nomes populares de exames/especialistas")
 
     # filtros

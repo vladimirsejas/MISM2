@@ -87,10 +87,12 @@ def main():
         with open(os.path.join(cheia, "tbServicoEspecializado202608.csv"), "w", encoding="latin-1", newline="") as f:
             f.write("CO_SERVICO_ESPECIALIZADO;DS_SERVICO_ESPECIALIZADO\n151;SERVICO DE DIAGNOSTICO POR IMAGEM\n")
         with open(os.path.join(cheia, "tbAtividadeProfissional202608.csv"), "w", encoding="latin-1", newline="") as f:
-            f.write("CO_CBO;DS_ATIVIDADE_PROFISSIONAL\n225135;MEDICO DERMATOLOGISTA\n225120;MEDICO CARDIOLOGISTA\n")
+            f.write("CO_CBO;DS_ATIVIDADE_PROFISSIONAL\n225135;MEDICO DERMATOLOGISTA\n225120;MEDICO CARDIOLOGISTA\n"
+                    + "".join(f"22510{i};MEDICO ESPECIALISTA NUMERO {i}\n" for i in range(1, 9)))
         with open(os.path.join(cheia, "tbCargaHorariaSus202608.csv"), "w", encoding="latin-1", newline="") as f:
             f.write("CO_UNIDADE;CO_PROFISSIONAL_SUS;CO_CBO;QT_CARGA_HORARIA_AMBULATORIAL\n"
-                    "1006;P1;225135;20\n1006;P2;225135;20\n1006;P3;225120;10\n")
+                    "1006;P1;225135;20\n1006;P2;225135;20\n1006;P3;225120;10\n"
+                    + "".join(f"1006;Q{i};22510{i};20\n" for i in range(1, 9)))
         os.environ["ESCUDO_CNES_PASTA"] = cheia
         esquecer_modulos()
         at = abrir()
@@ -125,12 +127,26 @@ def main():
         next(i for i in at.text_input if i.key == "un_busca").set_value("mamo pelo SUS").run()
         t = texto(at)
         checar("C. busca em linguagem comum encontra mamografia pelo CNES",
-               "AME Rio Claro" in t and "MAMOGRAFIA" in t and not at.exception)
+               "AME Rio Claro" in t and "Mamografia" in t and not at.exception)
         next(i for i in at.text_input if i.key == "un_busca").set_value("dermatologista").run()
         t = texto(at)
         checar("C. busca de especialista mostra tudo da unidade: médicos e serviços, sem corte",
-               "AME Rio Claro" in t and "MEDICO DERMATOLOGISTA (2 cadastrados)" in t and "MEDICO CARDIOLOGISTA (1 cadastrado)" in t
-               and "SERVICO DE DIAGNOSTICO POR IMAGEM" in t and "e mais" not in t and not at.exception)
+               "AME Rio Claro" in t and "Médico dermatologista: 2 no ambulatório, 2 cadastrados" in t and "Médico cardiologista: 1 no ambulatório, 1 cadastrado" in t
+               and "Servico de diagnostico por imagem" in t and "e mais" not in t and not at.exception)
+        checar("C. unidade com muitos itens: o excedente fica em 'Ver os outros', não é cortado",
+               "Ver os outros" in t and "Médico especialista numero 8" in t)
+        next(i for i in at.text_input if i.key == "un_busca").set_value("estrela").run()
+        t = texto(at)
+        checar("C. na busca a clínica particular aparece, em grupo separado e avisado",
+               "Clinica Estrela" in t and "Particulares" in t and "não informa se atendem pelo SUS" in t and not at.exception)
+        next(i for i in at.text_input if i.key == "un_busca").set_value("").run()
+        escolha_lista = next(x for x in at.selectbox if x.key == "un_escolha")
+        checar("C. lista 'o que existe na cidade' oferece a especialidade com a contagem de unidades",
+               any("Dermatologista (1 unidade)" in str(o) for o in escolha_lista.options))
+        escolha_lista.set_value("DERMATOLOGISTA").run()
+        t = texto(at)
+        checar("C. escolher na lista preenche a busca e mostra a unidade",
+               next(i for i in at.text_input if i.key == "un_busca").value == "DERMATOLOGISTA" and "AME Rio Claro" in t and not at.exception)
         next(i for i in at.text_input if i.key == "un_busca").set_value("farmacia").run()
         checar("C. a busca acha a farmácia (grupo que não é botão)", "Farmacia Popular" in texto(at))
         next(i for i in at.text_input if i.key == "un_busca").set_value("zzzz").run()

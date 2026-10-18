@@ -72,6 +72,7 @@ a.un-fonte { color: #8a7a90 !important; font-size: .78rem; text-decoration: none
 """, unsafe_allow_html=True)
 
 PAGINA = 12
+LIMITE_VISIVEL = 6  # itens de serviço/especialidade à vista no cartão; o resto fica em "Ver os outros"
 NOME_CIDADE = "Rio Claro"
 
 
@@ -150,21 +151,30 @@ def cartao(u, n_internacoes, busca=""):
     if u.horario:
         linhas.append(f"🕒 {html.escape(u.horario)}")
     corpo = "".join(f'<div class="un-linha">{l}</div>' for l in linhas)
-    termos_servico = [t.strip() for t in str(getattr(u, "servicos", "") or "").split("|") if t.strip()]
-    if termos_servico:
+    especialistas, servicos_exames = oa.separar_registros(getattr(u, "servicos", ""))
+    if especialistas or servicos_exames:
         traduzidos, digitados = oa._interpretar_busca(busca)
         alvos = [us._chave(t).replace("_", " ") for t in list(traduzidos) + list(digitados)]
-        correspondentes = [t for t in termos_servico
-                           if any(alvo in us._chave(t).replace("_", " ") for alvo in alvos)]
+        correspondentes = {t for t in especialistas + servicos_exames
+                           if any(alvo in us._chave(t).replace("_", " ") for alvo in alvos)}
+
         def _item(t):
-            return f"<b>{html.escape(t)}</b>" if t in correspondentes else html.escape(t)
-        especialistas = [t for t in termos_servico if "cadastrad" in t]
-        servicos_exames = [t for t in termos_servico if "cadastrad" not in t]
-        # tudo o que o CNES registra para a unidade, sem cortar; o que casou com a busca vai primeiro e em negrito
+            texto = html.escape(oa.rotulo_legivel(t))
+            return f"<b>{texto}</b>" if t in correspondentes else texto
+        # o CNES pode registrar dezenas de itens por unidade: o que casou com a busca vem primeiro e à vista,
+        # o resto está inteiro logo abaixo, recolhido ("Ver os outros N"); nada é cortado.
         for titulo, lista_t in (("Especialistas cadastrados no CNES", especialistas), ("Serviços e exames registrados no CNES", servicos_exames)):
-            lista_t = [t for t in lista_t if t in correspondentes] + [t for t in lista_t if t not in correspondentes]
-            if lista_t:
-                corpo += f'<div class="un-linha"><b>{titulo} ({len(lista_t)})</b>: {", ".join(_item(t) for t in lista_t)}</div>'
+            if not lista_t:
+                continue
+            ordenada = [t for t in lista_t if t in correspondentes] + [t for t in lista_t if t not in correspondentes]
+            ate = max(len(correspondentes & set(lista_t)), LIMITE_VISIVEL)
+            visiveis, resto = ordenada[:ate], ordenada[ate:]
+            junta = "<br>" if lista_t is especialistas else ", "  # médicos: um por linha; serviços: lista corrida
+            texto = ("<br>" if junta == "<br>" else "") + junta.join(_item(t) for t in visiveis)
+            if resto:
+                texto += (f'<details><summary>Ver os outros {len(resto)}</summary>'
+                          f'{junta.join(_item(t) for t in resto)}</details>')
+            corpo += f'<div class="un-linha"><b>{titulo} ({len(lista_t)})</b>: {texto}</div>'
         corpo += '<div class="un-aviso">Cadastro não confirma vaga, atendimento pelo SUS ou disponibilidade hoje.</div>'
     if u.aviso:
         corpo += f'<div class="un-aviso">⚠ {html.escape(u.aviso)}</div>'
@@ -217,16 +227,36 @@ with caixa:
                        format_func=lambda g: f"{oa.ESCOLHAS[g][0]} ({contagem[g]})", key="un_grupo")
 st.caption(oa.ESCOLHAS[escolha][1])
 
+especialidades_op, servicos_op = oa.opcoes_de_busca(df)
+_rotulos = {"": "— escolher o que existe na cidade —"}
+for _nome, _termo, _q in especialidades_op:
+    _rotulos[_termo] = f"Médico: {_nome} ({_q} unidade{'s' if _q != 1 else ''})"
+for _nome, _termo, _q in servicos_op[:150]:
+    _rotulos[_termo] = f"Exame/serviço: {_nome} ({_q} unidade{'s' if _q != 1 else ''})"
+
+
+def _usar_escolha():
+    if st.session_state.get("un_escolha"):
+        st.session_state["un_busca"] = st.session_state["un_escolha"]
+
+
+if len(_rotulos) > 1:
+    st.selectbox("Não sabe o nome? Escolha do que existe nos cadastros da cidade (digite para filtrar)", list(_rotulos),
+                 format_func=lambda t: _rotulos[t], key="un_escolha", on_change=_usar_escolha)
+
 c1, c2 = st.columns([2.2, 1.6])
 busca = c1.text_input("Busque um exame, especialista, serviço ou unidade (em todas as opções)", key="un_busca",
-                      placeholder="ex.: mamografia, preventivo, ultrassom, ginecologista, AME")
-c1.caption("A busca usa serviços registrados no CNES. Ela localiza unidades; não informa nomes de profissionais nem agenda de consultas.")
+                      placeholder="ex.: mamografia, preventivo, ultrassom, dermatologista, AME")
+c1.caption("A busca usa os serviços e as especialidades médicas registrados no CNES. Ela localiza unidades; não informa nomes de profissionais nem agenda de consultas.")
+procurando = bool(busca.strip())
 so_publicos = False
 if tem_cnes and df.attrs.get("tem_natureza", False):
     so_publicos = c2.checkbox("Só públicas e sem fins lucrativos", value=True, key="un_publicos",
                               help="Onde é mais provável haver atendimento pelo SUS. Desmarque para ver também clínicas privadas.")
+    if procurando and so_publicos:
+        c2.caption("Na busca, as unidades particulares aparecem em separado, depois das públicas.")
 
-mostrar = oa.filtrar(df, escolha, busca, so_publicos)
+mostrar = oa.filtrar(df, escolha, busca, so_publicos and not procurando)
 
 assinatura = (escolha, busca.strip().lower(), so_publicos)
 if st.session_state.get("un_assinatura") != assinatura:
@@ -235,11 +265,30 @@ if st.session_state.get("un_assinatura") != assinatura:
 limite = st.session_state.setdefault("un_limite", PAGINA)
 
 if mostrar.empty:
-    st.info("Não encontrei uma unidade com esse cadastro. Tente ‘mamografia’, ‘ultrassom’, ‘preventivo’, o nome do exame ou da unidade; confirme a disponibilidade antes de ir.")
+    st.info("Não encontrei uma unidade com esse cadastro. Use a lista “Não sabe o nome?” logo acima: ela traz o que de fato existe nos cadastros da cidade. "
+            "Confirme a disponibilidade antes de ir.")
 else:
     titulo = f"{len(mostrar)} lugar(es)" + (" encontrados na busca" if busca.strip() else f": {oa.ESCOLHAS[escolha][0].lower()}")
     pergunta(titulo, "sem ranking de qualidade")
-    cartoes = "".join(cartao(u, internacoes.get(u.cnes), busca) for u in mostrar.head(limite).itertuples())
+    if procurando and tem_cnes:
+        publicas, particulares = oa.separar_por_natureza(mostrar)
+        grupos = (("Rede pública e sem fins lucrativos", publicas),
+                  ("Particulares — o CNES não informa se atendem pelo SUS", particulares))
+    else:
+        grupos = (("", mostrar),)
+    partes, usados = [], 0
+    for rotulo, sub in grupos:
+        cartoes_grupo = []
+        for u in sub.itertuples():
+            if usados >= limite:
+                break
+            cartoes_grupo.append(cartao(u, internacoes.get(u.cnes), busca))
+            usados += 1
+        if cartoes_grupo:
+            cab = (f'<div style="grid-column:1/-1;font-weight:700;margin:10px 0 2px">{html.escape(rotulo)} ({len(sub)})</div>'
+                   if rotulo else "")
+            partes.append(cab + "".join(cartoes_grupo))
+    cartoes = "".join(partes)
     st.markdown(f'<div class="un-grade">{cartoes}</div>', unsafe_allow_html=True)
     if len(mostrar) > limite:
         if st.button(f"Mostrar mais ({len(mostrar) - limite} restantes)", key="un_mais"):
