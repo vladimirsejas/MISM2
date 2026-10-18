@@ -28,10 +28,18 @@ def ler_unidades_cruas(caminho):
     sep = us._separador(caminho, cod)
     cols = list(pd.read_csv(caminho, sep=sep, encoding=cod, dtype=str, nrows=0).columns)
     ach = us._mapear_colunas(cols)
+    print(f"Colunas do tbEstabelecimento ({len(cols)}): {', '.join(cols)}")
+    print("Reconhecidas pelo Escudo:", {k: v for k, v in ach.items()})
+    campo = "municipio_local" if "municipio_local" in ach else ("municipio_gestor" if "municipio_gestor" in ach else None)
+    if campo is None:
+        print("ATENÇÃO: nenhuma coluna de município reconhecida; o painel não consegue saber quais unidades são da cidade.")
+        raise SystemExit(1)
+    print(f"Critério de município usado pelo painel: {campo} ({ach[campo]})"
+          + ("  <-- é o GESTOR, não o endereço" if campo == "municipio_gestor" else ""))
     usar = list(dict.fromkeys(ach.values()))
     saida = []
     for p in pd.read_csv(caminho, sep=sep, encoding=cod, dtype=str, usecols=usar, chunksize=100_000, keep_default_na=False):
-        m = p[ach["municipio_local"]].map(us.so_digitos).str[:6] == CODIGO_RIO_CLARO
+        m = p[ach[campo]].map(us.so_digitos).str[:6] == CODIGO_RIO_CLARO
         saida.append(p.loc[m])
     bruto = pd.concat(saida, ignore_index=True)
     return bruto, ach
