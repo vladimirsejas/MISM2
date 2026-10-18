@@ -133,6 +133,19 @@ def _com_inicio(r):
 
 SELO_GUIA = f"Texto do guia, conferido em {apoio.CONFERIDO}. Nenhuma IA escreveu sobre o serviço."
 
+# Frases incompletas que só fazem sentido com o assunto da mensagem anterior.
+# Nelas, a Lia retoma o item selecionado e pede especificação; não presume fatos.
+SEGUIMENTOS_VAGOS = (
+    "e agora", "o que faco agora", "e depois", "e isso", "me explica melhor",
+    "pode explicar melhor", "nao entendi", "tenho medo", "estou com medo",
+    "to com medo", "e se nao", "como continuo",
+)
+
+
+def _seguimento_vago(pergunta):
+    texto = ent.normalizar(pergunta).strip(" ?.!…")
+    return any(texto == frase or texto.startswith(frase + " ") for frase in SEGUIMENTOS_VAGOS)
+
 # A opção do Gemini: portas e lâminas (lista fechada).
 OPCOES_IA = [(c, f"{r}: {dentro}") for c, r, dentro, _ in apoio.CAMINHOS] + [
     ("hospitais", "hospitais de câncer pelo SUS no Estado"), ("carretas", "carretas da mamografia: onde e quando"),
@@ -158,7 +171,23 @@ def _acao_da_opcao(escolha):
     return None
 
 
-def responder_pergunta(pergunta, classificar=None):
+def _resposta_do_contexto(contexto):
+    """Resolve um token temporário para uma ação existente do catálogo."""
+    if not isinstance(contexto, str) or ":" not in contexto:
+        return None
+    tipo, id = contexto.split(":", 1)
+    if tipo == "item" and id in apoio.POR_ID:
+        return apoio.responder(apoio.item(id)), apoio.POR_ID[id]["titulo"]
+    if tipo == "caminho" and id in apoio.NOME_CAMINHO:
+        return apoio.responder(apoio.caminho(id)), apoio.NOME_CAMINHO[id]
+    if tipo == "etapa" and id in apoio.NOME_ETAPA:
+        return apoio.responder(apoio.etapa(id)), apoio.NOME_ETAPA[id]
+    if tipo == "lamina" and id in apoio.LAMINAS:
+        return apoio.responder(apoio.lamina(id)), apoio.LAMINAS[id]
+    return None
+
+
+def responder_pergunta(pergunta, classificar=None, contexto=None):
     """Entende a pergunta e devolve uma resposta do guia. `classificar`: função do Gemini
     (pergunta, opções, contexto=, com_cancer=) -> {"intencao"} ou None; só é chamada sem confiança."""
     pergunta = (pergunta or "").strip()
@@ -177,6 +206,18 @@ def responder_pergunta(pergunta, classificar=None):
         return _com_inicio(_de(r, tipo="risco", selo="Texto fixo de segurança. A IA não é usada aqui.", **comum))
     if social.tipo == "saudacao":
         return _de(apoio.saudacao(), tipo="saudacao", **comum)
+
+    # A memória contém apenas um token validado do catálogo, nunca a mensagem anterior.
+    # Seguimentos vagos retomam o assunto com conteúdo oficial e pedem esclarecimento.
+    resposta_contextual = _resposta_do_contexto(contexto)
+    if resposta_contextual and _seguimento_vago(pergunta):
+        r, titulo = resposta_contextual
+        r.fala = (f"Entendi que você continua falando sobre **{titulo}**. "
+                  "Para eu não escolher uma orientação errada, diga qual é sua dúvida agora. "
+                  "Se o assunto mudou, escreva o novo assunto ou escolha uma porta.\n\n" + r.fala)
+        return _com_inicio(_de(r, tipo="esclarecimento", selo=SELO_GUIA,
+                               candidatos=[contexto], **comum))
+
 
     achados = buscar(pergunta)
     (id1, n1), (_, n2) = achados[0], achados[1]
