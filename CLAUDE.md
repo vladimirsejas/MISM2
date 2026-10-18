@@ -219,10 +219,21 @@ Estado atual:
   DDMs, Casas da Mulher Paulista, Defensoria (NUDEM) e violência sexual 24 h;
   Rio Claro com AME, DDM, Patrulha Maria da Penha e Rede Feminina. Item que mora
   numa lâmina e aparece em outra usa `tambem` (cartão curto, sem repetir texto).
-  **Carretas (itinerário):** `apoio.ITINERARIO` (trazido pelo autor, conferido na
-  Agência SP em 24/09/2026) alimenta o quadro "Onde a carreta está agora?" (Ir até
-  você) e a fala da Lia, pela data do dia; vencido, avisa para ver o Poupatempo.
-  Atualizar todo mês trocando a lista.
+  **Carretas (10/2026, pedido do autor, feito pelo Codex e auditado pelo Claude):** o itinerário
+  mensal saiu do código (`ITINERARIO`, `carretas()`, `itinerario_vencido()` e o quadro "onde a
+  carreta está agora" não existem mais): ele muda a cada ~15 dias e ficava desatualizado. No lugar,
+  a lâmina Carretas, a porta Câncer de mama, a lâmina Rio Claro e a fala da Lia (`frase_carretas()`)
+  mandam para o canal oficial (`URL_CARRETAS_POUPATEMPO` e `URL_CARRETAS_SP_POR_TODAS`), sem cidade
+  nem data. **A confirmar pelo autor:** a busca na web só confirmou o itinerário no Poupatempo; que o
+  SP Por Todas o publique não foi confirmado (a nuvem não abre sites do governo). Se esse link não
+  mostrar as cidades, tirar o botão dele. A carreta do Hospital de Amor em Rio Claro (fev/2025, evento
+  único) também saiu. **Boas-vindas do Apoio (Codex):** 4 entradas (Prevenção e exames, Meu exame
+  deu alterado, Recebi diagnóstico de câncer, Não sei por onde começar); "Preciso de ajuda" não presume
+  mais a etapa (`ap_etapa` começa vazio); os contadores do catálogo foram para "Sobre estas informações".
+  Textos das leis mais precisos: os 30 dias valem quando câncer é a principal hipótese diagnóstica e
+  há pedido médico fundamentado (Lei 13.896/2019); os 60 dias contam do laudo patológico (Lei
+  12.732/2012). Pergunta de diagnóstico recente ("recebi o diagnóstico de câncer...") vai direto à etapa,
+  sem a busca escolher hospital (`apoio_busca._diagnostico_recente`).
   **8 portas (proposta do autor, 09/2026):** Câncer de mama, Colo do útero,
   Diagnóstico, Regulação ("já fui encaminhada, e agora?"), Tratamento, Rede
   oncológica (fluxo UBS → diagnóstico → regulação → especialista → tratamento →

@@ -171,6 +171,8 @@ for e in apoio.NOME_ETAPA:
 
 import html as _html
 for lam in apoio.GRUPOS:
+    if lam == "carretas":
+        continue  # a lâmina Carretas não tem mais cartões por grupo: mostra o quadro com os links oficiais (conferido no bloco D acima)
     at.session_state["ap_aba"] = apoio.LAMINAS[lam]
     for g in apoio.GRUPOS[lam]:
         at.session_state[f"ap_grupo_{lam}"] = g
