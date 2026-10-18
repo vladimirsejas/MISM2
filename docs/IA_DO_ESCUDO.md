@@ -174,7 +174,10 @@ de ajuda genérico, sem 190/180: o padrão só reconhecia formas fixas ("ele me 
 No mesmo teste: 3 de 4 certas na primeira rodada de perguntas novas; a quarta (ranking por população) foi lida como se contasse o hospital, o que levou à
 reescrita do texto e à criação dos polos.
 
-**O que continua sem comprovação:** o ranking por 100 mil e os polos com o banco real (só conferido com dados sintéticos); o SP Por Todas como fonte
-do itinerário das carretas (só o Poupatempo foi confirmado); o botão "🏠 Início" do Apoio depois que o Codex trocou o caminho da navegação; um conjunto de
-perguntas novo, escrito às cegas por outras pessoas, para medir de novo.
+**Conferido pelo autor no notebook em 18/10/2026:** os polos de tratamento com o banco real; os links das carretas no Apoio; o botão "🏠 Início" do Apoio
+depois que o Codex trocou o caminho da navegação. O ranking por 100 mil mulheres já tinha respondido com o banco real em 17/10/2026.
+
+**O que continua sem comprovação:** um conjunto de perguntas novo, escrito às cegas por outras pessoas, para medir de novo o entendimento; as perguntas de
+quimio e mortalidade real com várias pessoas (o autor testou 4 perguntas, 3 certas e 1 em parte, que levou aos polos); o CNES na Lia (falta o dicionário de
+códigos, por exemplo mamógrafo).
 

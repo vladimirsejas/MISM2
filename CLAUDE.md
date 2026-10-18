@@ -224,9 +224,9 @@ Estado atual:
   carreta está agora" não existem mais): ele muda a cada ~15 dias e ficava desatualizado. No lugar,
   a lâmina Carretas, a porta Câncer de mama, a lâmina Rio Claro e a fala da Lia (`frase_carretas()`)
   mandam para o canal oficial (`URL_CARRETAS_POUPATEMPO` e `URL_CARRETAS_SP_POR_TODAS`), sem cidade
-  nem data. **A confirmar pelo autor:** a busca na web só confirmou o itinerário no Poupatempo; que o
-  SP Por Todas o publique não foi confirmado (a nuvem não abre sites do governo). Se esse link não
-  mostrar as cidades, tirar o botão dele. A carreta do Hospital de Amor em Rio Claro (fev/2025, evento
+  nem data. **Conferido pelo autor no notebook (18/10/2026):** o botão "🏠 Início" do Apoio volta ao
+  Panorama e os links das carretas funcionam (a nuvem não abre sites do governo, então isso só
+  o autor podia confirmar; a busca na web só tinha confirmado o Poupatempo). A carreta do Hospital de Amor em Rio Claro (fev/2025, evento
   único) também saiu. **Boas-vindas do Apoio (Codex):** 4 entradas (Prevenção e exames, Meu exame
   deu alterado, Recebi diagnóstico de câncer, Não sei por onde começar); "Preciso de ajuda" não presume
   mais a etapa (`ap_etapa` começa vazio); os contadores do catálogo foram para "Sobre estas informações".
@@ -406,7 +406,8 @@ Estado atual:
   população agora diz "conta onde a mulher mora; quem vem de fora se tratar não aumenta a cidade do hospital" e oferece o botão "Cidades
   que mais tratam"; o inverso também. Entra por gatilho (`GATILHO_POLOS`, só frases inequívocas de ranking de cidades: "vem de fora
   tratar" é o assunto `fluxo` que já existia e "centro de referência" aparece em consultas do Apoio). Caminho `lia.polos`, `Contexto.atendimento`.
-  Testes: O em `teste_inteligencia.py` e 7i em `teste_assistente.py`. Falta conferir com o banco real do notebook.
+  Testes: O em `teste_inteligencia.py` e 7i em `teste_assistente.py`. **Conferido pelo autor com o banco real (18/10/2026):** os polos
+  de tratamento responderam como esperado; o ranking por 100 mil mulheres também já tinha respondido com o banco real (17/10/2026).
   **Carga das bases novas no notebook (17/10/2026):** SIA (29 min) e SIM (3 min) entraram; o CNES falhou com "database is locked" (outro
   programa, provavelmente o painel, estava com o banco aberto): as gravações dos ETLs agora esperam até 2 min (`timeout=120`). Fechar o
   painel durante a carga continua sendo o mais seguro. `py etl\validar_bases_novas.py` só LÊ o banco (modo somente leitura) e mostra o
