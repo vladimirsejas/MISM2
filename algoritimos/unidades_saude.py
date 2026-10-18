@@ -362,8 +362,19 @@ def _servicos_cnes(caminho_estabelecimento, unidades, tamanho_pedaco=TAMANHO_PED
         return {}, f"Não foi possível ler as relações de serviços do CNES: {erro}"
 
 
+# Ocupações (CBO) de quem atende a pessoa e que a busca "Onde ser atendida" reconhece. Técnicos e agentes ficam de fora;
+# "médico veterinário" também (aparece no cadastro e não é saúde humana).
+PROFISSOES_BUSCAVEIS = ("MEDICO", "PSICOLOGO", "NUTRICIONISTA", "FISIOTERAPEUTA", "CIRURGIAO DENTISTA", "ASSISTENTE SOCIAL",
+                        "ENFERMEIRO", "FONOAUDIOLOGO", "TERAPEUTA OCUPACIONAL", "FARMACEUTICO")
+
+
+def _profissao_buscavel(nome):
+    n = _sem_acento(str(nome)).upper().strip()
+    return n.startswith(PROFISSOES_BUSCAVEIS) and not n.startswith("MEDICO VETERINARIO")
+
+
 def _medicos_cnes(caminho_estabelecimento, unidades, tamanho_pedaco=TAMANHO_PEDACO):
-    """Especialidades médicas cadastradas por unidade ("MEDICO DERMATOLOGISTA (2 cadastrados)").
+    """Médicos e outros profissionais de saúde cadastrados por unidade ("MEDICO DERMATOLOGISTA (2 no ambulatório, 3 cadastrados)").
 
     Só CONTA: o código do profissional é usado na memória para não contar a mesma pessoa duas vezes e
     não é guardado; nenhum nome, registro de conselho ou carga horária sai desta função. Conta quem tem
@@ -386,7 +397,7 @@ def _medicos_cnes(caminho_estabelecimento, unidades, tamanho_pedaco=TAMANHO_PEDA
         tabela = pd.read_csv(ocupacoes, sep=sep_o, encoding=cod_o, dtype=str, usecols=[col_cbo, col_nome],
                              keep_default_na=False)
         medicas = {str(r[col_cbo]).strip(): str(r[col_nome]).strip() for _, r in tabela.iterrows()
-                   if _sem_acento(str(r[col_nome])).upper().startswith("MEDICO")}
+                   if _profissao_buscavel(r[col_nome])}
         # tbCargaHorariaSus tem ~1 GB e traz bytes fora de UTF-8 (nomes de usuário do cadastro) bem depois do começo:
         # a amostra de _codificacao (200 KB) não os vê. Só lemos códigos, então latin-1 (nunca falha) é seguro.
         cod_c = "latin-1"

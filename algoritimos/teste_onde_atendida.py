@@ -108,13 +108,13 @@ def main():
     assert oa.filtrar(df, "especialidade", busca="neurologia").empty
     # lista para escolher: só o que existe, com quantas unidades, da mais comum à menos
     esp, svc = oa.opcoes_de_busca(df)
-    assert ("Dermatologista", "DERMATOLOGISTA", 1) in esp and ("Cardiologista", "CARDIOLOGISTA", 1) in esp, esp
+    assert ("Médico: Dermatologista", "DERMATOLOGISTA", 1) in esp and ("Médico: Cardiologista", "CARDIOLOGISTA", 1) in esp, esp
     assert any(n == "MAMOGRAFIA" and q == 1 for _, n, q in svc), svc  # só o AME
     for _, termo, _ in esp + svc:  # todo item da lista, usado como busca, tem de achar pelo menos a unidade de onde veio
         assert not oa.filtrar(df, None, busca=termo).empty, termo
     assert oa.rotulo_legivel("MEDICO DERMATOLOGISTA (2 no ambulatório, 8 cadastrados)") == "Médico dermatologista: 2 no ambulatório, 8 cadastrados"
     assert oa.rotulo_legivel("MEDICO CARDIOLOGISTA (1 no ambulatório, 1 cadastrado)") == "Médico cardiologista: 1 no ambulatório, 1 cadastrado"
-    assert oa.rotulo_legivel("SERVICO DE DIAGNOSTICO POR IMAGEM") == "Servico de diagnostico por imagem"
+    assert oa.rotulo_legivel("SERVICO DE DIAGNOSTICO POR IMAGEM") == "Serviço de diagnóstico por imagem"
     assert oa.separar_registros("MEDICO X (1 no ambulatório, 1 cadastrado) | MAMOGRAFIA") == (["MEDICO X (1 no ambulatório, 1 cadastrado)"], ["MAMOGRAFIA"])
     mistura = pd.DataFrame({"nome": ["A", "B", "C", "D"], "natureza": ["publica", "privada", "sem_fins", "desconhecida"]})
     publicas, particulares = oa.separar_por_natureza(mistura)

@@ -132,7 +132,7 @@ def main():
         t = texto(at)
         checar("C. busca de especialista mostra tudo da unidade: médicos e serviços, sem corte",
                "AME Rio Claro" in t and "Médico dermatologista: 2 no ambulatório, 2 cadastrados" in t and "Médico cardiologista: 1 no ambulatório, 1 cadastrado" in t
-               and "Servico de diagnostico por imagem" in t and "e mais" not in t and not at.exception)
+               and "Serviço de diagnóstico por imagem" in t and "e mais" not in t and not at.exception)
         checar("C. unidade com muitos itens: o excedente fica em 'Ver os outros', não é cortado",
                "Ver os outros" in t and "Médico especialista numero 8" in t)
         next(i for i in at.text_input if i.key == "un_busca").set_value("estrela").run()
@@ -155,6 +155,20 @@ def main():
         next(x for x in at.selectbox if x.key == "un_escolha").set_value("DERMATOLOGISTA").run()
         checar("C. escolher o MESMO item de novo, depois de digitar outra coisa, volta a preencher a caixa",
                next(i for i in at.text_input if i.key == "un_busca").value == "DERMATOLOGISTA" and not at.exception)
+        # caixa de busca (autor, 18/10/2026: "a caixa de pesquisa não está boa"): erro de digitação, aviso e sugestões
+        next(i for i in at.text_input if i.key == "un_busca").set_value("dermatolgista").run()
+        t = texto(at)
+        legendas = " ".join(str(c.value) for c in at.caption)
+        checar("C. erro de digitação: acha mesmo assim e avisa o que foi corrigido",
+               "AME Rio Claro" in t and "Mostrando resultados para “dermatologista”" in legendas and not at.exception)
+        next(i for i in at.text_input if i.key == "un_busca").set_value("dermatologa").run()
+        legendas = " ".join(str(c.value) for c in at.caption)
+        checar("C. 'dermatologa' (palavra incompleta): a busca corrige para o que existe e acha a unidade, sem exceção",
+               not at.exception and "AME Rio Claro" in texto(at))
+        next(i for i in at.text_input if i.key == "un_busca").set_value("zzzzzz").run()
+        checar("C. busca sem nenhuma semelhança: mensagem, sem botões inventados",
+               any("Não encontrei" in str(i.value) for i in at.info) and not at.exception
+               and not [b for b in at.button if str(b.key).startswith("un_sug_")])
         next(i for i in at.text_input if i.key == "un_busca").set_value("farmacia").run()
         checar("C. a busca acha a farmácia (grupo que não é botão)", "Farmacia Popular" in texto(at))
         next(i for i in at.text_input if i.key == "un_busca").set_value("zzzz").run()

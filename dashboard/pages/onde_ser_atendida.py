@@ -153,17 +153,14 @@ def cartao(u, n_internacoes, busca=""):
     corpo = "".join(f'<div class="un-linha">{l}</div>' for l in linhas)
     especialistas, servicos_exames = oa.separar_registros(getattr(u, "servicos", ""))
     if especialistas or servicos_exames:
-        traduzidos, digitados = oa._interpretar_busca(busca)
-        alvos = [us._chave(t).replace("_", " ") for t in list(traduzidos) + list(digitados)]
-        correspondentes = {t for t in especialistas + servicos_exames
-                           if any(alvo in us._chave(t).replace("_", " ") for alvo in alvos)}
+        correspondentes = {t for t in especialistas + servicos_exames if busca.strip() and oa.casa_item(t, busca)}
 
         def _item(t):
             texto = html.escape(oa.rotulo_legivel(t))
             return f"<b>{texto}</b>" if t in correspondentes else texto
         # o CNES pode registrar dezenas de itens por unidade: o que casou com a busca vem primeiro e à vista,
         # o resto está inteiro logo abaixo, recolhido ("Ver os outros N"); nada é cortado.
-        for titulo, lista_t in (("Especialistas cadastrados no CNES", especialistas), ("Serviços e exames registrados no CNES", servicos_exames)):
+        for titulo, lista_t in (("Profissionais cadastrados no CNES", especialistas), ("Serviços e exames registrados no CNES", servicos_exames)):
             if not lista_t:
                 continue
             ordenada = [t for t in lista_t if t in correspondentes] + [t for t in lista_t if t not in correspondentes]
@@ -230,7 +227,7 @@ st.caption(oa.ESCOLHAS[escolha][1])
 especialidades_op, servicos_op = oa.opcoes_de_busca(df)
 _rotulos = {"": "— escolher o que existe na cidade —"}
 for _nome, _termo, _q in especialidades_op:
-    _rotulos[_termo] = f"Médico: {_nome} ({_q} unidade{'s' if _q != 1 else ''})"
+    _rotulos[_termo] = f"{_nome} ({_q} unidade{'s' if _q != 1 else ''})"
 for _nome, _termo, _q in servicos_op[:150]:
     _rotulos[_termo] = f"Exame/serviço: {_nome} ({_q} unidade{'s' if _q != 1 else ''})"
 
@@ -250,8 +247,11 @@ if len(_rotulos) > 1:
 c1, c2 = st.columns([2.2, 1.6])
 busca = c1.text_input("Busque um exame, especialista, serviço ou unidade (em todas as opções)", key="un_busca",
                       placeholder="ex.: mamografia, preventivo, ultrassom, dermatologista, AME")
-c1.caption("A busca usa os serviços e as especialidades médicas registrados no CNES. Ela localiza unidades; não informa nomes de profissionais nem agenda de consultas.")
+c1.caption("A busca entende erros de digitação e palavras do dia a dia (raio x, ultrassom, coração, grávida). Ela usa os serviços e os profissionais registrados no CNES e localiza unidades; não informa nomes de pessoas nem agenda de consultas.")
 procurando = bool(busca.strip())
+busca_efetiva = oa.corrigir_busca(df, busca) if procurando else busca
+if procurando and busca_efetiva.strip().lower() != busca.strip().lower():
+    c1.caption(f"Mostrando resultados para “{busca_efetiva}” (corrigi a digitação com o que existe no cadastro).")
 so_publicos = False
 if tem_cnes and df.attrs.get("tem_natureza", False):
     so_publicos = c2.checkbox("Só públicas e sem fins lucrativos", value=True, key="un_publicos",
@@ -259,7 +259,7 @@ if tem_cnes and df.attrs.get("tem_natureza", False):
     if procurando and so_publicos:
         c2.caption("Na busca, as unidades particulares aparecem em separado, depois das públicas.")
 
-mostrar = oa.filtrar(df, escolha, busca, so_publicos and not procurando)
+mostrar = oa.filtrar(df, escolha, busca_efetiva, so_publicos and not procurando)
 
 assinatura = (escolha, busca.strip().lower(), so_publicos)
 if st.session_state.get("un_assinatura") != assinatura:
@@ -268,8 +268,13 @@ if st.session_state.get("un_assinatura") != assinatura:
 limite = st.session_state.setdefault("un_limite", PAGINA)
 
 if mostrar.empty:
-    st.info("Não encontrei uma unidade com esse cadastro. Use a lista “Não sabe o nome?” logo acima: ela traz o que de fato existe nos cadastros da cidade. "
-            "Confirme a disponibilidade antes de ir.")
+    st.info("Não encontrei uma unidade com esse cadastro. Veja as sugestões abaixo ou use a lista “Não sabe o nome?”, que traz o que de fato "
+            "existe nos cadastros da cidade. Confirme a disponibilidade antes de ir.")
+    if procurando:
+        def _aplicar(termo):
+            st.session_state["un_busca"] = termo
+        for i, (rotulo, termo) in enumerate(oa.sugestoes(df, busca_efetiva)):
+            st.button(f"Procurar: {rotulo}", key=f"un_sug_{i}", on_click=_aplicar, args=(termo,))
 else:
     titulo = f"{len(mostrar)} lugar(es)" + (" encontrados na busca" if busca.strip() else f": {oa.ESCOLHAS[escolha][0].lower()}")
     pergunta(titulo, "sem ranking de qualidade")
@@ -285,7 +290,7 @@ else:
         for u in sub.itertuples():
             if usados >= limite:
                 break
-            cartoes_grupo.append(cartao(u, internacoes.get(u.cnes), busca))
+            cartoes_grupo.append(cartao(u, internacoes.get(u.cnes), busca_efetiva))
             usados += 1
         if cartoes_grupo:
             cab = (f'<div style="grid-column:1/-1;font-weight:700;margin:10px 0 2px">{html.escape(rotulo)} ({len(sub)})</div>'

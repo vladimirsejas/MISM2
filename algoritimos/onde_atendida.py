@@ -11,6 +11,7 @@ Sem o arquivo do CNES a lista continua existindo (só com o catálogo): a págin
 Só descreve; cadastro não é vaga nem serviço aberto, e a página diz isso. Não depende do Streamlit;
 a página é dashboard/pages/onde_ser_atendida.py. Teste: algoritimos/teste_onde_atendida.py
 """
+import difflib
 import json
 import os
 import re
@@ -66,7 +67,9 @@ COLUNAS = ["cnes", "nome", "tipo", "grupo", "natureza", "endereco", "bairro", "c
 # Os rótulos-alvo foram conferidos nas classificações existentes na base do projeto.
 SINONIMOS_SERVICOS = {
     "mamo": ("MAMOGRAFIA",), "mamografia": ("MAMOGRAFIA",), "mamografias": ("MAMOGRAFIA",),
-    "ultrassom": ("ULTRASONOGRAFIA",), "ultra som": ("ULTRASONOGRAFIA",), "usg": ("ULTRASONOGRAFIA",),
+    "ultrassom": ("ULTRASONOGRAFIA", "ULTRASSONOGRAFIA"), "ultra som": ("ULTRASONOGRAFIA", "ULTRASSONOGRAFIA"),
+    "usg": ("ULTRASONOGRAFIA", "ULTRASSONOGRAFIA"), "ultrassonografia": ("ULTRASONOGRAFIA", "ULTRASSONOGRAFIA"),
+    "ultrasonografia": ("ULTRASONOGRAFIA", "ULTRASSONOGRAFIA"),
     "preventivo": ("EXAMES CITOPATOLOGICOS",), "papanicolau": ("EXAMES CITOPATOLOGICOS",),
     "papanicolaou": ("EXAMES CITOPATOLOGICOS",),
     "ginecologista": ("DO APARELHO GINECOLOGICO", "GINECOLOGISTA"), "ginecologia": ("DO APARELHO GINECOLOGICO", "GINECOLOGISTA"),
@@ -75,17 +78,31 @@ SINONIMOS_SERVICOS = {
     "cardiologia": ("CARDIOLOG",), "ortopedia": ("ORTOPED",), "ortopedista": ("ORTOPED",),
     "oftalmologia": ("OFTALMOLOG",), "oculista": ("OFTALMOLOG",), "mastologia": ("MASTOLOG",),
     "endocrinologia": ("ENDOCRINOLOG",), "psiquiatria": ("PSIQUIATR",), "neurologia": ("NEUROLOG",),
-    "raio x": ("RADIOLOGIA",), "raiox": ("RADIOLOGIA",), "radiografia": ("RADIOLOGIA",),
+    "raio x": ("RADIOLOGIA",), "raiox": ("RADIOLOGIA",), "radiografia": ("RADIOLOGIA",), "rx": ("RADIOLOGIA",),
     "laboratorio": ("SERVICO DE DIAGNOSTICO DE LABORATORIO CLINICO",),
     "exame de sangue": ("SERVICO DE DIAGNOSTICO DE LABORATORIO CLINICO",),
     "exames de sangue": ("SERVICO DE DIAGNOSTICO DE LABORATORIO CLINICO",),
     "oncologista": ("ONCOLOGIA CLINICA", "ONCOLOGISTA"),
+    "coracao": ("CARDIOLOG",), "olho": ("OFTALMOLOG",), "olhos": ("OFTALMOLOG",), "vista": ("OFTALMOLOG",),
+    "osso": ("ORTOPED",), "ossos": ("ORTOPED",), "ouvido": ("OTORRINO",), "garganta": ("OTORRINO",), "nariz": ("OTORRINO",),
+    "diabetes": ("ENDOCRINOLOG",), "tireoide": ("ENDOCRINOLOG",), "mama": ("MASTOLOG", "MAMOGRAFIA"), "seio": ("MASTOLOG", "MAMOGRAFIA"),
+    "gestante": ("PRE NATAL", "GINECOLOGISTA"), "gravida": ("PRE NATAL", "GINECOLOGISTA"), "gravidez": ("PRE NATAL", "GINECOLOGISTA"),
+    "crianca": ("PEDIATRA",), "bebe": ("PEDIATRA",), "idoso": ("GERIATRA",), "dentista": ("DENTISTA",), "dente": ("DENTISTA",),
+    "psiquiatria": ("PSIQUIATR",), "estomago": ("GASTRO",), "intestino": ("GASTRO", "COLOPROCT"), "rim": ("NEFRO",),
+    "coluna": ("ORTOPED", "NEUROLOG"), "alergia": ("ALERGIST", "IMUNOLOG"), "sangue": ("HEMATOLOG", "LABORATORIO CLINICO"),
 }
+# Rótulos que dizem que a UNIDADE FAZ o exame. Só valem no texto de serviços: um médico "em radiologia" cadastrado
+# numa unidade não significa que ela tenha o aparelho de raio X (visto no CNES real, 18/10/2026).
+SO_NOS_SERVICOS = {"MAMOGRAFIA", "ULTRASONOGRAFIA", "ULTRASSONOGRAFIA", "EXAMES CITOPATOLOGICOS", "RADIOLOGIA",
+                   "SERVICO DE DIAGNOSTICO DE LABORATORIO CLINICO"}
 PARADA_BUSCA = {"A", "AO", "AOS", "AS", "COM", "DA", "DAS", "DE", "DO", "DOS", "E", "EM", "NA", "NAS", "NO", "NOS",
                 "O", "OS", "PARA", "PELO", "PELA", "POR", "QUERO", "PRECISO", "PROCURO", "PROCURE", "BUSCAR", "CONSIGO",
                 "ONDE", "FAZER", "FAZ", "TEM", "UM", "UMA", "SUS", "CONSULTA", "CONSULTAR", "AGENDAR", "AGENDAMENTO",
                 "MARCAR", "MARCACAO", "ATENDIMENTO", "ATENDER", "EXAME", "EXAMES", "PROBLEMA", "PROBLEMAS",
-                "MEDICO", "MEDICA", "DOUTOR", "DOUTORA", "ESPECIALISTA", "TRATAMENTO"}
+                "MEDICO", "MEDICA", "DOUTOR", "DOUTORA", "ESPECIALISTA", "TRATAMENTO", "PROFISSIONAL", "UNIDADE", "LUGAR", "CLINICA",
+                "FACO", "FACA", "FAZEMOS", "POSSO", "PODE", "PODEM", "QUERIA", "GOSTARIA", "NECESSITO", "TENHO", "ESTOU",
+                "PROCURANDO", "ACHAR", "ENCONTRAR", "ALGUM", "ALGUMA", "QUAL", "QUAIS", "COMO", "AQUI", "PERTO", "MINHA", "MEU",
+                "PRA", "PARA", "SE", "QUE", "SEM", "GRATIS", "GRATUITO", "GRATUITA", "DE", "DO", "DA"}
 
 
 def link_como_chegar(nome, endereco, cidade="Rio Claro"):
@@ -216,17 +233,29 @@ def contar(df):
     return {g: int((df["grupo"].astype(str) == g).sum()) for g in ESCOLHAS}
 
 
-_ESPECIALISTA = re.compile(r"^(MEDICO\b.*?)\s*\((\d+) no ambulatório, (\d+) cadastrad")
+_ESPECIALISTA = re.compile(r"^(.*?)\s*\((\d+) no ambulatório, (\d+) cadastrad")
+
+
+_ACENTOS = {"clinico": "clínico", "clinica": "clínica", "ginecologico": "ginecológico", "laboratorio": "laboratório",
+            "ambulatorio": "ambulatório", "urgencia": "urgência", "emergencia": "emergência", "citopatologicos": "citopatológicos",
+            "assistencia": "assistência", "acoes": "ações", "orgaos": "órgãos", "doenca": "doença", "pre-natal": "pré-natal",
+            "medico": "médico", "psicologo": "psicólogo", "cirurgiao": "cirurgião", "farmaceutico": "farmacêutico",
+            "fonoaudiologo": "fonoaudiólogo", "estrategia": "estratégia", "saude": "saúde", "familia": "família",
+            "ocupacional": "ocupacional", "diagnostico": "diagnóstico", "servico": "serviço", "atencao": "atenção"}
+
+
+def _legivel(texto):
+    palavras = texto.strip().lower().split()
+    return " ".join(_ACENTOS.get(p, p) for p in palavras)
 
 
 def rotulo_legivel(t):
-    """O CNES escreve em MAIÚSCULAS e sem acento; na tela vai em letra normal, e o médico em 'N no ambulatório, M cadastrados'."""
+    """O CNES escreve em MAIÚSCULAS e sem acento; na tela vai em letra normal, e o profissional em 'N no ambulatório, M cadastrados'."""
     m = _ESPECIALISTA.match(t)
     if m:
-        nome = m.group(1).replace("MEDICO ", "", 1).lower()
         n = int(m.group(3))
-        return f"Médico {nome}: {m.group(2)} no ambulatório, {n} cadastrado{'s' if n != 1 else ''}"
-    return t.strip().capitalize()
+        return f"{_legivel(m.group(1)).capitalize()}: {m.group(2)} no ambulatório, {n} cadastrado{'s' if n != 1 else ''}"
+    return _legivel(t).capitalize()
 
 
 def separar_registros(texto):
@@ -237,27 +266,51 @@ def separar_registros(texto):
 
 def opcoes_de_busca(df):
     """O que existe de verdade nas unidades da cidade, para a pessoa ESCOLHER em vez de adivinhar a palavra.
-    Devolve (especialidades, servicos): listas de (rótulo, termo_de_busca, quantas_unidades), da mais comum à menos."""
+    Devolve (profissionais, servicos): listas de (rótulo, termo_de_busca, quantas_unidades), da mais comum à menos."""
     if df is None or "servicos" not in df:
         return [], []
-    espec, serv = {}, {}
+    prof, serv = {}, {}
     for texto in df["servicos"].fillna("").astype(str):
         esp, svc = separar_registros(texto)
         for t in set(esp):
             m = _ESPECIALISTA.match(t)
             nome = (m.group(1) if m else t).strip()
-            espec[nome] = espec.get(nome, 0) + 1
+            prof[nome] = prof.get(nome, 0) + 1
         for t in set(svc):
             serv[t] = serv.get(t, 0) + 1
 
-    def bonito(nome):
-        return nome.title().replace(" Em ", " em ").replace(" Da ", " da ").replace(" De ", " de ").replace(" E ", " e ").replace(" Do ", " do ")
-
-    especialidades = [(bonito(n.replace("MEDICO ", "", 1)), n.replace("MEDICO ", "", 1), q)
-                      for n, q in espec.items()]
-    servicos = [(bonito(n), n, q) for n, q in serv.items()]
+    profissionais = []
+    for n, q in prof.items():
+        if n.startswith("MEDICO "):
+            resto = n.replace("MEDICO ", "", 1)
+            profissionais.append((f"Médico: {_legivel(resto).capitalize()}", resto, q))
+        else:
+            profissionais.append((f"Profissional: {_legivel(n).capitalize()}", n, q))
+    servicos = [(_legivel(n).capitalize(), n, q) for n, q in serv.items()]
     ordem = lambda x: (-x[2], x[0])  # noqa: E731
-    return sorted(especialidades, key=ordem), sorted(servicos, key=ordem)
+    return sorted(profissionais, key=ordem), sorted(servicos, key=ordem)
+
+
+def sugestoes(df, busca, n=5):
+    """Quando nada casa: o que existe no cadastro e se parece com o que foi digitado (rótulo, termo de busca)."""
+    tokens = [t for t in _tokens(busca) if t not in PARADA_BUSCA and len(t) > 1]
+    if not tokens:
+        return []
+    profissionais, servicos = opcoes_de_busca(df)
+    pontuadas = []
+    for rotulo, termo, q in profissionais + servicos:
+        palavras = us._chave(termo).split("_")
+        melhor = 0.0
+        for t in tokens:
+            for p in palavras:
+                r = difflib.SequenceMatcher(None, t, p).ratio()
+                if len(t) >= 4 and len(p) >= 4 and (p.startswith(t[:5]) or t.startswith(p[:5])):
+                    r = max(r, 0.8)
+                melhor = max(melhor, r)
+        if melhor >= 0.75:
+            pontuadas.append((melhor, q, rotulo, termo))
+    pontuadas.sort(key=lambda x: (-x[0], -x[1]))
+    return [(rotulo, termo) for _, _, rotulo, termo in pontuadas[:n]]
 
 
 def separar_por_natureza(df):
@@ -268,21 +321,51 @@ def separar_por_natureza(df):
     return df[~particular].reset_index(drop=True), df[particular].reset_index(drop=True)
 
 
-def _interpretar_busca(busca):
-    normalizada = us._chave(busca).strip("_")
-    termos = normalizada.split("_") if normalizada else []
-    encontrados, consumidos = [], set()
+def _tokens(texto):
+    return [t for t in us._chave(texto).split("_") if t]
+
+
+def _variantes(t):
+    """Formas de uma palavra digitada que também valem: plural, feminino e radical (fisioterapia ~ fisioterapeuta)."""
+    v = [t]
+    if len(t) > 4 and t.endswith("S"):
+        v.append(t[:-1])
+    if len(t) > 5 and t.endswith("A"):
+        v.append(t[:-1] + "O")
+    if len(t) >= 9 and t.endswith(("IA", "ICA")):
+        v.append(t[:-2])
+    return list(dict.fromkeys(v))
+
+
+def _casa(palavras, compacto, t):
+    """A palavra digitada começa alguma palavra do texto (não vale trecho no meio: 'ame' não acha 'Gamela')."""
+    for v in _variantes(t):
+        if any(p.startswith(v) for p in palavras):
+            return True
+        if len(v) >= 7 and v in compacto:  # 'prenatal' x 'PRE-NATAL'
+            return True
+    return False
+
+
+def _interpretar_grupos(tokens):
+    """(grupos, residuais): cada grupo é um apelido reconhecido (rótulos alternativos do CNES); os demais viram residuais."""
+    grupos, consumidos = [], set()
     for apelido, rotulos in SINONIMOS_SERVICOS.items():
-        partes = us._chave(apelido).strip("_").split("_")
-        for inicio in range(len(termos) - len(partes) + 1):
-            fim = inicio + len(partes)
-            if termos[inicio:fim] == partes:
-                encontrados.extend(rotulos)
-                consumidos.update(range(inicio, fim))
-    residuais = [t for i, t in enumerate(termos) if i not in consumidos and t not in PARADA_BUSCA]
-    if not residuais and not encontrados:
-        residuais = termos
-    return tuple(dict.fromkeys(encontrados)), residuais
+        partes = us._chave(apelido).split("_")
+        for inicio in range(len(tokens) - len(partes) + 1):
+            if tokens[inicio:inicio + len(partes)] == partes:
+                grupos.append(tuple(rotulos))
+                consumidos.update(range(inicio, inicio + len(partes)))
+    residuais = [t for i, t in enumerate(tokens) if i not in consumidos and t not in PARADA_BUSCA and len(t) > 1]
+    if not residuais and not grupos:
+        residuais = [t for t in tokens if len(t) > 1]
+    return list(dict.fromkeys(grupos)), residuais
+
+
+def _interpretar_busca(busca):
+    """(rótulos do CNES que os apelidos pedem, palavras que sobraram): usado para destacar o que casou."""
+    grupos, residuais = _interpretar_grupos(_tokens(busca))
+    return tuple(dict.fromkeys(r for g in grupos for r in g)), residuais
 
 
 def termos_servico_buscados(busca):
@@ -290,29 +373,96 @@ def termos_servico_buscados(busca):
     return _interpretar_busca(busca)[0]
 
 
+def _partes_da_unidade(linha):
+    """(palavras do nome/endereço, palavras dos serviços, palavras dos profissionais) de uma unidade."""
+    esp, svc = separar_registros(linha.get("servicos", ""))
+    nome = " ".join(str(linha.get(c, "") or "") for c in ("nome", "tipo", "endereco", "bairro"))
+    return [us._chave(x).replace("_", " ").split() for x in (nome, " ".join(svc), " ".join(esp))]
+
+
+def _vocabulario(df):
+    vocab = set()
+    for _, linha in df.iterrows():
+        for palavras in _partes_da_unidade(linha):
+            vocab.update(p for p in palavras if len(p) >= 4)
+    for apelido in SINONIMOS_SERVICOS:
+        vocab.update(p for p in us._chave(apelido).split("_") if len(p) >= 4)
+    return vocab
+
+
+def corrigir_busca(df, busca):
+    """Conserta erro de digitação com as palavras que EXISTEM no cadastro ('ultrasom' -> 'ultrassom').
+    Só mexe em palavra que não casa com nada; palavra certa nunca é trocada."""
+    tokens = _tokens(busca)
+    if not tokens or df is None or df.empty:
+        return busca
+    conhecidas = {p for a in SINONIMOS_SERVICOS for p in us._chave(a).split("_")} | PARADA_BUSCA
+    vocab = None
+    saida = []
+    for t in tokens:
+        if t in conhecidas or len(t) < 4:
+            saida.append(t); continue
+        if vocab is None:
+            vocab = _vocabulario(df)
+        if any(any(w.startswith(v) for w in vocab) for v in _variantes(t)):
+            saida.append(t); continue
+        perto = difflib.get_close_matches(t, sorted(vocab), n=1, cutoff=0.8)
+        saida.append(perto[0] if perto else t)
+    return " ".join(saida).lower() if saida != tokens else busca
+
+
+def _rotulo_casa(rotulo, serv, prof, compacto_serv, compacto_prof):
+    alvo = us._chave(rotulo).split("_")
+    ok = _frase_em(alvo, serv)
+    if rotulo not in SO_NOS_SERVICOS:
+        ok = ok or _frase_em(alvo, prof)
+    return ok
+
+
+def _frase_em(alvo, palavras):
+    n = len(alvo)
+    return any(palavras[i:i + n] == alvo or all(p.startswith(a) for p, a in zip(palavras[i:i + n], alvo))
+               for i in range(len(palavras) - n + 1))
+
+
+def casa_item(item, busca):
+    """Este item de serviço/profissional casa com o que foi digitado? (usado para destacar em negrito no cartão)"""
+    grupos, residuais = _interpretar_grupos(_tokens(busca))
+    palavras = us._chave(item).replace("_", " ").split()
+    compacto = "".join(palavras)
+    eh_profissional = "cadastrad" in item
+    for g in grupos:
+        for r in g:
+            if r in SO_NOS_SERVICOS and eh_profissional:
+                continue
+            if _frase_em(us._chave(r).split("_"), palavras):
+                return True
+    return any(_casa(palavras, compacto, t) for t in residuais)
+
+
 def filtrar(df, escolha=None, busca="", so_publicos=False):
-    """Busca por unidade/local ou serviço CNES, incluindo palavras comuns para exames e especialidades."""
+    """Busca por unidade/local, serviço ou profissional do CNES, com as palavras que as pessoas usam.
+
+    Regras: a palavra digitada tem de começar uma palavra do cadastro; plural, feminino e erro de digitação
+    são aceitos; TODAS as partes da frase precisam casar; exame só conta em serviço (nunca em médico);
+    lugares cujo NOME bate com a busca vêm primeiro."""
     saida = df
-    normalizada = us._chave(busca).strip("_")
-    if normalizada:
-        encontrados, residuais = _interpretar_busca(busca)
-
-        def normalizar_texto(valor):
-            return us._chave(valor).strip("_")
-
-        nomes = (df["nome"].fillna("") + " " + df["tipo"].fillna("") + " " + df["endereco"].fillna("") + " " + df["bairro"].fillna("")).map(normalizar_texto)
-        servicos = df["servicos"].fillna("").map(normalizar_texto) if "servicos" in df else pd.Series("", index=df.index)
-        mask = pd.Series(True, index=df.index)
-        for termo in residuais:
-            mask &= (nomes + " " + servicos).str.contains(termo, regex=False)
-        if encontrados:
-            servicos_norm = servicos.map(lambda t: t.replace("_", " "))
-            encontrou_servico = pd.Series(False, index=df.index)
-            for rotulo in set(encontrados):
-                canonico = normalizar_texto(rotulo).replace("_", " ")
-                encontrou_servico |= servicos_norm.str.contains(canonico, regex=False)
-            mask &= encontrou_servico
-        saida = df[mask]
+    if us._chave(busca):
+        busca = corrigir_busca(df, busca)
+        grupos, residuais = _interpretar_grupos(_tokens(busca))
+        marcas, pontos = [], []
+        for _, linha in df.iterrows():
+            nome, serv, prof = _partes_da_unidade(linha)
+            todas = nome + serv + prof
+            compacto = "".join(todas)
+            ok = all(any(_rotulo_casa(r, serv, prof, "".join(serv), "".join(prof)) for r in g) for g in grupos)
+            ok = ok and all(_casa(todas, compacto, t) for t in residuais)
+            marcas.append(ok)
+            pontos.append(sum(1 for t in residuais if _casa(nome, "".join(nome), t)) if ok else 0)
+        saida = df[pd.Series(marcas, index=df.index)]
+        if residuais:
+            saida = saida.assign(_pontos=pd.Series(pontos, index=df.index)[saida.index])
+            saida = saida.sort_values("_pontos", ascending=False, kind="mergesort").drop(columns="_pontos")
     elif escolha:
         saida = df[df["grupo"].astype(str) == escolha]
     if so_publicos and "natureza" in saida:

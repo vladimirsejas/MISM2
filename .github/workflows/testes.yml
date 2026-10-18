@@ -91,3 +91,6 @@ jobs:
       - name: Onde ser atendida (lógica: CNES + catálogo conferido)
         working-directory: algoritimos
         run: python teste_onde_atendida.py
+      - name: Caixa de busca de Onde ser atendida (frases reais, erro de digitação, exame x médico)
+        working-directory: algoritimos
+        run: python teste_busca_caixa.py

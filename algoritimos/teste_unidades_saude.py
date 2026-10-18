@@ -180,18 +180,21 @@ def main():
                   "9001;2090001;3550308;CLINICA EM SAO PAULO;04;"])
         escrever(pasta, "tbAtividadeProfissional202608.csv",
                  "CO_CBO;DS_ATIVIDADE_PROFISSIONAL;TP_CLASSIFICACAO_PROFISSIONAL",
-                 ["225135;MEDICO DERMATOLOGISTA;", "225120;MEDICO CARDIOLOGISTA;", "322205;TECNICO DE ENFERMAGEM;"])
+                 ["225135;MEDICO DERMATOLOGISTA;", "225120;MEDICO CARDIOLOGISTA;", "322205;TECNICO DE ENFERMAGEM;",
+                  "251510;PSICOLOGO CLINICO;", "223505;ENFERMEIRO;", "223710;NUTRICIONISTA;", "223105;MEDICO VETERINARIO;"])
         escrever(pasta, "tbCargaHorariaSus202608.csv",
                  "CO_UNIDADE;CO_PROFISSIONAL_SUS;CO_CBO;TP_SUS_NAO_SUS;QT_CARGA_HORARIA_AMBULATORIAL",
                  ["1001;P1;225135;S;20", "1001;P1;225135;S;10",   # a mesma pessoa em dois vínculos conta uma vez
                   "1001;P2;225135;S;20", "1001;P3;225135;S;0",    # sem carga ambulatorial: cadastrado, mas fora do ambulatório
-                  "1001;P4;225120;S;8", "1001;P5;322205;S;40",    # só ocupações médicas
+                  "1001;P4;225120;S;8", "1001;P5;322205;S;40",    # técnico de enfermagem: não entra
+                  "1001;P8;251510;S;20", "1001;P9;223105;S;20",   # psicólogo entra; veterinário não
                   "9001;P6;225135;S;20"])                         # unidade de outra cidade: ignorada
         df = us.carregar_unidades(pasta, tamanho_pedaco=2)
         ame = df[df["nome"].str.contains("Ame", case=False)].iloc[0]["servicos"]
         assert "MEDICO DERMATOLOGISTA (2 no ambulatório, 3 cadastrados)" in ame, ame  # P3 sem horas: cadastrado, mas não no ambulatório
         assert "MEDICO CARDIOLOGISTA (1 no ambulatório, 1 cadastrado)" in ame, ame
-        assert "ENFERMAGEM" not in ame, ame
+        assert "ENFERMAGEM" not in ame and "VETERINARIO" not in ame, ame
+        assert "PSICOLOGO CLINICO (1 no ambulatório, 1 cadastrado)" in ame, ame
         assert df[df["nome"].str.contains("Sem Medico", case=False)].iloc[0]["servicos"] == ""
         assert "P1" not in " ".join(df["servicos"]), "nenhum código de profissional pode sair"
         assert not df.attrs["aviso_medicos"]
