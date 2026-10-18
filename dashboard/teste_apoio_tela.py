@@ -262,8 +262,10 @@ try:
     at.button(key="bv_ap_ajuda").click().run() if botao(at, "bv_ap_ajuda") is not None else None
     checar("F. a caixa 'Pergunte à Lia' está na lateral do Apoio, junto da Lia, e avisa que as perguntas não são guardadas",
            not erros(at) and at.text_input(key="caixa_ap_texto") is not None and "Pergunte à Lia" in lateral(at)
-           and "não são guardadas" in lateral(at))
-    checar("F. sem chave do Gemini a caixa diz que a IA está desligada e que o texto é do guia", "desligada" in lateral(at))
+           and "não guarda as perguntas" in lateral(at))
+    checar("F. sem Gemini configurado a busca usa apenas o catálogo", "indisponível nesta sessão" in lateral(at)
+           and "catálogo conferido" in lateral(at)
+           and not any(t.key == "caixa_ap_gemini_ativo" for t in at.toggle))
 
     perguntar_no_apoio(at, "como funciona a carreta da mamografia?")
     atual = at.session_state["ap_lia"]["atual"]
@@ -301,16 +303,25 @@ try:
     at.button(key="lia_discreto_voltar_ap").click().run()
     checar("F. '← Voltar' continua funcionando depois de perguntas", not erros(at))
 
-    # com o Gemini (simulado): só ajuda a entender; o texto continua sendo do guia
+    # O Gemini (simulado) só é chamado após consentimento explícito; o texto continua sendo do guia.
     recebidos = []
     original = apoio_busca.obter_classificador
     apoio_busca.obter_classificador = lambda: (lambda p, o, contexto=None, com_cancer=True: recebidos.append(p) or {"intencao": "mama"})
     try:
         at = abrir()
-        checar("F. com o Gemini ligado a caixa diz que a IA ajuda a entender", "ajuda a entender" in lateral(at))
+        checar("F. Gemini configurado aparece desligado por padrão com aviso de privacidade",
+               not at.session_state["caixa_ap_gemini_ativo"] and at.toggle(key="caixa_ap_gemini_ativo") is not None
+               and "somente para escolher o assunto" in lateral(at)
+               and "A IA não escreve a resposta" in lateral(at)
+               and "Não envie nomes, telefones" in lateral(at))
+        perguntar_no_apoio(at, "xyzzy plugh")
+        checar("F. pergunta usa só a busca local quando Gemini está desligado", recebidos == []
+               and at.session_state["ap_lia"]["atual"].origem != "gemini")
+        at.toggle(key="caixa_ap_gemini_ativo").set_value(True).run()
+        checar("F. ligar a opção mantém visível a informação do envio ao Google", "somente para escolher o assunto" in lateral(at))
         perguntar_no_apoio(at, "xyzzy plugh")
         atual = at.session_state["ap_lia"]["atual"]
-        checar("F. Gemini escolheu a porta: o texto é o do guia e o selo diz que não é da IA",
+        checar("F. com consentimento, Gemini escolhe a porta; o texto continua sendo o do guia",
                not erros(at) and atual.origem == "gemini" and recebidos == ["xyzzy plugh"] and apoio.responder(apoio.caminho("mama")).fala in atual.fala
                and "não da IA" in lateral(at))
         at.session_state["caixa_ap_ia"] = 40

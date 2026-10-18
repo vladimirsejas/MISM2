@@ -109,6 +109,7 @@ PADROES = {"ap_aba": ABAS[0], "ap_caminho": "mama", "ap_item": None, "ap_etapa":
            **{f"ap_grupo_{lam}": TODOS[lam] for lam in apoio.GRUPOS}}
 for chave, valor in PADROES.items():
     st.session_state.setdefault(chave, valor)
+st.session_state.setdefault("caixa_ap_gemini_ativo", False)
 st.session_state.setdefault("ap_lia", {"atual": apoio.responder(INICIO), "pilha": [], "falas": 0})
 lia_estado = st.session_state["ap_lia"]
 
@@ -208,6 +209,8 @@ def enviar_pergunta(texto=None):
 
 
 def classificador_da_sessao():
+    if not st.session_state.get("caixa_ap_gemini_ativo", False):
+        return None
     if st.session_state.get("caixa_ap_ia", 0) >= LIMITE_PERGUNTAS_COM_IA:
         return None
     return apoio_busca.obter_classificador()
@@ -713,14 +716,25 @@ with st.sidebar:
         st.text_input("Pergunte à Lia", key="caixa_ap_texto", max_chars=300, label_visibility="collapsed",
                       placeholder="Ex.: onde faço mamografia pelo SUS?")
         st.form_submit_button("Perguntar", key="caixa_ap_enviar", on_click=enviar_pergunta, width="stretch")
-    st.caption("🤖 A IA ajuda a entender a sua pergunta; o texto que aparece é do guia, conferido nas páginas oficiais."
-               if apoio_busca.obter_classificador() else
-               "Busca no guia (a IA de linguagem está desligada). O texto que aparece é do guia, conferido nas páginas oficiais.")
+    gemini_disponivel = apoio_busca.obter_classificador()
+    if gemini_disponivel:
+        st.toggle("Permitir que o Google Gemini ajude a identificar o assunto", key="caixa_ap_gemini_ativo",
+                  help="Opcional e desligado por padrão. A resposta continua sendo escrita pelo guia oficial.",
+                  width="stretch")
+        st.caption("Se ligado e a busca local precisar de ajuda, o texto da pergunta vai ao Google Gemini "
+                   "somente para escolher o assunto. A IA não escreve a resposta. Não envie nomes, telefones "
+                   "ou outros dados pessoais.")
+    else:
+        st.caption("Busca no guia; o Gemini está indisponível nesta sessão. A resposta vem do catálogo conferido.")
     with st.expander("Não sabe o que perguntar?"):
         for n, exemplo in enumerate(["Onde faço mamografia pelo SUS?", "Meu exame deu alterado, e agora?",
                                      "Quais são os meus direitos?", "Como pedir ajuda em situação de violência?"]):
             st.button(exemplo, key=f"caixa_ap_exemplo_{n}", on_click=enviar_pergunta, args=(exemplo,), width="stretch")
-    st.caption("Não escreva dados pessoais. As perguntas desta página não são guardadas.")
+    st.caption("Não escreva dados pessoais. Esta página não guarda as perguntas. "
+               + ("Com o Gemini desligado, a busca é feita localmente no guia."
+                  if not st.session_state.get("caixa_ap_gemini_ativo", False)
+                  else "Com o Gemini ligado, se a busca local precisar de ajuda, a pergunta vai ao Google "
+                       "apenas para classificar o assunto."))
     st.divider()
     botao_inicio(st.sidebar, "lateral")
 
