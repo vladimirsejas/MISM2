@@ -195,7 +195,10 @@ def cruzar(oficiais, banco=BANCO, pasta_cnes=us.PASTA_CNES):
                        "no_cnes": c is not None, "ativo_no_cnes": (c or {}).get("ativo"),
                        "endereco": (c or {}).get("endereco", ""), "telefone": (c or {}).get("telefone", ""),
                        "lat": (c or {}).get("lat"), "lon": (c or {}).get("lon"),
-                       "coordenada": coordenada_confere((c or {}).get("lat"), (c or {}).get("lon"), centros.get(o["cnes"]))})
+                       "coordenada": coordenada_confere((c or {}).get("lat"), (c or {}).get("lon"), centros.get(o["cnes"])),
+                       "km_do_centro": (round(localizacao.distancia_km(c["lat"], c["lon"], *centros[o["cnes"]]), 1)
+                                        if c and c.get("lat") is not None and c.get("lon") is not None and o["cnes"] in centros
+                                        else None)})
     return linhas, aviso
 
 
@@ -223,14 +226,16 @@ def main(argv=None, banco=BANCO, pasta_cnes=us.PASTA_CNES, arquivo_oficial=ARQUI
     com_cnes = [r for r in linhas if r["no_cnes"]]
     if com_cnes:
         boas = sum(1 for r in com_cnes if r["coordenada"] == "ok")
-        suspeitas = [f"{r['municipio']} {r['cnes']} ({r['coordenada']})" for r in com_cnes if r["coordenada"] not in ("ok", "sem")]
+        suspeitas = [f"{r['municipio']} {r['cnes']} ({r['coordenada']}"
+                     + (f", {r['km_do_centro']:.0f} km do centro; lat {r['lat']}, lon {r['lon']}" if r["km_do_centro"] is not None else f"; lat {r['lat']}, lon {r['lon']}")
+                     + ")" for r in com_cnes if r["coordenada"] not in ("ok", "sem")]
         print(f"\nCoordenadas do CNES: {boas} de {len(com_cnes)} dentro de SP e a até {LIMITE_KM_DO_CENTRO} km do centro do município do hospital"
               + (f"; suspeitas: {'; '.join(suspeitas)}" if suspeitas else "") + ". Conferida só a plausibilidade; ponto no mapa só depois de olhar.")
     total = total_de_internacoes(banco)
     habilitados = sum(r["internacoes_cancer"] or 0 for r in linhas)
     if total:
         print(f"\nInternações por câncer no SIH em hospitais da lista oficial: {habilitados} de {total} "
-              f"({100 * habilitados / total:.1f}%). O resto acontece em hospitais sem habilitação em oncologia (cirurgias, hospital-dia).")
+              f"({100 * habilitados / total:.1f}%). O resto está em hospitais que não constam na lista de 2023 (a lista é de um só ano e o banco vai de 2013 a 2025).")
     sem = [r for r in linhas if r["internacoes_cancer"] == 0]
     if sem:
         print(f"\nHospitais da lista sem nenhuma internação por câncer no banco: {len(sem)} de {len(linhas)}"
