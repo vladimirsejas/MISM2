@@ -98,3 +98,8 @@ jobs:
         run: python etl/teste_gerar_lista_hospitais_oncologia.py
       - name: Posição dos hospitais habilitados (conferência por estado, um caso por motivo)
         run: python etl/teste_gerar_hospitais_oncologia_geo.py
+      - name: Hospitais habilitados em oncologia (dados)
+        working-directory: algoritimos
+        run: python teste_hospitais_oncologia.py
+      - name: Página Hospitais de câncer (clica em tudo)
+        run: python dashboard/teste_hospitais_cancer_tela.py
