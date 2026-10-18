@@ -55,7 +55,7 @@ EXTRA = {
                                "intestino teste fit kit coleta em casa sangue oculto nas fezes preciso fazer exame de intestino "
                                "quem pode fazer o fit 50 a 75 anos resultado do fit deu positivo encaminhamento colonoscopia fila",
     "cancer_ovario": "câncer de ovário ovários câncer ginecológico barriga inchada que não passa dor pélvica dor na pelve "
-                     "ovario cisto no ovário",
+                     "ovario cisto no ovário ultrassom transvaginal ultrassom pélvico",
     "cancer_pele": "câncer de pele pele não melanoma melanoma carcinoma basocelular espinocelular pinta mancha ferida que não cicatriza ferida que não fecha "
                    "lesão que sangra pintinha protetor solar sol dermatologista",
     "cancer_pulmao": "câncer de pulmão pulmões tosse persistente tosse que não passa sangue no escarro falta de ar cigarro "
@@ -63,7 +63,7 @@ EXTRA = {
     "cancer_tireoide": "câncer de tireoide tiroide nódulo na tireoide caroço no pescoço nódulo no pescoço caroço na garganta "
                        "papo ultrassom da tireoide punção",
     "cancer_corpo_utero": "câncer de endométrio corpo do útero útero endométrio sangramento depois da menopausa "
-                          "sangramento na menopausa diferença entre câncer do colo do útero e do endométrio histeroscopia",
+                          "sangramento na menopausa diferença entre câncer do colo do útero e do endométrio histeroscopia ultrassom transvaginal",
     "inca_tipos_cancer": "outros tipos de câncer câncer de estômago câncer de próstata leucemia linfoma lista de tipos de câncer inca",
     "lei_30_dias": "prazo exames quantos dias demora diagnóstico lei",
     "lei_60_dias": "prazo começar tratamento quantos dias quimioterapia radioterapia lei 60 dias demora",
@@ -79,7 +79,7 @@ EXTRA = {
     "defensoria_nudem": "medida protetiva advogado gratuito direitos da mulher",
     "carretas_estado": "carreta caminhão mamografia itinerante quando passa calendário",
     "caminho_do_exame": "nunca fiz mamografia idade para começar quantos anos primeira vez por onde começar passo a passo primeira consulta pedido médico unidade de saúde",
-    "rc_unidades": "posto de saúde ubs usf unidade de saúde perto de casa ginecologista consulta",
+    "rc_unidades": "posto de saúde ubs usf unidade de saúde perto de casa ginecologista consulta pedido de ultrassom transvaginal",
     "rc_cadu_agendamento": "marcar consulta exame agendamento telefone prefeitura",
     "preventivo_alterado": "papanicolau papanicolaou deu alterado resultado alterado exame do colo alterado",
     "mamografia_alterada": "mamografia deu alterada resultado alterado laudo birads 3 4 5",

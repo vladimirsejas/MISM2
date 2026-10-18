@@ -455,6 +455,12 @@ def main():
                         "ha_quem_e": "2090236"} and "9662561" not in str(apoio.ITENS))
     checar("J3. o CNES é metadado: não aparece no texto lido pela usuária", not any(c in apoio.responder(apoio.item(i)).fala for i, c in com_cnes.items()))
 
+    # ---------- K. exame que serve a vários fins ("ultrassom transvaginal"): unidade de saúde e cartões que o citam, nunca hospital solto ----------
+    x = ab.responder_pergunta("onde faço ultrassom transvaginal pelo SUS")
+    checar("K1. ultrassom transvaginal leva à unidade de saúde e aos cartões de ovário/corpo do útero, sem hospital solto",
+           {"rc_unidades", "cancer_ovario"} <= set(x.candidatos) and not any(
+               apoio.POR_ID[i]["lamina"] == "hospitais" for i in x.candidatos))
+
     print()
     if falhas:
         print(f"{len(falhas)} falha(s):")
