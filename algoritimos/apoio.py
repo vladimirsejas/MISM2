@@ -395,11 +395,13 @@ ITENS = [
     _item("rc_santa_casa", "tratamento", "rio_claro", "Rio Claro",
           "Santa Casa de Rio Claro – oncologia (UNACON) e Centro Oncológico Santa Ágata",
           "hospital habilitado para tratar câncer pelo SUS na própria cidade",
-          "FOSP (boletim da RRAS 14) e Santa Casa de Rio Claro",
+          "Secretaria de Estado da Saúde (lista de unidades habilitadas, jun/2021), Ministério da Saúde (habilitação em oncologia) e Santa Casa de Rio Claro",
           "https://www.santacasaderioclaro.com.br/",
           como="Habilitada como UNACON. O Centro Oncológico Santa Ágata tem 24 poltronas de quimioterapia, 6 leitos e "
                "11 consultórios. É referência em câncer de cabeça e pescoço para os 26 municípios da DRS X. O acesso "
                "pelo SUS é pela regulação (encaminhamento da unidade ou do especialista).",
+          contato="Rua 2 (R. Dois), nº 297, Centro. Telefone (19) 3535-7000.",
+          confirmar="O telefone e o endereço vêm da lista da Secretaria de Estado da Saúde de junho/2021: confirme antes de ligar ou ir.",
           tambem=[("hospitais", "Rio Claro e Piracicaba (RRAS 14)")]),
     _item("rc_cram", "ajuda", "rio_claro", "Rio Claro",
           "Centro de Referência de Atendimento à Mulher (CRAM) Dona Ângela Gonzaga",
@@ -1333,10 +1335,10 @@ for _tipo, _ids in _MARCAS_CANCER.items():
 for _id, _tipos in _MARCAS_VARIOS.items():
     POR_ID[_id]["cancer"] = _tipos
 # CNES conferidos no banco do autor em 18/10/2026 (nome oficial na tabela `hospitais` e município do hospital em `internacoes`
-# batem; 7400926 = Fundação Hospital Regional do Câncer, Presidente Prudente, 1.737 internações, conferido em 18/10/2026). Uma lista de IA trazia também 9662561 para o Hospital de Amor: NÃO existe no banco; o real é 2090236 (Fundação Pio XII).
+# batem; 7400926 = Fundação Hospital Regional do Câncer, Presidente Prudente, 1.737 internações, conferido em 18/10/2026; 2082888 = Santa Casa de Rio Claro, 1.711 internações, conferido em 18/10/2026; confere com a lista do Ministério da Saúde de hospitais habilitados em oncologia). Uma lista de IA trazia também 9662561 para o Hospital de Amor: NÃO existe no banco; o real é 2090236 (Fundação Pio XII).
 _CNES_CONFERIDOS = {"icesp": "6123740", "amaral_carvalho": "2083086", "hc_unicamp": "2079798",
                     "hc_ribeirao": "2082187", "ha_quem_e": "2090236",
-                    "prudente_cancer": "7400926"}
+                    "prudente_cancer": "7400926", "rc_santa_casa": "2082888"}
 for _id, _cnes in _CNES_CONFERIDOS.items():
     POR_ID[_id]["cnes"] = _cnes
 # Cada página do INCA fala de UMA doença (autor, 18/10/2026: "cada um fala de uma doença, mas precisamos de mais"). Os cartões de câncer da

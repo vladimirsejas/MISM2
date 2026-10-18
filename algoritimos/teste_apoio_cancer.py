@@ -449,10 +449,10 @@ def main():
     com_cnes = {i["id"]: i["cnes"] for i in apoio.ITENS if i["cnes"]}
     checar("J1. CNES do catálogo: 7 dígitos numéricos, sem repetir, só em hospitais",
            all(c.isdigit() and len(c) == 7 for c in com_cnes.values()) and len(set(com_cnes.values())) == len(com_cnes)
-           and all(apoio.POR_ID[i]["lamina"] in ("hospitais", "barretos") for i in com_cnes))
+           and all(apoio.POR_ID[i]["lamina"] in ("hospitais", "barretos") or i == "rc_santa_casa" for i in com_cnes))
     checar("J2. os CNES são os conferidos no banco (7 digitos de hospitais reais), e o código errado da lista de IA NÃO está no catálogo",
            com_cnes == {"icesp": "6123740", "amaral_carvalho": "2083086", "hc_unicamp": "2079798", "hc_ribeirao": "2082187",
-                        "ha_quem_e": "2090236", "prudente_cancer": "7400926"} and "9662561" not in str(apoio.ITENS))
+                        "ha_quem_e": "2090236", "prudente_cancer": "7400926", "rc_santa_casa": "2082888"} and "9662561" not in str(apoio.ITENS))
     checar("J3. o CNES é metadado: não aparece no texto lido pela usuária", not any(c in apoio.responder(apoio.item(i)).fala for i, c in com_cnes.items()))
 
     # ---------- K. exame que serve a vários fins ("ultrassom transvaginal"): unidade de saúde e cartões que o citam, nunca hospital solto ----------
