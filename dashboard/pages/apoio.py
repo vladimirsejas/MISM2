@@ -157,6 +157,44 @@ def lia_clicar(acao):
     lia_mostrar(apoio.responder(acao))
 
 
+def contexto_da_resposta(resposta):
+    destino = getattr(resposta, "destino", None) or {}
+    aba = destino.get("aba")
+    caminho = destino.get("caminho")
+    etapa = destino.get("etapa")
+    if aba == apoio.LAMINAS["caminho"]:
+        chave = caminho or "caminho"
+        rotulo = apoio.NOME_ETAPA.get(etapa) or ROTULO.get(chave) or aba
+        return (aba, caminho, etapa), rotulo
+    chave = next((k for k, nome in apoio.LAMINAS.items() if nome == aba), None)
+    return (aba, chave, None), aba or "esta área"
+
+
+def contexto_da_aba_atual():
+    aba = st.session_state.get("ap_aba", ABAS[0])
+    if aba == apoio.LAMINAS["caminho"]:
+        caminho = st.session_state.get("ap_caminho")
+        etapa = st.session_state.get("ap_etapa") if caminho == "ajuda" else None
+        rotulo = apoio.NOME_ETAPA.get(etapa) or ROTULO.get(caminho) or aba
+        return (aba, caminho, etapa), rotulo
+    chave = next((k for k, nome in apoio.LAMINAS.items() if nome == aba), None)
+    return (aba, chave, None), aba
+
+
+def falar_sobre_aba_atual():
+    aba = st.session_state.get("ap_aba", ABAS[0])
+    if aba == apoio.LAMINAS["caminho"]:
+        etapa = st.session_state.get("ap_etapa") if st.session_state.get("ap_caminho") == "ajuda" else None
+        acao = apoio.etapa(etapa) if etapa in apoio.NOME_ETAPA else apoio.caminho(
+            st.session_state.get("ap_caminho", "mama"))
+    elif aba == apoio.LAMINAS["sobre"]:
+        acao = apoio.SOBRE
+    else:
+        chave = next((k for k, nome in apoio.LAMINAS.items() if nome == aba), None)
+        acao = apoio.lamina(chave) if chave else INICIO
+    lia_clicar(acao)
+
+
 # Pergunte à Lia no Apoio (algoritimos/apoio_busca.py): a pessoa escreve e a Lia mostra o item do guia.
 # Nenhuma IA escreve sobre serviço (o texto é do catálogo conferido); o Gemini, se ligado, só ajuda a entender
 # a pergunta. As perguntas desta página NÃO são gravadas. Chaves "caixa_ap_*".
@@ -646,6 +684,15 @@ with st.sidebar:
         else:
             if getattr(atual, "pergunta", None):
                 st.caption(f"Você perguntou: “{atual.pergunta}”")
+            contexto_resposta, rotulo_resposta = contexto_da_resposta(atual)
+            contexto_atual, rotulo_atual = contexto_da_aba_atual()
+            se_contexto_diferente = contexto_resposta[0] != contexto_atual[0]
+            if not se_contexto_diferente and contexto_resposta[1] == "caminho":
+                se_contexto_diferente = contexto_resposta[1:] != contexto_atual[1:]
+            if se_contexto_diferente:
+                st.info(f"Esta resposta é sobre {rotulo_resposta}. Você está em {rotulo_atual}.")
+                st.button("Falar sobre " + rotulo_atual, key="lia_falar_sobre_aba",
+                          on_click=falar_sobre_aba_atual, width="stretch")
             st.markdown(atual.fala)
             if getattr(atual, "selo", None):
                 st.caption(atual.selo)

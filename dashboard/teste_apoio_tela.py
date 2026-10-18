@@ -100,6 +100,24 @@ checar("A. bloco de retomada contém os cartões do catálogo e seus links ofici
        and all(apoio.POR_ID[i]["titulo"] in conteudo and apoio.POR_ID[i]["link"] in conteudo
                for i in ids_retomada))
 
+# ---------- A2. Trocar a aba não substitui a fala da Lia ----------
+at = abrir()
+botao(at, "bv_ap_diagnostico").click().run()
+fala_diagnostico = at.session_state["ap_lia"]["atual"].fala
+botao(at, "nav_apoio_carretas").click().run()
+aviso_contexto = any("Esta resposta é sobre" in str(i.value)
+                     and "Você está em Carretas" in str(i.value) for i in at.info)
+checar("A2. trocar para Carretas preserva a fala de diagnóstico e informa a diferença de contexto",
+       not erros(at) and at.session_state["ap_lia"]["atual"].fala == fala_diagnostico and aviso_contexto)
+checar("A2. a nova fala só é solicitada por um botão explícito",
+       botao(at, "lia_falar_sobre_aba") is not None
+       and botao(at, "lia_falar_sobre_aba").label == "Falar sobre Carretas")
+botao(at, "lia_falar_sobre_aba").click().run()
+checar("A2. após pedir, Lia responde sobre Carretas e o aviso desaparece",
+       not erros(at) and at.session_state["ap_lia"]["atual"].destino.get("aba") == apoio.LAMINAS["carretas"]
+       and not any("Esta resposta é sobre" in str(i.value) for i in at.info)
+       and botao(at, "lia_falar_sobre_aba") is None)
+
 # ---------- B. Lia: todos os botões ----------
 at = abrir()
 botao(at, "bv_fechar_apoio").click().run()
