@@ -30,6 +30,9 @@ jobs:
         run: |
           python teste_fluxo.py
           python teste_hospital.py
+      - name: Hospitais habilitados em oncologia (lista oficial x catálogo)
+        working-directory: etl
+        run: python teste_cruzar_hospitais_oncologia.py
       - name: Unidades de saúde da cidade (CNES)
         working-directory: algoritimos
         run: python teste_unidades_saude.py
