@@ -314,6 +314,18 @@ try:
     checar("F. colo do útero x endométrio: a Lia mostra os dois cânceres e não escolhe um",
            not erros(at) and atual.tipo == "palpites" and len([b for b in botoes_lia(at) if b.label.startswith("Ver ")]) == 2)
 
+    # "o que você sabe responder?" (autor, 18/10/2026): a Lia explica o que o guia cobre, em texto fixo
+    checar("F. a caixa avisa, sem mexer no resto, a pergunta que mostra o que a Lia sabe", "o que você sabe responder?" in lateral(at))
+    perguntar_no_apoio(at, "o que você sabe responder?")
+    atual = at.session_state["ap_lia"]["atual"]
+    checar("F. 'o que você sabe responder?': a Lia lista os assuntos, diz o que não faz e oferece as portas em botões",
+           not erros(at) and atual.tipo == "sobre_a_lia" and "O que eu não faço" in lateral(at)
+           and "intestino" in lateral(at) and len(botoes_lia(at)) >= len(apoio.NOME_CAMINHO)
+           and "Nenhuma IA" in lateral(at))
+    botoes_lia(at)[0].click().run()   # clicar numa porta continua funcionando depois dessa resposta
+    checar("F. depois da explicação, clicar numa porta leva a ela, sem erro", not erros(at)
+           and at.session_state["ap_lia"]["atual"].destino.get("caminho") in apoio.NOME_CAMINHO)
+
     antes = at.session_state["ap_lia"]["atual"]
     perguntar_no_apoio(at, "   ")
     checar("F. enviar vazio não faz nada e não quebra", not erros(at) and at.session_state["ap_lia"]["atual"] is antes)

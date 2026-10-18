@@ -178,6 +178,50 @@ PISTAS = [
 ]
 # Palavras sozinhas que servem a vários cânceres (ou a nenhum): pedem uma pergunta de volta, não um palpite.
 AMBIGUAS = re.compile(r"\b(caroco|caroços?|nodulo|bolinha|sangramento|sangrando|sangrou|barriga|mancha|ferida|peitos?)\b")
+# Perguntas sobre a própria Lia ("o que você sabe responder?", "o que posso perguntar?"): ela explica o que o guia cobre.
+# Texto fixo montado do catálogo (sem IA, nada de serviço novo). Só pergunta CURTA e sem câncer nomeado, para nunca
+# sequestrar uma pergunta de conteúdo ("como funciona a carreta?" continua indo ao item).
+_SOBRE_A_LIA = re.compile(
+    r"\b(o que|que|quais) (voce|vc|a lia|tu) (sabe|responde|pode|consegue|faz|ajuda)|"
+    r"\bo que (eu )?(posso|dá pra|da pra) (te |lhe )?(perguntar|pedir|saber)|"
+    r"\bsobre o que (eu )?(posso|dá pra|da pra) (te |lhe )?(perguntar|falar|conversar)|"
+    r"\bem que (voce|vc|a lia) (pode|consegue) (me )?(ajudar|responder)|"
+    r"\b(quais|que) (sao )?(os )?(assuntos|temas|perguntas)\b|"
+    r"\bo que (tem|ha|existe) (aqui|neste guia|nesse guia|no guia)\b|"
+    r"\b(como|pra que|para que) (voce|vc|a lia) (funciona|serve)\b|"
+    r"\b(quem e voce|voce e quem|o que e a lia)\b")
+
+
+def _pergunta_sobre_a_lia(pergunta):
+    texto = ent.normalizar(pergunta)
+    return len(texto.split()) <= 10 and bool(_SOBRE_A_LIA.search(texto))
+
+
+def responder_o_que_sei():
+    """O que a Lia responde e o que ela não faz, em texto fixo, com as portas do guia em botões."""
+    nomes = [re.sub(r"\s*\(.*?\)", "", re.sub(r"^câncer (de |do |da )?", "", t)) for t in apoio.TIPOS_CANCER.values()]
+    tipos = ", ".join(nomes[:-1]) + " e " + nomes[-1]
+    fala = ("Eu sou a Lia. Neste guia eu mostro **onde procurar cuidado pelo SUS**, com as páginas oficiais. Você pode me "
+            "perguntar, com as suas palavras, sobre:\n\n"
+            "- **Prevenção e exames:** mamografia, preventivo (Papanicolau) e vacina contra o HPV.\n"
+            f"- **Tipos de câncer** ({tipos}): sinais que merecem avaliação, como se investiga e como buscar atendimento.\n"
+            "- **Exame alterado e diagnóstico:** o que fazer depois e os prazos da lei (30 e 60 dias).\n"
+            "- **Encaminhamento:** a fila da regulação (CROSS) e os hospitais de câncer pelo SUS no Estado.\n"
+            "- **Tratamento e direitos:** transporte (TFD), FGTS, INSS, reconstrução da mama.\n"
+            "- **Carretas da mamografia, Rio Claro e Barretos.**\n"
+            "- **Proteção contra a violência:** 190 e 180.\n\n"
+            "Exemplos: \"tenho câncer no intestino\", \"meu preventivo deu alterado\", \"quero fazer mamografia de graça\", "
+            "\"qual a diferença entre câncer do colo do útero e do endométrio?\".\n\n"
+            "**O que eu não faço:** diagnosticar, dizer se um sintoma é câncer, indicar remédio ou garantir vaga. Quem orienta o "
+            "seu caso é a equipe de saúde. Em emergência, ligue 192.")
+    r = Resposta(fala=fala, expressao="acolhedora",
+                 botoes=[(rotulo, apoio.caminho(c)) for c, rotulo, _, _ in apoio.CAMINHOS]
+                 + [("Hospitais no Estado", apoio.lamina("hospitais")), ("Rio Claro", apoio.lamina("rio_claro")),
+                    ("Barretos", apoio.lamina("barretos"))],
+                 destino={"aba": apoio.LAMINAS["caminho"]})
+    return _com_inicio(r)
+
+
 ONDE_E = ("Para eu mostrar a informação certa, me conta em que parte do corpo é: na mama, no pescoço, na pele ou "
           "sangramento pela vagina?")
 # Pedido de visão geral ("quero informações sobre câncer de mama") x pedido de serviço ("onde faço mamografia de graça?").
@@ -384,6 +428,9 @@ def _responder_pergunta(pergunta, classificar=None, contexto=None, cancer_em_foc
                   "Se o assunto mudou, escreva o novo assunto ou escolha uma porta.\n\n" + r.fala)
         return _com_inicio(_de(r, tipo="esclarecimento", selo=SELO_GUIA,
                                candidatos=[contexto], **comum))
+
+    if _pergunta_sobre_a_lia(pergunta) and not tipos_citados(pergunta)[0]:
+        return _de(responder_o_que_sei(), tipo="sobre_a_lia", selo="Texto fixo do guia. Nenhuma IA escreveu isto.", **comum)
 
     # Trava por tipo de câncer: o que a pessoa nomeou manda; semelhança de palavras só desempata dentro do tipo.
     tipos, utero_ambiguo, outro = tipos_citados(pergunta)

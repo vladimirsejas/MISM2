@@ -800,6 +800,7 @@ with st.sidebar:
         st.text_input("Pergunte à Lia", key="caixa_ap_texto", max_chars=300, label_visibility="collapsed",
                       placeholder="Ex.: onde faço mamografia pelo SUS?")
         st.form_submit_button("Perguntar", key="caixa_ap_enviar", on_click=enviar_pergunta, width="stretch")
+    st.caption("Não sabe o que perguntar? Escreva: **o que você sabe responder?**")
     gemini_disponivel = apoio_busca.obter_classificador()
     if gemini_disponivel:
         st.toggle("Permitir que o Google Gemini ajude a identificar o assunto", key="caixa_ap_gemini_ativo",

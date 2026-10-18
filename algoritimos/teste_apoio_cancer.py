@@ -1,5 +1,6 @@
 import builtins
 import io
+import json
 import os
 import re
 import sqlite3
@@ -354,6 +355,32 @@ def main():
     checar("G1. às cegas: NENHUMA resposta leva a conteúdo específico de outro câncer", n_mistura == 0)
     checar("G2. às cegas: tipo de resposta esperado em pelo menos 85%", n_tipo >= 0.85 * len(cego))
     checar("G3. às cegas: o câncer certo aparece em pelo menos 85% das que citam câncer", n_cancer >= 0.85 * n_com_cancer)
+
+    # ---------- H. "o que você sabe responder?" (pedido do autor, 18/10/2026) ----------
+    sim = ["o que você sabe responder?", "o que posso perguntar?", "em que você pode me ajudar", "quais assuntos tem aqui",
+           "o que tem neste guia", "como você funciona", "quem é você", "que perguntas eu posso fazer"]
+    for pergunta in sim:
+        x = ab.responder_pergunta(pergunta)
+        checar(f"H1. a Lia explica o que sabe: {pergunta!r}", x.tipo == "sobre_a_lia" and not x.candidatos)
+    x = ab.responder_pergunta("o que você sabe responder?")
+    portas_botoes = {a.get("id") for _, a in x.botoes if a.get("tipo") == "apoio_caminho"}
+    checar("H2. a resposta lista os tipos de câncer do catálogo, os assuntos e as portas em botões",
+           all(n in x.fala for n in ("intestino", "ovário", "pele", "pulmão", "tireoide", "endométrio", "mama", "colo do útero"))
+           and portas_botoes == set(apoio.NOME_CAMINHO) and "CROSS" in x.fala and "190" in x.fala)
+    checar("H3. diz o que NÃO faz (diagnosticar, receitar, garantir vaga) e o 192, sem a palavra 'lâmina' nem parênteses dentro de parênteses",
+           "diagnosticar" in x.fala and "indicar remédio" in x.fala and "garantir vaga" in x.fala and "192" in x.fala
+           and "lâmina" not in x.fala.lower() and "((" not in x.fala and "(intestino (" not in x.fala)
+    checar("H4. texto fixo, sem IA e com selo que diz isso", "Nenhuma IA" in x.selo and x.origem == "regras")
+    nao = ["como funciona a carreta da mamografia?", "o que é UNACON", "onde faço mamografia", "como funciona o TFD",
+           "quais os sinais do câncer de mama", "tenho câncer no intestino, o que posso fazer", "o que tem no ovário",
+           "o que você acha de câncer de ovário"]
+    for pergunta in nao:
+        checar(f"H5. pergunta de conteúdo NÃO é sequestrada: {pergunta!r}", ab.responder_pergunta(pergunta).tipo != "sobre_a_lia")
+    sequestradas = [g["pergunta"] for arq in ("gabarito_apoio.json", "gabarito_apoio_cancer.json")
+                    for g in json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), arq), encoding="utf-8"))
+                    if ab.responder_pergunta(g["pergunta"]).tipo == "sobre_a_lia"]
+    checar("H6. nenhuma pergunta dos dois gabaritos do Apoio virou 'o que você sabe'", not sequestradas)
+    checar("H7. segurança continua primeiro: 'o que você sabe, meu marido me bate'", ab.responder_pergunta("o que você sabe? meu marido me bate").tipo == "risco")
 
     print()
     if falhas:

@@ -507,6 +507,11 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   Testes: `teste_conversa_apoio.py` e `dashboard/teste_conversa_apoio_tela.py` (regressão, não amostra independente).
 - **Vocabulário (autor, 18/10/2026): a usuária nunca lê "lâmina".** Hospitais no Estado, Carretas, Rio Claro e Barretos são **áreas**. "Lâmina" continua só como termo
   interno (código, comentários, nomes de teste, `LAMINAS`); texto de cartão, botão, fala da Lia e página "Sobre" diz "área". Teste: `teste_apoio.py`.
+- **"O que você sabe responder?" (autor, 18/10/2026):** a caixa do Apoio explica, em texto fixo montado do catálogo (sem IA, `tipo = "sobre_a_lia"`,
+  `apoio_busca.responder_o_que_sei`), os assuntos que o guia cobre, os tipos de câncer, o que a Lia NÃO faz (diagnosticar, indicar remédio, garantir vaga) e o 192,
+  com as portas em botões. Só pergunta curta sobre a própria Lia e sem câncer nomeado (não sequestra pergunta de conteúdo; medido nos dois gabaritos do Apoio).
+  Uma linha sob a caixa avisa a pergunta. Testes: H em `teste_apoio_cancer.py` e F em `dashboard/teste_apoio_tela.py`. **Perguntas continuam sem ser gravadas**
+  (contar o que mais perguntam foi oferecido e NÃO escolhido; mudaria a regra de privacidade).
 - Ainda não feito (combinar): população do IBGE; testar com pessoas de verdade; revisar com o autor o
   vocabulário popular do Apoio (`apoio_busca.VOCABULARIO`/`EXTRA`).
 
