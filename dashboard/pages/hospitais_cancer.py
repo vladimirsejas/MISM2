@@ -124,6 +124,10 @@ def cartao(r):
 
 # ---------------- topo ----------------
 inicio()
+try:  # quem chegou pela área "Hospitais no Estado" do Apoio volta para ela sem passar pelo Panorama
+    st.page_link("pages/apoio.py", label="← Voltar ao Apoio à mulher")
+except Exception:  # Streamlit antigo, ou fora do painel (teste isolado)
+    pass
 st.markdown('<div class="escudo-marca">Escudo Feminino</div>'
             '<div class="escudo-titulo">Hospitais habilitados em <em>oncologia</em></div>'
             '<div class="escudo-sub">Onde ficam os hospitais que o Ministério da Saúde habilitou para tratar câncer pelo SUS, '

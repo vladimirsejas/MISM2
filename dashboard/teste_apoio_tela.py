@@ -214,6 +214,14 @@ for lam in apoio.GRUPOS:
                and not any(_html.escape(i["titulo"]) in texto for i in apoio.itens(lamina=lam) if i["grupo"] != g
                            and (lam, g) not in i["tambem"]))
 checar("D. cartões com o botão Abrir a página oficial", "apoio-botao" in texto)
+# a porta para o mapa de hospitais habilitados mora na área "Hospitais no Estado" (e só nela); os cartões continuam os mesmos
+at.session_state["ap_aba"] = apoio.LAMINAS["hospitais"]
+at.run()
+tudo = " ".join(m.value for m in at.markdown) + " " + " ".join(str(l.label) for l in getattr(at, "page_link", []) if hasattr(l, "label"))
+checar("D. a área Hospitais no Estado tem a porta para o mapa de hospitais habilitados", not erros(at) and "hospitais_cancer" in tudo)
+at.session_state["ap_aba"] = apoio.LAMINAS["rio_claro"]
+at.run()
+checar("D. a porta do mapa NÃO aparece nas outras áreas (uma casa só)", "hospitais_cancer" not in " ".join(m.value for m in at.markdown))
 at.session_state["ap_aba"] = apoio.LAMINAS["carretas"]
 at.run()
 texto = " ".join(m.value for m in at.markdown)

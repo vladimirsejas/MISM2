@@ -23,6 +23,7 @@ Duas frases que protegem você: **"são internações, não casos novos"** e **"
 | 6–7 | Aba **Planejamento** | Radar do futuro | "Onde a cidade pode ter problema se nada mudar. Aponta atenção, não decide." |
 | 7–9 | **Lia** (lateral) | 3 perguntas escritas na caixa (seção 5) | "A Lia calcula com os dados e o Gemini só ajuda a redigir; se a IA falha, ela responde direto dos cálculos." |
 | 9–11 | **Apoio à mulher** | "Prevenção e exames" → passo "Ainda não fiz o exame" (Cadu, unidades) → "Unidades, telefones e como chegar" → Santa Casa de Rio Claro | "Para quem não sabe por onde começar. Cada cartão tem fonte, data de conferência e a marca **'a confirmar'** quando falta confirmar algo." |
+| 11–12 | **Apoio → Hospitais no Estado → "Ver todos os hospitais habilitados no mapa"** (☐ só se o mapa já tiver as posições no notebook: `py etl\gerar_hospitais_oncologia_geo.py`) | Escolher Rio Claro: "o hospital habilitado mais próximo, em linha reta, é a Santa Casa". Trocar para Brasil: "são 361 habilitados no país, 88 em SP". Dizer: "o mapa mostra onde ficam; não explica por que as pessoas vêm de fora". |
 | 11–12 | Aba **Método** e próximos passos | Fontes e limites | "O que vem: mapa por área de USF (com o projeto do Kauê), taxa por 100 mil mulheres, hospitais habilitados em oncologia." |
 
 ## 3. Números que podem ser ditos (e como dizê-los)

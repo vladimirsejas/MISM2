@@ -654,6 +654,12 @@ if aba == apoio.LAMINAS["hospitais"]:
     dica("Hospitais habilitados para tratar câncer (CACON e UNACON), por região. Eles não são porta de entrada: "
          "a vaga é pedida pela unidade de saúde, pela regulação do Estado (CROSS).")
     onde_clicar("Clique numa região. Em cada cartão, clique no botão azul <b>Abrir a página oficial</b>.")
+    # Mapa com TODOS os hospitais habilitados (Estado e Brasil), endereço, telefone e os mais próximos da sua cidade: página própria
+    # (uma casa só); o Apoio aponta para ela, como faz com "Onde ser atendida".
+    try:
+        st.page_link("pages/hospitais_cancer.py", label="🗺️ Ver todos os hospitais habilitados no mapa, com os mais próximos da sua cidade")
+    except Exception:  # Streamlit antigo, sem page_link
+        st.markdown('<a href="/hospitais_cancer" target="_self">Ver todos os hospitais habilitados no mapa</a>', unsafe_allow_html=True)
     lamina_por_grupos("hospitais", "Região")
     leitura("Como chegar a um destes hospitais", [
         "Com suspeita ou diagnóstico de câncer, procure a unidade de saúde do bairro: o médico do SUS pede a vaga "
