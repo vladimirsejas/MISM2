@@ -530,6 +530,7 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   **Os links do INCA "versao-para-populacao" (ovário, pele, pulmão, tireoide, corpo do útero) vieram de um texto de IA e NUNCA foram abertos; o do intestino foi trocado pela notícia do FIT
   (única que o autor anexou).** Para conferir TODOS os links: `py algoritimos\conferir_links.py` no notebook (diz OK / REDIRECIONOU para outra página / ERRO); teste `teste_conferir_links.py`.
   **Conferidor rodado no notebook (18/10/2026): 68 OK, 8 redirecionaram, 13 com erro; 5 links corrigidos pelo endereço novo, 5 cartões marcados "a confirmar" (Prudente, Botucatu, Ribeirão agendamento, AMEs, AME Rio Claro); o conferidor ganhou a classe AVISO (certificado não verificável) e tempo de 60 s com nova tentativa.**
+  **2ª rodada do conferidor (18/10/2026): 78 OK, 1 redirecionou (vacina HPV, notícia pedia login; trocada pela página "HPV" do Ministério, ainda não reconferida), 9 avisos de certificado (páginas abrem: FOSP, CAISM, HC Ribeirão, Santa Casa São Carlos), 0 erros.** Cartão de Ribeirão (404) saiu; colo do útero aponta para a BVS; AMEs e AME Rio Claro com os endereços que o autor passou.
   TFD agora abre a Portaria SAS/MS 55/1999 (e o "50 km", que a fonte não confirma, saiu).
 - Ainda não feito (combinar): população do IBGE; testar com pessoas de verdade; revisar com o autor o
   vocabulário popular do Apoio (`apoio_busca.VOCABULARIO`/`EXTRA`).

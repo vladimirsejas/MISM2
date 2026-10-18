@@ -136,13 +136,11 @@ ITENS = [
           "Vacina contra o HPV",
           "dose única de 9 a 14 anos; protege contra o vírus que causa o câncer do colo do útero",
           "Ministério da Saúde",
-          "https://www.gov.br/saude/pt-br/assuntos/noticias/2025/dezembro/ministerio-da-saude-amplia-prazo-de-"
-          "resgate-vacinal-contra-hpv-para-jovens-de-15-a-19-anos-ate-2026",
+          "https://www.gov.br/saude/pt-br/assuntos/saude-de-a-a-z/h/hpv",
           para_quem="Meninas e meninos de 9 a 14 anos, em dose única. Houve um resgate para jovens de 15 a 19 anos "
                     "não vacinados, prorrogado até o 1º semestre de 2026.",
           como="Nas unidades de saúde (e em ações em escolas e outros locais).",
-          confirmar="Confirme na unidade se o resgate de 15 a 19 anos ainda está valendo. A notícia do Ministério da Saúde pode "
-                    "pedir login ao abrir."),
+          confirmar="Confirme na unidade se o resgate de 15 a 19 anos ainda está valendo."),
 
     # ---------------- DESCOBRIR ----------------
     _item("caminho_do_exame", "mama", "caminho", "Estado de SP",
