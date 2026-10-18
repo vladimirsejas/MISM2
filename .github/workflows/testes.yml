@@ -103,3 +103,5 @@ jobs:
         run: python teste_hospitais_oncologia.py
       - name: Página Hospitais de câncer (clica em tudo)
         run: python dashboard/teste_hospitais_cancer_tela.py
+      - name: Consulta ao CNES (conferir pista contra o arquivo real, só leitura)
+        run: python etl/teste_consultar_cnes.py
