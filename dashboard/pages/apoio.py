@@ -82,13 +82,21 @@ a.apoio-botao:hover { background: #1f5fae; }
                       color: #4a3d78; font-weight: 600; font-size: .9rem; }
 .apoio-jornada span.ativo { background: #4a3d78; border-color: #4a3d78; color: #fff; }
 .apoio-jornada i { color: #9b8fc4; font-style: normal; }
-.apoio-jornada-diagnostico { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-                              gap: 8px; list-style: none; padding: 0; margin: 14px 0; }
-.apoio-jornada-diagnostico li { background: #fff; border: 1px solid #e3dcf2; border-radius: 12px;
-                                padding: 12px; min-width: 0; }
+.apoio-jornada-diagnostico { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px;
+                              list-style: none; padding: 0; margin: 14px 0; }
+.apoio-jornada-diagnostico li { position: relative; display: grid; grid-template-columns: 42px minmax(0, 1fr);
+                                gap: 10px; align-items: start; background: #fff; border: 1px solid #d4cbe8;
+                                border-radius: 12px; padding: 12px; min-width: 0; }
 .apoio-jornada-diagnostico li.atual { background: #f1eef8; border-color: #4a3d78; }
-.apoio-jornada-diagnostico b, .apoio-jornada-diagnostico span { display: block; }
-.apoio-jornada-diagnostico span { color: #625d72; font-size: .88rem; margin-top: 4px; }
+.apoio-jornada-numero { display: grid !important; place-items: center; width: 34px; height: 34px; margin: 0 !important;
+                        border-radius: 50%; background: #4a3d78; color: #fff !important; font-weight: 700; }
+.apoio-jornada-conteudo b, .apoio-jornada-conteudo span { display: block; }
+.apoio-jornada-conteudo span { color: #514b64; font-size: .92rem; margin-top: 4px; }
+.apoio-jornada-conector { position: absolute; left: 22px; bottom: -22px; z-index: 1; color: #4a3d78;
+                          font-size: 1.15rem; font-weight: 800; }
+.apoio-jornada-diagnostico li:last-child .apoio-jornada-conector { display: none; }
+.apoio-recuperar-caminho { margin-top: 18px; padding: 12px 14px; background: #f6f3fb;
+                           border-left: 5px solid #7565a8; border-radius: 10px; color: #292541; }
 .apoio-grupo { font-family: 'Manrope', sans-serif; font-weight: 700; color: #4a3d78; font-size: 1rem; margin: 18px 0 0; }
 </style>
 """, unsafe_allow_html=True)
@@ -365,14 +373,21 @@ def porta_ajuda():
     if e == "diagnostico_cancer":
         st.markdown("""
 <ol class="apoio-jornada-diagnostico" aria-label="Próximos passos depois do diagnóstico">
-  <li class="atual"><b>Diagnóstico confirmado</b><span>Você está aqui.</span></li>
-  <li><b>Converse com sua equipe de saúde</b><span>Pergunte quem acompanha seu encaminhamento e como receber notícias da vaga.</span></li>
-  <li><b>Regulação do SUS</b><span>A rede organiza o acesso ao serviço especializado.</span></li>
-  <li><b>Serviço especializado</b><span>A equipe avalia seu caso e conversa com você sobre o tratamento indicado.</span></li>
+  <li class="atual"><span class="apoio-jornada-numero" aria-hidden="true">1</span><div class="apoio-jornada-conteudo"><b>Diagnóstico confirmado</b><span>Você está aqui.</span></div><span class="apoio-jornada-conector" aria-hidden="true">↓</span></li>
+  <li><span class="apoio-jornada-numero" aria-hidden="true">2</span><div class="apoio-jornada-conteudo"><b>Converse com sua equipe de saúde</b><span><strong>Próximo passo:</strong> pergunte quem acompanha seu encaminhamento e como receber notícias da vaga.</span></div><span class="apoio-jornada-conector" aria-hidden="true">↓</span></li>
+  <li><span class="apoio-jornada-numero" aria-hidden="true">3</span><div class="apoio-jornada-conteudo"><b>Regulação do SUS</b><span>A rede organiza o acesso ao serviço especializado.</span></div><span class="apoio-jornada-conector" aria-hidden="true">↓</span></li>
+  <li><span class="apoio-jornada-numero" aria-hidden="true">4</span><div class="apoio-jornada-conteudo"><b>Serviço especializado</b><span>A equipe avalia seu caso e conversa com você sobre o tratamento indicado.</span></div></li>
 </ol>
 """, unsafe_allow_html=True)
         st.markdown("**Perguntas que você pode levar à equipe:** qual serviço está responsável pelo encaminhamento? Como acompanho a vaga? Quando devo voltar se ainda não tiver resposta? Leve o laudo e os exames que já tem, se puder."
                     )
+        st.markdown('<div class="apoio-recuperar-caminho"><b>Se a resposta demorar ou o encaminhamento não chegar</b></div>',
+                    unsafe_allow_html=True)
+        ids_retomada = ["nao_achei_nome", "lista_regulacao", "como_chegar_cross"]
+        if apoio.CIDADE.casefold() == "rio claro":
+            ids_retomada.append("rc_unidades")
+        for id_item in ids_retomada:
+            cartao_curto(apoio.POR_ID[id_item])
     if portas or e == "nao_fiz":
         colunas = st.columns(max(len(portas) + (e == "nao_fiz"), 1))
         for col, porta_id in zip(colunas, portas):

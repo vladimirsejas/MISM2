@@ -87,6 +87,18 @@ conteudo = " ".join(str(x.value) for x in at.markdown)
 checar("A. diagnóstico confirmado abre diagrama com a etapa atual e a regulação", not erros(at)
        and all(t in conteudo for t in ("Diagnóstico confirmado", "Você está aqui", "Regulação do SUS",
                                       "Como acompanho a vaga?")))
+checar("A. jornada do diagnóstico exibe quatro etapas numeradas e conectores visíveis",
+       all(f'class="apoio-jornada-numero" aria-hidden="true">{n}' in conteudo for n in (1, 2, 3, 4))
+       and conteudo.count('class="apoio-jornada-conector" aria-hidden="true">↓') == 3)
+checar("A. a segunda etapa é marcada como próximo passo",
+       "<strong>Próximo passo:</strong>" in conteudo)
+ids_retomada = ["nao_achei_nome", "lista_regulacao", "como_chegar_cross"]
+if apoio.CIDADE.casefold() == "rio claro":
+    ids_retomada.append("rc_unidades")
+checar("A. bloco de retomada contém os cartões do catálogo e seus links oficiais",
+       "Se a resposta demorar ou o encaminhamento não chegar" in conteudo
+       and all(apoio.POR_ID[i]["titulo"] in conteudo and apoio.POR_ID[i]["link"] in conteudo
+               for i in ids_retomada))
 
 # ---------- B. Lia: todos os botões ----------
 at = abrir()
