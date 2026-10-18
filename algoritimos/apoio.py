@@ -323,7 +323,9 @@ ITENS = [
           "Prefeitura de Ribeirão Preto",
           "https://www.ribeiraopreto.sp.gov.br/portal/sassom/prevencao-cancer-mama",
           para_quem="Moradoras de Ribeirão Preto de 50 a 69 anos sem mamografia há 2 anos ou mais.",
-          como="Agendar no site da Prefeitura; quem não conseguir pode pedir na unidade de saúde mais próxima."),
+          como="Agendar no site da Prefeitura; quem não conseguir pode pedir na unidade de saúde mais próxima.",
+          confirmar="A página da Prefeitura não abriu na última conferência (18/10/2026): procure a unidade de saúde mais "
+                    "próxima ou o site da Prefeitura de Ribeirão Preto."),
     _item("rio_preto_mamografia", "mama", "caminho", "São José do Rio Preto",
           "Mamografia de rastreamento em Rio Preto a partir dos 40 anos",
           "pedido na UBS; rastreamento a cada 2 anos para mulheres a partir de 40 anos",
@@ -346,7 +348,7 @@ ITENS = [
           "Aplicativo SP Mulher Segura",
           "boletim de ocorrência, pedido de medida protetiva e botão do pânico pelo celular",
           "Governo do Estado de SP (Agência SP)",
-          "https://www.agenciasp.sp.gov.br/sp-mulher-segura-conheca-o-aplicativo-que-permite-denunciar-violencia-"
+          "https://www.agenciasp.sp.gov.br/politicas-para-mulheres/sp-mulher-segura-conheca-o-aplicativo-que-permite-denunciar-violencia-"
           "domestica-e-acionar-botao-do-panico-contra-agressores/",
           como="Permite registrar boletim de ocorrência, pedir medida protetiva de urgência e, para quem já tem "
                "medida protetiva, acionar o botão do pânico, que envia a localização em tempo real. Android e iOS; "
@@ -355,7 +357,7 @@ ITENS = [
           "Delegacia Eletrônica – violência doméstica contra a mulher",
           "registrar ocorrência pela internet, 24 horas, e pedir medida protetiva",
           "Polícia Civil do Estado de SP",
-          "https://www.delegaciaeletronica.policiacivil.sp.gov.br/",
+          "https://delegaciadigital.policia-civil.sp.gov.br/pagina-inicial",
           como="Em \"Comunicar Ocorrência\", escolher \"Violência Doméstica Contra Mulher\". Dá para anexar fotos e "
                "mensagens e pedir medida protetiva de urgência no mesmo formulário."),
 
@@ -484,7 +486,7 @@ ITENS = [
           "Busca ativa do câncer do colo do útero desde 1994",
           "na região de Barretos, 72% dos diagnósticos de câncer do colo do útero são feitos no estágio inicial",
           "Hospital de Amor (dado da FOSP)",
-          "https://hospitaldeamor.com.br/site/barretos-possui-o-maior-indice-de-deteccao-precoce-do-cancer-de-colo-"
+          "https://hospitaldeamor.com.br/barretos-possui-o-maior-indice-de-deteccao-precoce-do-cancer-de-colo-"
           "uterino-em-sp/",
           como="Desde 1994 o hospital faz busca ativa para o preventivo na periferia de Barretos e depois nas cidades "
                "da DRS V. Segundo a FOSP, 72% dos diagnósticos da região acontecem no estágio in situ, tratado com "
@@ -1027,8 +1029,10 @@ ITENS = [
           "HC da Faculdade de Medicina de Botucatu (Unesp) – Oncologia",
           "centro de oncologia de referência regional, com quimioterapia e onco-hematologia",
           "HC Botucatu (Unesp)",
-          "https://hcfmb.unesp.br/servico-de-oncologia/",
+          "https://www.hcfmb.sp.gov.br/hcfmb",
           como="Referência regional: cerca de 17 mil consultas e 18 mil sessões de quimioterapia por ano (2021).",
+          confirmar="O site do hospital mudou de endereço e a página específica de oncologia não foi localizada: o botão abre "
+                    "o site geral do HC de Botucatu.",
           grupo="Centro-Oeste: Jaú, Bauru, Botucatu e Marília"),
     _item("bauru_oncologia", "rede", "hospitais", "Bauru",
           "Bauru: SOPC (prevenção e diagnóstico) e Hospital Estadual de Bauru",
@@ -1054,12 +1058,11 @@ ITENS = [
     _item("prudente_cancer", "rede", "hospitais", "Presidente Prudente",
           "Hospital Regional do Câncer de Presidente Prudente (Hospital de Esperança)",
           "UNACON com hematologia, oncologia pediátrica e radioterapia pelo SUS",
-          "Governo Federal (Planalto) – credenciamento de 2021",
-          "https://www.gov.br/planalto/pt-br/acompanhe-o-planalto/noticias/2021/07/hospital-de-presidente-prudente-sp-"
-          "e-credenciado-para-assistencia-de-alta-complexidade-em-oncologia",
+          "Agência Brasil – credenciamento de 2021",
+          "https://agenciabrasil.ebc.com.br/saude/noticia/2021-07/hospital-do-cancer-de-presidente-prudente-sera-credenciado-ao-sus",
           como="Credenciado em 2021 como UNACON, com 122 leitos para o SUS. Na cidade, a Santa Casa de Presidente "
                "Prudente também é UNACON.",
-          confirmar="O nome do hospital mudou: confira na lista da FOSP.",
+          confirmar="Notícia de 2021 (o hospital hoje se chama Hospital de Esperança): confira na lista da FOSP.",
           grupo="Oeste, Sorocaba, Vale do Paraíba e Litoral"),
     _item("sorocaba_oncologia", "rede", "hospitais", "Sorocaba",
           "Sorocaba: Santa Casa (Hospital do Câncer) e Conjunto Hospitalar",
@@ -1183,7 +1186,7 @@ ITENS = [
           "Cartilha do INCA: direitos sociais da pessoa com câncer",
           "todos os direitos num lugar só, em linguagem simples",
           "Instituto Nacional de Câncer (INCA)",
-          "https://www.inca.gov.br/publicacoes/cartilhas/direitos-sociais-da-pessoa-com-cancer-orientacoes-aos-usuarios",
+          "https://www.gov.br/inca/pt-br/assuntos/cancer/orientacoes-aos-pacientes-e-familiares/orientacoes-aos-pacientes-e-familiares",
           como="Explica benefícios do INSS, FGTS e PIS, isenções, transporte, prioridade na Justiça e outros direitos."),
 
     # ---------------- CUIDAR (mais apoio) ----------------
@@ -1194,7 +1197,8 @@ ITENS = [
           "https://www.saopaulo.sp.gov.br/spnoticias/ultimas-noticias/veja-a-relacao-dos-ames-ambulatorios-medicos-"
           "de-especialidades-no-estado/",
           como="Os AMEs fazem consultas com especialistas e exames (muitos fazem mamografia). A consulta é marcada "
-               "pela UBS do município, por sistema online."),
+               "pela UBS do município, por sistema online.",
+          confirmar="A notícia com a lista dos AMEs foi retirada do ar: procure o AME da sua região na unidade de saúde."),
     _item("rede_feminina", "tratamento", "caminho", "Estado de SP",
           "Rede Feminina de Combate ao Câncer",
           "entidade voluntária que apoia pacientes com câncer e divulga a prevenção",
@@ -1212,12 +1216,13 @@ ITENS = [
           como="Tem especialidade dedicada às mamas, na prevenção e no tratamento. A consulta é marcada pela unidade "
                "de saúde do município.",
           contato="Rua 9 (esquina com a Avenida da Saudade), 165 – Bairro dos Estádios. (19) 3526-2300.",
-          confirmar="Algumas fontes trazem outro telefone: confirme na página do AME."),
+          confirmar="Algumas fontes trazem outro telefone e outro número no endereço (Avenida da Saudade, 252), e o certificado "
+                    "do site do Seconci não é verificável: confirme endereço e telefone na unidade de saúde antes de ir."),
     _item("rc_ddm", "ajuda", "rio_claro", "Rio Claro",
           "Delegacia de Defesa da Mulher (DDM) de Rio Claro",
           "registrar ocorrência e pedir medida protetiva na cidade",
           "OAB Rio Claro e Polícia Civil",
-          "https://www.oabrioclaro.org.br/1955-2/",
+          "https://www.oabrioclaro.org.br/noticias/delegacia-de-defesa-da-mulher-ddm/",
           como="Rio Claro tem DDM. Em perigo imediato, ligue 190; pela internet, use a Delegacia Eletrônica.",
           confirmar="Endereços e telefones diferentes aparecem em fontes diferentes: confirme pela página das "
                     "Delegacias da Mulher do SP por Todas antes de ir."),
