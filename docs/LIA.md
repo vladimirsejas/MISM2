@@ -104,6 +104,11 @@ assuntos que os botões já cobrem, então a caixa respondia o mesmo com
 menos precisão e prometia "pergunte qualquer coisa". A Lia conduz só
 por botões. O código antigo está no histórico do git (commit
 `8d78523`); `conversa.py` continua no repositório, fora do painel.
+**Atualização (10/2026):** por pedido do autor (o trabalho precisa ter IA
+de verdade), a caixa **voltou como "Pergunte à Lia"**, junto dos botões e
+sem mexer neles, mas com outro motor (`entendimento.py` + `assistente.py`,
+Gemini só reescrevendo números que o Escudo calculou). Ver
+`docs/IA_DO_ESCUDO.md`.
 
 **Passeio pelo Escudo** (`algoritimos/passeio.py`). Uma interação a
 mais, logo abaixo da Lia na lateral, com cor e forma próprias
@@ -142,9 +147,11 @@ de novo, o Passeio e as 5 abas.
 
 ## O que fica fora da versão 1.0 (de propósito)
 
-Escolha de perfil (gestora / pesquisadora / estudante / cidadã),
-comparação entre cidades (precisa da população do IBGE), voz,
+Escolha de perfil (gestora / pesquisadora / estudante / cidadã), voz,
 animação, memória entre visitas, personalidade gerada pela IA.
+(A comparação entre cidades e o ranking por 100 mil mulheres já existem
+desde 10/2026: o ranking entrou depois que a população do IBGE foi
+carregada.)
 
 ## Onde fica no código
 

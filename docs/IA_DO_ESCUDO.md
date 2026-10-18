@@ -154,3 +154,27 @@ A página Apoio é para quem **procura cuidado**, então o desenho é mais caute
 - Segurança (violência, risco de vida, emergência) e sintoma pessoal: texto fixo, sem IA. As perguntas do Apoio não são gravadas em lugar nenhum (o teste prova que a página não abre o banco).
 
 **Medição** (`gabarito_apoio.json`, 86 perguntas escritas antes do motor; `py algoritimos\teste_apoio_busca.py`). Primeira execução, sem ajuste: desenvolvimento 12 de 37 diretas e corretas, 0 erradas; **final, às cegas: 19 de 30 (63%), 0 erradas, o item certo entre os 3 primeiros em 29 de 30**, segurança/saudação/sintoma 5 de 6, fora do assunto 2 de 3. Depois dos ajustes: 26 de 37 e 21 de 30 (70%), 0 erradas — o final **já não é independente**. Limites: perguntas da equipe, não de usuárias; vocabulário popular do Apoio precisa da revisão do autor; "como declarar imposto de renda" encontra o item de isenção do IR para quem tem câncer (aceitável no contexto, mas conta como não recusada no gabarito).
+
+## 8. Bases novas, polos de tratamento, hospital pela cidade e segurança (17/10/2026)
+
+**Assuntos novos que entram por gatilho, não pelo índice** (`entendimento._por_gatilho`). Colocar as frases no índice mudava a resposta de 6
+perguntas dos gabaritos (medido); por gatilho as medições ficaram idênticas (80/47/33 diretas):
+- `tratamento` (quimio e radio, em APACs, nunca "mulheres"), `mortalidade_real` (SIM x SIH, "não se subtraem") e `polos` (cidades que mais
+  tratam: onde a internação acontece, com a parcela de fora e a razão entre o que o hospital trata e o que as moradoras da cidade internam).
+  O ranking por 100 mil mulheres conta onde a mulher mora e agora diz isso, e oferece o botão do outro lado.
+
+**Hospital de câncer a partir da cidade que a pessoa cita** (`assistente._hospital_de_cancer`). Hospital de câncer pelo SUS não se escolhe por
+proximidade e a cidade do painel (Rio Claro) não é a de quem pergunta. "Moro em Catanduva..." mostra os hospitais do catálogo ligados àquela cidade
+ou, sem eles, os três mais próximos em **linha reta entre os centros** (`localizacao.py`), sempre dizendo que a regulação decide. Cidade fora da tabela
+não recebe distância inventada. "Qual o melhor hospital" recebe "o Escudo não classifica hospitais".
+
+**Terceiro teste com uma pessoa (autor, 17/10/2026): falha de segurança encontrada e corrigida.** "meu marido tá me agredindo, me ajuda" virou pedido
+de ajuda genérico, sem 190/180: o padrão só reconhecia formas fixas ("ele me bate"). Agora pega gerúndio, voz passiva ("estou sendo agredida"),
+"tenho medo dele" e "violência doméstica", sem falso positivo nos gabaritos ("violência sexual" sozinha continua sendo consulta do catálogo do Apoio).
+No mesmo teste: 3 de 4 certas na primeira rodada de perguntas novas; a quarta (ranking por população) foi lida como se contasse o hospital, o que levou à
+reescrita do texto e à criação dos polos.
+
+**O que continua sem comprovação:** o ranking por 100 mil e os polos com o banco real (só conferido com dados sintéticos); o SP Por Todas como fonte
+do itinerário das carretas (só o Poupatempo foi confirmado); o botão "🏠 Início" do Apoio depois que o Codex trocou o caminho da navegação; um conjunto de
+perguntas novo, escrito às cegas por outras pessoas, para medir de novo.
+

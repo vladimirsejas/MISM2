@@ -81,3 +81,29 @@ estimativa menos firme — por isso o aviso fica sempre visível.
 Por mês, no Estado, o crescimento é suave em todos os cânceres (mama:
 1.387, 1.557, 1.794, 1.908 e 1.982 AIHs por mês de 2021 a 2025), o
 que confirma que os saltos anuais vinham da falta de meses.
+
+## Outras fontes além do SIH (17/10/2026)
+
+O Escudo nasceu só com o SIH (internações). A pergunta do autor ("por que só o SIH?") levou a trazer mais cinco fontes, cada uma
+respondendo algo que o SIH não responde. Tudo é baixado por `py -3.12 etl\carregar_tudo_pysus.py` e só grava **agregados**
+(nenhum cartão SUS, CEP, nascimento ou número de documento). `py etl\validar_bases_novas.py` confere o que entrou.
+
+| Fonte | O que traz | O que NÃO traz |
+|---|---|---|
+| **População** (IBGE, Censo 2022, tabela 9514) | mulheres por município; base do ranking por 100 mil | população por faixa etária |
+| **Centros dos municípios** (IBGE, malha) | latitude e longitude do centro de cada cidade de SP | rota, tempo de viagem |
+| **SIA** (APACs de quimio AQ e radio AR) | tratamento ambulatorial por cidade de residência, câncer, faixa, estadiamento e raça/cor | número de mulheres: APAC é a autorização de um procedimento, não uma pessoa |
+| **SIM** (declarações de óbito, `DOSP`) | todas as mortes por câncer, por cidade de residência e local do óbito | causa da diferença para o SIH |
+| **CNES** (equipamentos EQ e leitos LT) | existentes, em uso e do SUS por município e ano, em **códigos crus** | o nome do equipamento: o dicionário do CNES ainda não foi conferido, então "mamógrafo" ainda não aparece na Lia |
+
+**O que foi conferido na carga real (17/10/2026, notebook do autor):**
+- SIA: 2013 a 2025 completos; 6.538.473 APACs de quimio e 248.782 de radio de mulheres. Rio Claro, quimio: 2.120 (2013) a 4.092 (2025).
+- SIM: 2013 a 2023 completos; 10.526 (2013) a 14.711 (2023) mortes de mulheres pelos 7 cânceres em SP. 86,5% no hospital, 8,2% em casa.
+- Raça/cor: os códigos diferem entre SIA (03 parda, 04 amarela) e SIM (4 parda, 3 amarela). A conferência de plausibilidade passou nas duas
+  bases (parda bem maior que amarela). O script avisa se isso se inverter.
+- CNES: 248.470 linhas de equipamentos e 49.666 de leitos, 13 anos (competência de dezembro).
+- SIM x SIH, Rio Claro, 2023: **71** mortes por câncer pelo SIM contra **10** óbitos durante internação pelo SIH. O SIH só enxerga a morte
+  que acontece numa internação por câncer em hospital de SP. O Escudo mostra os dois lado a lado e **não** explica a diferença.
+
+Limites desta carga: a nuvem não alcança o DATASUS nem o IBGE, então os ETLs foram testados com dados simulados e depois rodados no
+notebook do autor. O SIM foi carregado só até 2023 (a carga foi configurada assim); 2024 e 2025 não foram tentados, então não se sabe se a fonte já os oferece.
