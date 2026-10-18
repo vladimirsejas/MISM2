@@ -292,9 +292,12 @@ try:
     perguntar_no_apoio(at, "Tenho câncer no intestino. Onde procuro ajuda?")
     atual = at.session_state["ap_lia"]["atual"]
     rotulos = " ".join(b.label for b in botoes_lia(at)).lower()
-    checar("F. câncer de intestino: a Lia abre o cartão do intestino, a página vai para Outros cânceres e nada de mamografia",
-           not erros(at) and "cancer_intestino" in atual.candidatos and at.session_state["ap_caminho"] == "outros"
-           and "Sinais que merecem avaliação" in lateral(at) and "mamogra" not in rotulos and atual.tipo_cancer == "colorretal")
+    # "onde procuro ajuda?" pede o CAMINHO: abre a jornada do exame de intestino (18/10/2026); a pergunta geral abre o cartão do câncer
+    checar("F. câncer de intestino: a Lia abre o conteúdo do intestino, a página vai para Outros cânceres e nada de mamografia",
+           not erros(at) and {"cancer_intestino", "jornada_exame_intestino"} & set(atual.candidatos)
+           and at.session_state["ap_caminho"] == "outros"
+           and ("Rastreamento ou sintomas?" in lateral(at) or "Sinais que merecem avaliação" in lateral(at))
+           and "mamogra" not in rotulos and atual.tipo_cancer == "colorretal")
     perguntar_no_apoio(at, "e os sinais?")
     atual = at.session_state["ap_lia"]["atual"]
     checar("F. 'e os sinais?' segue o câncer em foco (só memória da sessão)",
@@ -303,7 +306,7 @@ try:
     atual = at.session_state["ap_lia"]["atual"]
     checar("F. mudou de assunto: 'e o de pulmão?' abre o pulmão e deixa o intestino",
            not erros(at) and "cancer_pulmao" in atual.candidatos and atual.tipo_cancer == "pulmao"
-           and "cancer_intestino" not in atual.candidatos)
+           and not {"cancer_intestino", "jornada_exame_intestino"} & set(atual.candidatos))
     perguntar_no_apoio(at, "Estou com uma ferida que não cicatriza.")
     atual = at.session_state["ap_lia"]["atual"]
     checar("F. ferida que não cicatriza: texto fixo de sintoma e botão para os sinais do câncer de pele, sem diagnosticar",
