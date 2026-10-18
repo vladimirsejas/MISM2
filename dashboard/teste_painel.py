@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import time
@@ -276,6 +277,57 @@ def main():
                and "não muda quando você troca de cidade" in textos)
         checar("F. fluxo: a leitura cita Minas Gerais, Barretos e o aviso de que conta internações",
                "Minas Gerais" in textos and "Barretos" in textos and "internações, não pessoas" in textos)
+
+        # hospitais habilitados no mapa de estados (10/2026): chave ligada por padrão, desligável; sem arquivo de posições, avisa
+        import csv
+        import tempfile
+        import hospitais_oncologia as hosp_onco
+        carregar_original = hosp_onco.carregar
+        campos = ["cnes", "uf", "municipio", "nome", "nome_ministerio", "tipo", "habilitacao", "endereco", "cep", "telefone", "lat", "lon", "no_mapa", "motivo"]
+        hospitais = [("2090236", "SP", "Barretos", "Hospital de Amor", "CACON", -20.557, -48.567, "sim"),
+                     ("2082888", "SP", "Rio Claro", "Santa Casa de Rio Claro", "UNACON", -22.409, -47.560, "sim"),
+                     ("1", "AM", "Manaus", "Centro de Oncologia de Manaus", "UNACON", -3.119, -60.021, "sim"),
+                     ("2", "MT", "Cuiabá", "Hospital sem posição", "UNACON", "", "", "não")]
+        with tempfile.TemporaryDirectory() as pasta_h:
+            with open(os.path.join(pasta_h, "hospitais_oncologia_br_geo.csv"), "w", encoding="utf-8-sig", newline="") as f:
+                w = csv.writer(f, delimiter=";")
+                w.writerow(campos)
+                for cn, uf, mu, no, ti, la, lo, nm in hospitais:
+                    w.writerow([cn, uf, mu, no, no, ti, ti, "", "", "", la, lo, nm, "" if nm == "sim" else "cadastro desabilitado"])
+            hosp_onco.carregar = lambda: carregar_original(pasta_h)
+            st_cache = __import__("streamlit").cache_data
+            try:
+                st_cache.clear()
+                at = abrir()
+                at.session_state["aba"] = "Investigar"
+                at.run()
+                textos = " ".join(str(m.value) for m in at.markdown)
+                liga = [x for x in at.toggle if "hospitais habilitados em oncologia" in x.label]
+                tracos = json.dumps([json.loads(g.proto.spec) for g in at.get("plotly_chart")])
+                checar("F. hospitais no mapa de estados: a chave aparece ligada e os tipos entram como pontos",
+                       not erros(at) and len(liga) == 1 and liga[0].value is True and '"name": "UNACON"' in tracos and '"name": "CACON"' in tracos)
+                checar("F. hospitais no mapa: só os 3 com posição (o sem posição não entra) e os nomes ficam no balão",
+                       "Hospital de Amor" in tracos and "Centro de Oncologia de Manaus" in tracos and "Hospital sem posição" not in tracos)
+                checar("F. hospitais no mapa: a leitura conta (3: 2 em SP, 1 fora), lembra que não é vaga e que não explica o motivo",
+                       "3 hospitais habilitados em oncologia" in textos and "2 em SP e 1 em outros estados" in textos
+                       and "não explica por que vêm" in textos and "Habilitado não quer dizer vaga" in textos)
+                liga[0].set_value(False).run()
+                tracos = json.dumps([json.loads(g.proto.spec) for g in at.get("plotly_chart")])
+                textos = " ".join(str(m.value) for m in at.markdown)
+                checar("F. hospitais no mapa: desligando a chave, os pontos e a frase somem e o resto do mapa continua",
+                       not erros(at) and "Hospital de Amor" not in tracos and "hospitais habilitados em oncologia pelo" not in textos
+                       and "Minas Gerais" in textos)
+                hosp_onco.carregar = lambda: carregar_original(pasta_h + "_nao_existe")
+                st_cache.clear()
+                at = abrir()
+                at.session_state["aba"] = "Investigar"
+                at.run()
+                legendas = " ".join(str(c.value) for c in at.caption)
+                checar("F. hospitais no mapa: sem arquivo de posições a seção avisa o comando e não quebra",
+                       not erros(at) and "gerar_hospitais_oncologia_geo" in legendas and not [x for x in at.toggle if "hospitais habilitados" in x.label])
+            finally:
+                hosp_onco.carregar = carregar_original
+                st_cache.clear()
     finally:
         inteligencia.carregar_fluxo, inteligencia.fluxo_da_cidade = fluxo_original, cidade_original
 

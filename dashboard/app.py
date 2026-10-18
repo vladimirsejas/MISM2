@@ -14,6 +14,7 @@ from lia import INICIO, Contexto, responder as lia_responder
 from assistente import IA, acao as acao_assistente, obter_ia, responder_escolha, responder_pergunta
 from conversa import registrar_pergunta
 from localizacao import carregar_localizacao
+import hospitais_oncologia as hosp_onco
 from passeio import PARADAS, parada as passeio_parada
 from lia_rosto import img as rosto_lia
 from estilo import CSS
@@ -172,6 +173,12 @@ def porte_cidades():
         return porte_das_cidades(conn, UF_REFERENCIA)
     finally:
         conn.close()
+
+
+@st.cache_data(ttl=600)
+def hospitais_habilitados():
+    """Hospitais habilitados em oncologia (lista do Ministério + posição do CNES); vazio se os arquivos não existirem."""
+    return hosp_onco.carregar()
 
 
 @st.cache_data
@@ -393,7 +400,7 @@ if resumo.empty:
 
 ABAS = ["Panorama", "Evolução", "Investigar", "Planejamento", "Método"]
 PADROES = {"aba": "Panorama", "medida": "Internações",
-           "ver_estado": True, "ver_fora": True, "ver_projecao": False}
+           "ver_estado": True, "ver_fora": True, "ver_projecao": False, "ver_hospitais": True}
 for chave, valor in PADROES.items():
     st.session_state.setdefault(chave, valor)
 
@@ -855,6 +862,16 @@ if aba == "Investigar":
         st.markdown('<div class="escudo-dica">Como ler: quanto maior a bolha, mais internações de mulheres '
                     'daquele estado. Os estados estão na posição aproximada (centro de cada um), sem fronteiras; '
                     'cinza é estado sem internação de fora. Mostra de onde elas vêm, não o caminho que fizeram.</div>', unsafe_allow_html=True)
+        hosp_df = hospitais_habilitados()
+        hosp_pontos = hosp_df[hosp_df["no_mapa"]] if len(hosp_df) else hosp_df
+        ver_hospitais = False
+        if len(hosp_pontos):
+            ver_hospitais = chave_liga(st, "Mostrar também onde ficam os hospitais habilitados em oncologia", "ver_hospitais",
+                                       help="Pontos pequenos coloridos pelo tipo (UNACON, CACON...). Lista do Ministério da Saúde, habilitação 2023; "
+                                            "a posição vem do cadastro do CNES e só entra quem passou nas conferências.")
+        else:
+            st.caption("Os hospitais habilitados em oncologia ainda não têm posição neste computador "
+                       "(py etl\\gerar_hospitais_oncologia_geo.py); por isso não aparecem no mapa.")
         pontos, sem_posicao = pontos_mapa_fluxo(r_fluxo)
         if pontos.empty:
             st.info("Não há estados de origem para mostrar no mapa.")
@@ -877,6 +894,16 @@ if aba == "Investigar":
                 hovertext=[f"{e}: {formatar_numero(n)} internações ({formatar_numero(q, 1)}% das de fora)"
                            for e, n, q in zip(pontos["estado"], pontos["internacoes"], pontos["pct"])],
                 hoverinfo="text", showlegend=False))
+            if ver_hospitais:
+                for tipo_h in hosp_onco.ORDEM_TIPOS:
+                    q = hosp_pontos[hosp_pontos["tipo"].astype(str) == tipo_h]
+                    if q.empty:
+                        continue
+                    fig.add_trace(go.Scatter(
+                        x=q["lon"], y=q["lat"], mode="markers", name=tipo_h, showlegend=True,
+                        marker={"size": 7, "color": hosp_onco.TIPOS[tipo_h][0], "line": {"width": 1, "color": "#ffffff"}},
+                        hovertext=[f"{n} · {m} ({u}) · {tipo_h}" for n, m, u in zip(q["nome"], q["municipio"], q["uf"])],
+                        hoverinfo="text"))
             fig.add_trace(go.Scatter(
                 x=[CENTROS_UF["SP"][1]], y=[CENTROS_UF["SP"][0]], mode="markers+text", text=["SP"],
                 textposition="bottom center", textfont={"size": 10, "color": "#c0392b"},
@@ -885,7 +912,8 @@ if aba == "Investigar":
             fig.update_xaxes(visible=False, range=[-76, -32])
             fig.update_yaxes(visible=False, range=[-35, 6], scaleanchor="x", scaleratio=1)
             estilizar(fig, altura=560)
-            fig.update_layout(showlegend=False, margin={"l": 0, "r": 0, "t": 10, "b": 0})
+            fig.update_layout(showlegend=ver_hospitais, margin={"l": 0, "r": 0, "t": 10, "b": 0},
+                              legend={"orientation": "h", "x": 0, "y": 0.02, "bgcolor": "rgba(255,255,255,0.7)"})
             st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO)
             topo = pontos.iloc[0]
             frases = [f"{topo['estado']} é o estado com mais internações de mulheres de fora "
@@ -895,7 +923,17 @@ if aba == "Investigar":
             if sem_posicao:
                 frases.append(f"{formatar_numero(sem_posicao)} internações vêm de residência sem posição no mapa "
                               "e não aparecem nas bolhas.")
+            if ver_hospitais:
+                n_h, n_sp_h = len(hosp_pontos), int((hosp_pontos["uf"] == "SP").sum())
+                frases.append(f"Os pontos pequenos são {formatar_numero(n_h)} hospitais habilitados em oncologia pelo Ministério da Saúde "
+                              f"(lista de 2023): {formatar_numero(n_sp_h)} em SP e {formatar_numero(n_h - n_sp_h)} em outros estados. "
+                              "O mapa mostra de onde elas vêm e onde ficam os hospitais; não explica por que vêm. "
+                              "Habilitado não quer dizer vaga: o acesso é pela regulação.")
             leitura("O que o mapa mostra", frases)
+            try:
+                st.page_link("pages/hospitais_cancer.py", label="🗺️ Ver o mapa dos hospitais com mais detalhes (nome, telefone, os mais próximos da sua cidade)")
+            except Exception:  # Streamlit antigo, sem page_link
+                pass
 
         st.markdown('<div class="escudo-dica">Como ler: cada faixa liga o estado onde a mulher mora (à esquerda) '
                     'ao município do hospital de SP onde foi internada (à direita). A largura é o número de '
