@@ -1336,9 +1336,10 @@ for _tipo, _ids in _MARCAS_CANCER.items():
 for _id, _tipos in _MARCAS_VARIOS.items():
     POR_ID[_id]["cancer"] = _tipos
 # CNES conferidos no banco do autor em 18/10/2026 (nome oficial na tabela `hospitais` e município do hospital em `internacoes`
-# batem). Uma lista de IA trazia também 9662561 para o Hospital de Amor: NÃO existe no banco; o real é 2090236 (Fundação Pio XII).
+# batem; 7400926 = Fundação Hospital Regional do Câncer, Presidente Prudente, 1.737 internações, conferido em 18/10/2026). Uma lista de IA trazia também 9662561 para o Hospital de Amor: NÃO existe no banco; o real é 2090236 (Fundação Pio XII).
 _CNES_CONFERIDOS = {"icesp": "6123740", "amaral_carvalho": "2083086", "hc_unicamp": "2079798",
-                    "hc_ribeirao": "2082187", "ha_quem_e": "2090236"}
+                    "hc_ribeirao": "2082187", "ha_quem_e": "2090236",
+                    "prudente_cancer": "7400926"}
 for _id, _cnes in _CNES_CONFERIDOS.items():
     POR_ID[_id]["cnes"] = _cnes
 # Cada página do INCA fala de UMA doença (autor, 18/10/2026: "cada um fala de uma doença, mas precisamos de mais"). Os cartões de câncer da
