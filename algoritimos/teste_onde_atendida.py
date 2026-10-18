@@ -76,6 +76,10 @@ def main():
         {"cnes": "2080003", "nome": "Clinica Estrela", "tipo": "Clínica", "grupo": "especialidade",
          "natureza": "privada", "endereco": "Rua 7, 45", "bairro": "Vila Nova", "cep": "", "telefone": "",
          "lat": float("nan"), "lon": float("nan"), "mapa": False},
+        {"cnes": "2080004", "nome": "AME Rio Claro", "tipo": "Ambulatório", "grupo": "especialidade",
+         "natureza": "publica", "endereco": "Rua Saúde, 10", "bairro": "Centro", "cep": "", "telefone": "",
+         "lat": float("nan"), "lon": float("nan"), "mapa": False,
+         "servicos": "MAMOGRAFIA | ULTRASONOGRAFIA | EXAMES CITOPATOLOGICOS | DO APARELHO GINECOLOGICO"},
     ])
     cnes.attrs.update({"tem_natureza": True, "arquivo": "tbEstabelecimento202608.csv"})
     df = oa.unificar(cnes, servicos)
@@ -87,6 +91,13 @@ def main():
     assert hosp["telefone"] == "(19) 3534-0000", "o telefone do CNES não é trocado pelo do catálogo"
     assert "Clinica Estrela" in set(df["nome"]) and set(df["grupo"].astype(str)) <= set(oa.ORDEM)
     print("[OK] com CNES: cruza por código e por nome, enriquece e não duplica")
+
+    assert list(oa.filtrar(df, "especialidade", busca="onde fazer mamo pelo sus")["nome"]) == ["AME Rio Claro"]
+    assert list(oa.filtrar(df, "especialidade", busca="ultrassom")["nome"]) == ["AME Rio Claro"]
+    assert list(oa.filtrar(df, "especialidade", busca="preventivo papanicolau")["nome"]) == ["AME Rio Claro"]
+    assert list(oa.filtrar(df, "especialidade", busca="ginecologista")["nome"]) == ["AME Rio Claro"]
+    assert oa.termos_servico_buscados("onde fazer mamo pelo sus") == ("MAMOGRAFIA",)
+    print("[OK] busca por serviço CNES e nomes populares de exames/especialistas")
 
     # filtros
     assert list(oa.filtrar(df, "hospital")["nome"]) == ["Hospital Sem Codigo"]

@@ -45,6 +45,7 @@ CAIXA_RIO_CLARO = (-22.65, -22.15, -48.05, -47.15)  # lat_min, lat_max, lon_min,
 # Nomes das colunas do CNES variam entre as versões do arquivo; cada
 # campo aceita várias (sem acento, maiúsculas, _ no lugar de espaço).
 ALIASES = {
+    "unidade": ("CO_UNIDADE",),
     "municipio_local": ("CO_IBGE", "CO_MUNICIPIO", "CO_MUNICIPIO_IBGE", "COD_IBGE", "CO_MUNICIPIO_ESTABELECIMENTO"),
     "municipio_gestor": ("CO_MUNICIPIO_GESTOR",),
     "cnes": ("CO_CNES", "CNES", "COD_CNES"),
@@ -296,6 +297,71 @@ def _mapear_colunas(colunas):
     return achados
 
 
+def _colunas_por_nome(caminho):
+    """Lê apenas o cabeçalho e devolve nomes de coluna comparáveis do arquivo CNES."""
+    cod = _codificacao(caminho)
+    sep = _separador(caminho, cod)
+    colunas = list(pd.read_csv(caminho, sep=sep, encoding=cod, dtype=str, nrows=0).columns)
+    return sep, cod, {_chave(c): c for c in colunas}
+
+
+def _servicos_cnes(caminho_estabelecimento, unidades, tamanho_pedaco=TAMANHO_PEDACO):
+    """Agrupa serviços e classificações pelas unidades selecionadas, sem ler dados profissionais."""
+    unidades = {so_digitos(u) for u in unidades if so_digitos(u)}
+    if not unidades:
+        return {}, ""
+    mes = re.search(r"(\d{6})\.csv$", os.path.basename(caminho_estabelecimento), re.IGNORECASE)
+    if not mes:
+        return {}, "O mês do arquivo de estabelecimentos não foi reconhecido; serviços CNES não carregados."
+    pasta = os.path.dirname(caminho_estabelecimento)
+    relacao = os.path.join(pasta, f"rlEstabServClass{mes.group(1)}.csv")
+    classificacoes = os.path.join(pasta, f"tbClassificacaoServico{mes.group(1)}.csv")
+    servicos = os.path.join(pasta, f"tbServicoEspecializado{mes.group(1)}.csv")
+    if not all(os.path.isfile(p) for p in (relacao, classificacoes, servicos)):
+        return {}, "Os arquivos de serviços do CNES do mesmo mês não estão disponíveis."
+
+    try:
+        sep_c, cod_c, cols_c = _colunas_por_nome(classificacoes)
+        sep_s, cod_s, cols_s = _colunas_por_nome(servicos)
+        _, _, cols_r = _colunas_por_nome(relacao)
+        # A relação só traz códigos nas colunas consumidas e pode conter bytes de usuário CNES
+        # que não seguem UTF-8. Latin-1 preserva esses códigos sem interromper o processamento.
+        sep_r, cod_r = _separador(relacao, "latin-1"), "latin-1"
+        class_cols = [cols_c[_chave(k)] for k in ("CO_SERVICO_ESPECIALIZADO", "CO_CLASSIFICACAO_SERVICO", "DS_CLASSIFICACAO_SERVICO")]
+        service_cols = [cols_s[_chave(k)] for k in ("CO_SERVICO_ESPECIALIZADO", "DS_SERVICO_ESPECIALIZADO")]
+        relation_cols = [cols_r[_chave(k)] for k in ("CO_UNIDADE", "CO_SERVICO", "CO_CLASSIFICACAO")]
+        classes = pd.read_csv(classificacoes, sep=sep_c, encoding=cod_c, dtype=str, usecols=class_cols,
+                              keep_default_na=False, low_memory=False)
+        nomes_classes = {
+            (so_digitos(r[class_cols[0]]), so_digitos(r[class_cols[1]])): str(r[class_cols[2]]).strip()
+            for _, r in classes.iterrows() if str(r[class_cols[2]]).strip()
+        }
+        tabela_servicos = pd.read_csv(servicos, sep=sep_s, encoding=cod_s, dtype=str, usecols=service_cols,
+                                      keep_default_na=False, low_memory=False)
+        nomes_servicos = {
+            so_digitos(r[service_cols[0]]): str(r[service_cols[1]]).strip()
+            for _, r in tabela_servicos.iterrows() if str(r[service_cols[1]]).strip()
+        }
+        por_unidade = {}
+        for pedaco in pd.read_csv(relacao, sep=sep_r, encoding=cod_r, dtype=str, usecols=relation_cols,
+                                  chunksize=tamanho_pedaco, keep_default_na=False, low_memory=False):
+            ids = pedaco[relation_cols[0]].map(so_digitos)
+            pedaco = pedaco.loc[ids.isin(unidades)]
+            for _, r in pedaco.iterrows():
+                unidade = so_digitos(r[relation_cols[0]])
+                servico = so_digitos(r[relation_cols[1]])
+                classificacao = so_digitos(r[relation_cols[2]])
+                rotulo = nomes_classes.get((servico, classificacao), "")
+                nome_servico = nomes_servicos.get(servico, "")
+                if rotulo:
+                    por_unidade.setdefault(unidade, set()).add(rotulo)
+                if nome_servico:
+                    por_unidade.setdefault(unidade, set()).add(nome_servico)
+        return {u: " | ".join(sorted(rotulos)) for u, rotulos in por_unidade.items()}, ""
+    except (OSError, ValueError, KeyError, pd.errors.ParserError, pd.errors.EmptyDataError) as erro:
+        return {}, f"Não foi possível ler as relações de serviços do CNES: {erro}"
+
+
 def _vazio(aviso):
     df = pd.DataFrame()
     df.attrs["aviso"] = aviso
@@ -363,9 +429,12 @@ def carregar_unidades(pasta=PASTA_CNES, codigo_ibge=CODIGO_IBGE_PADRAO, nome_cid
         motivo = coluna("desabilitado").map(so_digitos).str.lstrip("0")
         ativo = motivo == ""
     desabilitados = int((~ativo).sum())
+    ids_unidade = (coluna("unidade") if "unidade" in achados else pd.Series("", index=bruto.index))
+    servicos_por_unidade, aviso_servicos = _servicos_cnes(caminho, ids_unidade[ativo], tamanho_pedaco)
 
     df = pd.DataFrame({
         "cnes": coluna("cnes").map(so_digitos).str.zfill(7),
+        "servicos": [servicos_por_unidade.get(so_digitos(u), "") for u in ids_unidade],
         "nome": [nome_legivel(n) or nome_legivel(r) for n, r in
                  zip(coluna("nome"), coluna("razao") if "razao" in achados else coluna("nome"))],
         "tipo_codigo": coluna("tipo_codigo"),
@@ -392,7 +461,7 @@ def carregar_unidades(pasta=PASTA_CNES, codigo_ibge=CODIGO_IBGE_PADRAO, nome_cid
     df["grupo"] = pd.Categorical(df["grupo"], categories=ORDEM_GRUPOS, ordered=True)
     df = df.sort_values(["grupo", "nome"]).reset_index(drop=True)
     df = df[["cnes", "nome", "tipo", "grupo", "natureza", "endereco", "bairro", "cep", "telefone",
-             "lat", "lon", "mapa", "link_mapa"]]
+             "lat", "lon", "mapa", "link_mapa", "servicos"]]
 
     df.attrs.update({
         "arquivo": os.path.basename(caminho), "criterio_municipio": criterio, "desabilitados": desabilitados,
@@ -401,6 +470,7 @@ def carregar_unidades(pasta=PASTA_CNES, codigo_ibge=CODIGO_IBGE_PADRAO, nome_cid
         "aviso": ("" if len(df) else
                   f"O arquivo {os.path.basename(caminho)} foi lido, mas nenhum estabelecimento tem o código "
                   f"{so_digitos(codigo_ibge)} na coluna de município ({achados[campo_municipio]})."),
+        "aviso_servicos": aviso_servicos,
     })
     return df
 
@@ -439,7 +509,9 @@ def filtrar(df, grupos=None, naturezas=None, busca="", bairro=None):
         saida = saida[saida["bairro"] == bairro]
     termo = _sem_acento(str(busca or "")).casefold().strip()
     if termo:
-        alvo = (saida["nome"] + " " + saida["endereco"] + " " + saida["cnes"]).map(lambda t: _sem_acento(t).casefold())
+        servicos = saida["servicos"] if "servicos" in saida else pd.Series("", index=saida.index)
+        alvo = (saida["nome"] + " " + saida["endereco"] + " " + saida["cnes"] + " " + servicos).map(
+            lambda t: _sem_acento(t).casefold())
         saida = saida[alvo.str.contains(re.escape(termo), na=False)]
     return saida.reset_index(drop=True)
 

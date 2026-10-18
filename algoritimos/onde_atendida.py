@@ -59,8 +59,27 @@ APOIO = {  # (tipo, subtipo) -> tipo em palavras
 
 PRIMEIRO_NO_APOIO = {"Secretaria da Mulher", "Delegacia de Defesa da Mulher", "Patrulha Maria da Penha", "Defensoria Pública"}
 
-COLUNAS = ["cnes", "nome", "tipo", "grupo", "natureza", "endereco", "bairro", "cep", "telefone", "horario",
+COLUNAS = ["cnes", "nome", "tipo", "grupo", "natureza", "endereco", "bairro", "cep", "telefone", "horario", "servicos",
            "conferido_em", "aviso", "fonte_url", "origem", "lat", "lon", "mapa", "link_chegar", "link_ligar"]
+
+# Tradução local de palavras que mulheres usam para descrições do cadastro CNES.
+# Os rótulos-alvo foram conferidos nas classificações existentes na base do projeto.
+SINONIMOS_SERVICOS = {
+    "mamo": ("MAMOGRAFIA",), "mamografia": ("MAMOGRAFIA",), "mamografias": ("MAMOGRAFIA",),
+    "ultrassom": ("ULTRASONOGRAFIA",), "ultra som": ("ULTRASONOGRAFIA",), "usg": ("ULTRASONOGRAFIA",),
+    "preventivo": ("EXAMES CITOPATOLOGICOS",), "papanicolau": ("EXAMES CITOPATOLOGICOS",),
+    "papanicolaou": ("EXAMES CITOPATOLOGICOS",),
+    "ginecologista": ("DO APARELHO GINECOLOGICO",), "ginecologia": ("DO APARELHO GINECOLOGICO",),
+    "raio x": ("RADIOLOGIA",), "raiox": ("RADIOLOGIA",), "radiografia": ("RADIOLOGIA",),
+    "laboratorio": ("SERVICO DE DIAGNOSTICO DE LABORATORIO CLINICO",),
+    "exame de sangue": ("SERVICO DE DIAGNOSTICO DE LABORATORIO CLINICO",),
+    "exames de sangue": ("SERVICO DE DIAGNOSTICO DE LABORATORIO CLINICO",),
+    "oncologista": ("ONCOLOGIA CLINICA",),
+}
+PARADA_BUSCA = {"A", "AO", "AOS", "AS", "COM", "DA", "DAS", "DE", "DO", "DOS", "E", "EM", "NA", "NAS", "NO", "NOS",
+                "O", "OS", "PARA", "PELO", "PELA", "POR", "QUERO", "PRECISO", "PROCURO", "PROCURE", "BUSCAR", "CONSIGO",
+                "ONDE", "FAZER", "FAZ", "TEM", "UM", "UMA", "SUS", "CONSULTA", "CONSULTAR", "AGENDAR", "AGENDAMENTO",
+                "MARCAR", "MARCACAO", "ATENDIMENTO", "ATENDER", "EXAME", "EXAMES"}
 
 
 def link_como_chegar(nome, endereco, cidade="Rio Claro"):
@@ -128,6 +147,7 @@ def _linha_do_catalogo(s, cidade):
         "nome": nome, "tipo": tipo_txt, "grupo": grupo, "natureza": "publica",
         "endereco": endereco, "bairro": "", "cep": us.cep_legivel(s.get("cep") or ""),
         "telefone": str(s.get("telefone") or "").strip(), "horario": str(s.get("horario") or "").strip(),
+        "servicos": "",
         "conferido_em": _data_br(s.get("verificado_em")), "aviso": aviso, "fonte_url": str(s.get("fonte_url") or ""),
         "origem": "catalogo", "lat": s.get("lat") if com_ponto else None, "lon": s.get("lon") if com_ponto else None,
         "mapa": bool(com_ponto),
@@ -142,6 +162,7 @@ def unificar(df_cnes, servicos, cidade="Rio Claro"):
     linhas = []
     for _, r in base.iterrows():
         d = r.to_dict()
+        d.setdefault("servicos", "")
         d.update({"horario": "", "conferido_em": "", "aviso": "", "fonte_url": "", "origem": "cnes"})
         linhas.append(d)
     por_cnes = {d["cnes"]: d for d in linhas if str(d.get("cnes") or "").strip("0")}
@@ -167,7 +188,7 @@ def unificar(df_cnes, servicos, cidade="Rio Claro"):
     df["grupo"] = pd.Categorical(df["grupo"], categories=ORDEM, ordered=True)
     df["link_chegar"] = [link_como_chegar(n, e, cidade) for n, e in zip(df["nome"], df["endereco"])]
     df["link_ligar"] = [link_ligar(t) for t in df["telefone"]]
-    for c in ("cnes", "bairro", "cep", "telefone", "horario", "conferido_em", "aviso", "fonte_url", "endereco", "tipo"):
+    for c in ("cnes", "bairro", "cep", "telefone", "horario", "servicos", "conferido_em", "aviso", "fonte_url", "endereco", "tipo"):
         df[c] = df[c].fillna("").astype(str)
     df["mapa"] = df["mapa"].fillna(False).astype(bool)
     # no apoio, primeiro o que é da mulher (Secretaria, delegacia, patrulha, defensoria), depois a assistência social
@@ -189,13 +210,51 @@ def contar(df):
     return {g: int((df["grupo"].astype(str) == g).sum()) for g in ESCOLHAS}
 
 
+def _interpretar_busca(busca):
+    normalizada = us._chave(busca).strip("_")
+    termos = normalizada.split("_") if normalizada else []
+    encontrados, consumidos = [], set()
+    for apelido, rotulos in SINONIMOS_SERVICOS.items():
+        partes = us._chave(apelido).strip("_").split("_")
+        for inicio in range(len(termos) - len(partes) + 1):
+            fim = inicio + len(partes)
+            if termos[inicio:fim] == partes:
+                encontrados.extend(rotulos)
+                consumidos.update(range(inicio, fim))
+    residuais = [t for i, t in enumerate(termos) if i not in consumidos and t not in PARADA_BUSCA]
+    if not residuais and not encontrados:
+        residuais = termos
+    return tuple(dict.fromkeys(encontrados)), residuais
+
+
+def termos_servico_buscados(busca):
+    """Classificações CNES correspondentes ao termo popular informado, para explicar o resultado na tela."""
+    return _interpretar_busca(busca)[0]
+
+
 def filtrar(df, escolha=None, busca="", so_publicos=False):
-    """Lista da escolha (ou de todas as escolhas, se houver busca). Texto da busca: nome, tipo, endereço, bairro."""
+    """Busca por unidade/local ou serviço CNES, incluindo palavras comuns para exames e especialidades."""
     saida = df
-    texto = us._chave(busca).replace("_", "")
-    if texto:
-        alvo = (df["nome"] + " " + df["tipo"] + " " + df["endereco"] + " " + df["bairro"]).map(lambda t: us._chave(t).replace("_", ""))
-        saida = df[alvo.str.contains(texto, regex=False)]
+    normalizada = us._chave(busca).strip("_")
+    if normalizada:
+        encontrados, residuais = _interpretar_busca(busca)
+
+        def normalizar_texto(valor):
+            return us._chave(valor).strip("_")
+
+        nomes = (df["nome"].fillna("") + " " + df["tipo"].fillna("") + " " + df["endereco"].fillna("") + " " + df["bairro"].fillna("")).map(normalizar_texto)
+        servicos = df["servicos"].fillna("").map(normalizar_texto) if "servicos" in df else pd.Series("", index=df.index)
+        mask = pd.Series(True, index=df.index)
+        for termo in residuais:
+            mask &= (nomes + " " + servicos).str.contains(termo, regex=False)
+        if encontrados:
+            servicos_norm = servicos.map(lambda t: t.replace("_", " "))
+            encontrou_servico = pd.Series(False, index=df.index)
+            for rotulo in set(encontrados):
+                canonico = normalizar_texto(rotulo).replace("_", " ")
+                encontrou_servico |= servicos_norm.str.contains(canonico, regex=False)
+            mask &= encontrou_servico
+        saida = df[mask]
     elif escolha:
         saida = df[df["grupo"].astype(str) == escolha]
     if so_publicos and "natureza" in saida:
