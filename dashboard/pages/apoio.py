@@ -82,13 +82,21 @@ a.apoio-botao:hover { background: #1f5fae; }
                       color: #4a3d78; font-weight: 600; font-size: .9rem; }
 .apoio-jornada span.ativo { background: #4a3d78; border-color: #4a3d78; color: #fff; }
 .apoio-jornada i { color: #9b8fc4; font-style: normal; }
-.apoio-jornada-diagnostico { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-                              gap: 8px; list-style: none; padding: 0; margin: 14px 0; }
-.apoio-jornada-diagnostico li { background: #fff; border: 1px solid #e3dcf2; border-radius: 12px;
-                                padding: 12px; min-width: 0; }
+.apoio-jornada-diagnostico { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px;
+                              list-style: none; padding: 0; margin: 14px 0; }
+.apoio-jornada-diagnostico li { position: relative; display: grid; grid-template-columns: 42px minmax(0, 1fr);
+                                gap: 10px; align-items: start; background: #fff; border: 1px solid #d4cbe8;
+                                border-radius: 12px; padding: 12px; min-width: 0; }
 .apoio-jornada-diagnostico li.atual { background: #f1eef8; border-color: #4a3d78; }
-.apoio-jornada-diagnostico b, .apoio-jornada-diagnostico span { display: block; }
-.apoio-jornada-diagnostico span { color: #625d72; font-size: .88rem; margin-top: 4px; }
+.apoio-jornada-numero { display: grid !important; place-items: center; width: 34px; height: 34px; margin: 0 !important;
+                        border-radius: 50%; background: #4a3d78; color: #fff !important; font-weight: 700; }
+.apoio-jornada-conteudo b, .apoio-jornada-conteudo span { display: block; }
+.apoio-jornada-conteudo span { color: #514b64; font-size: .92rem; margin-top: 4px; }
+.apoio-jornada-conector { position: absolute; left: 22px; bottom: -22px; z-index: 1; color: #4a3d78;
+                          font-size: 1.15rem; font-weight: 800; }
+.apoio-jornada-diagnostico li:last-child .apoio-jornada-conector { display: none; }
+.apoio-recuperar-caminho { margin-top: 18px; padding: 12px 14px; background: #f6f3fb;
+                           border-left: 5px solid #7565a8; border-radius: 10px; color: #292541; }
 .apoio-grupo { font-family: 'Manrope', sans-serif; font-weight: 700; color: #4a3d78; font-size: 1rem; margin: 18px 0 0; }
 </style>
 """, unsafe_allow_html=True)
@@ -101,6 +109,7 @@ PADROES = {"ap_aba": ABAS[0], "ap_caminho": "mama", "ap_item": None, "ap_etapa":
            **{f"ap_grupo_{lam}": TODOS[lam] for lam in apoio.GRUPOS}}
 for chave, valor in PADROES.items():
     st.session_state.setdefault(chave, valor)
+st.session_state.setdefault("caixa_ap_gemini_ativo", False)
 st.session_state.setdefault("ap_lia", {"atual": apoio.responder(INICIO), "pilha": [], "falas": 0})
 lia_estado = st.session_state["ap_lia"]
 
@@ -149,6 +158,44 @@ def lia_clicar(acao):
     lia_mostrar(apoio.responder(acao))
 
 
+def contexto_da_resposta(resposta):
+    destino = getattr(resposta, "destino", None) or {}
+    aba = destino.get("aba")
+    caminho = destino.get("caminho")
+    etapa = destino.get("etapa")
+    if aba == apoio.LAMINAS["caminho"]:
+        chave = caminho or "caminho"
+        rotulo = apoio.NOME_ETAPA.get(etapa) or ROTULO.get(chave) or aba
+        return (aba, caminho, etapa), rotulo
+    chave = next((k for k, nome in apoio.LAMINAS.items() if nome == aba), None)
+    return (aba, chave, None), aba or "esta área"
+
+
+def contexto_da_aba_atual():
+    aba = st.session_state.get("ap_aba", ABAS[0])
+    if aba == apoio.LAMINAS["caminho"]:
+        caminho = st.session_state.get("ap_caminho")
+        etapa = st.session_state.get("ap_etapa") if caminho == "ajuda" else None
+        rotulo = apoio.NOME_ETAPA.get(etapa) or ROTULO.get(caminho) or aba
+        return (aba, caminho, etapa), rotulo
+    chave = next((k for k, nome in apoio.LAMINAS.items() if nome == aba), None)
+    return (aba, chave, None), aba
+
+
+def falar_sobre_aba_atual():
+    aba = st.session_state.get("ap_aba", ABAS[0])
+    if aba == apoio.LAMINAS["caminho"]:
+        etapa = st.session_state.get("ap_etapa") if st.session_state.get("ap_caminho") == "ajuda" else None
+        acao = apoio.etapa(etapa) if etapa in apoio.NOME_ETAPA else apoio.caminho(
+            st.session_state.get("ap_caminho", "mama"))
+    elif aba == apoio.LAMINAS["sobre"]:
+        acao = apoio.SOBRE
+    else:
+        chave = next((k for k, nome in apoio.LAMINAS.items() if nome == aba), None)
+        acao = apoio.lamina(chave) if chave else INICIO
+    lia_clicar(acao)
+
+
 # Pergunte à Lia no Apoio (algoritimos/apoio_busca.py): a pessoa escreve e a Lia mostra o item do guia.
 # Nenhuma IA escreve sobre serviço (o texto é do catálogo conferido); o Gemini, se ligado, só ajuda a entender
 # a pergunta. As perguntas desta página NÃO são gravadas. Chaves "caixa_ap_*".
@@ -161,10 +208,72 @@ def enviar_pergunta(texto=None):
         st.session_state["caixa_ap_pendente"] = texto[:300]
 
 
+def assuntos_do_guia():
+    """Gera a lista de atalhos a partir dos caminhos, etapas e lâminas do catálogo."""
+    caminhos = {id: rotulo for id, rotulo, _, _ in apoio.CAMINHOS}
+    etapas = apoio.NOME_ETAPA
+    grupos = [
+        ("Prevenção e exames", [("caminho", "mama"), ("caminho", "colo"), ("etapa", "nao_fiz")]),
+        ("Exame alterado e diagnóstico", [("caminho", "diagnostico"), ("etapa", "alterado"),
+                                         ("etapa", "diagnostico_cancer")]),
+        ("Tratamento e direitos", [("caminho", "regulacao"), ("caminho", "tratamento"),
+                                   ("caminho", "rede"), ("caminho", "direitos"),
+                                   ("etapa", "encaminhada"), ("etapa", "em_tratamento")]),
+        ("Onde procurar (hospitais, Rio Claro, Barretos, carretas)",
+         [("lamina", "hospitais"), ("lamina", "rio_claro"), ("lamina", "barretos"),
+          ("lamina", "carretas")]),
+        ("Proteção", [("etapa", "violencia")]),
+    ]
+    for titulo, referencias in grupos:
+        assuntos = []
+        for tipo, id in referencias:
+            if tipo == "caminho" and id in caminhos:
+                rotulo = caminhos[id]
+                acao = apoio.caminho(id)
+                pergunta_modelo = f"Quero orientação sobre {rotulo.lower()}."
+            elif tipo == "etapa" and id in etapas:
+                rotulo = etapas[id]
+                acao = apoio.etapa(id)
+                pergunta_modelo = f"Minha situação é: {rotulo.lower()}."
+            elif tipo == "lamina" and id in apoio.LAMINAS:
+                rotulo = apoio.LAMINAS[id]
+                acao = apoio.lamina(id)
+                pergunta_modelo = f"Quero consultar {rotulo.lower()}."
+            else:
+                continue
+            assuntos.append({"tipo": tipo, "id": id, "rotulo": rotulo,
+                             "pergunta": pergunta_modelo, "acao": acao})
+        yield titulo, assuntos
+
+
+def mostrar_assunto(pergunta_modelo, acao=None):
+    """Mostra resposta do guia a partir de um atalho, sem classificador de IA."""
+    st.session_state["caixa_ap_texto"] = pergunta_modelo
+    if acao is None:
+        resposta = apoio_busca.responder_pergunta(pergunta_modelo, classificar=None)
+    else:
+        resposta = apoio.responder(acao)
+        resposta.pergunta = pergunta_modelo
+    lia_mostrar(resposta)
+
+
 def classificador_da_sessao():
+    if not st.session_state.get("caixa_ap_gemini_ativo", False):
+        return None
     if st.session_state.get("caixa_ap_ia", 0) >= LIMITE_PERGUNTAS_COM_IA:
         return None
-    return apoio_busca.obter_classificador()
+    classificar = apoio_busca.obter_classificador()
+    if classificar is None:
+        return None
+
+    def classificar_contando(*args, **kwargs):
+        chamadas = st.session_state.get("caixa_ap_ia", 0)
+        if chamadas >= LIMITE_PERGUNTAS_COM_IA:
+            return None
+        st.session_state["caixa_ap_ia"] = chamadas + 1
+        return classificar(*args, **kwargs)
+
+    return classificar_contando
 
 
 def lia_voltar():
@@ -365,14 +474,21 @@ def porta_ajuda():
     if e == "diagnostico_cancer":
         st.markdown("""
 <ol class="apoio-jornada-diagnostico" aria-label="Próximos passos depois do diagnóstico">
-  <li class="atual"><b>Diagnóstico confirmado</b><span>Você está aqui.</span></li>
-  <li><b>Converse com sua equipe de saúde</b><span>Pergunte quem acompanha seu encaminhamento e como receber notícias da vaga.</span></li>
-  <li><b>Regulação do SUS</b><span>A rede organiza o acesso ao serviço especializado.</span></li>
-  <li><b>Serviço especializado</b><span>A equipe avalia seu caso e conversa com você sobre o tratamento indicado.</span></li>
+  <li class="atual"><span class="apoio-jornada-numero" aria-hidden="true">1</span><div class="apoio-jornada-conteudo"><b>Diagnóstico confirmado</b><span>Você está aqui.</span></div><span class="apoio-jornada-conector" aria-hidden="true">↓</span></li>
+  <li><span class="apoio-jornada-numero" aria-hidden="true">2</span><div class="apoio-jornada-conteudo"><b>Converse com sua equipe de saúde</b><span><strong>Próximo passo:</strong> pergunte quem acompanha seu encaminhamento e como receber notícias da vaga.</span></div><span class="apoio-jornada-conector" aria-hidden="true">↓</span></li>
+  <li><span class="apoio-jornada-numero" aria-hidden="true">3</span><div class="apoio-jornada-conteudo"><b>Regulação do SUS</b><span>A rede organiza o acesso ao serviço especializado.</span></div><span class="apoio-jornada-conector" aria-hidden="true">↓</span></li>
+  <li><span class="apoio-jornada-numero" aria-hidden="true">4</span><div class="apoio-jornada-conteudo"><b>Serviço especializado</b><span>A equipe avalia seu caso e conversa com você sobre o tratamento indicado.</span></div></li>
 </ol>
 """, unsafe_allow_html=True)
         st.markdown("**Perguntas que você pode levar à equipe:** qual serviço está responsável pelo encaminhamento? Como acompanho a vaga? Quando devo voltar se ainda não tiver resposta? Leve o laudo e os exames que já tem, se puder."
                     )
+        st.markdown('<div class="apoio-recuperar-caminho"><b>Se a resposta demorar ou o encaminhamento não chegar</b></div>',
+                    unsafe_allow_html=True)
+        ids_retomada = ["nao_achei_nome", "lista_regulacao", "como_chegar_cross"]
+        if apoio.CIDADE.casefold() == "rio claro":
+            ids_retomada.append("rc_unidades")
+        for id_item in ids_retomada:
+            cartao_curto(apoio.POR_ID[id_item])
     if portas or e == "nao_fiz":
         colunas = st.columns(max(len(portas) + (e == "nao_fiz"), 1))
         for col, porta_id in zip(colunas, portas):
@@ -411,8 +527,6 @@ if _pergunta_pendente:
     with st.spinner("A Lia está procurando no guia..."):
         _classificador = classificador_da_sessao()
         _resposta = apoio_busca.responder_pergunta(_pergunta_pendente, classificar=_classificador)
-        if _resposta.origem == "gemini":
-            st.session_state["caixa_ap_ia"] = st.session_state.get("caixa_ap_ia", 0) + 1
         lia_mostrar(_resposta)
 
 if not st.session_state.get("ap_boas_vindas_fechada"):
@@ -574,8 +688,6 @@ if aba == apoio.LAMINAS["barretos"]:
                 'referência da própria região (RRAS 14: Rio Claro e Piracicaba). Converse com a equipe que '
                 'acompanha você.</div>', unsafe_allow_html=True)
     leitura("A ligação com Rio Claro", [
-        "A carreta do Hospital de Amor já esteve em Rio Claro, com mamografia e Papanicolau agendados nas USF "
-        "(lâmina Rio Claro).",
         "Prevenção e tratamento têm portas diferentes: a prevenção chega pelas ações com a prefeitura; o "
         "tratamento, com o câncer confirmado, segue os fluxos do SUS.",
     ])
@@ -633,6 +745,15 @@ with st.sidebar:
         else:
             if getattr(atual, "pergunta", None):
                 st.caption(f"Você perguntou: “{atual.pergunta}”")
+            contexto_resposta, rotulo_resposta = contexto_da_resposta(atual)
+            contexto_atual, rotulo_atual = contexto_da_aba_atual()
+            se_contexto_diferente = contexto_resposta[0] != contexto_atual[0]
+            if not se_contexto_diferente and contexto_resposta[1] == "caminho":
+                se_contexto_diferente = contexto_resposta[1:] != contexto_atual[1:]
+            if se_contexto_diferente:
+                st.info(f"Esta resposta é sobre {rotulo_resposta}. Você está em {rotulo_atual}.")
+                st.button("Falar sobre " + rotulo_atual, key="lia_falar_sobre_aba",
+                          on_click=falar_sobre_aba_atual, width="stretch")
             st.markdown(atual.fala)
             if getattr(atual, "selo", None):
                 st.caption(atual.selo)
@@ -653,14 +774,34 @@ with st.sidebar:
         st.text_input("Pergunte à Lia", key="caixa_ap_texto", max_chars=300, label_visibility="collapsed",
                       placeholder="Ex.: onde faço mamografia pelo SUS?")
         st.form_submit_button("Perguntar", key="caixa_ap_enviar", on_click=enviar_pergunta, width="stretch")
-    st.caption("🤖 A IA ajuda a entender a sua pergunta; o texto que aparece é do guia, conferido nas páginas oficiais."
-               if apoio_busca.obter_classificador() else
-               "Busca no guia (a IA de linguagem está desligada). O texto que aparece é do guia, conferido nas páginas oficiais.")
-    with st.expander("Não sabe o que perguntar?"):
-        for n, exemplo in enumerate(["Onde faço mamografia pelo SUS?", "Meu exame deu alterado, e agora?",
-                                     "Quais são os meus direitos?", "Como pedir ajuda em situação de violência?"]):
-            st.button(exemplo, key=f"caixa_ap_exemplo_{n}", on_click=enviar_pergunta, args=(exemplo,), width="stretch")
-    st.caption("Não escreva dados pessoais. As perguntas desta página não são guardadas.")
+    gemini_disponivel = apoio_busca.obter_classificador()
+    if gemini_disponivel:
+        st.toggle("Permitir que o Google Gemini ajude a identificar o assunto", key="caixa_ap_gemini_ativo",
+                  help="Opcional e desligado por padrão. A resposta continua sendo escrita pelo guia oficial.",
+                  width="stretch")
+        if st.session_state.get("caixa_ap_ia", 0) >= LIMITE_PERGUNTAS_COM_IA:
+            st.info("Limite de 40 classificações Gemini nesta sessão atingido. A busca local no guia continua disponível.")
+        else:
+            st.caption("Se ligado e a busca local precisar de ajuda, o texto da pergunta vai ao Google Gemini "
+                       "somente para escolher o assunto. A IA não escreve a resposta. Não envie nomes, telefones "
+                       "ou outros dados pessoais.")
+    else:
+        st.caption("Busca no guia; o Gemini está indisponível nesta sessão. A resposta vem do catálogo conferido.")
+    st.markdown("**Assuntos**")
+    for titulo, assuntos in assuntos_do_guia():
+        with st.expander(titulo):
+            for assunto in assuntos:
+                st.button(assunto["rotulo"], key=f"assunto_{assunto['tipo']}_{assunto['id']}",
+                          on_click=mostrar_assunto, args=(assunto["pergunta"], assunto["acao"]),
+                          width="stretch")
+            if titulo == "Proteção":
+                st.button("Estou em perigo agora", key="assunto_urgencia_agora", on_click=mostrar_assunto,
+                          args=("meu marido me bate", None), width="stretch")
+    st.caption("Não escreva dados pessoais. Esta página não guarda as perguntas. "
+               + ("Com o Gemini desligado, a busca é feita localmente no guia."
+                  if not st.session_state.get("caixa_ap_gemini_ativo", False)
+                  else "Com o Gemini ligado, se a busca local precisar de ajuda, a pergunta vai ao Google "
+                       "apenas para classificar o assunto."))
     st.divider()
     botao_inicio(st.sidebar, "lateral")
 

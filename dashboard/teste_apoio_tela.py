@@ -87,6 +87,36 @@ conteudo = " ".join(str(x.value) for x in at.markdown)
 checar("A. diagnóstico confirmado abre diagrama com a etapa atual e a regulação", not erros(at)
        and all(t in conteudo for t in ("Diagnóstico confirmado", "Você está aqui", "Regulação do SUS",
                                       "Como acompanho a vaga?")))
+checar("A. jornada do diagnóstico exibe quatro etapas numeradas e conectores visíveis",
+       all(f'class="apoio-jornada-numero" aria-hidden="true">{n}' in conteudo for n in (1, 2, 3, 4))
+       and conteudo.count('class="apoio-jornada-conector" aria-hidden="true">↓') == 3)
+checar("A. a segunda etapa é marcada como próximo passo",
+       "<strong>Próximo passo:</strong>" in conteudo)
+ids_retomada = ["nao_achei_nome", "lista_regulacao", "como_chegar_cross"]
+if apoio.CIDADE.casefold() == "rio claro":
+    ids_retomada.append("rc_unidades")
+checar("A. bloco de retomada contém os cartões do catálogo e seus links oficiais",
+       "Se a resposta demorar ou o encaminhamento não chegar" in conteudo
+       and all(apoio.POR_ID[i]["titulo"] in conteudo and apoio.POR_ID[i]["link"] in conteudo
+               for i in ids_retomada))
+
+# ---------- A2. Trocar a aba não substitui a fala da Lia ----------
+at = abrir()
+botao(at, "bv_ap_diagnostico").click().run()
+fala_diagnostico = at.session_state["ap_lia"]["atual"].fala
+botao(at, "nav_apoio_carretas").click().run()
+aviso_contexto = any("Esta resposta é sobre" in str(i.value)
+                     and "Você está em Carretas" in str(i.value) for i in at.info)
+checar("A2. trocar para Carretas preserva a fala de diagnóstico e informa a diferença de contexto",
+       not erros(at) and at.session_state["ap_lia"]["atual"].fala == fala_diagnostico and aviso_contexto)
+checar("A2. a nova fala só é solicitada por um botão explícito",
+       botao(at, "lia_falar_sobre_aba") is not None
+       and botao(at, "lia_falar_sobre_aba").label == "Falar sobre Carretas")
+botao(at, "lia_falar_sobre_aba").click().run()
+checar("A2. após pedir, Lia responde sobre Carretas e o aviso desaparece",
+       not erros(at) and at.session_state["ap_lia"]["atual"].destino.get("aba") == apoio.LAMINAS["carretas"]
+       and not any("Esta resposta é sobre" in str(i.value) for i in at.info)
+       and botao(at, "lia_falar_sobre_aba") is None)
 
 # ---------- B. Lia: todos os botões ----------
 at = abrir()
@@ -232,8 +262,10 @@ try:
     at.button(key="bv_ap_ajuda").click().run() if botao(at, "bv_ap_ajuda") is not None else None
     checar("F. a caixa 'Pergunte à Lia' está na lateral do Apoio, junto da Lia, e avisa que as perguntas não são guardadas",
            not erros(at) and at.text_input(key="caixa_ap_texto") is not None and "Pergunte à Lia" in lateral(at)
-           and "não são guardadas" in lateral(at))
-    checar("F. sem chave do Gemini a caixa diz que a IA está desligada e que o texto é do guia", "desligada" in lateral(at))
+           and "não guarda as perguntas" in lateral(at))
+    checar("F. sem Gemini configurado a busca usa apenas o catálogo", "indisponível nesta sessão" in lateral(at)
+           and "catálogo conferido" in lateral(at)
+           and not any(t.key == "caixa_ap_gemini_ativo" for t in at.toggle))
 
     perguntar_no_apoio(at, "como funciona a carreta da mamografia?")
     atual = at.session_state["ap_lia"]["atual"]
@@ -264,33 +296,123 @@ try:
     checar("F. fora do assunto: diz que não achou e mostra as portas de novo", not erros(at) and at.session_state["ap_lia"]["atual"].tipo == "nada"
            and len(botoes_lia(at)) >= 8)
 
-    at.button(key="caixa_ap_exemplo_0").click().run()
-    checar("F. botão de exemplo ('Onde faço mamografia pelo SUS?') responde sem digitar",
-           not erros(at) and at.session_state["ap_lia"]["atual"].tipo in ("itens", "palpites"))
+    botao_assunto = next((b for b in at.sidebar.button if b.key == "assunto_caminho_mama"), None)
+    checar("F. assunto de prevenção oferece botão no grupo dinâmico", botao_assunto is not None)
+    if botao_assunto:
+        botao_assunto.click().run()
+    resposta_assunto = at.session_state["ap_lia"]["atual"]
+    checar("F. atalho usa pergunta-modelo e mostra resposta do guia sem IA",
+           not erros(at) and at.session_state["caixa_ap_texto"] == "Quero orientação sobre câncer de mama."
+           and resposta_assunto.destino.get("caminho") == "mama" and bool(resposta_assunto.botoes))
 
     at.button(key="lia_discreto_voltar_ap").click().run()
     checar("F. '← Voltar' continua funcionando depois de perguntas", not erros(at))
 
-    # com o Gemini (simulado): só ajuda a entender; o texto continua sendo do guia
+    # O Gemini (simulado) só é chamado após consentimento explícito; o texto continua sendo do guia.
     recebidos = []
+    classificador_falso = {"resultado": {"intencao": "mama"}, "erro": False}
     original = apoio_busca.obter_classificador
-    apoio_busca.obter_classificador = lambda: (lambda p, o, contexto=None, com_cancer=True: recebidos.append(p) or {"intencao": "mama"})
+
+    def classificar_falso(p, o, contexto=None, com_cancer=True):
+        recebidos.append(p)
+        if classificador_falso["erro"]:
+            raise RuntimeError("falha simulada do classificador")
+        return classificador_falso["resultado"]
+
+    apoio_busca.obter_classificador = lambda: classificar_falso
     try:
         at = abrir()
-        checar("F. com o Gemini ligado a caixa diz que a IA ajuda a entender", "ajuda a entender" in lateral(at))
+        checar("F. Gemini configurado aparece desligado por padrão com aviso de privacidade",
+               not at.session_state["caixa_ap_gemini_ativo"] and at.toggle(key="caixa_ap_gemini_ativo") is not None
+               and "somente para escolher o assunto" in lateral(at)
+               and "A IA não escreve a resposta" in lateral(at)
+               and "Não envie nomes, telefones" in lateral(at))
+        perguntar_no_apoio(at, "xyzzy plugh")
+        checar("F. pergunta usa só a busca local quando Gemini está desligado", recebidos == []
+               and at.session_state["ap_lia"]["atual"].origem != "gemini")
+        at.toggle(key="caixa_ap_gemini_ativo").set_value(True).run()
+        checar("F. ligar a opção mantém visível a informação do envio ao Google", "somente para escolher o assunto" in lateral(at))
         perguntar_no_apoio(at, "xyzzy plugh")
         atual = at.session_state["ap_lia"]["atual"]
-        checar("F. Gemini escolheu a porta: o texto é o do guia e o selo diz que não é da IA",
+        checar("F. com consentimento, Gemini escolhe a porta; o texto continua sendo o do guia",
                not erros(at) and atual.origem == "gemini" and recebidos == ["xyzzy plugh"] and apoio.responder(apoio.caminho("mama")).fala in atual.fala
-               and "não da IA" in lateral(at))
-        at.session_state["caixa_ap_ia"] = 40
-        perguntar_no_apoio(at, "xyzzy plugh dois")
-        checar("F. passou do limite de perguntas com IA na sessão: segue só com a busca", recebidos == ["xyzzy plugh"]
+               and "não da IA" in lateral(at) and at.session_state["caixa_ap_ia"] == 1)
+        classificador_falso["resultado"] = {"intencao": "destino_inexistente"}
+        perguntar_no_apoio(at, "xyzzy retorno inválido")
+        checar("F. retorno inválido do Gemini conta como chamada", at.session_state["caixa_ap_ia"] == 2
                and at.session_state["ap_lia"]["atual"].tipo == "nada")
+        classificador_falso["resultado"] = {"intencao": "nenhuma"}
+        perguntar_no_apoio(at, "xyzzy nenhuma")
+        checar("F. resposta nenhuma do Gemini conta como chamada", at.session_state["caixa_ap_ia"] == 3)
+        classificador_falso["erro"] = True
+        perguntar_no_apoio(at, "xyzzy erro")
+        checar("F. erro do Gemini também conta como chamada", at.session_state["caixa_ap_ia"] == 4
+               and not erros(at))
+        classificador_falso["erro"] = False
+        classificador_falso["resultado"] = {"intencao": "nenhuma"}
+        at.session_state["caixa_ap_ia"] = 39
+        perguntar_no_apoio(at, "xyzzy chamada quarenta")
+        chamadas_ate_quarenta = len(recebidos)
+        checar("F. 40a classificação incrementa o contador até o limite", at.session_state["caixa_ap_ia"] == 40
+               and chamadas_ate_quarenta == 5)
+        perguntar_no_apoio(at, "xyzzy plugh dois")
+        checar("F. 41a tentativa não chama Gemini e avisa que a busca local continua",
+               len(recebidos) == chamadas_ate_quarenta and at.session_state["caixa_ap_ia"] == 40
+               and at.session_state["ap_lia"]["atual"].tipo == "nada"
+               and any("Limite de 40 classificações" in str(i.value) for i in at.info))
     finally:
         apoio_busca.obter_classificador = original
 finally:
     sqlite3.connect = sqlite_original
+
+# ---------- G. Atalhos dinâmicos: caminhos, etapas e lâminas, sem IA ----------
+assuntos_teste = [
+    ("caminho", id, rotulo, f"Quero orientação sobre {rotulo.lower()}.")
+    for id, rotulo, _, _ in apoio.CAMINHOS
+    if id in {"mama", "colo", "diagnostico", "regulacao", "tratamento", "rede", "direitos"}
+]
+assuntos_teste += [
+    ("etapa", id, rotulo, f"Minha situação é: {rotulo.lower()}.")
+    for id, rotulo, _, _, _ in apoio.ETAPAS
+    if id in {"nao_fiz", "alterado", "diagnostico_cancer", "encaminhada", "em_tratamento", "violencia"}
+]
+assuntos_teste += [
+    ("lamina", id, apoio.LAMINAS[id], f"Quero consultar {apoio.LAMINAS[id].lower()}.")
+    for id in ("hospitais", "rio_claro", "barretos", "carretas")
+]
+
+chamadas_assuntos = []
+original_classificador_assuntos = apoio_busca.obter_classificador
+apoio_busca.obter_classificador = lambda: (lambda *a, **k: chamadas_assuntos.append(a[0]) or {"intencao": "mama"})
+try:
+    at = abrir()
+    at.toggle(key="caixa_ap_gemini_ativo").set_value(True).run()
+    for tipo, id, rotulo, pergunta_modelo in assuntos_teste:
+        botao_assunto = next((b for b in at.sidebar.button if b.key == f"assunto_{tipo}_{id}"), None)
+        if botao_assunto:
+            botao_assunto.click().run()
+        resposta = at.session_state["ap_lia"]["atual"]
+        destino = resposta.destino or {}
+        if tipo == "caminho":
+            destino_valido = destino.get("aba") == apoio.LAMINAS["caminho"] and destino.get("caminho") == id
+        elif tipo == "etapa":
+            destino_valido = destino.get("aba") == apoio.LAMINAS["caminho"] and destino.get("etapa") == id
+        else:
+            destino_valido = destino.get("aba") == apoio.LAMINAS[id]
+        checar(f"G. assunto {rotulo} responde com destino válido, botões e pergunta-modelo", botao_assunto is not None
+               and not erros(at) and destino_valido and bool(resposta.botoes)
+               and at.session_state["caixa_ap_texto"] == pergunta_modelo
+               and getattr(resposta, "pergunta", None) == pergunta_modelo)
+    botao_urgencia = next((b for b in at.sidebar.button if b.key == "assunto_urgencia_agora"), None)
+    if botao_urgencia:
+        botao_urgencia.click().run()
+    resposta_urgencia = at.session_state["ap_lia"]["atual"]
+    checar("G. perigo imediato usa orientação fixa 190/180 sem chamar Gemini", botao_urgencia is not None
+           and not erros(at) and "190" in resposta_urgencia.fala and "180" in resposta_urgencia.fala
+           and chamadas_assuntos == [])
+finally:
+    apoio_busca.obter_classificador = original_classificador_assuntos
+
 checar("F. a página do Apoio não abriu banco de dados em nenhum momento (perguntas não são gravadas)", abriu_banco == [])
 
 print(f"\n({time.time() - inicio:.0f} s)")
