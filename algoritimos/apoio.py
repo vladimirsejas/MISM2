@@ -524,12 +524,15 @@ ITENS = [
                                                "presumir a causa sem avaliação."),
               ("Prevenção, diagnóstico precoce e rastreamento", "Rastreamento e sintomas são coisas diferentes. "
                                                                  "Rastrear é procurar a doença em quem não tem "
-                                                                 "sintoma, por exemplo com a pesquisa de sangue "
-                                                                 "oculto nas fezes. Quem tem sintoma não espera o "
-                                                                 "rastreamento: faz a investigação. A idade, o "
-                                                                 "exame e o intervalo dependem das diretrizes do "
-                                                                 "Ministério da Saúde e do seu histórico; pergunte na "
-                                                                 "unidade de saúde. Este guia não define uma regra."),
+                                                                 "sintoma. Desde maio de 2026, o SUS adota o teste "
+                                                                 "imunoquímico fecal (FIT), feito com um kit em casa, "
+                                                                 "como exame de referência para homens e mulheres de "
+                                                                 "50 a 75 anos sem sintomas (notícia do INCA, "
+                                                                 "21/05/2026). Quem tem sintoma não espera o "
+                                                                 "rastreamento: faz a investigação. De quanto em "
+                                                                 "quanto tempo repetir o teste e onde pegar o kit, "
+                                                                 "pergunte na unidade de saúde. O passo a passo está "
+                                                                 "no cartão \"Exame de intestino pelo SUS\"."),
               ("Como se investiga", "A equipe avalia os sintomas e pode pedir exames de fezes, de sangue e a "
                                     "colonoscopia, que olha o interior do intestino e permite retirar pólipos e "
                                     "coletar material. A biópsia (análise desse material no laboratório) é o que "
@@ -544,9 +547,56 @@ ITENS = [
                "regulação (CROSS); veja \"Como se chega a um hospital de referência pelo SUS\".",
           cuidado="Sangue nas fezes ou mudança do intestino que dura merece consulta, não espera. Com dor forte, "
                   "sangramento intenso ou desmaio, procure um pronto atendimento ou ligue 192.",
-          confirmar="Texto escrito a partir de conhecimento geral e de busca na web em 18/10/2026; a página do INCA "
-                    "não pôde ser aberta pela nuvem. Conferir o texto e as regras atuais de rastreamento (idade, "
-                    "exame, intervalo) na página oficial antes de tirar esta marca.",
+          confirmar="O rastreamento (FIT, 50 a 75 anos, sem sintomas) foi conferido na notícia do INCA de 21/05/2026. O "
+                    "resto do texto veio de conhecimento geral e de busca na web em 18/10/2026, e a página do INCA "
+                    "sobre o tipo de câncer não pôde ser aberta pela nuvem: conferir na página oficial. Falta saber o "
+                    "intervalo entre os testes.",
+          conferido="18/10/2026", cancer=["colorretal"]),
+    _item("jornada_exame_intestino", "outros", "caminho", "SUS (todo o Brasil)",
+          "Exame de intestino pelo SUS: do posto de saúde ao resultado (FIT e colonoscopia)",
+          "o caminho do teste FIT (sangue escondido nas fezes) e da colonoscopia; quem procura rastreamento e quem "
+          "tem sintomas seguem caminhos diferentes",
+          "INCA (Instituto Nacional de Câncer) e Ministério da Saúde",
+          "https://www.gov.br/inca/pt-br/assuntos/noticias/2026/sus-adota-novo-exame-para-detectar-cancer-de-"
+          "intestino-antes-dos-sintomas",
+          para_quem="Rastreamento (teste FIT): homens e mulheres de 50 a 75 anos, sem sintomas. Sintomas (sangue nas "
+                    "fezes, mudança que dura no intestino, anemia, perda de peso sem explicação): avaliação clínica, "
+                    "sem esperar o rastreamento.",
+          topicos=[
+              ("1. Comece pela unidade de saúde", "Procure a UBS ou USF do seu bairro com o cartão do SUS e um "
+                                                  "documento. É lá que a equipe avalia o seu caso e diz qual "
+                                                  "caminho vale para você."),
+              ("2. Rastreamento ou sintomas?", "Sem sintomas e com 50 a 75 anos: o caminho é o teste FIT. Com "
+                                               "sintomas: a equipe faz a avaliação clínica e decide os exames, sem "
+                                               "esperar o rastreamento. Conte também se alguém da família teve câncer "
+                                               "de intestino."),
+              ("3. O teste FIT", "Desde maio de 2026, o Ministério da Saúde adotou o teste imunoquímico fecal (FIT) "
+                                 "como exame de referência no SUS para o rastreamento. Você recebe um kit para "
+                                 "coletar em casa, e o material vai para o laboratório. Não exige preparo do "
+                                 "intestino nem dieta, e basta uma amostra. Ele procura sangue escondido nas fezes e "
+                                 "não diz, sozinho, que há câncer."),
+              ("4. Se o FIT detectar sangue", "Você é encaminhada para exames complementares. A colonoscopia é "
+                                              "considerada o exame padrão-ouro: olha o intestino por dentro e "
+                                              "permite retirar pólipos durante o procedimento. Quem indica o exame é "
+                                              "a equipe de saúde."),
+              ("5. Vaga e regulação", "A colonoscopia e a consulta com especialista são marcadas pela regulação do "
+                                      "município e do Estado. Peça à unidade o número ou a data do seu pedido. Se o "
+                                      "seu nome não aparecer ou a fila não andar, veja \"Não achei meu nome na "
+                                      "lista, ou a fila não anda\" e a \"Lista de Regulação de Oncologia\"."),
+              ("6. Depois do resultado", "Volte à equipe que pediu o exame. Se for encontrada uma lesão, a biópsia "
+                                         "confirma ou afasta o câncer. Com um diagnóstico, os próximos passos estão "
+                                         "nas portas Diagnóstico, Regulação e Tratamento."),
+          ],
+          como="A porta de entrada é sempre a unidade de saúde do bairro (em Rio Claro, veja \"Unidades de Saúde da "
+               "Família (USF) e UBS\"). Hospitais e centros de referência não são porta de entrada: a vaga vem pela "
+               "regulação (CROSS).",
+          cuidado="Sangue nas fezes, mudança do intestino que dura, anemia ou emagrecimento sem explicação não "
+                  "esperam o FIT: procure a unidade de saúde. Com dor forte, sangramento intenso ou desmaio, procure "
+                  "um pronto atendimento ou ligue 192.",
+          confirmar="Faixa etária, o FIT como exame de referência e o que vem depois de um teste positivo foram "
+                    "conferidos na notícia do INCA de 21/05/2026. NÃO confirmados: de quanto em quanto tempo repetir "
+                    "o teste, quais unidades de Rio Claro entregam o kit e onde é feita a colonoscopia pelo SUS na "
+                    "região. Pergunte na unidade de saúde ou na Secretaria Municipal de Saúde.",
           conferido="18/10/2026", cancer=["colorretal"]),
     _item("cancer_ovario", "outros", "caminho", "SUS (todo o Brasil)",
           "Câncer de ovário: sinais, exames e como buscar atendimento",
@@ -830,9 +880,23 @@ ITENS = [
           "hospital público estadual só de câncer; atende pacientes encaminhados pela regulação",
           "ICESP",
           "https://icesp.org.br/como-ser-atendido/",
+          para_quem="Pacientes do SUS. É uma das unidades do Hospital das Clínicas da Faculdade de Medicina da USP, "
+                    "com atendimento exclusivo pela rede pública de saúde.",
+          topicos=[
+              ("As quatro unidades (página institucional do ICESP)",
+               "Unidade Hospitalar, na Av. Dr. Arnaldo, 251 (a matriz, com a maior parte dos atendimentos). Unidade "
+               "Ambulatorial de Osasco, na R. Benedito Américo de Oliveira, 122 (oncologia clínica, radioterapia e "
+               "equipe multiprofissional). Farmácia Ambulatorial, na R. da Consolação, 2049 (medicamentos para "
+               "pacientes oncológicos). Instituto de Tratamento do Câncer Infantil (Itaci), na R. Galeno de Almeida, "
+               "148, em Pinheiros (oncologia pediátrica, pelo SUS)."),
+              ("Números da página (fevereiro de 2024)", "Mais de 146 mil pacientes atendidos desde a inauguração, em "
+                                                        "2008, cerca de 40 mil pacientes ativos e 528 leitos."),
+          ],
           como="Atende só pacientes encaminhados pela rede estadual (UBS, AMEs e hospitais gerais), pela Central de "
-               "Regulação (CROSS), priorizando as regiões que têm o ICESP como referência.",
+               "Regulação (CROSS), priorizando as regiões que têm o ICESP como referência. Não é porta de entrada: "
+               "a vaga vem pela regulação, a partir da unidade de saúde.",
           contato="(11) 3893-2000.",
+          conferido="18/10/2026",
           grupo="Capital e Grande São Paulo"),
     _item("hospital_da_mulher_sp", "rede", "hospitais", "São Paulo (capital)",
           "Hospital da Mulher (antigo Pérola Byington)",
@@ -1250,6 +1314,9 @@ def lamina(id):
 
 ITEM_PRINCIPAL = {"colorretal": "cancer_intestino", "ovario": "cancer_ovario", "pele": "cancer_pele",
                   "pulmao": "cancer_pulmao", "tireoide": "cancer_tireoide", "endometrio": "cancer_corpo_utero"}
+
+
+JORNADA_DO_TIPO = {"colorretal": "jornada_exame_intestino"}   # tipos que têm o passo a passo do exame além do cartão geral
 
 
 def abertura_do_tipo(tipo):

@@ -50,6 +50,9 @@ EXTRA = {
     # sozinhos não decidem o câncer; ver PISTAS e AMBIGUAS).
     "cancer_intestino": "câncer no intestino cólon reto colorretal câncer de intestino sangue nas fezes mudança no intestino "
                         "intestino preso intestino solto colonoscopia pólipo teste de sangue oculto nas fezes fit",
+    "jornada_exame_intestino": "onde faço colonoscopia pelo sus como conseguir colonoscopia colonoscopia gratuita passo a passo exame de "
+                               "intestino teste fit kit coleta em casa sangue oculto nas fezes preciso fazer exame de intestino "
+                               "quem pode fazer o fit 50 a 75 anos resultado do fit deu positivo encaminhamento colonoscopia fila",
     "cancer_ovario": "câncer de ovário ovários câncer ginecológico barriga inchada que não passa dor pélvica dor na pelve "
                      "ovario cisto no ovário",
     "cancer_pele": "câncer de pele pele não melanoma melanoma carcinoma basocelular espinocelular pinta mancha ferida que não cicatriza ferida que não fecha "
@@ -109,13 +112,15 @@ INDICE = ent.Indice(_documentos())
 # tipo de câncer, o conteúdo específico de OUTRO tipo sai da disputa (nota zero) e o cartão principal do tipo citado ganha um bônus. O que
 # não é específico de câncer nenhum (rede, regulação, direitos, hospitais) continua valendo para todos.
 # Palavra solta do dia a dia ("caroço", "peito", "barriga", "sangramento") NUNCA decide o câncer sozinha: ver AMBIGUAS.
+_PEDE_CAMINHO = re.compile(r"\b(onde|agend\w*|marc\w*|gratis|gratuit\w*|passo a passo|encaminhament\w*|como (faco|consigo|conseguir|fazer|pedir)|"
+                           r"pelo sus|na fila|fila|resultado|deu positivo)\b")
 BONUS_PRINCIPAL = 0.25   # só o cartão geral do câncer citado: vence os hospitais e serviços que apenas o mencionam.
                          # Os demais itens do tipo NÃO ganham bônus (mama e colo continuam disputando como antes).
 
 _PALAVRA_CANCER = re.compile(r"\b(cancer|cancro|tumor|neoplasia|oncologi\w*|ca)\b")
 # A ordem importa: o trecho reconhecido sai do texto antes de procurar o próximo ("colo retal" não vira "colo do útero").
 _FORTES = [
-    ("colorretal", r"colorretal|colo ?retal|colonoscopia|sangue oculto"),
+    ("colorretal", r"colorretal|colo ?retal|colonoscopia|sangue oculto|\bfit\b|imunoquimico"),
     ("colo", r"colo (do |de |)uter\w*|colo uterino|papanicola\w*|preventivo|\bhpv\b|colposcopia"),
     ("endometrio", r"endometri\w*|corpo (do )?uter\w*|histeroscopia"),
     ("mama", r"\bmamas?\b|mamograf\w*|mastolog\w*|mastectomia|\bseios?\b|bi ?rads"),
@@ -245,11 +250,15 @@ def buscar(pergunta, n=3, tipos=()):
     Com `tipos`: item específico de OUTRO câncer sai da disputa; o cartão principal do tipo citado ganha BONUS_PRINCIPAL."""
     notas = INDICE.notas(pergunta)
     if tipos:
+        # quem pede o CAMINHO ("onde faço colonoscopia pelo SUS?") vê a jornada; quem pede a visão geral, o cartão do câncer
+        pede_caminho = bool(_PEDE_CAMINHO.search(ent.normalizar(pergunta)))
+        favorecidos = {apoio.JORNADA_DO_TIPO[t] if pede_caminho and t in apoio.JORNADA_DO_TIPO else apoio.ITEM_PRINCIPAL.get(t)
+                       for t in tipos}
         for id in notas:
             do_item = apoio.POR_ID[id]["cancer"]
             if do_item and not set(do_item) & set(tipos):
                 notas[id] = 0.0
-            elif do_item and id in apoio.ITEM_PRINCIPAL.values():
+            elif do_item and id in favorecidos:
                 notas[id] = min(1.0, notas[id] + BONUS_PRINCIPAL)
     return sorted(notas.items(), key=lambda kv: -kv[1])[:n]
 

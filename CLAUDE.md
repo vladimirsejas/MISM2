@@ -512,6 +512,12 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   com as portas em botões. Só pergunta curta sobre a própria Lia e sem câncer nomeado (não sequestra pergunta de conteúdo; medido nos dois gabaritos do Apoio).
   Uma linha sob a caixa avisa a pergunta. Testes: H em `teste_apoio_cancer.py` e F em `dashboard/teste_apoio_tela.py`. **Perguntas continuam sem ser gravadas**
   (contar o que mais perguntam foi oferecido e NÃO escolhido; mudaria a regra de privacidade).
+- **Jornada do exame de intestino e ICESP (autor anexou fontes oficiais, 18/10/2026):** a notícia do INCA de 21/05/2026 confirma o **FIT** como exame de
+  referência no SUS para 50 a 75 anos **sem sintomas** (kit em casa; positivo leva a exames complementares; colonoscopia = padrão-ouro). Cartão novo
+  `jornada_exame_intestino` (6 passos) e `cancer_intestino` com o rastreamento confirmado; **intervalo entre testes e oferta em Rio Claro NÃO estão confirmados**
+  (a página não traz) e o catálogo não afirma. ICESP com as 4 unidades. A busca separa pedido de caminho ("onde faço colonoscopia pelo SUS?" -> jornada) de visão geral
+  ("o que é o FIT?" -> cartão do câncer) (`apoio.JORNADA_DO_TIPO`, `apoio_busca._PEDE_CAMINHO`). A lista de centros sugerida pelo autor ficou **triada, não cadastrada**
+  (sem fonte; ver `docs/APOIO_COBERTURA_ONCOLOGICA.md`). Teste: seção I de `teste_apoio_cancer.py` (o C4 passou a aceitar "50 a 75 anos" só no intestino).
 - Ainda não feito (combinar): população do IBGE; testar com pessoas de verdade; revisar com o autor o
   vocabulário popular do Apoio (`apoio_busca.VOCABULARIO`/`EXTRA`).
 

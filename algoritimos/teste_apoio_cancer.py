@@ -112,7 +112,7 @@ def main():
     # (pergunta, tipo esperado, id do cartão que deve aparecer; None = só vale a regra de não misturar)
     casos = [
         # as dez do pedido do autor
-        ("Tenho câncer no intestino. Onde procuro ajuda?", "colorretal", "cancer_intestino"),
+        ("Tenho câncer no intestino. Onde procuro ajuda?", "colorretal", "jornada_exame_intestino"),
         ("Quero saber sobre câncer de ovário.", "ovario", "cancer_ovario"),
         ("Estou com uma ferida que não cicatriza.", "pele", "cancer_pele"),
         ("Tenho um nódulo na tireoide.", "tireoide", "cancer_tireoide"),
@@ -187,9 +187,16 @@ def main():
                and "todas as mulheres devem" not in todos)
     intestino = dict(apoio.POR_ID["cancer_intestino"]["topicos"])
     prev = intestino["Prevenção, diagnóstico precoce e rastreamento"]
-    checar("C4. intestino: separa rastreamento (sem sintoma) de investigação (com sintoma) e não inventa idade nem intervalo",
+    # Antes de 18/10/2026 o cartão NÃO podia dizer idade (sem fonte). Agora a faixa 50 a 75 anos e o FIT têm fonte oficial
+    # (notícia do INCA de 21/05/2026) e valem SÓ nos cartões do intestino; o intervalo entre testes continua proibido em
+    # todo lugar, porque a notícia não o traz.
+    sem_intestino = " ".join(apoio.responder(apoio.item(i)).fala for t, i in novos.items() if t != "colorretal").lower()
+    checar("C4. intestino: separa rastreamento (sem sintoma) de investigação (com sintoma), cita o FIT e a faixa da fonte do INCA",
            "Rastreamento e sintomas são coisas diferentes" in prev and "Quem tem sintoma não espera" in prev
-           and "não define uma regra" in prev and not re.search(r"\b\d{2} (a|e) \d{2} anos|a cada \d+ anos", todos))
+           and "50 a 75 anos" in prev and "FIT" in prev and "21/05/2026" in prev)
+    checar("C4b. nenhum cartão inventa idade (fora do intestino) nem intervalo entre testes (em lugar nenhum)",
+           not re.search(r"\b\d{2} (a|e) \d{2} anos", sem_intestino)
+           and not re.search(r"a cada \d+ anos|de \d+ em \d+ anos|a cada (dois|três|cinco) anos", todos))
     checar("C5. sintomas 'não confirmam câncer' em cada cartão novo", all(
         re.search(r"não (confirm\w+|significa\w*) (que é )?câncer|não (é|são) câncer|não quer dizer|não diz o que|só a avaliação|"
                   r"nem toda lesão|não confirmam", apoio.responder(apoio.item(i)).fala, re.I) for i in novos.values()))
@@ -381,6 +388,41 @@ def main():
                     if ab.responder_pergunta(g["pergunta"]).tipo == "sobre_a_lia"]
     checar("H6. nenhuma pergunta dos dois gabaritos do Apoio virou 'o que você sabe'", not sequestradas)
     checar("H7. segurança continua primeiro: 'o que você sabe, meu marido me bate'", ab.responder_pergunta("o que você sabe? meu marido me bate").tipo == "risco")
+
+    # ---------- I. jornada do exame de intestino e ICESP (fontes oficiais anexadas pelo autor, 18/10/2026) ----------
+    j = apoio.POR_ID["jornada_exame_intestino"]
+    fala_j = apoio.responder(apoio.item("jornada_exame_intestino")).fala
+    checar("I1. jornada: 6 passos em ordem, começando pela unidade de saúde e fechando no resultado",
+           [r[:2] for r, _ in j["topicos"]] == ["1.", "2.", "3.", "4.", "5.", "6."]
+           and "unidade de saúde" in j["topicos"][0][0].lower() and "resultado" in j["topicos"][-1][0].lower())
+    checar("I2. jornada separa rastreamento (FIT, 50 a 75 anos, sem sintomas) de sintomas (sem esperar o rastreamento)",
+           "50 a 75 anos" in j["para_quem"] and "sem sintomas" in j["para_quem"] and "sem esperar" in j["para_quem"]
+           and "sem esperar o rastreamento" in j["cuidado"].lower() + " " + j["para_quem"].lower())
+    checar("I3. jornada diz o que a fonte diz do FIT (kit em casa, sem preparo nem dieta, uma amostra) e da colonoscopia (padrão-ouro, retira pólipos)",
+           all(t in fala_j for t in ("kit para coletar em casa", "Não exige preparo", "basta uma amostra", "padrão-ouro", "retirar pólipos")))
+    checar("I4. jornada NÃO afirma o que a fonte não traz: intervalo do teste, unidade ou hospital de Rio Claro que faz colonoscopia",
+           "NÃO confirmados" in j["confirmar"] and "intervalo" not in fala_j.lower().replace("de quanto em quanto tempo repetir", "")
+           and "santa casa" not in fala_j.lower() and "ame rio claro" not in fala_j.lower())
+    checar("I5. jornada cita a fonte oficial (INCA, 21/05/2026), link da notícia e o hospital não é porta de entrada",
+           "INCA" in j["fonte"] and "sus-adota-novo-exame" in j["link"] and "21/05/2026" in j["confirmar"]
+           and "não são porta de entrada" in fala_j.lower().replace("não é porta de entrada", "não são porta de entrada")
+           and "CROSS" in fala_j)
+    for pergunta in ("onde faço colonoscopia pelo SUS?", "como conseguir colonoscopia gratuita", "meu FIT deu positivo e agora",
+                     "quero fazer o teste fit, onde pego o kit"):
+        x = ab.responder_pergunta(pergunta)
+        checar(f"I6. pedido de CAMINHO do intestino abre a jornada: {pergunta!r}", "jornada_exame_intestino" in x.candidatos
+               and x.tipo_cancer == "colorretal" and not conteudo_de_outro_cancer(x, "colorretal"))
+    for pergunta in ("o que é o teste FIT", "câncer de intestino", "colonoscopia dói"):
+        x = ab.responder_pergunta(pergunta)
+        checar(f"I7. pergunta de visão geral continua no cartão do câncer, sem misturar: {pergunta!r}",
+               x.tipo_cancer == "colorretal" and not conteudo_de_outro_cancer(x, "colorretal"))
+    checar("I8. 'fit' sozinho não é 'fitness' nem vira outro câncer", ab.responder_pergunta("quero um plano de fitness").tipo == "nada")
+    ic = apoio.POR_ID["icesp"]
+    fala_ic = apoio.responder(apoio.item("icesp")).fala
+    checar("I9. ICESP: as 4 unidades com endereço, só SUS, não é porta de entrada, conferido em 18/10/2026",
+           all(t in fala_ic for t in ("Av. Dr. Arnaldo, 251", "Osasco", "R. Benedito Américo de Oliveira, 122", "Consolação, 2049",
+                                      "Itaci", "Galeno de Almeida, 148", "exclusivo pela rede pública", "Não é porta de entrada"))
+           and ic["conferido"] == "18/10/2026" and "(11) 3893-2000" in fala_ic)
 
     print()
     if falhas:
