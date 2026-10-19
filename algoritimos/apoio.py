@@ -357,14 +357,14 @@ ITENS = [
 
     # ================ LÂMINA RIO CLARO (a cidade do trabalho) ================
     _item("rc_cadu_agendamento", "mama", "rio_claro", "Rio Claro",
-          "Agendamento de consulta e exames pelo Cadu",
-          "telefone e WhatsApp gratuitos para agendar consulta e solicitar mamografia ou Papanicolau",
-          "Fundação Municipal de Saúde de Rio Claro (publicação de 07/10/2026)",
+          "Agendamento de consultas pelo Cadu",
+          "telefone e WhatsApp gratuitos para agendar atendimento nas unidades de saúde, inclusive a consulta em que se pede mamografia ou Papanicolau",
+          "Publicação da Fundação Municipal de Saúde de Rio Claro de 07/10/2026, que divulga o canal; chefia de UBS (19/10/2026)",
           "https://rioclaro.sp.gov.br/fundacao-de-saude/nova-central-para-agendamento-de-consultas-comeca-a-operar-na-2a-feira-em-rc/",
           para_quem="Moradoras e moradores que precisam agendar consulta na rede municipal; para mamografia e Papanicolau, é necessário passar por profissional de saúde.",
-          como="Ligue ou envie mensagem pelo WhatsApp para 0800 019 0505. A publicação municipal de 07/10/2026 informa que consultas para solicitar mamografia e Papanicolau podem ser agendadas pelo Cadu ou diretamente na unidade de saúde. O exame depende de solicitação de profissional. A Prefeitura também oferece o aplicativo oficial CADU Digital (Central de Atendimento Digital), para Android e iPhone: os botões de download estão abaixo.",
+          como="Ligue ou envie mensagem pelo WhatsApp para 0800 019 0505. A publicação municipal de 07/10/2026 informa que consultas para solicitar mamografia e Papanicolau podem ser agendadas pelo Cadu ou diretamente na unidade de saúde. O exame depende de solicitação de profissional. O Cadu só agenda: atendimentos nas unidades de saúde, com médicos, enfermeiros e dentistas, clínicos ou especialistas. É um canal externo à Fundação, e o exame pedido segue pela Central de Regulação, acionada pela unidade. Há também o aplicativo CADU Digital (Central de Atendimento Digital), para Android e iPhone: os botões de download estão abaixo.",
           contato="Cadu: 0800 019 0505 (telefone/WhatsApp).",
-          confirmar="Canal confirmado em publicação municipal de 07/10/2026; confirme o funcionamento e as regras atuais antes de depender do serviço. Os endereços do aplicativo foram informados pela equipe em 18/10/2026.",
+          confirmar="Canal confirmado em publicação municipal de 07/10/2026; confirme o funcionamento e as regras atuais antes de depender do serviço. Os endereços do aplicativo foram informados pela equipe em 18/10/2026. Uma chefia de UBS informou em 19/10/2026 que o Cadu só faz agendamento e é externo à Fundação; quem opera o serviço não foi identificado.",
           tambem_caminhos=["colo"],
           mais_links=[("Baixar o app CADU Digital no Android (Google Play)", "https://play.google.com/store/apps/details?id=com.unicidadao&hl=pt_BR"),
                       ("Baixar o app CADU Digital no iPhone (App Store)", "https://apps.apple.com/br/app/cadu-digital/id6449848522"),
@@ -384,8 +384,9 @@ ITENS = [
                "o telefone atualizado na unidade. A Central analisa o pedido; se faltar informação, ele volta à unidade "
                "para correção, e a marcação depende das vagas da rede. Pedido de médico ou clínica particular também "
                "vale: precisa estar em receituário próprio, com identificação do profissional, CID e justificativa "
-               "clínica, e a equipe da unidade o transcreve para o formulário. O Cadu (0800 019 0505) agenda consultas "
-               "e procedimentos, como a coleta do Papanicolau.",
+               "clínica, e a equipe da unidade o transcreve para o formulário. O Cadu (0800 019 0505) só agenda "
+               "atendimentos nas unidades, como a consulta ou a coleta do Papanicolau; o exame pedido segue pela "
+               "Central de Regulação.",
           levar="O pedido do exame, completo e legível, quando já houver.",
           confirmar="O número de unidades e o horário vêm de páginas antigas da Prefeitura: confira a lista de "
                     "endereços. O caminho do exame pedido segue o protocolo da Fundação Municipal de Saúde para exames "
@@ -1191,7 +1192,7 @@ ITENS = [
           "AME Rio Claro",
           "https://amerioclaro.org.br/",
           como="Tem especialidade dedicada às mamas, na prevenção e no tratamento. O AME e as unidades de saúde têm "
-               "ginecologista e mastologista; a marcação depende das vagas e passa pela regulação ou pelo Cadu. No cadastro nacional de estabelecimentos (CNES, 08/2026), o AME consta entre os "
+               "ginecologista e mastologista; a marcação depende das vagas e é feita pela unidade de saúde, por meio da Central de Regulação. No cadastro nacional de estabelecimentos (CNES, 08/2026), o AME consta entre os "
                "poucos estabelecimentos de Rio Claro que fazem mamografia no próprio local; as unidades de saúde "
                "registram o exame como feito por outro estabelecimento. A unidade orienta onde o exame será feito.",
           contato="Rua 9 (esquina com a Avenida da Saudade), 165 – Bairro dos Estádios. (19) 3526-2300.",
@@ -1209,9 +1210,9 @@ ITENS = [
                "pedido pela unidade conforme critérios clínicos, não como exame de rotina. O CEAD é municipal, da "
                "Fundação, e é um serviço diferente do AME, que é do Estado. Mulher com câncer confirmado segue para o "
                "tratamento na Santa Casa de Rio Claro.",
-          contato="Atendimento de segunda a sexta-feira, das 7h às 16h.",
-          confirmar="O endereço e o telefone do CEAD ainda não foram confirmados para este cartão, e o horário foi "
-                    "informado por quem trabalha na Fundação (19/10/2026): pergunte na unidade de saúde. O que está aqui "
+          contato="Avenida 24, nº 1040, entre as ruas 8 e 9. Atendimento de segunda a sexta-feira, das 7h às 16h.",
+          confirmar="O telefone do CEAD ainda não foi confirmado para este cartão, e o endereço e o horário foram "
+                    "informados por quem trabalha na Fundação (19/10/2026): pergunte na unidade de saúde. O que está aqui "
                     "vem do protocolo da Fundação e de chefias da Fundação."),
     _item("rc_ddm", "ajuda", "rio_claro", "Rio Claro",
           "Delegacia de Defesa da Mulher (DDM) de Rio Claro",
