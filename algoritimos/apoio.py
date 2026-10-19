@@ -378,20 +378,16 @@ ITENS = [
           para_quem="Moradoras de Rio Claro.",
           como="A Prefeitura informa 17 Unidades de Saúde da Família e 4 UBS, das 7h às 17h. A consulta é marcada "
                "na própria unidade, que é onde se faz o preventivo e se pede a mamografia. Algumas equipes têm "
-               "ginecologista.",
+               "ginecologista. Exame pedido pelo médico (mamografia, raio X e outros): o pedido fica com o "
+               "funcionário da unidade, que aciona a Central Municipal de Regulação de Serviços Especializados; a "
+               "Central avisa a unidade e a unidade avisa a paciente, que não precisa ir a outra central. Convém manter "
+               "o telefone atualizado na unidade. O Cadu (0800 019 0505) serve para marcar a consulta em que o médico "
+               "pede o exame.",
+          levar="O pedido do exame, quando já houver.",
           confirmar="O número de unidades e o horário vêm de páginas antigas da Prefeitura: confira a lista de "
-                    "endereços.",
+                    "endereços. O caminho do exame pedido foi informado por chefias da Fundação em 19/10/2026, por "
+                    "conversa, e ainda não está em publicação oficial: confirme na unidade.",
           tambem_caminhos=["mama"]),
-    _item("rc_central_vagas", "mama", "rio_claro", "Rio Claro",
-          "Central de Vagas da Fundação Municipal de Saúde (mamografia com pedido médico)",
-          "com o pedido médico em mãos, a mamografia é agendada na Central de Vagas",
-          "Fundação Municipal de Saúde de Rio Claro (informativo)",
-          "https://www.saude-rioclaro.org.br/informativos/Rio%20Claro%20faz%20agendamento%20de%20exame%20de%20mama.htm",
-          levar="O pedido médico.",
-          contato="Rua 10, esquina com a Via da Saudade. Telefones 3524-1463 e 3534-0026. Segunda a sexta, das 7h "
-                  "às 16h.",
-          confirmar="É um informativo antigo da Fundação: confirme endereço, telefones e se o agendamento ainda é "
-                    "feito ali."),
     _item("rc_santa_casa", "tratamento", "rio_claro", "Rio Claro",
           "Santa Casa de Rio Claro – oncologia (UNACON) e Centro Oncológico Santa Ágata",
           "hospital habilitado para tratar câncer pelo SUS na própria cidade",
@@ -1191,7 +1187,9 @@ ITENS = [
           "AME Rio Claro",
           "https://amerioclaro.org.br/",
           como="Tem especialidade dedicada às mamas, na prevenção e no tratamento. A consulta é marcada pela unidade "
-               "de saúde do município.",
+               "de saúde do município. No cadastro nacional de estabelecimentos (CNES, 08/2026), o AME consta entre os "
+               "poucos estabelecimentos de Rio Claro que fazem mamografia no próprio local; as unidades de saúde "
+               "registram o exame como feito por outro estabelecimento. A unidade orienta onde o exame será feito.",
           contato="Rua 9 (esquina com a Avenida da Saudade), 165 – Bairro dos Estádios. (19) 3526-2300.",
           confirmar="Algumas fontes trazem outro telefone e outro número no endereço (Avenida da Saudade, 252), e o certificado "
                     "do site do Seconci não é verificável: confirme endereço e telefone na unidade de saúde antes de ir."),
@@ -1301,7 +1299,7 @@ TIPOS_CANCER = {"mama": "câncer de mama", "colo": "câncer do colo do útero",
                 "tireoide": "câncer de tireoide", "endometrio": "câncer do corpo do útero (endométrio)"}
 _MARCAS_CANCER = {
     "mama": ("mulheres_de_peito", "caminho_do_exame", "carretas_estado", "campinas_craim",
-             "rio_preto_mamografia", "rc_central_vagas", "ha_mastologia", "mater_ribeirao",
+             "rio_preto_mamografia", "ha_mastologia", "mater_ribeirao",
              "reconstrucao_mamaria"),
     "colo": ("colo_utero", "vacina_hpv", "ha_colo_busca_ativa", "ha_pesquisa_hpv"),
 }
