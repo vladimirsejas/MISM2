@@ -1187,7 +1187,9 @@ ITENS = [
           "AME Rio Claro",
           "https://amerioclaro.org.br/",
           como="Tem especialidade dedicada às mamas, na prevenção e no tratamento. A consulta é marcada pela unidade "
-               "de saúde do município.",
+               "de saúde do município. No cadastro nacional de estabelecimentos (CNES, 08/2026), o AME consta entre os "
+               "poucos estabelecimentos de Rio Claro que fazem mamografia no próprio local; as unidades de saúde "
+               "registram o exame como feito por outro estabelecimento. A unidade orienta onde o exame será feito.",
           contato="Rua 9 (esquina com a Avenida da Saudade), 165 – Bairro dos Estádios. (19) 3526-2300.",
           confirmar="Algumas fontes trazem outro telefone e outro número no endereço (Avenida da Saudade, 252), e o certificado "
                     "do site do Seconci não é verificável: confirme endereço e telefone na unidade de saúde antes de ir."),
