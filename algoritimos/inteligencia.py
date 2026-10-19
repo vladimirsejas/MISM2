@@ -1960,6 +1960,94 @@ def leitura_cidade(info, nome_cidade):
 
 
 # =====================================
+# ALCANCE DO BANCO: o que o Escudo tem (a Lia precisa saber o tamanho dos próprios dados)
+# =====================================
+
+# Tabelas que o ETL pode ter trazido além das internações: (tabela, nome em palavras, coluna do ano ou None).
+_OUTRAS_BASES = [
+    ("populacao_mulheres", "população de mulheres por município (IBGE)", None),
+    ("oncologia_ambulatorial", "quimioterapia e radioterapia ambulatoriais (SIA)", "ano"),
+    ("obitos_sim", "mortes por câncer pelas declarações de óbito (SIM)", "ano"),
+    ("municipios_localizacao", "posição dos centros dos municípios de SP", None),
+    ("cnes_equipamentos", "equipamentos dos estabelecimentos (CNES, códigos ainda sem nome)", "ano"),
+    ("cnes_leitos", "leitos dos estabelecimentos (CNES, códigos ainda sem nome)", "ano"),
+]
+
+
+def alcance_dados(conexao):
+    """Retrato do que o banco guarda de verdade: cânceres, período, cidades, estados de origem e outras bases.
+    Tudo vem de consultas ao banco, nada escrito à mão. None se não houver a tabela de internações."""
+    try:
+        total, ano_ini, ano_fim = conexao.execute("SELECT COUNT(*), MIN(ano), MAX(ano) FROM internacoes").fetchone()
+        canceres = [(c, int(n)) for c, n in conexao.execute(
+            "SELECT tipo_cancer, COUNT(*) FROM internacoes WHERE tipo_cancer IS NOT NULL GROUP BY 1 ORDER BY 2 DESC")]
+        cidades = conexao.execute(
+            "SELECT i.municipio, COALESCE(m.nome, i.municipio), COUNT(*) FROM internacoes i "
+            "LEFT JOIN municipios m ON m.origem = i.municipio "
+            "WHERE i.municipio IS NOT NULL AND i.municipio <> 'OUTRO_ESTADO' GROUP BY 1, 2 ORDER BY 3 DESC").fetchall()
+        fora_do_estado = conexao.execute(
+            "SELECT COUNT(*) FROM internacoes WHERE municipio = 'OUTRO_ESTADO'").fetchone()[0]
+    except Exception:
+        return None
+    if not total:
+        return None
+    info = {"internacoes": int(total), "ano_ini": int(ano_ini), "ano_fim": int(ano_fim), "canceres": canceres,
+            "n_cidades": len(cidades), "cidades": [(str(nome), int(n)) for _, nome, n in cidades],
+            "internacoes_de_fora": int(fora_do_estado), "ufs_de_fora": None, "n_hospitais": None, "bases": []}
+    if _banco_tem_fluxo(conexao):
+        try:
+            info["ufs_de_fora"] = [u for (u,) in conexao.execute(
+                "SELECT DISTINCT uf_residencia FROM internacoes WHERE municipio = 'OUTRO_ESTADO' "
+                "AND uf_residencia IS NOT NULL ORDER BY 1")]
+            info["n_hospitais"] = conexao.execute(
+                "SELECT COUNT(DISTINCT cnes) FROM internacoes WHERE cnes IS NOT NULL").fetchone()[0]
+        except Exception:
+            pass
+    for tabela, nome, col_ano in _OUTRAS_BASES:
+        try:
+            n = conexao.execute(f"SELECT COUNT(*) FROM {tabela}").fetchone()[0]
+            anos = conexao.execute(f"SELECT MIN({col_ano}), MAX({col_ano}) FROM {tabela}").fetchone() if col_ano else None
+        except Exception:
+            n, anos = 0, None
+        info["bases"].append({"tabela": tabela, "nome": nome, "linhas": int(n or 0),
+                              "anos": (int(anos[0]), int(anos[1])) if anos and anos[0] is not None else None})
+    return info
+
+
+def leitura_alcance(info, cidade=None, max_cidades=12):
+    """O que o Escudo tem, em palavras. Só descreve o que o banco guarda (e o que ele NÃO guarda)."""
+    if not info:
+        return ["Não consegui ler o banco para dizer o que ele guarda."]
+    nomes = ", ".join(f"{nome_doenca(c).lower()} ({formatar_numero(n)})" for c, n in info["canceres"])
+    frases = [
+        f"Neste banco há {formatar_numero(info['internacoes'])} internações de mulheres por câncer em hospitais do SUS "
+        f"do Estado de São Paulo, de {info['ano_ini']} a {info['ano_fim']}.",
+        f"São {len(info['canceres'])} tipos de câncer: {nomes}.",
+    ]
+    if info["n_cidades"]:
+        top = ", ".join(n for n, _ in info["cidades"][:max_cidades])
+        frases.append(
+            f"As internações são de mulheres que moram em {formatar_numero(info['n_cidades'])} cidades de SP; as com mais "
+            f"internações são {top}. A lista completa está no seletor de cidade, no alto do painel.")
+    if info["internacoes_de_fora"]:
+        ufs = f" (de {', '.join(info['ufs_de_fora'])})" if info.get("ufs_de_fora") else ""
+        frases.append(f"Há também {formatar_numero(info['internacoes_de_fora'])} internações de mulheres que moram em outros "
+                      f"estados{ufs}, atendidas em hospitais de SP.")
+    if info.get("n_hospitais"):
+        frases.append(f"Os atendimentos aconteceram em {formatar_numero(info['n_hospitais'])} estabelecimentos de saúde.")
+    com = [b for b in info["bases"] if b["linhas"]]
+    sem = [b for b in info["bases"] if not b["linhas"]]
+    if com:
+        frases.append("Além das internações, o banco também guarda: " + "; ".join(
+            b["nome"] + (f" ({b['anos'][0]} a {b['anos'][1]})" if b["anos"] else "") for b in com) + ".")
+    if sem:
+        frases.append("Ainda não foram carregados: " + "; ".join(b["nome"] for b in sem) + ".")
+    frases.append("Não guardo casos novos (incidência), quem se trata só por plano de saúde ou em hospital de outro estado, "
+                  "nem a causa das mudanças. Contam internações, não pessoas.")
+    return frases
+
+
+# =====================================
 # PREVISÃO COM VALIDAÇÃO (aprendizado de máquina simples)
 #
 # A projeção de tendência do painel é UMA reta. Aqui o Escudo faz o que

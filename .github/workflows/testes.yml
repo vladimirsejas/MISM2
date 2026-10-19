@@ -22,6 +22,9 @@ jobs:
       - name: Lia
         working-directory: algoritimos
         run: python teste_lia.py
+      - name: Alcance do banco (a Lia sabe o que tem)
+        working-directory: algoritimos
+        run: python teste_alcance.py
       - name: Glossário da Lia (termos técnicos)
         working-directory: algoritimos
         run: python teste_glossario.py

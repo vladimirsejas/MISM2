@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 
 from inteligencia import (
+    leitura_alcance,
     anos_fora_do_padrao,
     anos_incompletos,
     anos_fora_todos,
@@ -73,6 +74,7 @@ class Contexto:
     obitos_sim: object = None     # inteligencia.carregar_obitos_sim (None: banco sem a mortalidade do SIM)
     localizacao: object = None    # localizacao.carregar_localizacao (None: banco sem os centros dos municípios)
     atendimento: object = None    # {câncer ou None: inteligencia.ranking_atendimento} (None: banco sem o município do hospital)
+    alcance: object = None        # inteligencia.alcance_dados (o que o banco guarda: cânceres, cidades, período, outras bases)
 
 
 # ---------- ações (o que um botão faz) ----------
@@ -103,6 +105,7 @@ CAMINHOS = [
     ("Olhar para frente", "futuro"),
     ("Anos fora do padrão", "fora_padrao"),
     ("Os dados estão completos?", "completude"),
+    ("O que há nos dados?", "alcance"),
     ("Como esses dados funcionam?", "metodo"),
 ]
 
@@ -626,6 +629,19 @@ def tratamento(ctx, cancer=None):
                     destino={"aba": "Método"})
 
 
+def alcance(ctx, cancer=None):
+    """O que o banco guarda (autor, 19/10/2026: a Lia não podia ignorar o tamanho dos próprios dados). Texto fixo, lido do banco."""
+    info = getattr(ctx, "alcance", None)
+    if not info:
+        return Resposta(fala="Não consegui ler o banco para dizer o que ele guarda. Confira se a carga foi feita (py etl\\validar_banco.py).",
+                        expressao="cautelosa", botoes=[("Como esses dados funcionam?", caminho("metodo"))], destino={"aba": "Método"})
+    frases = leitura_alcance(info, ctx.cidade)
+    return Resposta(fala="\n\n".join(frases), expressao="explicando",
+                    botoes=[("O que mais aparece?", caminho("mais_aparece")), ("Os dados estão completos?", caminho("completude")),
+                            ("Como esses dados funcionam?", caminho("metodo"))],
+                    destino={"aba": "Método"}, numeros=frases[:2])
+
+
 def polos(ctx, cancer=None):
     """Cidades que mais TRATAM (município do hospital), ao lado do que a população delas tem. Só descreve."""
     tabelas = getattr(ctx, "atendimento", None) or {}
@@ -655,7 +671,7 @@ def mortalidade_real(ctx, cancer=None):
                     destino={"aba": "Método"})
 
 
-CAMINHOS_FUNCOES = {"polos": polos, "tratamento": tratamento, "mortalidade_real": mortalidade_real, "completude": completude, "mais_aparece": mais_aparece, "aumentando": aumentando, "atencao": atencao,
+CAMINHOS_FUNCOES = {"alcance": alcance, "polos": polos, "tratamento": tratamento, "mortalidade_real": mortalidade_real, "completude": completude, "mais_aparece": mais_aparece, "aumentando": aumentando, "atencao": atencao,
                     "valores": valores, "estado": estado, "fluxo": fluxo, "fora_padrao": fora_padrao, "metodo": metodo}
 
 

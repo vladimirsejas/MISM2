@@ -40,6 +40,7 @@ from inteligencia import (
     fluxo_da_cidade,
     formatar_numero,
     evolucao_fluxo,
+    alcance_dados,
     leitura_cidade, leitura_cidade_visao,
     leitura_evolucao,
     leitura_previsao,
@@ -218,6 +219,16 @@ def localizacao_dos_municipios():
     conn = sqlite3.connect(BANCO)
     try:
         return carregar_localizacao(conn)
+    finally:
+        conn.close()
+
+
+@st.cache_data
+def alcance_do_banco():
+    """O que o banco guarda (cânceres, período, cidades, outras bases): a Lia responde "quais doenças/cidades você tem?" com isto."""
+    conn = sqlite3.connect(BANCO)
+    try:
+        return alcance_dados(conn)
     finally:
         conn.close()
 
@@ -449,7 +460,8 @@ ctx_lia = Contexto(serie=serie, cidade=nome_cidade, faixas=faixas_municipio(ORIG
                    fluxo=fluxo_geral(), fluxo_cidade=fluxo_cidade(ORIGEM, cidade["codigo_ibge"]),
                    codigo_ibge=cidade["codigo_ibge"], ranking=rankings_por_100_mil(),
                    tratamento=tabelas_ambulatorial_e_sim()[0], obitos_sim=tabelas_ambulatorial_e_sim()[1],
-                   localizacao=localizacao_dos_municipios(), atendimento=polos_de_tratamento())
+                   localizacao=localizacao_dos_municipios(), atendimento=polos_de_tratamento(),
+                   alcance=alcance_do_banco())
 st.session_state.setdefault("lia", {"cidade": None, "atual": None, "pilha": []})
 lia_estado = st.session_state["lia"]
 if lia_estado["cidade"] != ORIGEM:  # trocou de cidade: a Lia recomeça

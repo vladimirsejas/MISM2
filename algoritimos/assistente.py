@@ -19,7 +19,7 @@ from inteligencia import (
     serie_doenca,
     _variacao_pct,
 )
-from lia import INICIO, Resposta, caminho, responder as lia_responder, sobre, tratamento as lia_tratamento, mortalidade_real as lia_mortalidade, polos as lia_polos
+from lia import INICIO, Resposta, caminho, responder as lia_responder, sobre, tratamento as lia_tratamento, mortalidade_real as lia_mortalidade, polos as lia_polos, alcance as lia_alcance
 
 # =====================================
 # ASSISTENTE DA LIA — a caixa "Pergunte à Lia" (10/2026)
@@ -451,6 +451,8 @@ def _resposta_base(ctx, intencao, cancer, foco, ano, ia):
         return (lia_responder(ctx, sobre(c, "obitos")) if c else _obitos_todos(ctx)), c, nota
     if intencao == "polos":
         return lia_polos(ctx, c), c, nota
+    if intencao == "alcance":
+        return lia_alcance(ctx), None, nota
     if intencao == "tratamento":
         return lia_tratamento(ctx, c), c, nota
     if intencao == "mortalidade_real":

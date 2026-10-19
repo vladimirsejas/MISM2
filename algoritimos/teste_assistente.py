@@ -429,6 +429,19 @@ def main():
     r = asst.responder_pergunta(ctx, "onde me trato, moro em Catanduva e tenho câncer de ovário", foco, ia=asst.IA())
     checar("7i. 'onde me trato' (pessoal) continua sendo hospital da região, não o ranking de polos", r.intencao == "onde_atendida")
 
+    # ---- 7j. alcance do banco: a Lia sabe quais doenças, quantas cidades e que período o banco tem (autor, 19/10/2026) ----
+    info_alc = {"internacoes": 464340, "ano_ini": 2013, "ano_fim": 2025, "canceres": [("MAMA", 200000), ("COLO_UTERO", 50000)],
+                "n_cidades": 645, "cidades": [("São Paulo", 90000), ("Campinas", 20000)], "internacoes_de_fora": 17991,
+                "ufs_de_fora": ["MG", "PR"], "n_hospitais": 800, "bases": []}
+    ctx_alc = Contexto(serie=ctx.serie, cidade="Rio Claro", faixas=ctx.faixas, alcance=info_alc)
+    for q in ("quais doenças você tem?", "quantas cidades tem no banco?", "que dados você tem"):
+        r = asst.responder_pergunta(ctx_alc, q, foco, ia=asst.IA())
+        checar(f"7j. {q!r}: responde com o que o banco guarda (cânceres, 645 cidades, período), em texto fixo, sem IA",
+               r.intencao == "alcance" and "645 cidades" in r.fala and "2013 a 2025" in r.fala and "mama" in r.fala and not r.usou_ia)
+    r = asst.responder_pergunta(ctx, "quantas cidades tem no banco?", foco, ia=asst.IA())
+    checar("7j. sem a leitura do banco, a Lia admite que não conseguiu ler em vez de inventar números",
+           r.intencao == "alcance" and "Não consegui ler o banco" in r.fala)
+
     # ---- 8. palpites e botões ----
     r = perguntar("me explica o negócio dos números do hospital das moças")
     ok_palpites = r.tipo in ("palpites", "fora")

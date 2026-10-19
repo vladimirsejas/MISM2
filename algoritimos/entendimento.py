@@ -298,7 +298,7 @@ ROTULOS = {
     "onde_atendida": "Onde ser atendida", "apoio": "Apoio à mulher", "sintoma": "Estou com um sintoma",
     "ajuda": "O que posso perguntar?", "causa": "Por que mudou?", "sem_dados": "O que os dados não têm",
 }
-ROTULOS_POR_GATILHO = {"tratamento": "Quimio e radioterapia", "mortalidade_real": "Mortes por câncer (todas)", "polos": "Cidades que mais tratam",
+ROTULOS_POR_GATILHO = {"tratamento": "Quimio e radioterapia", "mortalidade_real": "Mortes por câncer (todas)", "polos": "Cidades que mais tratam", "alcance": "O que há nos dados?",
                        "glossario": "O que significa um termo"}  # fora do índice (ver _por_gatilho)
 ROTULOS_TODOS = {**ROTULOS, **ROTULOS_POR_GATILHO}
 
@@ -571,6 +571,18 @@ GATILHO_MORTES = re.compile(r"\b(fora do hospital|em casa|via publica|na rua|dec
 GATILHO_POLOS = re.compile(r"\b((cidades?|municipios?) que mais (tratam|atendem|recebem|internam)|polos? de (tratamento|atendimento)|"
                            r"onde (mais )?(se )?(tratam|internam|atendem)|cidades? de referencia|"
                            r"(casos|pacientes|mulheres) (tratad\w+|atendid\w+) (nas|nos|em) cidades)\b")
+# "Quais doenças você tem? Quantas cidades? Que dados são esses?": o alcance do próprio banco (autor, 19/10/2026). Só por gatilho,
+# para não mexer nos outros assuntos; perguntas de número/ranking/tendência ("quais cidades têm mais...", "quais cânceres estão
+# aumentando") ficam de fora.
+GATILHO_ALCANCE = re.compile(
+    r"\b((que|quais|qual|quantas?|quantos?|quais sao as?)\b.{0,40}\b(doencas?|canceres|tipos? de cancer|cidades|municipios|estados|dados|bases?|anos)\b"
+    r".{0,40}\b(voces?|vcs?|tem|temos|conhece|sabe|acompanham|acompanha|monitora|cobre|cobrem|disponiv\w+|no banco|nos dados|na base|no painel|no escudo|existem|ha|abrange|abrangem)\b"
+    r"|\b(numero|quantidade|lista|total) de (cidades|municipios|doencas|canceres)\b|\btodas as (cidades|doencas|canceres)\b"
+    r"|\b(alcance|tamanho|abrangencia|cobertura) (dos|do|da) (dados|banco|base|escudo|painel)\b"
+    r"|\bo que (tem|ha|existe) (no|nos|na) (banco|dados|base|escudo)\b|\b(banco|base) de dados\b"
+    r"|\bque dados (voce|vc|o escudo|tem|existem)\b|\bo que (voce|vc) (conhece|sabe sobre|cobre)\b)")
+EXCLUI_ALCANCE = re.compile(r"\b(mais|menos|maior|maiores|menor|proporc\w+|cresc\w+|aument\w+|diminu\w+|caem|cai|tratam|atendem|"
+                            r"recebem|ranking|casos|internac\w+|obitos?|mortes?|valores?|gasto\w*|custo\w*|preven\w+|sintomas?|como funciona)\b")
 PALAVRA_MORTE = re.compile(r"\b(morr\w+|obito\w*|mort\w+|mortalidade)\b")
 
 
@@ -583,6 +595,8 @@ def _por_gatilho(texto):
         return "mortalidade_real"
     if GATILHO_POLOS.search(norm):
         return "polos"
+    if GATILHO_ALCANCE.search(norm) and not EXCLUI_ALCANCE.search(norm):
+        return "alcance"
     return None
 
 
@@ -625,6 +639,8 @@ def compreender(pergunta, disponiveis=None, memoria=None, classificar=None, cida
         # "me explica isso melhor" depois de uma resposta de dados: explica a resposta anterior (a mesma, em palavras simples)
         return Entendimento("intencao", intencao=memoria["intencao"], origem="explicar",
                             **{**base, "cancer": memoria.get("cancer")})
+    if _por_gatilho(texto) == "alcance":   # "quais cânceres vocês acompanham?" não é o ranking de cânceres
+        return Entendimento("intencao", intencao="alcance", origem="regras", **base)
     if _pede_comparar_canceres(texto, base, ano):
         return Entendimento("intencao", intencao="mais_aparece", origem="comparar_canceres", **base)
     gatilho = _por_gatilho(texto)
