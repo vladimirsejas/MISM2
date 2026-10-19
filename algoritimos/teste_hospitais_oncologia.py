@@ -68,6 +68,15 @@ with tempfile.TemporaryDirectory() as pasta:
     checar("o mais próximo de Rio Claro é a Santa Casa (poucos km), depois Barretos; só entra quem tem ponto",
            [r.cnes for _, r in perto] == ["2000002", "2000001"] and perto[0][0] < 10 and perto[1][0] > 100)
     checar("cidade fora da tabela: nenhuma distância, nunca posição inventada", h.mais_proximos(df, local, "Cidade Inexistente") == [] and h.mais_proximos(df, None, "Rio Claro") == [])
+    lista = h.ordenar_por_distancia(df, local, "Rio Claro")
+    com_ponto = int(df["no_mapa"].sum())
+    checar("a lista de baixo segue a cidade: todos os estabelecimentos, o mais perto primeiro (km crescente) e quem não tem ponto por último, sem km",
+           len(lista) == len(df) and lista.iloc[0]["cnes"] == "2000002" and lista.iloc[0]["km"] < 10
+           and lista["km"].iloc[:com_ponto].is_monotonic_increasing and lista["km"].iloc[:com_ponto].notna().all()
+           and lista["km"].iloc[com_ponto:].isna().all())
+    checar("cidade fora da tabela ou sem cidade: a lista segue como veio, sem coluna km (não finge ordem)",
+           "km" not in h.ordenar_por_distancia(df, local, "Cidade Inexistente").columns and "km" not in h.ordenar_por_distancia(df, local, "").columns
+           and "km" not in h.ordenar_por_distancia(df, None, "Rio Claro").columns)
     checar("cidades disponíveis em ordem alfabética sem acento", h.cidades_disponiveis(local) == ["Catanduva", "Piracicaba", "Rio Claro"])
 
     checar("link de rota leva nome, endereço, município e UF", "destination=Hospital+de+Amor%2C+Rua+A%2C+1%2C+Barretos%2C+SP" in h.link_chegar("Hospital de Amor", "Rua A, 1", "Barretos", "SP"))

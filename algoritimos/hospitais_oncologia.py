@@ -118,6 +118,19 @@ def mais_proximos(df, localizacao, cidade, n=3):
     return achados[:n]
 
 
+def ordenar_por_distancia(df, localizacao, cidade):
+    """Cópia de `df` com a coluna `km` (linha reta do centro da cidade até o hospital) e ordenada do mais perto ao mais longe.
+    Quem não tem posição confirmada fica sem km e vai para o fim (nunca ganha distância inventada). Se a cidade não está
+    na tabela de centros, devolve `df` como veio, sem a coluna: a página não finge uma ordem que não calculou."""
+    if localizacao is None or len(localizacao) == 0 or not cidade:
+        return df
+    origem = loc._ponto(localizacao, loc.ent.normalizar(cidade))
+    if origem is None:
+        return df
+    km = [loc.distancia_km(origem[0], origem[1], float(r.lat), float(r.lon)) if r.no_mapa else float("nan") for r in df.itertuples()]
+    return df.assign(km=km).sort_values("km", kind="mergesort", na_position="last").reset_index(drop=True)
+
+
 def cidades_disponiveis(localizacao):
     """Nomes das cidades de SP que têm centro cadastrado (para a pessoa escolher onde mora)."""
     if localizacao is None or len(localizacao) == 0:

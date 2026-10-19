@@ -112,6 +112,9 @@ def cartao(r):
     corpo = ""
     if r.habilitacao:
         corpo += f'<div class="hc-linha">{html.escape(r.habilitacao)}</div>'
+    km = getattr(r, "km", None)
+    if km is not None and km == km:  # km == km: NaN (sem posição confirmada) não mostra distância
+        corpo += f'<div class="hc-linha"><span class="hc-km">{km:.0f} km</span> em linha reta da sua cidade</div>'
     if r.endereco:
         corpo += f'<div class="hc-linha">📍 {html.escape(r.endereco)}</div>'
     if r.telefone:
@@ -278,8 +281,14 @@ else:
         st.session_state["hc_assinatura"] = assinatura
         st.session_state["hc_limite"] = PAGINA
     limite = st.session_state.setdefault("hc_limite", PAGINA)
+    # com a cidade escolhida, a lista segue o topo: do hospital mais perto ao mais longe (sem posição confirmada, no fim)
+    lista = h.ordenar_por_distancia(mostrar, local, cidade) if (escopo == "sp" and cidade) else mostrar
+    ordenada = "km" in lista.columns
     st.markdown(f'<div class="escudo-pergunta">{len(mostrar)} estabelecimento{"s" if len(mostrar) != 1 else ""}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="hc-grade">{"".join(cartao(r) for r in mostrar.head(limite).itertuples())}</div>', unsafe_allow_html=True)
+    if ordenada:
+        st.caption(f"Do mais perto ao mais longe de {cidade} (linha reta entre o centro da cidade e o hospital). "
+                   "Quem não tem posição confirmada vem por último, sem distância.")
+    st.markdown(f'<div class="hc-grade">{"".join(cartao(r) for r in lista.head(limite).itertuples())}</div>', unsafe_allow_html=True)
     if len(mostrar) > limite:
         if st.button(f"Mostrar mais ({len(mostrar) - limite} restantes)", key="hc_mais"):
             st.session_state["hc_limite"] = limite + PAGINA

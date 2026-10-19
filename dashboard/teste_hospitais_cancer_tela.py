@@ -83,6 +83,11 @@ def main():
         checar("A. começa no Estado de SP (5 estabelecimentos) com o selo de escopo", cartoes(at) == 5 and "Todo o Estado de São Paulo" in t)
         checar("A. escolhe a cidade (Rio Claro) e mostra os 3 hospitais mais próximos em linha reta, a Santa Casa primeiro",
                t.count("em linha reta") >= 3 and t.index("Santa Casa de Rio Claro") < t.index("HC da Unicamp") and "Não é rota nem tempo de viagem" in t)
+        grade = t[t.index('class="hc-grade"'):]
+        ordem = [grade.index(n) for n in ("Santa Casa de Rio Claro", "HC da Unicamp", "Hospital Albert Einstein", "Hospital de Amor", "HC da Famema")]
+        checar("A. os cartões de baixo seguem a cidade escolhida: do mais perto ao mais longe, com km, e sem posição por último",
+               ordem == sorted(ordem) and "em linha reta da sua cidade" in grade and grade.count("em linha reta da sua cidade") == 4
+               and "Do mais perto ao mais longe de Rio Claro" in t)
         checar("A. avisa que quem decide é a regulação, não a proximidade", "quem decide para onde você vai é a regulação" in t)
         checar("A. a leitura diz o que está no mapa e o que está só na lista", "4 aparecem no mapa" in t and "1 está só na lista" in t)
         checar("B. o hospital sem posição confirmada aparece na lista SEM ponto e diz o motivo",
