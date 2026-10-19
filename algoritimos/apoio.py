@@ -381,12 +381,16 @@ ITENS = [
                "ginecologista. Exame pedido pelo médico (mamografia, raio X e outros): o pedido fica com o "
                "funcionário da unidade, que aciona a Central Municipal de Regulação de Serviços Especializados; a "
                "Central avisa a unidade e a unidade avisa a paciente, que não precisa ir a outra central. Convém manter "
-               "o telefone atualizado na unidade. O Cadu (0800 019 0505) agenda consultas e procedimentos, como a "
-               "coleta do Papanicolau.",
-          levar="O pedido do exame, quando já houver.",
+               "o telefone atualizado na unidade. A Central analisa o pedido; se faltar informação, ele volta à unidade "
+               "para correção, e a marcação depende das vagas da rede. Pedido de médico ou clínica particular também "
+               "vale: precisa estar em receituário próprio, com identificação do profissional, CID e justificativa "
+               "clínica, e a equipe da unidade o transcreve para o formulário. O Cadu (0800 019 0505) agenda consultas "
+               "e procedimentos, como a coleta do Papanicolau.",
+          levar="O pedido do exame, completo e legível, quando já houver.",
           confirmar="O número de unidades e o horário vêm de páginas antigas da Prefeitura: confira a lista de "
-                    "endereços. O caminho do exame pedido foi informado por chefias da Fundação em 19/10/2026, por "
-                    "conversa, e ainda não está em publicação oficial: confirme na unidade.",
+                    "endereços. O caminho do exame pedido segue o protocolo da Fundação Municipal de Saúde para exames "
+                    "de média e alta complexidade (revisão 03, 2026) e foi confirmado por chefias da Fundação em "
+                    "19/10/2026. O protocolo não foi aberto por link público: confirme na unidade os prazos e as vagas.",
           tambem_caminhos=["mama"]),
     _item("rc_santa_casa", "tratamento", "rio_claro", "Rio Claro",
           "Santa Casa de Rio Claro – oncologia (UNACON) e Centro Oncológico Santa Ágata",
