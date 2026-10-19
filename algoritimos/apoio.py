@@ -1197,8 +1197,7 @@ ITENS = [
           contato="Rua 9 (esquina com a Avenida da Saudade), 165 – Bairro dos Estádios. (19) 3526-2300.",
           confirmar="As fontes trazem dois números para o endereço (Rua 9, 165, e Avenida da Saudade, 252): são compatíveis, "
                     "porque o AME fica na esquina das duas ruas (informação de quem trabalha na Fundação, 19/10/2026). Algumas "
-                    "fontes trazem outro telefone, e o certificado do site do Seconci não é verificável: confirme o telefone "
-                    "na unidade de saúde antes de ir."),
+                    "fontes trazem outro telefone: confirme o telefone na unidade de saúde antes de ir."),
     _item("rc_cead", "mama", "rio_claro", "Rio Claro",
           "CEAD – centro municipal de especialidades e apoio diagnóstico",
           "a unidade municipal onde ficam a mastologia e o ultrassom da mama, para quem a unidade de saúde encaminha",
@@ -1210,8 +1209,10 @@ ITENS = [
                "pedido pela unidade conforme critérios clínicos, não como exame de rotina. O CEAD é municipal, da "
                "Fundação, e é um serviço diferente do AME, que é do Estado. Mulher com câncer confirmado segue para o "
                "tratamento na Santa Casa de Rio Claro.",
-          confirmar="Endereço, telefone e horário do CEAD não foram confirmados para este cartão: pergunte na unidade de "
-                    "saúde. O que está aqui vem do protocolo da Fundação e de chefias da Fundação (19/10/2026)."),
+          contato="Atendimento de segunda a sexta-feira, das 7h às 16h.",
+          confirmar="O endereço e o telefone do CEAD ainda não foram confirmados para este cartão, e o horário foi "
+                    "informado por quem trabalha na Fundação (19/10/2026): pergunte na unidade de saúde. O que está aqui "
+                    "vem do protocolo da Fundação e de chefias da Fundação."),
     _item("rc_ddm", "ajuda", "rio_claro", "Rio Claro",
           "Delegacia de Defesa da Mulher (DDM) de Rio Claro",
           "registrar ocorrência e pedir medida protetiva na cidade",
