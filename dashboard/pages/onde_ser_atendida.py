@@ -122,7 +122,11 @@ def internacoes_por_cnes(modificado):
 
 
 def inicio():
-    if st.button("🏠 Início", key="un_inicio"):
+    st.markdown('<div style="background:#efe9f5;border-left:4px solid #5b2a55;border-radius:6px;padding:6px 12px;'
+                'margin:4px 0 10px;font-size:.95rem;color:#2a1730">📍 Você está em: <b>Onde ser atendida</b></div>',
+                unsafe_allow_html=True)
+    if st.button("🏠 Início", key="un_inicio", help="Volta à página inicial do Escudo (Panorama)."):
+        st.session_state["aba"] = "Panorama"
         try:
             st.switch_page("app.py")
         except Exception:  # fora do painel (teste isolado): sem destino

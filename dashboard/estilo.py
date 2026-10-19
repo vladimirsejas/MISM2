@@ -118,6 +118,10 @@ div[data-testid="stRadio"]:has(input[value="Panorama"]) > div { gap: 4px; border
     color: #ffffff !important; font-weight: 700; font-size: 1rem; }
 [class*="st-key-botao_inicio"] button { background: #ffffff; border: 1px solid #2a78d6; color: #2a78d6;
     border-radius: 12px; font-weight: 700; }
+.escudo-voce-esta { background: #efe9f5; border-left: 4px solid #5b2a55; color: #2a1730; border-radius: 6px;
+    padding: 6px 12px; margin: 4px 0 10px; font-size: .95rem; }
+div[data-testid="stRadio"]:has(input[value="Panorama"]) label:has(input:checked) { background: #5b2a55; border-radius: 8px; }
+div[data-testid="stRadio"]:has(input[value="Panorama"]) label:has(input:checked) p { color: #ffffff; font-weight: 700; }
 [class*="st-key-botao_inicio"] button:hover { background: #2a78d6; color: #ffffff; }
 [class*="st-key-botao_inicio"] button p { font-weight: 700; }
 

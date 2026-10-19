@@ -212,3 +212,22 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# --- sem o dado de onde as moradoras são atendidas: a leitura diz que não existe ---
+def _teste_sem_destino():
+    info = {"atendimentos": 10, "da_cidade": 4, "outras_cidades": 6, "outros_estados": 0, "moradoras": 0,
+            "moradoras_na_cidade": 0, "moradoras_fora": 0, "destinos": [], "moradoras_sem_hospital": 7}
+    texto = " ".join(leitura_cidade(info, "Teste"))
+    assert "Não há como dizer onde as moradoras de Teste foram atendidas" in texto, texto
+    info["moradoras_sem_hospital"] = 0
+    assert "não existe o dado" in " ".join(leitura_cidade(info, "Teste"))
+
+
+try:
+    _teste_sem_destino()
+    print("OK sem destino das moradoras")
+except NameError:
+    from inteligencia import leitura_cidade
+    _teste_sem_destino()
+    print("OK sem destino das moradoras")

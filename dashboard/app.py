@@ -605,16 +605,24 @@ if not st.session_state.get("lia_fechada"):
 # Abas + botão "Início" (pedido do autor, 09/2026): de qualquer aba, um
 # clique volta ao Panorama, a página inicial do Escudo.
 col_abas, col_inicio = st.columns([5, 1])
-with col_abas:
-    aba = seletor(st, "Navegação", "aba", ABAS, horizontal=True, label_visibility="collapsed")
 with col_inicio:
     try:
         caixa_inicio = st.container(key="botao_inicio_painel")
     except TypeError:  # Streamlit antigo: sem key em container
         caixa_inicio = st.container()
+    # Sempre ativo (autor, 19/10/2026: "falta o botão home"): no Panorama só recarrega a página inicial.
     caixa_inicio.button("🏠 Início", key="inicio_painel", on_click=definir, args=("aba", "Panorama"),
-                        width="stretch", disabled=aba == "Panorama",
-                        help="Volta à página inicial do Escudo.")
+                        width="stretch", help="Volta à página inicial do Escudo (Panorama).")
+with col_abas:
+    aba = seletor(st, "Navegação", "aba", ABAS, horizontal=True, label_visibility="collapsed")
+# "Você está em" (autor, 19/10/2026): a aba aberta fica escrita, não só marcada no seletor.
+_ONDE = {"Panorama": "Panorama · a página inicial: o que está acontecendo",
+         "Evolução": "Evolução · como os números mudaram ao longo dos anos",
+         "Investigar": "Investigar · de onde vêm as pacientes e quando cada câncer aparece",
+         "Planejamento": "Planejamento · onde a cidade pode ter problema nos próximos anos",
+         "Método": "Método · como os números são feitos"}
+st.markdown(f'<div class="escudo-voce-esta">📍 Você está em: <b>{html.escape(_ONDE.get(aba, aba))}</b>'
+            f' · {html.escape(nome_cidade)}</div>', unsafe_allow_html=True)
 
 
 # ============================================================
@@ -1155,18 +1163,34 @@ if aba == "Investigar":
                           help=f"{parte(info_cidade['outros_estados'], atend)} das internações nos hospitais da cidade")
             with dire:
                 st.markdown(f"**2. Onde as moradoras de {nome_cidade} são atendidas**")
-                st.metric(f"Internações de moradoras de {nome_cidade}", formatar_numero(morad))
-                d1, d2 = st.columns(2)
-                d1.metric("Na própria cidade", formatar_numero(info_cidade["moradoras_na_cidade"]),
-                          help=f"{parte(info_cidade['moradoras_na_cidade'], morad)} das internações das moradoras")
-                d2.metric("Em outras cidades de SP", formatar_numero(info_cidade["moradoras_fora"]),
-                          help=f"{parte(info_cidade['moradoras_fora'], morad)} das internações das moradoras")
-            if info_cidade["destinos"]:
-                st.dataframe(pd.DataFrame({
-                    "Cidade do hospital (moradoras atendidas fora)": [nome for nome, _ in info_cidade["destinos"]],
-                    "Internações": [n for _, n in info_cidade["destinos"]],
-                    "% das internações das moradoras": [parte(n, morad) for _, n in info_cidade["destinos"]],
-                }), width="stretch", hide_index=True)
+                sem_h = info_cidade.get("moradoras_sem_hospital", 0)
+                if not morad:
+                    if sem_h:
+                        st.warning(f"**Este dado não existe para {nome_cidade}.** Há {formatar_numero(sem_h)} "
+                                   "internações de moradoras no banco, mas nenhuma traz o município do hospital; "
+                                   "por isso não dá para dizer para onde elas vão.")
+                    else:
+                        st.warning(f"**Este dado não existe para {nome_cidade}.** O banco não tem internações de "
+                                   "moradoras da cidade, então não há como mostrar onde elas são atendidas.")
+                else:
+                    st.metric(f"Internações de moradoras de {nome_cidade}", formatar_numero(morad))
+                    d1, d2 = st.columns(2)
+                    d1.metric("Na própria cidade", formatar_numero(info_cidade["moradoras_na_cidade"]),
+                              help=f"{parte(info_cidade['moradoras_na_cidade'], morad)} das internações das moradoras")
+                    d2.metric("Em outras cidades de SP", formatar_numero(info_cidade["moradoras_fora"]),
+                              help=f"{parte(info_cidade['moradoras_fora'], morad)} das internações das moradoras")
+                    if sem_h:
+                        st.caption(f"Outras {formatar_numero(sem_h)} internações de moradoras ficaram de fora desta "
+                                   "conta por não trazerem o município do hospital.")
+                    if info_cidade["destinos"]:
+                        st.dataframe(pd.DataFrame({
+                            "Cidade do hospital": [nome for nome, _ in info_cidade["destinos"]],
+                            "Internações": [n for _, n in info_cidade["destinos"]],
+                            "% das moradoras": [parte(n, morad) for _, n in info_cidade["destinos"]],
+                        }), width="stretch", hide_index=True)
+                    else:
+                        st.info(f"Nenhuma moradora de {nome_cidade} foi atendida em hospital de outra cidade de SP "
+                                "no período.")
             leitura("O que mostra", leitura_cidade(info_cidade, nome_cidade))
         st.markdown("---")
 

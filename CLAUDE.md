@@ -442,6 +442,12 @@ Estado atual:
   para afirmar (meses ausentes na fonte, atendimento fora do SIH ou sob outro CNES, poucos casos) sem atribuir causa. Testes:
   `teste_fluxo.py`, `teste_hospital.py` e os cenários F e H de `dashboard/teste_painel.py`. **Não foi visto no navegador real nem com
   o banco real** (a nuvem não tem o banco): conferir no notebook como a tabela se comporta com ~18 mil internações de fora.
+  **Navegação (19/10/2026, autor: "falta o botão home e a indicação de onde você está"):** o botão "🏠 Início" do painel agora fica
+  SEMPRE ativo (antes desligava no Panorama) e uma faixa "📍 Você está em: <aba> · <cidade>" aparece sob as abas (`escudo-voce-esta`);
+  a aba aberta também ganha fundo roxo no seletor. As páginas Onde ser atendida e Hospitais habilitados ganharam a mesma faixa e o
+  Início delas marca `aba = "Panorama"` antes de trocar de página. **Bloco da cidade:** a coluna "2. Onde as moradoras de <cidade> são
+  atendidas" sempre aparece; sem o município do hospital (`moradoras_sem_hospital` em `fluxo_da_cidade`) ou sem internações de
+  moradoras, mostra o aviso "Este dado não existe para <cidade>" e a leitura diz o mesmo. A tabela de destinos agora fica dentro da coluna.
 
 ## Pergunte à Lia — a IA do Escudo (10/2026, pedido do autor)
 

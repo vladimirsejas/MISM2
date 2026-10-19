@@ -1863,6 +1863,7 @@ def fluxo_da_cidade(conexao, origem, codigo_ibge, uf_referencia="SP"):
         return None
     nomes = _nomes_municipios(conexao)
     com_hospital = [(c, int(n)) for c, n in onde if c is not None]
+    sem_hospital = sum(int(n) for c, n in onde if c is None)
     moradoras = sum(n for _, n in com_hospital)
     na_cidade = sum(n for c, n in com_hospital if c == cod6)
     destinos = [(nome_do_hospital_municipio(nomes, c), n) for c, n in com_hospital if c != cod6]
@@ -1873,6 +1874,7 @@ def fluxo_da_cidade(conexao, origem, codigo_ibge, uf_referencia="SP"):
         "outros_estados": int(quem.get("outros_estados", 0)),
         "moradoras": moradoras, "moradoras_na_cidade": na_cidade,
         "moradoras_fora": moradoras - na_cidade, "destinos": destinos[:10],
+        "moradoras_sem_hospital": sem_hospital,
     }
 
 
@@ -1894,6 +1896,15 @@ def leitura_cidade(info, nome_cidade):
     else:
         frases.append(f"Nenhuma internação foi registrada em hospitais de {nome_cidade}.")
     m = info["moradoras"]
+    sem = info.get("moradoras_sem_hospital", 0)
+    if not m:
+        if sem:
+            frases.append(
+                f"Não há como dizer onde as moradoras de {nome_cidade} foram atendidas: as {formatar_numero(sem)} "
+                "internações delas estão sem o município do hospital no banco.")
+        else:
+            frases.append(f"Não há internações de moradoras de {nome_cidade} no banco, então não existe o dado de "
+                          "onde elas são atendidas.")
     if m:
         frases.append(
             f"Das {formatar_numero(m)} internações de moradoras de {nome_cidade}, "
