@@ -384,14 +384,15 @@ ITENS = [
           tambem_caminhos=["mama"]),
     _item("rc_central_vagas", "mama", "rio_claro", "Rio Claro",
           "Exame com pedido médico (mamografia, raio X e outros): a unidade agenda",
-          "com o pedido em mãos, a equipe do posto agenda pelo centro de regulação",
+          "o médico pede, o pedido fica na unidade e a equipe aciona a regulação; o Cadu avisa quando marcar",
           "Informação da chefia do CEAD (Fundação Municipal de Saúde de Rio Claro), por conversa em 19/10/2026",
           "https://www.saude-rioclaro.org.br/enderecos.htm",
           para_quem="Quem já tem o pedido de um exame (mamografia, raio X e outros) da rede municipal de Rio Claro.",
-          como="Passe pelo posto de saúde (USF ou UBS) ou pelo local que pediu o exame, com o pedido. Os funcionários "
-               "da própria unidade fazem a marcação pelo centro de regulação: não é preciso ir a outra central. Se "
-               "não souber qual é a sua unidade, use o botão \"Unidades, telefones e como chegar\". Depois, a "
-               "paciente é avisada da marcação pelo Cadu (0800 019 0505, telefone ou WhatsApp).",
+          como="1) O médico pede o exame. 2) O pedido fica com o funcionário da unidade (USF, UBS ou o local que pediu "
+               "o exame). 3) Ele entra em contato com a Central Municipal de Regulação de Serviços Especializados: "
+               "a paciente não precisa ir a outra central. Se não souber qual é a sua unidade, use o botão \"Unidades, "
+               "telefones e como chegar\". 4) Assim que o exame for agendado, o Cadu entra em contato com a paciente "
+               "(0800 019 0505, telefone ou WhatsApp). Convém manter o telefone atualizado na unidade.",
           levar="O pedido do exame.",
           contato="Cadu: 0800 019 0505 (telefone/WhatsApp).",
           confirmar="Informação dada por conversa com a chefia do CEAD em 19/10/2026; ainda não está em publicação "
