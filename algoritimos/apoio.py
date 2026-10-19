@@ -1283,10 +1283,14 @@ ETAPAS = [
      "a consulta também pode ser marcada pelo Cadu (0800 019 0505, telefone ou WhatsApp).",
      ["mama", "colo"], ["rc_cadu_agendamento", "rc_unidades", "mulheres_de_peito", "colo_utero"]),
     ("alterado", "Meu exame deu alteração",
-     "Um exame alterado não confirma câncer. Leve o laudo à equipe de saúde que pediu o exame e pergunte qual é o "
-     "próximo passo. O prazo legal de até 30 dias se aplica quando câncer é a principal hipótese diagnóstica e o "
-     "médico responsável faz um pedido fundamentado.",
-     ["diagnostico"], ["mamografia_alterada", "preventivo_alterado", "lei_30_dias"]),
+     "Respire: um exame alterado não é diagnóstico de câncer, e a maior parte das alterações não é. O primeiro passo "
+     "é ir, com o laudo na mão, à unidade de saúde do seu bairro (UBS ou USF) e dizer: \"meu exame deu alterado\". "
+     "Foi essa equipe que pediu o exame, e é ela quem organiza os próximos exames e o encaminhamento. Não sabe qual "
+     "é a sua unidade? Em Rio Claro, ligue para o Cadu (0800 019 0505, telefone ou WhatsApp) ou use o botão "
+     "\"Unidades, telefones e como chegar\", no alto da página. Se depois a resposta demorar, existem prazos "
+     "legais: o de até 30 dias vale quando câncer é a principal hipótese diagnóstica e o médico responsável faz um "
+     "pedido fundamentado.",
+     [], ["rc_unidades", "rc_cadu_agendamento"]),
     ("encaminhada", "Fui encaminhada",
      "Depois do encaminhamento, a vaga é organizada pela regulação do Estado. Você pode acompanhar a fila da "
      "oncologia e, se o nome não aparecer, sabe onde procurar ajuda.",

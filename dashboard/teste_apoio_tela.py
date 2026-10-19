@@ -162,9 +162,10 @@ checar("C. sem saber o ponto: a tela não assume que a mulher ainda não fez exa
        not erros(at2) and at2.session_state["ap_etapa"] is None
        and "Escolha uma situação acima" in " ".join(str(x.value) for x in at2.info))
 next(b for b in botoes_lia(at2) if b.label == "Meu exame deu alteração").click().run()
-checar("C. Preciso de ajuda → 'Meu exame deu alteração' leva a Diagnóstico",
+checar("C. Preciso de ajuda → 'Meu exame deu alteração' leva primeiro à unidade de saúde do bairro (não à lei)",
        not erros(at2) and at2.session_state["ap_etapa"] == "alterado"
-       and any(b.label == "Porta Diagnóstico" for b in botoes_lia(at2)))
+       and any("USF" in b.label and "UBS" in b.label for b in botoes_lia(at2))
+       and not any("30 dias" in b.label for b in botoes_lia(at2)))
 botao(at, "lia_discreto_inicio_ap").click().run()
 checar("C. começar de novo volta à saudação", apoio.CIDADE in at.session_state["ap_lia"]["atual"].fala
        and not erros(at))

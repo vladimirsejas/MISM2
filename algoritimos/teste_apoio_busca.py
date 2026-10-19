@@ -103,8 +103,8 @@ def main():
            x.tipo == "sintoma" and "Eu não faço diagnóstico" in x.fala and "UBS" in x.fala and "192" in x.fala
            and any("Caminho do exame" in r for r, _ in x.botoes) and "Onde ser atendida" not in x.fala)
     x = ab.responder_pergunta("meu papanicolau deu alterado", classificar=g)
-    checar("2. 'meu papanicolau deu alterado' tem item exato no guia: mostra o item, não o texto de sintoma",
-           x.tipo in ("itens", "palpites") and "preventivo_alterado" in x.candidatos)
+    checar("2. 'meu papanicolau deu alterado' leva primeiro à unidade de saúde (autor, 19/10/2026), não ao texto de sintoma",
+           x.tipo == "etapa" and "unidade de saúde do seu bairro" in x.fala)
     checar("2. nada disso chamou o Gemini", g.chamadas == [])
     checar("2. saudação: apresenta as portas do guia", ab.responder_pergunta("oi").tipo == "saudacao" and len(ab.responder_pergunta("bom dia").botoes) >= 8)
 
@@ -224,3 +224,24 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# --- exame alterado sem dizer qual: unidade de saúde primeiro, não lei (autor, 19/10/2026) ---
+def _teste_exame_alterado_generico():
+    for q in ("meu exame deu alteração", "meu exame deu alterado", "o resultado do meu exame veio alterado"):
+        r = responder_pergunta(q)
+        assert r.tipo == "etapa" and "unidade de saúde do seu bairro" in r.fala, (q, r.tipo)
+        assert "lei_30_dias" not in " ".join(str(b[1]) for b in r.botoes), q
+    for q in ("minha mamografia deu alterada", "meu preventivo deu alterado", "o papanicolau veio alterado"):
+        r = responder_pergunta(q)
+        assert r.tipo == "etapa" and "unidade de saúde do seu bairro" in r.fala, (q, r.tipo)
+    r = responder_pergunta("minha mamografia veio com BI-RADS 4, e agora?")
+    assert r.tipo != "etapa" and "BI-RADS" in r.fala
+    print("OK   exame alterado: unidade de saúde primeiro (inclusive mamografia/preventivo); termo técnico continua no cartão")
+
+
+try:
+    _teste_exame_alterado_generico()
+except NameError:
+    from apoio_busca import responder_pergunta
+    _teste_exame_alterado_generico()

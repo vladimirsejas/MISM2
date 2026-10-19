@@ -281,6 +281,19 @@ def _diagnostico_recente(pergunta):
     return menciona_cancer and relata_diagnostico
 
 
+def _exame_alterado_generico(pergunta):
+    """"Meu exame deu alteração" sem dizer qual exame: a mulher está assustada e o primeiro passo é a unidade de
+    saúde do bairro (autor, 19/10/2026), não escolher à força preventivo ou mamografia nem abrir lei."""
+    texto = ent.normalizar(pergunta)
+    diz_alterado = any(p in texto for p in ("alterad", "alteracao", "alteracoes", "anormal", "deu ruim", "veio ruim"))
+    diz_exame = any(p in texto for p in ("exame", "resultado", "laudo", "mamografia", "mamo", "preventivo", "papanicolau", "ultrassom"))
+    # quem pergunta pelo termo técnico ("o que é BI-RADS 4?") continua indo ao cartão; "mamografia/preventivo
+    # alterado" é a mulher assustada e também vai primeiro à unidade de saúde.
+    exame_especifico = any(p in texto for p in (
+        "colposcopia", "biopsia", "birads", "bi-rads", "bi rads", "hpv", "colonoscopia", "sangue", "psa"))
+    return diz_alterado and diz_exame and not exame_especifico
+
+
 # ---------- respostas ----------
 
 @dataclass
@@ -513,6 +526,10 @@ def _responder_pergunta(pergunta, classificar=None, contexto=None, cancer_em_foc
             r.botoes = [(f"Sobre o {apoio.TIPOS_CANCER[tipos[0]]}", apoio.abertura_do_tipo(tipos[0]))] + r.botoes
         return _de(r, tipo="etapa", selo="Orientação fixa do guia; a Lia não escolhe hospital nem tratamento.",
                    tipo_cancer=tipos[0] if len(tipos) == 1 else None, **comum)
+    if _exame_alterado_generico(pergunta) and "cancer" not in texto_norm:
+        r = apoio.responder(apoio.etapa("alterado"))
+        return _de(r, tipo="etapa", selo="Orientação fixa do guia; a Lia não interpreta o seu exame.",
+                   tipo_cancer=None, **comum)
     # parece "previsão do tempo", não um item do guia; mas evidência clara de item vence esse sinal geral
     # ("o que é UNACON" lembra "o que é inflação"). Quem nomeou um câncer está sempre no assunto.
     fora_do_assunto = social.tipo == "fora" and n1 < NOTA_FORA and not tipos

@@ -266,7 +266,7 @@ def main():
     checar("D14. risco de vida vence o assunto de câncer", x.tipo == "risco")
     checar("D15. diagnóstico recente com câncer nomeado continua indo à jornada do diagnóstico",
            ab.responder_pergunta("acabei de receber o diagnóstico de câncer de intestino").tipo == "etapa")
-    antigas = {"onde faço mamografia de graça?": "mama", "preventivo alterado": "colo", "quero fazer a vacina do hpv": "colo"}
+    antigas = {"onde faço mamografia de graça?": "mama", "colposcopia depois do preventivo": "colo", "quero fazer a vacina do hpv": "colo"}
     for pergunta, tipo in antigas.items():
         x = ab.responder_pergunta(pergunta)
         checar(f"D16. busca que já funcionava continua: {pergunta!r}", x.tipo in ("itens", "palpites")
