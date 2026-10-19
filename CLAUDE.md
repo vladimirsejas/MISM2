@@ -428,9 +428,15 @@ Estado atual:
   `parcela_fora_por_cancer`, `leitura_tabela_fluxo`): uma linha por câncer x estado de origem x hospital (um ano por linha
   opcional), filtros de câncer, estado e anos, busca sem acento/maiúscula em hospital, município, estado, câncer e CNES, ordenação
   por coluna, download CSV e leitura que ainda responde a pergunta antiga (parcela de fora de cada câncer no período).
-  `por_cancer_fluxo` continua em `inteligencia.py` (tem teste), mas o painel não a usa mais. (2) "Em que anos algum câncer saiu do
-  padrão?": dica "Como ler" (esperado, diferença, poucos casos), colunas renomeadas ("Internações no ano", "Esperado pela
-  tendência", "Ficou", "Poucos casos", "Meses na fonte") e leitura em palavras (`leitura_fora_todos`). (3) Gráfico do hospital por
+  `por_cancer_fluxo` continua em `inteligencia.py` (tem teste), mas o painel não a usa mais. (2) O bloco "Em que anos algum câncer saiu do padrão?" saiu da
+  aba Investigar (autor: "dado confuso que não ajuda em nada"; régua: um gestor ou uma aluna de 3º semestre sabe o que fazer com
+  isso? Não, e vários anos marcados vinham só de meses ausentes na fonte). A informação continua em UMA casa: a camada "Destacar
+  anos fora do padrão" do gráfico da aba Evolução, e a Lia conta em palavras quando perguntada (o botão "Anos fora do padrão"
+  agora leva à Evolução com a camada ligada; `anos_fora_todos` fica só para a Lia). **Passeio:** a parada 3 deixou de ser "Algum
+  ano fora do padrão?" (repetiria a Evolução) e virou "De onde vêm as pacientes de outros estados?" (caminho `fluxo`, aba
+  Investigar), mantendo uma parada por aba. Avisos de confiabilidade agora dizem "Poucos casos" no lugar de "Números pequenos".
+  O bloco "Quem é atendida nos hospitais de <cidade>" virou duas perguntas separadas (quem é atendida AQUI x onde as MORADORAS
+  são atendidas), com a lista das cidades de destino e uma frase de resumo no lugar do "saldo". (3) Gráfico do hospital por
   ano: ano sem registro ganha um x laranja com o mouse dizendo quantos meses a fonte tinha, a leitura diz onde caem as lacunas e que
   o banco NÃO guarda o motivo (`_frases_anos_sem_registro`), e a caixa "Por que alguns anos ficam sem barra?" lista o que dá
   para afirmar (meses ausentes na fonte, atendimento fora do SIH ou sob outro CNES, poucos casos) sem atribuir causa. Testes:

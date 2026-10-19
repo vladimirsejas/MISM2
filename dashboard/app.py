@@ -27,7 +27,6 @@ from inteligencia import (
     ano_atipico_no_estado,
     anos_fora_do_padrao,
     anos_incompletos,
-    anos_fora_todos,
     cancer_de,
     canceres_com_duplicidade,
     carregar_faixas,
@@ -69,7 +68,6 @@ from inteligencia import (
     filtrar_tabela_fluxo,
     agrupar_tabela_fluxo,
     leitura_tabela_fluxo,
-    leitura_fora_todos,
     porte_das_cidades,
     leitura_aparece,
     leitura_comparacao,
@@ -1134,56 +1132,43 @@ if aba == "Investigar":
         if info_cidade is None:
             st.info("Sem o município do hospital no banco não dá para ver o fluxo da cidade.")
         else:
-            g1, g2, g3 = st.columns(3)
-            g1.metric(f"Internações em hospitais de {nome_cidade}", formatar_numero(info_cidade["atendimentos"]))
-            g2.metric("De outros estados", formatar_numero(info_cidade["outros_estados"]))
-            g3.metric("Moradoras atendidas fora da cidade", formatar_numero(info_cidade["moradoras_fora"]),
-                      help=f"de {formatar_numero(info_cidade['moradoras'])} internações de moradoras de {nome_cidade}")
+            st.markdown(f'<div class="escudo-dica"><b>São duas perguntas diferentes.</b> À esquerda: quem é atendida '
+                        f'<i>dentro</i> dos hospitais de {html.escape(nome_cidade)}, venha de onde vier. À direita: '
+                        f'as mulheres que <i>moram</i> em {html.escape(nome_cidade)}, onde quer que tenham sido '
+                        f'atendidas. Uma moradora internada em outra cidade conta só à direita. Conta internações '
+                        f'(uma mulher pode ter várias) e só enxerga hospitais de SP.</div>', unsafe_allow_html=True)
+            atend, morad = info_cidade["atendimentos"], info_cidade["moradoras"]
+
+            def parte(valor, todo):
+                return f"{formatar_numero(100 * valor / todo, 1)}%" if todo else "—"
+
+            esq, dire = st.columns(2)
+            with esq:
+                st.markdown(f"**1. Quem é atendida nos hospitais de {nome_cidade}**")
+                st.metric(f"Internações nos hospitais de {nome_cidade}", formatar_numero(atend))
+                e1, e2, e3 = st.columns(3)
+                e1.metric(f"Moradoras de {nome_cidade}", formatar_numero(info_cidade["da_cidade"]),
+                          help=f"{parte(info_cidade['da_cidade'], atend)} das internações nos hospitais da cidade")
+                e2.metric("De outras cidades de SP", formatar_numero(info_cidade["outras_cidades"]),
+                          help=f"{parte(info_cidade['outras_cidades'], atend)} das internações nos hospitais da cidade")
+                e3.metric("De outros estados", formatar_numero(info_cidade["outros_estados"]),
+                          help=f"{parte(info_cidade['outros_estados'], atend)} das internações nos hospitais da cidade")
+            with dire:
+                st.markdown(f"**2. Onde as moradoras de {nome_cidade} são atendidas**")
+                st.metric(f"Internações de moradoras de {nome_cidade}", formatar_numero(morad))
+                d1, d2 = st.columns(2)
+                d1.metric("Na própria cidade", formatar_numero(info_cidade["moradoras_na_cidade"]),
+                          help=f"{parte(info_cidade['moradoras_na_cidade'], morad)} das internações das moradoras")
+                d2.metric("Em outras cidades de SP", formatar_numero(info_cidade["moradoras_fora"]),
+                          help=f"{parte(info_cidade['moradoras_fora'], morad)} das internações das moradoras")
+            if info_cidade["destinos"]:
+                st.dataframe(pd.DataFrame({
+                    "Cidade do hospital (moradoras atendidas fora)": [nome for nome, _ in info_cidade["destinos"]],
+                    "Internações": [n for _, n in info_cidade["destinos"]],
+                    "% das internações das moradoras": [parte(n, morad) for _, n in info_cidade["destinos"]],
+                }), width="stretch", hide_index=True)
             leitura("O que mostra", leitura_cidade(info_cidade, nome_cidade))
         st.markdown("---")
-
-    pergunta(f"Em que anos algum câncer saiu do padrão em {nome_cidade}?", "cidade",
-             f"moradoras de {html.escape(nome_cidade)}")
-    st.markdown('<div class="escudo-dica"><b>Como ler:</b> para cada câncer, o Escudo traça a tendência com os '
-                'outros anos e vê onde o ano analisado deveria ficar. Esse número é o <b>esperado</b>. Se o ano '
-                'real ficou muito longe dele, o ano entra na tabela. <b>Diferença</b> é quanto a mais ou a menos '
-                'que o esperado, em %. <b>Poucos casos</b> marca cânceres com menos de 10 internações esperadas '
-                'por ano: ali uma diferença pequena já parece grande e pode ser acaso. Detectar não explica a '
-                'causa.</div>', unsafe_allow_html=True)
-    fora_todos = anos_fora_todos(serie)
-    f1, f2 = st.columns([1, 1])
-    direcao = f1.radio("Mostrar", ["Todos", "Só acima do esperado", "Só abaixo do esperado"], horizontal=True,
-                       key="direcao", help="Acima: mais internações do que a tendência indicava. Abaixo: menos.")
-    incluir_pequenos = f2.toggle("Incluir cânceres com poucos casos", value=True,
-                                 help="Cânceres com menos de 10 internações esperadas por ano, onde o acaso pesa mais.")
-    tabela = fora_todos
-    if direcao != "Todos":
-        tabela = tabela[tabela["direcao"] == ("acima" if direcao.startswith("Só acima") else "abaixo")]
-    if not incluir_pequenos:
-        tabela = tabela[~tabela["numeros_pequenos"]]
-    if tabela.empty:
-        st.info("Nenhum ano fora do padrão com esses filtros.")
-    else:
-        meses_incompletos = anos_incompletos(serie)
-        st.dataframe(
-            pd.DataFrame({
-                "Câncer": tabela["doenca"],
-                "Ano": tabela["ano"].astype(int),
-                "Internações no ano": tabela["observado"].round(0).astype(int),
-                "Esperado pela tendência": [formatar_numero(v, 1) for v in tabela["esperado"]],
-                "Diferença": [f"{'+' if v > 0 else ''}{formatar_numero(v)}%" for v in tabela["diferenca_pct"]],
-                "Ficou": tabela["direcao"].map({"acima": "acima do esperado", "abaixo": "abaixo do esperado"}),
-                "Poucos casos": tabela["numeros_pequenos"].map({True: "sim, pode ser acaso", False: "não"}),
-                "Meses na fonte": [f"{meses_incompletos.get(int(a), 12)} de 12" for a in tabela["ano"]],
-            }),
-            width="stretch", hide_index=True,
-            column_config={"Ano": st.column_config.NumberColumn(format="%d")},
-        )
-        leitura("O que a tabela mostra", leitura_fora_todos(tabela, meses_incompletos))
-        contagem = tabela["ano"].value_counts()
-        if contagem.iloc[0] >= 2:
-            st.caption(f"{contagem.index[0]} aparece para {contagem.iloc[0]} cânceres ao mesmo tempo — quando "
-                       f"vários mudam juntos, vale checar o registro antes de concluir.")
 
     pergunta("Qual câncer cresce mais rápido, e quando foi o ponto mais alto?", "cidade",
              f"moradoras de {html.escape(nome_cidade)}, {ano_ini}–{ano_fim}")

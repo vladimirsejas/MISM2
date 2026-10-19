@@ -111,6 +111,8 @@ r = responder(ctx_m, caminho("fora_padrao"))
 checar("E. ano fora do padrão em ano incompleto vem com cautela",
        "2019 (acima do esperado — ano com 7 de 12 meses na fonte: leia com cautela)" in r.fala and any(
            b[0] == "Os dados estão completos?" for b in r.botoes))
+checar("E. 'Anos fora do padrão' leva ao gráfico da Evolução, com os anos marcados (não existe mais tabela solta)",
+       r.destino["aba"] == "Evolução" and r.destino["camadas"].get("ver_fora") is True and bool(r.destino.get("cancer")))
 r = responder(ctx_m, sobre("MAMA", "projecao"))
 checar("E. projeção sem promessa ('deve ficar' não aparece; 'a tendência aponta')",
        "deve ficar" not in r.fala and "a tendência aponta" in r.fala)

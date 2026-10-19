@@ -272,6 +272,14 @@ def main():
         checar("F. fluxo: números (3 estados de origem; 2 de outros estados em Rio Claro)",
                rotulos.get("Estados de origem") == "3" and rotulos.get("De outros estados") == "2"
                and "Internações de fora de SP" in rotulos)
+        checar("F. fluxo da cidade: duas perguntas separadas (quem é atendida aqui x onde as moradoras são atendidas)",
+               rotulos.get("Internações nos hospitais de Rio Claro") == "142" and rotulos.get("Moradoras de Rio Claro") == "140"
+               and rotulos.get("Internações de moradoras de Rio Claro") == "150" and rotulos.get("Na própria cidade") == "140"
+               and rotulos.get("Em outras cidades de SP") == "10" and "São duas perguntas diferentes" in textos
+               and "Onde as moradoras de Rio Claro são atendidas" in textos)
+        checar("F. anos fora do padrão: o bloco solto e confuso saiu da aba Investigar (a informação mora na Evolução)",
+               not erros(at) and "saiu do padrão em Rio Claro" not in textos
+               and "Direção" not in textos and "Números pequenos" not in textos)
         checar("F. fluxo: cada bloco diz se é do Estado ou da cidade",
                textos.count("Todo o Estado de São Paulo") >= 3 and "📍 Rio Claro" in textos
                and "não muda quando você troca de cidade" in textos)

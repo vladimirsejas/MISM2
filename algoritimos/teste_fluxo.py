@@ -173,21 +173,6 @@ def main():
         assert proibido not in junto_t, proibido
     print("[OK] parcela de fora por câncer no período (colo 33,3%; mama 15,8%, ou 18,8% só em 2024) e frases sem causa")
 
-    # ---- leitura dos anos fora do padrão (10/2026): explica esperado, poucos casos e meses ausentes ----
-    fora_padrao = pd.DataFrame({
-        "doenca": ["Mama", "Tireoide"], "ano": [2019, 2020], "observado": [120.0, 4.0], "esperado": [95.0, 1.2],
-        "direcao": ["acima", "acima"], "numeros_pequenos": [False, True], "diferenca_pct": [26.3, 233.3]})
-    texto_fp = " ".join(ti.leitura_fora_todos(fora_padrao, {2019: 7})).lower()
-    assert "2 anos fora do padrão" in texto_fp and "2 acima e 0 abaixo" in texto_fp
-    assert "mama em 2019: 120 internações registradas contra 95,0 esperadas (+26%)" in texto_fp, texto_fp
-    assert "tendência dos outros anos" in texto_fp and "poucos casos" in texto_fp and "pode ser acaso" in texto_fp
-    assert "em 2019 a fonte" in texto_fp and "não explica a causa" in texto_fp
-    assert "tireoide em 2020" not in texto_fp  # a maior diferença só olha cânceres com mais casos
-    assert ti.leitura_fora_todos(fora_padrao.iloc[0:0]) == []
-    for proibido in ("porque", "devido", "por causa", "em razão", "r$"):
-        assert proibido not in texto_fp, proibido
-    print("[OK] anos fora do padrão: a leitura explica o esperado, marca poucos casos e avisa dos meses ausentes")
-
     # ---- a cidade ----
     info = ti.fluxo_da_cidade(c, "RIO_CLARO", 3543907)
     assert info["atendimentos"] == 142 and info["da_cidade"] == 140
@@ -204,7 +189,9 @@ def main():
         assert proibido not in junto, proibido
     assert "internações, não pessoas" in junto and "só enxerga hospitais de sp" in junto
     assert "minas gerais" in junto and "barretos" in junto and "campinas (10)" in junto
-    assert "saldo da cidade: -8" in junto, junto
+    assert "diferença: -8 (mais saíram do que entraram)" in junto, junto
+    assert "2 internações de mulheres de fora da cidade foram atendidas" in junto
+    assert "10 internações de moradoras foram em hospitais de outras cidades" in junto
     print("[OK] frases: citam os números, avisam que contam internações e nunca atribuem causa")
 
     # ---- banco antigo (sem as colunas do fluxo) e banco sem ninguém de fora ----

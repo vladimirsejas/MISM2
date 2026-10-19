@@ -124,7 +124,7 @@ frases = leitura_evolucao(serie(crescente, [1000] * 13), "MAMA")
 checar("E. cita o crescimento", any("cresceram" in f for f in frases))
 checar("E. compara com o Estado (mais rápido)", any("mais rápido" in f for f in frases))
 frases = leitura_evolucao(serie(agudos), "MAMA")
-checar("E. avisa números pequenos", any("Números pequenos" in f for f in frases))
+checar("E. avisa poucos casos", any("Poucos casos" in f for f in frases))
 
 # ---- F. projeção ----
 proj = projetar(serie_doenca(serie(crescente), "MAMA"))
@@ -214,10 +214,10 @@ checar("I. destaque não aparece para quem não pesa mais no valor",
 
 avisos = dict((t[:20], n) for n, t in confiabilidade(serie(agudos), "MAMA", duplicados=["MAMA"]))
 textos = " ".join(t for _, t in confiabilidade(serie(agudos), "MAMA", duplicados=["MAMA"]))
-checar("I. confiabilidade avisa duplicidade, números pequenos e falta de população",
-       "duplicidade" in textos and "Números pequenos" in textos and "população" in textos)
-checar("I. série grande e sem duplicidade: sem aviso de números pequenos",
-       "Números pequenos" not in " ".join(t for _, t in confiabilidade(serie(crescente), "MAMA")))
+checar("I. confiabilidade avisa duplicidade, poucos casos e falta de população",
+       "duplicidade" in textos and "Poucos casos" in textos and "população" in textos)
+checar("I. série grande e sem duplicidade: sem aviso de poucos casos",
+       "Poucos casos" not in " ".join(t for _, t in confiabilidade(serie(crescente), "MAMA")))
 
 varios = pd.concat([serie(pico, cancer="MAMA"), serie(agudos, cancer="OVARIO")], ignore_index=True)
 todos = anos_fora_todos(varios)

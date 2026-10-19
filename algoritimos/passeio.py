@@ -18,7 +18,7 @@ from lia import caminho, responder
 PARADAS = [
     ("O que mais aparece?", caminho("mais_aparece")),
     ("Está aumentando?", caminho("aumentando")),
-    ("Algum ano fora do padrão?", caminho("fora_padrao")),
+    ("De onde vêm as pacientes de outros estados?", caminho("fluxo")),
     ("E em relação a São Paulo?", caminho("estado")),
     ("Onde podemos ter problema?", caminho("atencao")),
     ("O que estes dados não dizem", caminho("metodo")),

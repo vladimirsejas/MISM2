@@ -370,7 +370,7 @@ def fora_padrao(ctx):
     if todos.empty:
         return Resposta(fala=f"Não encontrei anos fora do padrão em {ctx.cidade}.",
                         botoes=[("Está aumentando?", caminho("aumentando"))],
-                        destino={"aba": "Investigar"})
+                        destino={"aba": "Evolução", "camadas": {"ver_fora": True}})
     itens = [f"{l['doenca']} em {l['ano']} ({l['direcao']} do esperado"
              + (", poucos casos" if l["numeros_pequenos"] else "") + _cuidado_ano(ctx, l["ano"]) + ")"
              for _, l in todos.iterrows()]
@@ -388,7 +388,7 @@ def fora_padrao(ctx):
         botoes=_mais(codigo, "evolucao", "porque") + (
             [("Os dados estão completos?", caminho("completude"))] if anos_incompletos(ctx.serie)
             else [("Como esses dados funcionam?", caminho("metodo"))]),
-        destino={"aba": "Investigar"},
+        destino={"aba": "Evolução", "cancer": codigo, "camadas": {"ver_estado": True, "ver_fora": True}},
         numeros=[f"{l['doenca']} {l['ano']}: {formatar_numero(l['observado'])} internações, esperado "
                  f"~{formatar_numero(l['esperado'])}" for _, l in todos.iterrows()],
     )

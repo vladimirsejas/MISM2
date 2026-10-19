@@ -538,7 +538,7 @@ def leitura_evolucao(serie, cancer):
 
     if mun["internacoes"].mean() < MEDIA_PEQUENA:
         frases.append(
-            "Números pequenos: com poucas internações por ano, variações de um ano "
+            "Poucos casos: com poucas internações por ano, variações de um ano "
             "para outro podem ser acaso. Confirme antes de concluir."
         )
     return frases
@@ -661,7 +661,7 @@ def confiabilidade(serie, cancer, duplicados=()):
                                   f"da tendência ao mesmo tempo no Estado. Isso costuma vir do registro (por "
                                   f"exemplo, anos anteriores com meses faltando na fonte), não do adoecimento."))
     if mun["internacoes"].mean() < MEDIA_PEQUENA:
-        avisos.append(("atencao", f"Números pequenos: média de {formatar_numero(mun['internacoes'].mean(), 1)} "
+        avisos.append(("atencao", f"Poucos casos: média de {formatar_numero(mun['internacoes'].mean(), 1)} "
                                   f"internações por ano. Variações podem ser acaso."))
     if registrado(mun, "obitos").sum() < 10:
         avisos.append(("info", "Menos de 10 óbitos no período: a letalidade é pouco estável."))
@@ -693,40 +693,6 @@ def anos_fora_todos(serie, grupo=GRUPO_MUNICIPIO):
         return pd.DataFrame(columns=["doenca", "ano", "observado", "esperado", "direcao",
                                      "numeros_pequenos", "diferenca_pct"])
     return pd.concat(partes, ignore_index=True).sort_values(["ano", "doenca"]).reset_index(drop=True)
-
-
-def leitura_fora_todos(tabela, incompletos=None):
-    """Frases, em palavras, para a tabela de anos fora do padrão: o que é
-    'esperado', quantos ficaram acima ou abaixo e quais linhas têm poucos
-    casos (onde o acaso pesa). `incompletos` = {ano: meses} do `anos_incompletos`.
-    Só descreve: detectar um ano fora do padrão não explica a causa."""
-    if tabela.empty:
-        return []
-    n = len(tabela)
-    acima = int((tabela["direcao"] == "acima").sum())
-    frases = [f"Há {n} {'ano fora do padrão' if n == 1 else 'anos fora do padrão'} nesta tabela: "
-              f"{acima} acima e {n - acima} abaixo do esperado. \"Esperado\" é onde o ano ficaria se seguisse a "
-              f"tendência dos outros anos do mesmo câncer; fora do padrão é o ano que se afastou muito disso."]
-    grandes = tabela[~tabela["numeros_pequenos"] & tabela["diferenca_pct"].notna()]
-    if not grandes.empty:
-        g = grandes.loc[grandes["diferenca_pct"].abs().idxmax()]
-        sinal = "+" if g["diferenca_pct"] > 0 else ""
-        frases.append(f"A maior diferença entre os cânceres com mais casos é {g['doenca']} em {int(g['ano'])}: "
-                      f"{formatar_numero(g['observado'])} internações registradas contra "
-                      f"{formatar_numero(g['esperado'], 1)} esperadas ({sinal}{formatar_numero(g['diferenca_pct'])}%).")
-    pequenos = int(tabela["numeros_pequenos"].sum())
-    if pequenos:
-        frases.append(f"{formatar_numero(pequenos)} {'linha tem' if pequenos == 1 else 'linhas têm'} poucos casos "
-                      f"(menos de {MEDIA_PEQUENA} esperados por ano): uma diferença de poucas internações já parece "
-                      f"grande em porcentagem e pode ser acaso. Por isso aparecem marcadas.")
-    anos_inc = sorted({int(a) for a in tabela["ano"]} & set(incompletos or {}))
-    if anos_inc:
-        frases.append("Em " + ", ".join(str(a) for a in anos_inc) + " a fonte (DATASUS) não oferece todos os meses; "
-                      "o valor foi levado à escala de 12 meses pela média dos meses disponíveis, então a diferença "
-                      "desses anos é uma estimativa menos firme.")
-    frases.append("O primeiro e o último ano de cada série não são avaliados. Detectar um ano fora do padrão não "
-                  "explica a causa; serve para decidir onde olhar com mais cuidado.")
-    return frases
 
 
 def quando_aparece(serie):
@@ -1906,7 +1872,7 @@ def fluxo_da_cidade(conexao, origem, codigo_ibge, uf_referencia="SP"):
         "outras_cidades": int(quem.get("outras_cidades", 0)),
         "outros_estados": int(quem.get("outros_estados", 0)),
         "moradoras": moradoras, "moradoras_na_cidade": na_cidade,
-        "moradoras_fora": moradoras - na_cidade, "destinos": destinos[:5],
+        "moradoras_fora": moradoras - na_cidade, "destinos": destinos[:10],
     }
 
 
@@ -1935,10 +1901,15 @@ def leitura_cidade(info, nome_cidade):
             f"{formatar_numero(info['moradoras_fora'])} em hospitais de outras cidades de SP"
             + (": " + ", ".join(f"{nome} ({formatar_numero(n)})" for nome, n in info["destinos"][:3])
                if info["destinos"] else "") + ".")
-    saldo = info["outras_cidades"] + info["outros_estados"] - info["moradoras_fora"]
-    frases.append(f"Saldo da cidade: {'+' if saldo > 0 else ''}{formatar_numero(saldo)} "
-                  f"(internações de quem mora fora, atendidas aqui, menos moradoras atendidas fora). "
-                  "Conta internações e só enxerga hospitais de SP.")
+    entraram = info["outras_cidades"] + info["outros_estados"]
+    saíram = info["moradoras_fora"]
+    saldo = entraram - saíram
+    sentido = ("mais saíram do que entraram" if saldo < 0 else
+               "mais entraram do que saíram" if saldo > 0 else "entraram e saíram na mesma quantidade")
+    frases.append(f"Resumo: {formatar_numero(entraram)} internações de mulheres de fora da cidade foram atendidas em "
+                  f"hospitais de {nome_cidade} (entraram) e {formatar_numero(saíram)} internações de moradoras foram "
+                  f"em hospitais de outras cidades de SP (saíram). Diferença: {'+' if saldo > 0 else ''}"
+                  f"{formatar_numero(saldo)} ({sentido}). Conta internações, não pessoas, e só enxerga hospitais de SP.")
     return frases
 
 
