@@ -383,15 +383,21 @@ ITENS = [
                     "endereços.",
           tambem_caminhos=["mama"]),
     _item("rc_central_vagas", "mama", "rio_claro", "Rio Claro",
-          "Central de Vagas da Fundação Municipal de Saúde (mamografia com pedido médico)",
-          "com o pedido médico em mãos, a mamografia é agendada na Central de Vagas",
-          "Fundação Municipal de Saúde de Rio Claro (informativo)",
-          "https://www.saude-rioclaro.org.br/informativos/Rio%20Claro%20faz%20agendamento%20de%20exame%20de%20mama.htm",
-          levar="O pedido médico.",
-          contato="Rua 10, esquina com a Via da Saudade. Telefones 3524-1463 e 3534-0026. Segunda a sexta, das 7h "
-                  "às 16h.",
-          confirmar="É um informativo antigo da Fundação: confirme endereço, telefones e se o agendamento ainda é "
-                    "feito ali."),
+          "Exame com pedido médico (mamografia, raio X e outros): a unidade agenda",
+          "com o pedido em mãos, a equipe do posto agenda pelo centro de regulação",
+          "Informação da chefia do CEAD (Fundação Municipal de Saúde de Rio Claro), por conversa em 19/10/2026",
+          "https://www.saude-rioclaro.org.br/enderecos.htm",
+          para_quem="Quem já tem o pedido de um exame (mamografia, raio X e outros) da rede municipal de Rio Claro.",
+          como="Passe pelo posto de saúde (USF ou UBS) ou pelo local que pediu o exame, com o pedido. Os funcionários "
+               "da própria unidade fazem a marcação pelo centro de regulação: não é preciso ir a outra central. Se "
+               "não souber qual é a sua unidade, use o botão \"Unidades, telefones e como chegar\". Depois, a "
+               "paciente é avisada da marcação pelo Cadu (0800 019 0505, telefone ou WhatsApp).",
+          levar="O pedido do exame.",
+          contato="Cadu: 0800 019 0505 (telefone/WhatsApp).",
+          confirmar="Informação dada por conversa com a chefia do CEAD em 19/10/2026; ainda não está em publicação "
+                    "oficial. A \"Central de Vagas\" da Rua 10, que aparecia aqui por um informativo antigo, saiu: "
+                    "não há confirmação de que ainda funcione. Confirme na sua unidade antes de ir.",
+          conferido="19/10/2026"),
     _item("rc_santa_casa", "tratamento", "rio_claro", "Rio Claro",
           "Santa Casa de Rio Claro – oncologia (UNACON) e Centro Oncológico Santa Ágata",
           "hospital habilitado para tratar câncer pelo SUS na própria cidade",
