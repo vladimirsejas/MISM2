@@ -38,18 +38,12 @@
  },
  {
   "pergunta": "minha mamografia veio com BI-RADS 4, e agora?",
-  "tipo": "itens",
-  "aceitaveis": [
-   "mamografia_alterada"
-  ],
+  "tipo": "etapa",
   "conjunto": "desenvolvimento"
  },
  {
   "pergunta": "meu papanicolau deu alterado",
-  "tipo": "itens",
-  "aceitaveis": [
-   "preventivo_alterado"
-  ],
+  "tipo": "etapa",
   "conjunto": "desenvolvimento"
  },
  {
@@ -428,18 +422,12 @@
  },
  {
   "pergunta": "o laudo da mamografia disse birads 3",
-  "tipo": "itens",
-  "aceitaveis": [
-   "mamografia_alterada"
-  ],
+  "tipo": "etapa",
   "conjunto": "final"
  },
  {
   "pergunta": "fiz papanicolau e pediram colposcopia",
-  "tipo": "itens",
-  "aceitaveis": [
-   "preventivo_alterado"
-  ],
+  "tipo": "etapa",
   "conjunto": "final"
  },
  {

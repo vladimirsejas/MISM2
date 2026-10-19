@@ -850,27 +850,6 @@ ITENS = [
           conferido="18/10/2026"),
 
     # ---------------- DIAGNÓSTICO: depois que aparece uma alteração ----------------
-    _item("mamografia_alterada", "diagnostico", "caminho", "SUS (todo o Brasil)",
-          "Mamografia alterada: o que quer dizer o BI-RADS",
-          "BI-RADS 0 pede exame complementar; 3, novo exame em 6 meses; 4 e 5, biópsia",
-          "Ministério da Saúde – Linha de cuidado do câncer de mama",
-          "https://linhasdecuidado.saude.gov.br/portal/cancer-de-mama/unidade-de-atencao-primaria/rastreamento-"
-          "diagnostico/risco-cancer-conduta-categoria-BI-RADS/",
-          como="O laudo da mamografia traz uma categoria BI-RADS. 0: o exame ficou incompleto e precisa de "
-               "complemento (outras incidências ou ultrassom). 3: achado provavelmente benigno, com novo exame em 6 "
-               "meses. 4: achado suspeito, e a conduta é a biópsia. 5: muito suspeito, também biópsia. Quando a "
-               "alteração não se esclarece, a mulher é encaminhada ao especialista (mastologista).",
-          cuidado="Quem explica o seu resultado é a equipe que pediu o exame; leve o laudo à unidade de saúde."),
-    _item("preventivo_alterado", "diagnostico", "caminho", "SUS (todo o Brasil)",
-          "Preventivo alterado: colposcopia e biópsia",
-          "resultado alterado pede repetição, colposcopia ou biópsia; muitas alterações não são câncer",
-          "Ministério da Saúde – diretriz de rastreamento do câncer do colo do útero",
-          "https://www.gov.br/saude/pt-br/assuntos/pcdt/r/rastreamento-cancer-do-colo-do-utero",
-          como="Conforme o resultado, repete-se o exame ou a mulher vai à colposcopia, exame que olha o colo do útero "
-               "com aumento; se houver uma área suspeita, faz-se uma biópsia. Com o teste de HPV, quem tem os tipos "
-               "16 ou 18 vai direto à colposcopia. Muitas lesões são tratadas no próprio ambulatório.",
-          cuidado="Quem explica o seu resultado é a equipe que pediu o exame."),
-
     # ---------------- REGULAÇÃO: quando o nome não aparece ----------------
     _item("nao_achei_nome", "regulacao", "caminho", "SUS (todo o Brasil)",
           "Não achei meu nome na lista, ou a fila não anda: o que fazer",
@@ -1322,9 +1301,9 @@ TIPOS_CANCER = {"mama": "câncer de mama", "colo": "câncer do colo do útero",
                 "tireoide": "câncer de tireoide", "endometrio": "câncer do corpo do útero (endométrio)"}
 _MARCAS_CANCER = {
     "mama": ("mulheres_de_peito", "caminho_do_exame", "carretas_estado", "campinas_craim",
-             "rio_preto_mamografia", "rc_central_vagas", "ha_mastologia", "mamografia_alterada", "mater_ribeirao",
+             "rio_preto_mamografia", "rc_central_vagas", "ha_mastologia", "mater_ribeirao",
              "reconstrucao_mamaria"),
-    "colo": ("colo_utero", "vacina_hpv", "ha_colo_busca_ativa", "ha_pesquisa_hpv", "preventivo_alterado"),
+    "colo": ("colo_utero", "vacina_hpv", "ha_colo_busca_ativa", "ha_pesquisa_hpv"),
 }
 _MARCAS_VARIOS = {   # itens que servem a mais de um tipo
     "piracicaba_cesm": ("mama", "colo"),

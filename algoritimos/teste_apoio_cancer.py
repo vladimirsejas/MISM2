@@ -269,7 +269,7 @@ def main():
     antigas = {"onde faço mamografia de graça?": "mama", "colposcopia depois do preventivo": "colo", "quero fazer a vacina do hpv": "colo"}
     for pergunta, tipo in antigas.items():
         x = ab.responder_pergunta(pergunta)
-        checar(f"D16. busca que já funcionava continua: {pergunta!r}", x.tipo in ("itens", "palpites")
+        checar(f"D16. busca que já funcionava continua: {pergunta!r}", x.tipo in ("itens", "palpites", "etapa")
                and not conteudo_de_outro_cancer(x, tipo))
 
     # ---------- E. falhas e Gemini ----------

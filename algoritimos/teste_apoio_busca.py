@@ -235,9 +235,10 @@ def _teste_exame_alterado_generico():
     for q in ("minha mamografia deu alterada", "meu preventivo deu alterado", "o papanicolau veio alterado"):
         r = responder_pergunta(q)
         assert r.tipo == "etapa" and "unidade de saúde do seu bairro" in r.fala, (q, r.tipo)
-    r = responder_pergunta("minha mamografia veio com BI-RADS 4, e agora?")
-    assert r.tipo != "etapa" and "BI-RADS" in r.fala
-    print("OK   exame alterado: unidade de saúde primeiro (inclusive mamografia/preventivo); termo técnico continua no cartão")
+    for q in ("minha mamografia veio com BI-RADS 4, e agora?", "o que é colposcopia?", "mamografia alterada"):
+        r = responder_pergunta(q)
+        assert r.tipo == "etapa" and "unidade de saúde" in r.fala, q
+    print("OK   exame alterado: unidade de saúde primeiro (inclusive mamografia/preventivo); BI-RADS e colposcopia também")
 
 
 try:

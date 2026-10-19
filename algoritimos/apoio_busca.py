@@ -81,8 +81,6 @@ EXTRA = {
     "caminho_do_exame": "nunca fiz mamografia idade para começar quantos anos primeira vez por onde começar passo a passo primeira consulta pedido médico unidade de saúde",
     "rc_unidades": "posto de saúde ubs usf unidade de saúde perto de casa ginecologista consulta pedido de ultrassom transvaginal",
     "rc_cadu_agendamento": "marcar consulta exame agendamento telefone prefeitura",
-    "preventivo_alterado": "papanicolau papanicolaou deu alterado resultado alterado exame do colo alterado",
-    "mamografia_alterada": "mamografia deu alterada resultado alterado laudo birads 3 4 5",
     "cartilha_inca": "quais são os direitos de quem tem câncer direitos da pessoa com câncer guia de direitos",
     "rede_oncologica": "unacon cacon o que é unacon centro de assistência de alta complexidade em oncologia",
     "rc_gacc": "filho filha criança com câncer infantil pediátrico grupo de apoio gacc",
@@ -285,12 +283,12 @@ def _exame_alterado_generico(pergunta):
     """"Meu exame deu alteração" sem dizer qual exame: a mulher está assustada e o primeiro passo é a unidade de
     saúde do bairro (autor, 19/10/2026), não escolher à força preventivo ou mamografia nem abrir lei."""
     texto = ent.normalizar(pergunta)
-    diz_alterado = any(p in texto for p in ("alterad", "alteracao", "alteracoes", "anormal", "deu ruim", "veio ruim"))
-    diz_exame = any(p in texto for p in ("exame", "resultado", "laudo", "mamografia", "mamo", "preventivo", "papanicolau", "ultrassom"))
-    # quem pergunta pelo termo técnico ("o que é BI-RADS 4?") continua indo ao cartão; "mamografia/preventivo
-    # alterado" é a mulher assustada e também vai primeiro à unidade de saúde.
-    exame_especifico = any(p in texto for p in (
-        "colposcopia", "biopsia", "birads", "bi-rads", "bi rads", "hpv", "colonoscopia", "sangue", "psa"))
+    diz_alterado = any(p in texto for p in ("alterad", "alteracao", "alteracoes", "anormal", "deu ruim", "veio ruim", "birads", "bi-rads", "bi rads", "colposcopia"))
+    diz_exame = any(p in texto for p in ("exame", "resultado", "laudo", "mamografia", "mamo", "preventivo", "papanicolau", "ultrassom",
+                                         "birads", "bi-rads", "bi rads", "colposcopia"))
+    # BI-RADS e colposcopia também vão à unidade de saúde (autor, 19/10/2026: os cartões técnicos saíram);
+    # os outros exames têm caminho próprio.
+    exame_especifico = any(p in texto for p in ("biopsia", "hpv", "colonoscopia", "sangue", "psa"))
     return diz_alterado and diz_exame and not exame_especifico
 
 
@@ -492,6 +490,10 @@ def _responder_pergunta(pergunta, classificar=None, contexto=None, cancer_em_foc
     # "quais os sinais do câncer de mama?" pede informação; só o relato pessoal ("tenho", "minha") vira texto de sintoma
     pede_informacao = bool(tipos) and bool(_VISAO_GERAL.search(texto_norm)) and not relato
     ambiguo_sem_tipo = bool(AMBIGUAS.search(texto_norm)) and not tipos and not pistas_ and (parece_sintoma or relato)
+    if _exame_alterado_generico(pergunta) and "cancer" not in texto_norm:
+        r = apoio.responder(apoio.etapa("alterado"))
+        return _de(r, tipo="etapa", selo="Orientação fixa do guia; a Lia não interpreta o seu exame.",
+                   tipo_cancer=None, **comum)
     if ((parece_sintoma and not pede_informacao and (not direto or ambiguo_sem_tipo)) or so_pista
             or ambiguo_sem_tipo):   # sem um item claro para o que ela descreve
         import assistente
@@ -526,10 +528,6 @@ def _responder_pergunta(pergunta, classificar=None, contexto=None, cancer_em_foc
             r.botoes = [(f"Sobre o {apoio.TIPOS_CANCER[tipos[0]]}", apoio.abertura_do_tipo(tipos[0]))] + r.botoes
         return _de(r, tipo="etapa", selo="Orientação fixa do guia; a Lia não escolhe hospital nem tratamento.",
                    tipo_cancer=tipos[0] if len(tipos) == 1 else None, **comum)
-    if _exame_alterado_generico(pergunta) and "cancer" not in texto_norm:
-        r = apoio.responder(apoio.etapa("alterado"))
-        return _de(r, tipo="etapa", selo="Orientação fixa do guia; a Lia não interpreta o seu exame.",
-                   tipo_cancer=None, **comum)
     # parece "previsão do tempo", não um item do guia; mas evidência clara de item vence esse sinal geral
     # ("o que é UNACON" lembra "o que é inflação"). Quem nomeou um câncer está sempre no assunto.
     fora_do_assunto = social.tipo == "fora" and n1 < NOTA_FORA and not tipos

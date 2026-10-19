@@ -89,8 +89,8 @@ checar("todo ponto do caminho aponta para portas e itens que existem",
            for _, _, _, portas, ids in apoio.ETAPAS) and all(apoio.itens_da_etapa(e) for e in apoio.NOME_ETAPA))
 checar("todo 'tambem_caminhos' aponta para uma porta que existe",
        all(c in apoio.NOME_CAMINHO and c != i["caminho"] for i in apoio.ITENS for c in i["tambem_caminhos"]))
-checar("diagnóstico explica mamografia e preventivo alterados",
-       {"mamografia_alterada", "preventivo_alterado"} <= {i["id"] for i in apoio.itens(caminho="diagnostico")})
+checar("cartões técnicos de BI-RADS e colposcopia saíram (autor, 19/10/2026)",
+       not {"mamografia_alterada", "preventivo_alterado"} & {i["id"] for i in apoio.itens()})
 checar("prazo legal de 30 dias explicita hipótese principal e pedido médico fundamentado",
        "principal hipótese diagnóstica" in apoio.POR_ID["lei_30_dias"]["resumo"]
        and "pedido médico fundamentado" in apoio.POR_ID["lei_30_dias"]["resumo"]

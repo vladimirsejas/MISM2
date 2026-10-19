@@ -4,7 +4,7 @@
   {"pergunta": "mamografia dói?", "cancer": ["mama"], "tipos": ["itens", "palpites"]},
   {"pergunta": "nódulo na mama o que fazer", "cancer": ["mama"], "tipos": ["itens", "palpites", "sintoma"]},
   {"pergunta": "o que é HPV e câncer de colo do útero", "cancer": ["colo"], "tipos": ["itens", "palpites"]},
-  {"pergunta": "fiz o preventivo e deu alterado", "cancer": ["colo"], "tipos": ["itens", "palpites"]},
+  {"pergunta": "fiz o preventivo e deu alterado", "cancer": [], "tipos": ["etapa"]},
   {"pergunta": "quando fazer papanicolau", "cancer": ["colo"], "tipos": ["itens", "palpites"]},
   {"pergunta": "meu pai tem câncer no intestino grosso", "cancer": ["colorretal"], "tipos": ["itens", "palpites"]},
   {"pergunta": "tem sangue nas minhas fezes faz duas semanas", "cancer": ["colorretal"], "tipos": ["sintoma"]},
