@@ -381,8 +381,8 @@ ITENS = [
                "ginecologista. Exame pedido pelo médico (mamografia, raio X e outros): o pedido fica com o "
                "funcionário da unidade, que aciona a Central Municipal de Regulação de Serviços Especializados; a "
                "Central avisa a unidade e a unidade avisa a paciente, que não precisa ir a outra central. Convém manter "
-               "o telefone atualizado na unidade. O Cadu (0800 019 0505) serve para marcar a consulta em que o médico "
-               "pede o exame.",
+               "o telefone atualizado na unidade. O Cadu (0800 019 0505) agenda consultas e procedimentos, como a "
+               "coleta do Papanicolau.",
           levar="O pedido do exame, quando já houver.",
           confirmar="O número de unidades e o horário vêm de páginas antigas da Prefeitura: confira a lista de "
                     "endereços. O caminho do exame pedido foi informado por chefias da Fundação em 19/10/2026, por "
@@ -1186,13 +1186,15 @@ ITENS = [
           "especialistas do Estado na cidade, inclusive mastologia (mama); marcado pela UBS",
           "AME Rio Claro",
           "https://amerioclaro.org.br/",
-          como="Tem especialidade dedicada às mamas, na prevenção e no tratamento. A consulta é marcada pela unidade "
-               "de saúde do município. No cadastro nacional de estabelecimentos (CNES, 08/2026), o AME consta entre os "
+          como="Tem especialidade dedicada às mamas, na prevenção e no tratamento. O AME e as unidades de saúde têm "
+               "ginecologista e mastologista; a marcação depende das vagas e passa pela regulação ou pelo Cadu. No cadastro nacional de estabelecimentos (CNES, 08/2026), o AME consta entre os "
                "poucos estabelecimentos de Rio Claro que fazem mamografia no próprio local; as unidades de saúde "
                "registram o exame como feito por outro estabelecimento. A unidade orienta onde o exame será feito.",
           contato="Rua 9 (esquina com a Avenida da Saudade), 165 – Bairro dos Estádios. (19) 3526-2300.",
-          confirmar="Algumas fontes trazem outro telefone e outro número no endereço (Avenida da Saudade, 252), e o certificado "
-                    "do site do Seconci não é verificável: confirme endereço e telefone na unidade de saúde antes de ir."),
+          confirmar="As fontes trazem dois números para o endereço (Rua 9, 165, e Avenida da Saudade, 252): são compatíveis, "
+                    "porque o AME fica na esquina das duas ruas (informação de quem trabalha na Fundação, 19/10/2026). Algumas "
+                    "fontes trazem outro telefone, e o certificado do site do Seconci não é verificável: confirme o telefone "
+                    "na unidade de saúde antes de ir."),
     _item("rc_ddm", "ajuda", "rio_claro", "Rio Claro",
           "Delegacia de Defesa da Mulher (DDM) de Rio Claro",
           "registrar ocorrência e pedir medida protetiva na cidade",
