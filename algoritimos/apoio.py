@@ -1199,6 +1199,19 @@ ITENS = [
                     "porque o AME fica na esquina das duas ruas (informação de quem trabalha na Fundação, 19/10/2026). Algumas "
                     "fontes trazem outro telefone, e o certificado do site do Seconci não é verificável: confirme o telefone "
                     "na unidade de saúde antes de ir."),
+    _item("rc_cead", "mama", "rio_claro", "Rio Claro",
+          "CEAD – centro municipal de especialidades e apoio diagnóstico",
+          "a unidade municipal onde ficam a mastologia e o ultrassom da mama, para quem a unidade de saúde encaminha",
+          "Fundação Municipal de Saúde de Rio Claro (protocolos de câncer de mama, rev. 01, 2026, e de exames, rev. 03, 2026)",
+          "https://www.saude-rioclaro.org.br/enderecos.htm",
+          para_quem="Moradoras de Rio Claro encaminhadas pela unidade de saúde.",
+          como="Pelo protocolo da Fundação, a mulher com nódulo suspeito, exame de imagem alterado (BI-RADS 4 ou 5) ou "
+               "risco alto de câncer de mama é encaminhada pela unidade ao mastologista do CEAD. O ultrassom da mama é "
+               "pedido pela unidade conforme critérios clínicos, não como exame de rotina. O CEAD é municipal, da "
+               "Fundação, e é um serviço diferente do AME, que é do Estado. Mulher com câncer confirmado segue para o "
+               "tratamento na Santa Casa de Rio Claro.",
+          confirmar="Endereço, telefone e horário do CEAD não foram confirmados para este cartão: pergunte na unidade de "
+                    "saúde. O que está aqui vem do protocolo da Fundação e de chefias da Fundação (19/10/2026)."),
     _item("rc_ddm", "ajuda", "rio_claro", "Rio Claro",
           "Delegacia de Defesa da Mulher (DDM) de Rio Claro",
           "registrar ocorrência e pedir medida protetiva na cidade",
