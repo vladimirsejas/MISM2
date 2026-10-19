@@ -1878,6 +1878,41 @@ def fluxo_da_cidade(conexao, origem, codigo_ibge, uf_referencia="SP"):
     }
 
 
+def leitura_cidade_visao(info, nome_cidade, visao):
+    """Leitura de UMA das duas perguntas do fluxo da cidade.
+    visao = "fora" (moradoras atendidas em outras cidades) ou "aqui" (mulheres de fora atendidas na cidade)."""
+    if not info:
+        return [f"Sem o município do hospital no banco não dá para ver o fluxo de {nome_cidade}."]
+    if visao == "fora":
+        m, sem = info["moradoras"], info.get("moradoras_sem_hospital", 0)
+        if not m:
+            if sem:
+                return [f"Este dado não existe para {nome_cidade}: as {formatar_numero(sem)} internações de moradoras "
+                        "no banco não trazem o município do hospital."]
+            return [f"Este dado não existe para {nome_cidade}: não há internações de moradoras da cidade no banco."]
+        f = info["moradoras_fora"]
+        frases = [f"Das {formatar_numero(m)} internações de moradoras de {nome_cidade}, "
+                  f"{formatar_numero(_pct(info['moradoras_na_cidade'], m), 1)}% foram em hospitais da própria cidade e "
+                  f"{formatar_numero(f)} ({formatar_numero(_pct(f, m), 1)}%) em hospitais de outras cidades de SP."]
+        if info["destinos"]:
+            frases.append("As cidades que mais receberam: " + ", ".join(
+                f"{nome} ({formatar_numero(n)})" for nome, n in info["destinos"][:3]) + ".")
+        frases.append("Conta internações, não pessoas, e só enxerga hospitais de SP: moradora atendida em outro estado não aparece.")
+        return frases
+    a = info["atendimentos"]
+    if not a:
+        return [f"Nenhuma internação foi registrada em hospitais de {nome_cidade}."]
+    fora = info["outras_cidades"] + info["outros_estados"]
+    frases = [f"Nos hospitais de {nome_cidade} foram registradas {formatar_numero(a)} internações: "
+              f"{formatar_numero(_pct(info['da_cidade'], a), 1)}% de moradoras da cidade e "
+              f"{formatar_numero(_pct(fora, a), 1)}% de mulheres de fora ({formatar_numero(info['outras_cidades'])} de outras "
+              f"cidades de SP e {formatar_numero(info['outros_estados'])} de outros estados)."]
+    if not info["outros_estados"]:
+        frases.append(f"Nenhuma internação de mulher de outro estado foi registrada em {nome_cidade}.")
+    frases.append("Conta internações, não pessoas, e só enxerga hospitais de SP.")
+    return frases
+
+
 def leitura_cidade(info, nome_cidade):
     """Frases sobre o fluxo da cidade. Só descreve."""
     if not info or (not info["atendimentos"] and not info["moradoras"]):

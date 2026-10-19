@@ -270,13 +270,21 @@ def main():
                "De onde vêm as mulheres de outros estados atendidas em São Paulo?" in textos
                and "Quem é atendida nos hospitais de Rio Claro" in textos)
         checar("F. fluxo: números (3 estados de origem; 2 de outros estados em Rio Claro)",
-               rotulos.get("Estados de origem") == "3" and rotulos.get("De outros estados") == "2"
+               rotulos.get("Estados de origem") == "3"
                and "Internações de fora de SP" in rotulos)
-        checar("F. fluxo da cidade: duas perguntas separadas (quem é atendida aqui x onde as moradoras são atendidas)",
-               rotulos.get("Internações nos hospitais de Rio Claro") == "142" and rotulos.get("Moradoras de Rio Claro") == "140"
-               and rotulos.get("Internações de moradoras de Rio Claro") == "150" and rotulos.get("Na própria cidade") == "140"
-               and rotulos.get("Em outras cidades de SP") == "10" and "São duas perguntas diferentes" in textos
-               and "Onde as moradoras de Rio Claro são atendidas" in textos)
+        checar("F. fluxo da cidade: escolhe-se o que ver; a 1ª visão são as moradoras atendidas fora",
+               "O que você quer ver?" in [r.label for r in at.radio]
+               and rotulos.get("Internações de moradoras") == "150" and rotulos.get("Na própria cidade") == "140"
+               and rotulos.get("Em outras cidades de SP") == "10" and "Campinas" in " ".join(
+                   str(d.value) for d in at.dataframe))
+        at.session_state["fluxo_visao"] = "Mulheres de fora atendidas na cidade"
+        at.run()
+        rot2 = {m.label: m.value for m in at.metric}
+        checar("F. fluxo da cidade: 2ª visão mostra as mulheres de fora atendidas na cidade",
+               not erros(at) and rot2.get("Internações nos hospitais") == "142" and rot2.get("Moradoras de Rio Claro") == "140"
+               and rot2.get("De outros estados") == "2")
+        at.session_state["fluxo_visao"] = "Moradoras atendidas fora da cidade"
+        at.run()
         checar("F. anos fora do padrão: o bloco solto e confuso saiu da aba Investigar (a informação mora na Evolução)",
                not erros(at) and "saiu do padrão em Rio Claro" not in textos
                and "Direção" not in textos and "Números pequenos" not in textos)

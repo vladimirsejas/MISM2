@@ -447,7 +447,7 @@ Estado atual:
   a aba aberta também ganha fundo roxo no seletor. As páginas Onde ser atendida e Hospitais habilitados ganharam a mesma faixa e o
   Início delas marca `aba = "Panorama"` antes de trocar de página. **Bloco da cidade:** a coluna "2. Onde as moradoras de <cidade> são
   atendidas" sempre aparece; sem o município do hospital (`moradoras_sem_hospital` em `fluxo_da_cidade`) ou sem internações de
-  moradoras, mostra o aviso "Este dado não existe para <cidade>" e a leitura diz o mesmo. A tabela de destinos agora fica dentro da coluna.
+  moradoras, mostra o aviso "Este dado não existe para <cidade>" e a leitura diz o mesmo. A tabela de destinos agora fica dentro da coluna. **Depois (19/10/2026, autor: "ficou muito confuso, crie a opção de ver quando as moradoras são atendidas fora e quando as de fora são atendidas aqui"):** as duas colunas viraram um seletor (`fluxo_visao`: "Moradoras atendidas fora da cidade" x "Mulheres de fora atendidas na cidade"), mostrando uma visão por vez, cada uma com sua leitura (`inteligencia.leitura_cidade_visao`). A faixa "Você está em" ficou roxa e grande.
 
 ## Pergunte à Lia — a IA do Escudo (10/2026, pedido do autor)
 

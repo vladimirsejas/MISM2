@@ -40,7 +40,7 @@ from inteligencia import (
     fluxo_da_cidade,
     formatar_numero,
     evolucao_fluxo,
-    leitura_cidade,
+    leitura_cidade, leitura_cidade_visao,
     leitura_evolucao,
     leitura_previsao,
     leitura_evolucao_fluxo,
@@ -403,7 +403,8 @@ if resumo.empty:
 
 ABAS = ["Panorama", "Evolução", "Investigar", "Planejamento", "Método"]
 PADROES = {"aba": "Panorama", "medida": "Internações",
-           "ver_estado": True, "ver_fora": True, "ver_projecao": False, "ver_hospitais": True}
+           "ver_estado": True, "ver_fora": True, "ver_projecao": False, "ver_hospitais": True,
+           "fluxo_visao": "Moradoras atendidas fora da cidade"}
 for chave, valor in PADROES.items():
     st.session_state.setdefault(chave, valor)
 
@@ -1140,48 +1141,30 @@ if aba == "Investigar":
         if info_cidade is None:
             st.info("Sem o município do hospital no banco não dá para ver o fluxo da cidade.")
         else:
-            st.markdown(f'<div class="escudo-dica"><b>São duas perguntas diferentes.</b> À esquerda: quem é atendida '
-                        f'<i>dentro</i> dos hospitais de {html.escape(nome_cidade)}, venha de onde vier. À direita: '
-                        f'as mulheres que <i>moram</i> em {html.escape(nome_cidade)}, onde quer que tenham sido '
-                        f'atendidas. Uma moradora internada em outra cidade conta só à direita. Conta internações '
-                        f'(uma mulher pode ter várias) e só enxerga hospitais de SP.</div>', unsafe_allow_html=True)
+            VISOES = ["Moradoras atendidas fora da cidade", "Mulheres de fora atendidas na cidade"]
+            visao = seletor(st, "O que você quer ver?", "fluxo_visao", VISOES, horizontal=True)
             atend, morad = info_cidade["atendimentos"], info_cidade["moradoras"]
 
             def parte(valor, todo):
                 return f"{formatar_numero(100 * valor / todo, 1)}%" if todo else "—"
 
-            esq, dire = st.columns(2)
-            with esq:
-                st.markdown(f"**1. Quem é atendida nos hospitais de {nome_cidade}**")
-                st.metric(f"Internações nos hospitais de {nome_cidade}", formatar_numero(atend))
-                e1, e2, e3 = st.columns(3)
-                e1.metric(f"Moradoras de {nome_cidade}", formatar_numero(info_cidade["da_cidade"]),
-                          help=f"{parte(info_cidade['da_cidade'], atend)} das internações nos hospitais da cidade")
-                e2.metric("De outras cidades de SP", formatar_numero(info_cidade["outras_cidades"]),
-                          help=f"{parte(info_cidade['outras_cidades'], atend)} das internações nos hospitais da cidade")
-                e3.metric("De outros estados", formatar_numero(info_cidade["outros_estados"]),
-                          help=f"{parte(info_cidade['outros_estados'], atend)} das internações nos hospitais da cidade")
-            with dire:
-                st.markdown(f"**2. Onde as moradoras de {nome_cidade} são atendidas**")
+            if visao == VISOES[0]:
+                st.markdown(f"**Quando as mulheres que moram em {html.escape(nome_cidade)} são atendidas em hospitais de outras cidades**")
                 sem_h = info_cidade.get("moradoras_sem_hospital", 0)
                 if not morad:
-                    if sem_h:
-                        st.warning(f"**Este dado não existe para {nome_cidade}.** Há {formatar_numero(sem_h)} "
-                                   "internações de moradoras no banco, mas nenhuma traz o município do hospital; "
-                                   "por isso não dá para dizer para onde elas vão.")
-                    else:
-                        st.warning(f"**Este dado não existe para {nome_cidade}.** O banco não tem internações de "
-                                   "moradoras da cidade, então não há como mostrar onde elas são atendidas.")
+                    st.warning(f"**Este dado não existe para {nome_cidade}.** "
+                               + (f"Há {formatar_numero(sem_h)} internações de moradoras no banco, mas nenhuma traz o município do hospital."
+                                  if sem_h else "O banco não tem internações de moradoras da cidade."))
                 else:
-                    st.metric(f"Internações de moradoras de {nome_cidade}", formatar_numero(morad))
-                    d1, d2 = st.columns(2)
+                    d0, d1, d2 = st.columns(3)
+                    d0.metric("Internações de moradoras", formatar_numero(morad))
                     d1.metric("Na própria cidade", formatar_numero(info_cidade["moradoras_na_cidade"]),
                               help=f"{parte(info_cidade['moradoras_na_cidade'], morad)} das internações das moradoras")
                     d2.metric("Em outras cidades de SP", formatar_numero(info_cidade["moradoras_fora"]),
                               help=f"{parte(info_cidade['moradoras_fora'], morad)} das internações das moradoras")
                     if sem_h:
-                        st.caption(f"Outras {formatar_numero(sem_h)} internações de moradoras ficaram de fora desta "
-                                   "conta por não trazerem o município do hospital.")
+                        st.caption(f"Outras {formatar_numero(sem_h)} internações de moradoras ficaram fora desta conta por não "
+                                   "trazerem o município do hospital.")
                     if info_cidade["destinos"]:
                         st.dataframe(pd.DataFrame({
                             "Cidade do hospital": [nome for nome, _ in info_cidade["destinos"]],
@@ -1189,9 +1172,19 @@ if aba == "Investigar":
                             "% das moradoras": [parte(n, morad) for _, n in info_cidade["destinos"]],
                         }), width="stretch", hide_index=True)
                     else:
-                        st.info(f"Nenhuma moradora de {nome_cidade} foi atendida em hospital de outra cidade de SP "
-                                "no período.")
-            leitura("O que mostra", leitura_cidade(info_cidade, nome_cidade))
+                        st.info(f"Nenhuma moradora de {nome_cidade} foi atendida em hospital de outra cidade de SP.")
+                leitura("O que mostra", leitura_cidade_visao(info_cidade, nome_cidade, "fora"))
+            else:
+                st.markdown(f"**Quando mulheres de fora são atendidas em hospitais de {html.escape(nome_cidade)}**")
+                e0, e1, e2, e3 = st.columns(4)
+                e0.metric("Internações nos hospitais", formatar_numero(atend))
+                e1.metric(f"Moradoras de {nome_cidade}", formatar_numero(info_cidade["da_cidade"]),
+                          help=f"{parte(info_cidade['da_cidade'], atend)} das internações nos hospitais da cidade")
+                e2.metric("De outras cidades de SP", formatar_numero(info_cidade["outras_cidades"]),
+                          help=f"{parte(info_cidade['outras_cidades'], atend)} das internações nos hospitais da cidade")
+                e3.metric("De outros estados", formatar_numero(info_cidade["outros_estados"]),
+                          help=f"{parte(info_cidade['outros_estados'], atend)} das internações nos hospitais da cidade")
+                leitura("O que mostra", leitura_cidade_visao(info_cidade, nome_cidade, "aqui"))
         st.markdown("---")
 
     pergunta("Qual câncer cresce mais rápido, e quando foi o ponto mais alto?", "cidade",
