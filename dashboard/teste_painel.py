@@ -278,6 +278,30 @@ def main():
         checar("F. fluxo: a leitura cita Minas Gerais, Barretos e o aviso de que conta internações",
                "Minas Gerais" in textos and "Barretos" in textos and "internações, não pessoas" in textos)
 
+        # tabela completa e pesquisável (10/2026): substituiu a de 7 linhas (uma por câncer)
+        def tabela_do_fluxo(app):
+            achadas = [d.value for d in app.dataframe if {"Estado de origem", "Hospital"} <= set(d.value.columns)]
+            return achadas[0] if len(achadas) == 1 else None
+        tab_f = tabela_do_fluxo(at)
+        checar("F. fluxo: a tabela completa tem filtros de câncer, estado e anos, e a caixa de busca",
+               tab_f is not None and at.multiselect(key="fluxo_tab_cancer") is not None
+               and at.multiselect(key="fluxo_tab_estado") is not None
+               and at.select_slider(key="fluxo_tab_anos") is not None and at.text_input(key="fluxo_tab_busca") is not None)
+        checar("F. fluxo: a tabela mostra TUDO (21 linhas = 7 cânceres x 3 estados; 910 internações), não 7 linhas",
+               tab_f is not None and len(tab_f) == 21 and int(tab_f["Internações"].sum()) == 910
+               and "Parcela de fora" not in set(tab_f.columns))
+        at.text_input(key="fluxo_tab_busca").set_value("goias").run()  # sem acento acha Goiás
+        tab_busca = tabela_do_fluxo(at)
+        checar("F. fluxo: buscar 'goias' (sem acento) deixa só Goiás: 7 linhas, 273 internações, e a leitura acompanha",
+               not erros(at) and tab_busca is not None and len(tab_busca) == 7
+               and set(tab_busca["Estado de origem"]) == {"Goiás"} and int(tab_busca["Internações"].sum()) == 273
+               and "Com os filtros escolhidos, são 273 internações" in " ".join(str(m.value) for m in at.markdown))
+        at.text_input(key="fluxo_tab_busca").set_value("palavra que não existe").run()
+        checar("F. fluxo: busca sem resultado avisa e não quebra",
+               not erros(at) and tabela_do_fluxo(at) is None
+               and any("Nenhuma internação de fora com esses filtros" in str(i.value) for i in at.info))
+        at.text_input(key="fluxo_tab_busca").set_value("").run()
+
         # hospitais habilitados no mapa de estados (10/2026): chave ligada por padrão, desligável; sem arquivo de posições, avisa
         import csv
         import tempfile
@@ -370,6 +394,8 @@ def main():
                 if not n:
                     continue
                 for ano in range(2013, 2026):
+                    if cnes == "2077590" and ano == 2015:
+                        continue  # ano sem registro: o gráfico marca com x e explica
                     for proc, parte in (("cidade", n), ("outra_cidade", n // 2), ("fora", n // 4)):
                         linhas.append((cnes, tipo, ano, cidade, proc, parte, 0, 3 * parte, parte // 2, parte))
                 ufs.append((cnes, tipo, "MG", 4 * n))
@@ -409,6 +435,20 @@ def main():
                not erros(at) and len(caixas["Escolha um hospital (pode digitar o nome)"]) == 1
                and "câncer de colo do útero" in textos and "colo do útero" in textos.lower()
                and not any(set(d.value.columns) == TABELA_CANCERES_HOSPITAL for d in at.dataframe))
+        # hospital sem registro em 2015: o ano vazio é explicado (x no gráfico + leitura + caixa "por que")
+        at.selectbox(key="hospital_cancer").select("Todos os cânceres").run()
+        rotulo_sp = next(o for o in at.selectbox(key="hospital_perfil_todos").options if o.startswith("CNES 2077590"))
+        at.selectbox(key="hospital_perfil_todos").select(rotulo_sp).run()
+        textos = " ".join(str(m.value) for m in at.markdown)
+        rotulos_exp = [e.label for e in at.expander]
+        checar("H. hospital com um ano sem registro: a leitura diz o ano, a fonte e que o banco não guarda o motivo",
+               not erros(at) and "Sem nenhuma internação registrada em 2015" in textos
+               and "o banco não guarda o motivo da ausência" in textos
+               and "Por que alguns anos ficam sem barra?" in rotulos_exp)
+        at.selectbox(key="hospital_perfil_todos").select(
+            next(o for o in at.selectbox(key="hospital_perfil_todos").options if o.startswith("FUNDACAO"))).run()
+        checar("H. hospital sem lacunas: a caixa 'por que alguns anos ficam sem barra' não aparece",
+               not erros(at) and "Por que alguns anos ficam sem barra?" not in [e.label for e in at.expander])
     finally:
         inteligencia.carregar_hospitais, inteligencia.carregar_fluxo = hospitais_original, fluxo_original
         inteligencia.fluxo_da_cidade = cidade_original

@@ -159,6 +159,24 @@ def main():
         assert proibido not in texto_anos + texto_y, proibido
     print("[OK] hospital sem internações em 2023: o ano aparece com zero registrado, sem inventar causa")
 
+    # ---- anos sem barra (10/2026): onde caem, se a fonte tinha os 12 meses e o que a ausência não prova ----
+    import pandas as pd
+    lacunas = {"por_ano": pd.DataFrame({
+        "ano": [2018, 2019, 2020, 2021, 2022, 2023, 2024], "meses": [6, 12, 12, 12, 12, 12, 12],
+        "registrado": [0, 5, 0, 0, 7, 9, 0], "ajustado": [0.0, 5.0, 0.0, 0.0, 7.0, 9.0, 0.0],
+        "cidade": [0.0, 5.0, 0.0, 0.0, 7.0, 9.0, 0.0], "outra_cidade": [0.0] * 7, "fora": [0.0] * 7})}
+    texto_l = " ".join(ti.leitura_hospital_anos(lacunas)).lower()
+    assert "primeiro ano com internações registradas foi 2019" in texto_l
+    assert "sem nenhuma internação registrada em 2020, 2021, anos entre 2019 e 2023" in texto_l, texto_l
+    assert "depois de 2023 não há internação registrada (2024)" in texto_l
+    assert "em 2018 a fonte oferece menos de 12 meses" in texto_l and "oferece os 12 meses" in texto_l
+    assert "ano sem barra tem zero internações registradas" in texto_l and "o banco não guarda o motivo" in texto_l
+    for proibido in ("porque", "devido", "por causa", "em razão", "r$", "abriu", "fechou"):
+        assert proibido not in texto_l, proibido
+    sem_nada = dict(lacunas, por_ano=lacunas["por_ano"].assign(registrado=0))
+    assert ti.leitura_hospital_anos(sem_nada)[0].startswith("Nenhum ano com internações registradas")
+    print("[OK] anos sem barra: a leitura diz onde caem as lacunas, se a fonte tinha os 12 meses e que o banco não guarda o motivo")
+
     # ---- banco antigo, sem a coluna do código IBGE, ou sem nenhum hospital ----
     sem_codigo = sqlite3.connect(":memory:")
     sem_codigo.execute("CREATE TABLE internacoes (tipo_cancer TEXT, origem TEXT, municipio TEXT, uf_residencia TEXT, "

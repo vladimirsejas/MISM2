@@ -135,6 +135,59 @@ def main():
     assert aprox(pc.iloc[0]["pct_fora"], 33.33) and pc.iloc[0]["destino_principal"] == "Barretos"
     print("[OK] por câncer: colo 33,3% de fora; mama 15,8%")
 
+    # ---- tabela completa e pesquisável (10/2026) ----
+    tab = ti.tabela_fluxo(fluxo)
+    assert len(tab) == 6 and int(tab["internacoes"].sum()) == 37, tab
+    assert set(tab["cancer"]) == {ti.nome_doenca("MAMA"), ti.nome_doenca("COLO_UTERO")}
+    assert "FUNDACAO PIO XII BARRETOS" in set(tab["hospital"]) and "CNES 2082888" in set(tab["hospital"])
+    assert set(tab["municipio"]) == {"Barretos", "São Paulo", "Rio Claro"}
+    barretos = ti.filtrar_tabela_fluxo(tab, busca="barretos")
+    assert len(barretos) == 4 and int(barretos["internacoes"].sum()) == 31
+    for jeito in ("sao paulo", "SÃO PAULO", "  São   Paulo "):
+        achou = ti.filtrar_tabela_fluxo(tab, busca=jeito)
+        assert len(achou) == 1 and int(achou["internacoes"].sum()) == 4, jeito  # sem acento nem maiúscula
+    assert int(ti.filtrar_tabela_fluxo(tab, busca="minas barretos")["internacoes"].sum()) == 25  # todas as palavras
+    assert ti.filtrar_tabela_fluxo(tab, busca="2082888")["internacoes"].sum() == 2  # CNES também acha
+    assert ti.filtrar_tabela_fluxo(tab, busca="zzz").empty
+    assert int(ti.filtrar_tabela_fluxo(tab, cancers=[ti.nome_doenca("COLO_UTERO")])["internacoes"].sum()) == 5
+    assert int(ti.filtrar_tabela_fluxo(tab, estados=["Goiás"])["internacoes"].sum()) == 6
+    assert int(ti.filtrar_tabela_fluxo(tab, anos=(2024, 2024))["internacoes"].sum()) == 35
+    soma = ti.agrupar_tabela_fluxo(tab)
+    assert len(soma) == 5 and int(soma.iloc[0]["internacoes"]) == 20 and int(soma["internacoes"].sum()) == 37
+    assert "ano" not in soma.columns and len(ti.agrupar_tabela_fluxo(tab, por_ano=True)) == 6
+    assert ti.agrupar_tabela_fluxo(tab.iloc[0:0]).empty
+    print("[OK] tabela completa: 6 linhas = 37 internações; busca sem acento/maiúscula, várias palavras, CNES, filtros e soma")
+
+    parcelas = ti.parcela_fora_por_cancer(fluxo)
+    assert list(parcelas["doenca"]) == [ti.nome_doenca("COLO_UTERO"), ti.nome_doenca("MAMA")]
+    assert aprox(parcelas.iloc[0]["pct_fora"], 33.33) and aprox(parcelas.iloc[1]["pct_fora"], 15.84)
+    em_2024 = ti.parcela_fora_por_cancer(fluxo, (2024, 2024))
+    assert aprox(em_2024[em_2024["doenca"] == ti.nome_doenca("MAMA")].iloc[0]["pct_fora"], 18.75)  # 30 de 160
+    leitura_t = ti.leitura_tabela_fluxo(tab, parcelas, False) + ti.leitura_tabela_fluxo(barretos, parcelas, True)
+    junto_t = " ".join(leitura_t).lower()
+    assert "37 internações" in junto_t and "com os filtros escolhidos, são 31 internações" in junto_t
+    assert "fundacao pio xii barretos" in junto_t and "internações, não pessoas" in junto_t
+    assert "33,3%" in junto_t and "15,8%" in junto_t
+    assert ti.leitura_tabela_fluxo(tab.iloc[0:0], parcelas, True)[0].startswith("Nenhuma internação de fora")
+    for proibido in ("porque", "devido", "por causa", "em razão", "r$"):
+        assert proibido not in junto_t, proibido
+    print("[OK] parcela de fora por câncer no período (colo 33,3%; mama 15,8%, ou 18,8% só em 2024) e frases sem causa")
+
+    # ---- leitura dos anos fora do padrão (10/2026): explica esperado, poucos casos e meses ausentes ----
+    fora_padrao = pd.DataFrame({
+        "doenca": ["Mama", "Tireoide"], "ano": [2019, 2020], "observado": [120.0, 4.0], "esperado": [95.0, 1.2],
+        "direcao": ["acima", "acima"], "numeros_pequenos": [False, True], "diferenca_pct": [26.3, 233.3]})
+    texto_fp = " ".join(ti.leitura_fora_todos(fora_padrao, {2019: 7})).lower()
+    assert "2 anos fora do padrão" in texto_fp and "2 acima e 0 abaixo" in texto_fp
+    assert "mama em 2019: 120 internações registradas contra 95,0 esperadas (+26%)" in texto_fp, texto_fp
+    assert "tendência dos outros anos" in texto_fp and "poucos casos" in texto_fp and "pode ser acaso" in texto_fp
+    assert "em 2019 a fonte" in texto_fp and "não explica a causa" in texto_fp
+    assert "tireoide em 2020" not in texto_fp  # a maior diferença só olha cânceres com mais casos
+    assert ti.leitura_fora_todos(fora_padrao.iloc[0:0]) == []
+    for proibido in ("porque", "devido", "por causa", "em razão", "r$"):
+        assert proibido not in texto_fp, proibido
+    print("[OK] anos fora do padrão: a leitura explica o esperado, marca poucos casos e avisa dos meses ausentes")
+
     # ---- a cidade ----
     info = ti.fluxo_da_cidade(c, "RIO_CLARO", 3543907)
     assert info["atendimentos"] == 142 and info["da_cidade"] == 140

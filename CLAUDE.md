@@ -422,6 +422,21 @@ Estado atual:
   `etl/teste_carga_robusta.py`. Testes do sistema atual
   rodam no GitHub (`.github/workflows/testes.yml`).
 
+- **Revisão da aba Investigar (19/10/2026, o autor achou três blocos "confusos, limitados, que não servem para nada").**
+  (1) A tabela "Em quais cânceres a parcela de fora é maior?" (7 linhas, sem leitura, números viravam texto) saiu: no lugar,
+  a tabela completa e pesquisável do fluxo (`inteligencia.tabela_fluxo`, `filtrar_tabela_fluxo`, `agrupar_tabela_fluxo`,
+  `parcela_fora_por_cancer`, `leitura_tabela_fluxo`): uma linha por câncer x estado de origem x hospital (um ano por linha
+  opcional), filtros de câncer, estado e anos, busca sem acento/maiúscula em hospital, município, estado, câncer e CNES, ordenação
+  por coluna, download CSV e leitura que ainda responde a pergunta antiga (parcela de fora de cada câncer no período).
+  `por_cancer_fluxo` continua em `inteligencia.py` (tem teste), mas o painel não a usa mais. (2) "Em que anos algum câncer saiu do
+  padrão?": dica "Como ler" (esperado, diferença, poucos casos), colunas renomeadas ("Internações no ano", "Esperado pela
+  tendência", "Ficou", "Poucos casos", "Meses na fonte") e leitura em palavras (`leitura_fora_todos`). (3) Gráfico do hospital por
+  ano: ano sem registro ganha um x laranja com o mouse dizendo quantos meses a fonte tinha, a leitura diz onde caem as lacunas e que
+  o banco NÃO guarda o motivo (`_frases_anos_sem_registro`), e a caixa "Por que alguns anos ficam sem barra?" lista o que dá
+  para afirmar (meses ausentes na fonte, atendimento fora do SIH ou sob outro CNES, poucos casos) sem atribuir causa. Testes:
+  `teste_fluxo.py`, `teste_hospital.py` e os cenários F e H de `dashboard/teste_painel.py`. **Não foi visto no navegador real nem com
+  o banco real** (a nuvem não tem o banco): conferir no notebook como a tabela se comporta com ~18 mil internações de fora.
+
 ## Pergunte à Lia — a IA do Escudo (10/2026, pedido do autor)
 
 Requisito do trabalho (Fatec): o projeto precisa ter IA de verdade, e o autor

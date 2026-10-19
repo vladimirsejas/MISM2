@@ -64,7 +64,12 @@ from inteligencia import (
     prever_com_validacao,
     projetar,
     perfil_cidade,
-    por_cancer_fluxo,
+    parcela_fora_por_cancer,
+    tabela_fluxo,
+    filtrar_tabela_fluxo,
+    agrupar_tabela_fluxo,
+    leitura_tabela_fluxo,
+    leitura_fora_todos,
     porte_das_cidades,
     leitura_aparece,
     leitura_comparacao,
@@ -1019,12 +1024,35 @@ if aba == "Investigar":
                     hovertemplate=nome_barra + " em %{x}: %{y:.0f} (escala de 12 meses)"
                                   "<br>registrado: %{customdata[0]:.0f} internações em %{customdata[1]:.0f} meses"
                                   "<extra></extra>"))
+            sem_registro = anos_h[anos_h["registrado"] == 0]
+            if len(sem_registro):  # ano vazio não pode parecer "dado que sumiu": o x marca e o mouse explica
+                fig.add_trace(go.Scatter(
+                    x=sem_registro["ano"], y=[0] * len(sem_registro), mode="markers", cliponaxis=False,
+                    name="Sem internação registrada", marker={"symbol": "x", "size": 9, "color": LARANJA},
+                    customdata=sem_registro[["meses"]].fillna(12).values,
+                    hovertemplate="%{x}: nenhuma internação registrada neste hospital "
+                                  "(a fonte oferece %{customdata[0]:.0f} de 12 meses)<extra></extra>"))
             fig.update_layout(barmode="stack", legend={"orientation": "h", "y": -0.2})
             fig.update_xaxes(dtick=1)
             estilizar(fig, altura=340)
             fig.update_layout(showlegend=True)
             st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO)
             leitura("O que o gráfico mostra", leitura_hospital_anos(ficha))
+            if len(sem_registro):
+                with st.expander("Por que alguns anos ficam sem barra?"):
+                    st.markdown(
+                        "Um **x** no gráfico marca um ano em que este hospital não tem nenhuma internação "
+                        "registrada na base do SIH/SUS, a fonte oficial das internações. **O banco não guarda o "
+                        "motivo**, e o Escudo não chuta um. O que dá para dizer com segurança é o seguinte.")
+                    st.markdown(
+                        "Primeiro, o DATASUS não oferece todos os meses de todos os anos. Quando o ano tem menos "
+                        "de 12 meses na fonte, o hospital pode ficar sem registro naquele ano; passe o mouse sobre "
+                        "o x para ver quantos meses a fonte tem. Segundo, ausência no SIH não é ausência de "
+                        "atendimento: o hospital pode ter atendido pelo ambulatório, por convênio ou de forma "
+                        "particular, ou ter registrado as internações sob outro número de CNES. Terceiro, um "
+                        "hospital com poucos casos por ano pode simplesmente não ter internado esse câncer em "
+                        "certo ano. Para saber o que houve em um hospital específico, é preciso conferir com o "
+                        "próprio hospital ou no cadastro do CNES.")
 
             if cancer_h is None:  # com um câncer escolhido, a tabela teria uma linha só
                 st.dataframe(pd.DataFrame({
@@ -1051,16 +1079,53 @@ if aba == "Investigar":
         st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO)
         leitura("O que o gráfico mostra", leitura_evolucao_fluxo(e_fluxo))
 
-        pergunta("Em quais cânceres a parcela de fora é maior?", "estado", "uma linha por câncer, no Estado inteiro")
-        pc = por_cancer_fluxo(fluxo)
-        st.dataframe(pc.assign(
-            pct_fora=[f"{formatar_numero(v, 1)}%" for v in pc["pct_fora"]],
-            internacoes_fora=[formatar_numero(v) for v in pc["internacoes_fora"]],
-            internacoes_total=[formatar_numero(v) for v in pc["internacoes_total"]],
-        ).drop(columns="tipo_cancer").rename(columns={
-            "doenca": "Câncer", "internacoes_fora": "Internações de fora", "internacoes_total": "Total de internações",
-            "pct_fora": "Parcela de fora", "estado_principal": "Estado que mais envia",
-            "destino_principal": "Município que mais atende"}), width="stretch", hide_index=True)
+        pergunta("Quem vem de fora, de qual câncer e para qual hospital? Pesquise tudo", "estado",
+                 "todas as internações de mulheres de outros estados em hospitais de SP, 2013–2025 · "
+                 "uma linha por câncer, estado de origem e hospital")
+        st.markdown('<div class="escudo-dica">Digite um nome na busca (hospital, cidade, estado ou câncer) ou use os '
+                    'filtros. Clique no título de uma coluna para ordenar. "De fora" = mulher que mora em outro '
+                    'estado. Cada linha soma as internações daquele câncer, daquele estado de origem, naquele '
+                    'hospital; some as linhas para ter um total.</div>', unsafe_allow_html=True)
+        todas = tabela_fluxo(fluxo)
+        anos_t = sorted(todas["ano"].unique())
+        t1, t2 = st.columns(2)
+        sel_cancer = t1.multiselect("Câncer", sorted(todas["cancer"].unique()), key="fluxo_tab_cancer",
+                                    placeholder="Todos os cânceres")
+        sel_estado = t2.multiselect("Estado de origem", sorted(todas["estado"].unique()), key="fluxo_tab_estado",
+                                    placeholder="Todos os estados")
+        t3, t4 = st.columns([3, 2])
+        if len(anos_t) > 1:
+            faixa_anos = t3.select_slider("Anos", options=anos_t, value=(anos_t[0], anos_t[-1]),
+                                          key="fluxo_tab_anos")
+        else:
+            faixa_anos = (anos_t[0], anos_t[0])
+            t3.caption(f"Só há dados de {anos_t[0]}.")
+        busca_t = t4.text_input("Pesquisar", key="fluxo_tab_busca",
+                                placeholder="ex.: Barretos, Minas Gerais, mama")
+        separar_ano = st.toggle("Mostrar um ano por linha", value=False, key="fluxo_tab_por_ano",
+                                help="Desligado, cada linha soma os anos escolhidos. Ligado, cada ano vira uma linha.")
+        filtrada = filtrar_tabela_fluxo(todas, sel_cancer, sel_estado, faixa_anos, busca_t)
+        agrupada = agrupar_tabela_fluxo(filtrada, por_ano=separar_ano)
+        if agrupada.empty:
+            st.info("Nenhuma internação de fora com esses filtros.")
+        else:
+            st.dataframe(
+                agrupada.rename(columns={"cancer": "Câncer", "ano": "Ano", "estado": "Estado de origem",
+                                         "hospital": "Hospital", "municipio": "Município do hospital",
+                                         "internacoes": "Internações", "obitos": "Óbitos",
+                                         "dias_leito": "Dias de leito"}),
+                width="stretch", hide_index=True,
+                column_config={"Ano": st.column_config.NumberColumn(format="%d"),
+                               "Internações": st.column_config.NumberColumn(format="%d"),
+                               "Óbitos": st.column_config.NumberColumn(format="%d"),
+                               "Dias de leito": st.column_config.NumberColumn(format="%d")})
+            st.download_button(
+                "Baixar esta tabela (CSV)",
+                agrupada.to_csv(index=False, sep=";", decimal=",").encode("utf-8-sig"),
+                file_name="escudo_fluxo_mulheres_de_fora.csv", mime="text/csv", key="fluxo_tab_baixar")
+        filtros_ativos = bool(sel_cancer or sel_estado or busca_t.strip() or faixa_anos != (anos_t[0], anos_t[-1]))
+        leitura("O que a tabela mostra",
+                leitura_tabela_fluxo(filtrada, parcela_fora_por_cancer(fluxo, faixa_anos), filtros_ativos))
 
         pergunta(f"Quem é atendida nos hospitais de {nome_cidade}, e para onde vão as moradoras?", "cidade",
                  f"só hospitais de {html.escape(nome_cidade)} e só moradoras de {html.escape(nome_cidade)}, "
@@ -1079,32 +1144,42 @@ if aba == "Investigar":
 
     pergunta(f"Em que anos algum câncer saiu do padrão em {nome_cidade}?", "cidade",
              f"moradoras de {html.escape(nome_cidade)}")
-    st.markdown('<div class="escudo-dica">Todos os cânceres de uma vez. "Esperado" = tendência calculada com os '
-                'outros anos. Detectar não explica a causa.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="escudo-dica"><b>Como ler:</b> para cada câncer, o Escudo traça a tendência com os '
+                'outros anos e vê onde o ano analisado deveria ficar. Esse número é o <b>esperado</b>. Se o ano '
+                'real ficou muito longe dele, o ano entra na tabela. <b>Diferença</b> é quanto a mais ou a menos '
+                'que o esperado, em %. <b>Poucos casos</b> marca cânceres com menos de 10 internações esperadas '
+                'por ano: ali uma diferença pequena já parece grande e pode ser acaso. Detectar não explica a '
+                'causa.</div>', unsafe_allow_html=True)
     fora_todos = anos_fora_todos(serie)
     f1, f2 = st.columns([1, 1])
-    direcao = f1.radio("Direção", ["Todos", "Acima do esperado", "Abaixo do esperado"], horizontal=True, key="direcao")
-    incluir_pequenos = f2.toggle("Incluir números pequenos", value=True,
-                                 help="Cânceres com média abaixo de 10 internações por ano, onde o acaso pesa mais.")
+    direcao = f1.radio("Mostrar", ["Todos", "Só acima do esperado", "Só abaixo do esperado"], horizontal=True,
+                       key="direcao", help="Acima: mais internações do que a tendência indicava. Abaixo: menos.")
+    incluir_pequenos = f2.toggle("Incluir cânceres com poucos casos", value=True,
+                                 help="Cânceres com menos de 10 internações esperadas por ano, onde o acaso pesa mais.")
     tabela = fora_todos
     if direcao != "Todos":
-        tabela = tabela[tabela["direcao"] == ("acima" if direcao.startswith("Acima") else "abaixo")]
+        tabela = tabela[tabela["direcao"] == ("acima" if direcao.startswith("Só acima") else "abaixo")]
     if not incluir_pequenos:
         tabela = tabela[~tabela["numeros_pequenos"]]
     if tabela.empty:
         st.info("Nenhum ano fora do padrão com esses filtros.")
     else:
+        meses_incompletos = anos_incompletos(serie)
         st.dataframe(
-            tabela.assign(
-                observado=tabela["observado"].round(0).astype(int),
-                esperado=[formatar_numero(v, 1) for v in tabela["esperado"]],
-                diferenca_pct=[f"{'+' if v > 0 else ''}{formatar_numero(v)}%" for v in tabela["diferenca_pct"]],
-                numeros_pequenos=tabela["numeros_pequenos"].map({True: "sim", False: "não"}),
-            ).rename(columns={"doenca": "Câncer", "ano": "Ano", "observado": "Internações",
-                              "esperado": "Esperado", "direcao": "Direção",
-                              "numeros_pequenos": "Números pequenos", "diferenca_pct": "Diferença"}),
+            pd.DataFrame({
+                "Câncer": tabela["doenca"],
+                "Ano": tabela["ano"].astype(int),
+                "Internações no ano": tabela["observado"].round(0).astype(int),
+                "Esperado pela tendência": [formatar_numero(v, 1) for v in tabela["esperado"]],
+                "Diferença": [f"{'+' if v > 0 else ''}{formatar_numero(v)}%" for v in tabela["diferenca_pct"]],
+                "Ficou": tabela["direcao"].map({"acima": "acima do esperado", "abaixo": "abaixo do esperado"}),
+                "Poucos casos": tabela["numeros_pequenos"].map({True: "sim, pode ser acaso", False: "não"}),
+                "Meses na fonte": [f"{meses_incompletos.get(int(a), 12)} de 12" for a in tabela["ano"]],
+            }),
             width="stretch", hide_index=True,
+            column_config={"Ano": st.column_config.NumberColumn(format="%d")},
         )
+        leitura("O que a tabela mostra", leitura_fora_todos(tabela, meses_incompletos))
         contagem = tabela["ano"].value_counts()
         if contagem.iloc[0] >= 2:
             st.caption(f"{contagem.index[0]} aparece para {contagem.iloc[0]} cânceres ao mesmo tempo — quando "
