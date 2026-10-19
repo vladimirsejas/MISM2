@@ -378,28 +378,16 @@ ITENS = [
           para_quem="Moradoras de Rio Claro.",
           como="A Prefeitura informa 17 Unidades de Saúde da Família e 4 UBS, das 7h às 17h. A consulta é marcada "
                "na própria unidade, que é onde se faz o preventivo e se pede a mamografia. Algumas equipes têm "
-               "ginecologista.",
+               "ginecologista. Exame pedido pelo médico (mamografia, raio X e outros): o pedido fica com o "
+               "funcionário da unidade, que aciona a Central Municipal de Regulação de Serviços Especializados; a "
+               "Central avisa a unidade e a unidade avisa a paciente, que não precisa ir a outra central. Convém manter "
+               "o telefone atualizado na unidade. O Cadu (0800 019 0505) serve para marcar a consulta em que o médico "
+               "pede o exame.",
+          levar="O pedido do exame, quando já houver.",
           confirmar="O número de unidades e o horário vêm de páginas antigas da Prefeitura: confira a lista de "
-                    "endereços.",
+                    "endereços. O caminho do exame pedido foi informado por chefias da Fundação em 19/10/2026, por "
+                    "conversa, e ainda não está em publicação oficial: confirme na unidade.",
           tambem_caminhos=["mama"]),
-    _item("rc_central_vagas", "mama", "rio_claro", "Rio Claro",
-          "Exame com pedido médico (mamografia, raio X e outros): a unidade agenda",
-          "o médico pede, o pedido fica na unidade, a equipe aciona a regulação e a própria unidade avisa a paciente",
-          "Informação da chefia do CEAD (Fundação Municipal de Saúde de Rio Claro), por conversa em 19/10/2026",
-          "https://www.saude-rioclaro.org.br/enderecos.htm",
-          para_quem="Quem já tem o pedido de um exame (mamografia, raio X e outros) da rede municipal de Rio Claro.",
-          como="1) O médico pede o exame. 2) O pedido fica com o funcionário da unidade (USF, UBS ou o local que pediu "
-               "o exame). 3) A unidade aciona a Central Municipal de Regulação de Serviços Especializados: "
-               "a paciente não precisa ir a outra central. 4) Quando o exame é agendado, a Central avisa a unidade e "
-               "a unidade avisa a paciente. Se não souber qual é a sua unidade, use o botão \"Unidades, telefones e "
-               "como chegar\". Convém manter o telefone atualizado na unidade, para que o aviso chegue. O Cadu "
-               "(0800 019 0505) serve para marcar a consulta em que o médico pede o exame, não para avisar do exame.",
-          levar="O pedido do exame.",
-          confirmar="Informação dada por conversa com a chefia do CEAD e de uma unidade de saúde da Fundação, em "
-                    "19/10/2026; ainda não está em publicação oficial. A \"Central de Vagas\" da Rua 10, que aparecia "
-                    "aqui por um informativo antigo, saiu: não há confirmação de que ainda funcione. Confirme na sua "
-                    "unidade antes de ir.",
-          conferido="19/10/2026"),
     _item("rc_santa_casa", "tratamento", "rio_claro", "Rio Claro",
           "Santa Casa de Rio Claro – oncologia (UNACON) e Centro Oncológico Santa Ágata",
           "hospital habilitado para tratar câncer pelo SUS na própria cidade",
@@ -1309,7 +1297,7 @@ TIPOS_CANCER = {"mama": "câncer de mama", "colo": "câncer do colo do útero",
                 "tireoide": "câncer de tireoide", "endometrio": "câncer do corpo do útero (endométrio)"}
 _MARCAS_CANCER = {
     "mama": ("mulheres_de_peito", "caminho_do_exame", "carretas_estado", "campinas_craim",
-             "rio_preto_mamografia", "rc_central_vagas", "ha_mastologia", "mater_ribeirao",
+             "rio_preto_mamografia", "ha_mastologia", "mater_ribeirao",
              "reconstrucao_mamaria"),
     "colo": ("colo_utero", "vacina_hpv", "ha_colo_busca_ativa", "ha_pesquisa_hpv"),
 }
