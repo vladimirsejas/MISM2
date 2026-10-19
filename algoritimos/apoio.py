@@ -384,20 +384,21 @@ ITENS = [
           tambem_caminhos=["mama"]),
     _item("rc_central_vagas", "mama", "rio_claro", "Rio Claro",
           "Exame com pedido médico (mamografia, raio X e outros): a unidade agenda",
-          "o médico pede, o pedido fica na unidade e a equipe aciona a regulação; o Cadu avisa quando marcar",
+          "o médico pede, o pedido fica na unidade, a equipe aciona a regulação e a própria unidade avisa a paciente",
           "Informação da chefia do CEAD (Fundação Municipal de Saúde de Rio Claro), por conversa em 19/10/2026",
           "https://www.saude-rioclaro.org.br/enderecos.htm",
           para_quem="Quem já tem o pedido de um exame (mamografia, raio X e outros) da rede municipal de Rio Claro.",
           como="1) O médico pede o exame. 2) O pedido fica com o funcionário da unidade (USF, UBS ou o local que pediu "
-               "o exame). 3) Ele entra em contato com a Central Municipal de Regulação de Serviços Especializados: "
-               "a paciente não precisa ir a outra central. Se não souber qual é a sua unidade, use o botão \"Unidades, "
-               "telefones e como chegar\". 4) Assim que o exame for agendado, o Cadu entra em contato com a paciente "
-               "(0800 019 0505, telefone ou WhatsApp). Convém manter o telefone atualizado na unidade.",
+               "o exame). 3) A unidade aciona a Central Municipal de Regulação de Serviços Especializados: "
+               "a paciente não precisa ir a outra central. 4) Quando o exame é agendado, a Central avisa a unidade e "
+               "a unidade avisa a paciente. Se não souber qual é a sua unidade, use o botão \"Unidades, telefones e "
+               "como chegar\". Convém manter o telefone atualizado na unidade, para que o aviso chegue. O Cadu "
+               "(0800 019 0505) serve para marcar a consulta em que o médico pede o exame, não para avisar do exame.",
           levar="O pedido do exame.",
-          contato="Cadu: 0800 019 0505 (telefone/WhatsApp).",
-          confirmar="Informação dada por conversa com a chefia do CEAD em 19/10/2026; ainda não está em publicação "
-                    "oficial. A \"Central de Vagas\" da Rua 10, que aparecia aqui por um informativo antigo, saiu: "
-                    "não há confirmação de que ainda funcione. Confirme na sua unidade antes de ir.",
+          confirmar="Informação dada por conversa com a chefia do CEAD e de uma unidade de saúde da Fundação, em "
+                    "19/10/2026; ainda não está em publicação oficial. A \"Central de Vagas\" da Rua 10, que aparecia "
+                    "aqui por um informativo antigo, saiu: não há confirmação de que ainda funcione. Confirme na sua "
+                    "unidade antes de ir.",
           conferido="19/10/2026"),
     _item("rc_santa_casa", "tratamento", "rio_claro", "Rio Claro",
           "Santa Casa de Rio Claro – oncologia (UNACON) e Centro Oncológico Santa Ágata",
