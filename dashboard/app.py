@@ -18,7 +18,6 @@ import hospitais_oncologia as hosp_onco
 from passeio import PARADAS, parada as passeio_parada
 from lia_rosto import img as rosto_lia
 from estilo import CSS
-from navegacao import barra_de_navegacao
 from identidade import regua_cobertura as regua_mism
 from inteligencia import (
     ranking_municipios,
@@ -403,6 +402,11 @@ with col_cidade:
             st.page_link("pages/onde_ser_atendida.py", label="Onde ser atendida")
         except Exception:  # Streamlit antigo, sem page_link
             st.markdown('<a href="/onde_ser_atendida" target="_self">Onde ser atendida</a>', unsafe_allow_html=True)
+        # Hospitais de câncer (mapa e os mais próximos da cidade onde a mulher mora): mesmo grupo, uma casa só no painel.
+        try:
+            st.page_link("pages/hospitais_cancer.py", label="Hospitais de câncer")
+        except Exception:  # Streamlit antigo, sem page_link
+            st.markdown('<a href="/hospitais_cancer" target="_self">Hospitais de câncer</a>', unsafe_allow_html=True)
 cidade = next(m for m in lista_municipios if m["nome"] == nome_cidade)
 ORIGEM = cidade["origem"]
 
@@ -682,7 +686,6 @@ _ONDE = {"Panorama": "Panorama · a página inicial: o que está acontecendo",
          "Investigar": "Investigar · perguntas sobre a cidade escolhida: câncer que cresce, idade e comparação",
          "Planejamento": "Planejamento · onde a cidade pode ter problema nos próximos anos",
          "Método": "Método · como os números são feitos"}
-barra_de_navegacao("painel")  # Apoio, Onde ser atendida e Hospitais de câncer: os mesmos botões de todas as páginas
 st.markdown(f'<div class="escudo-voce-esta">📍 Você está em: <b>{html.escape(_ONDE.get(aba, aba))}</b>'
             f' · {html.escape(nome_cidade)}</div>', unsafe_allow_html=True)
 
