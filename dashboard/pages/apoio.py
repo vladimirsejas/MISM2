@@ -600,6 +600,7 @@ if not st.session_state.get("ap_boas_vindas_fechada"):
                   on_click=lia_clicar, args=(apoio.caminho("ajuda"),), width="stretch")
         try:
             st.page_link("pages/onde_ser_atendida.py", label="📍 Preciso de uma unidade de saúde perto de mim")
+            st.page_link("pages/hospitais_cancer.py", label="🗺️ Qual hospital de câncer fica mais perto da cidade onde moro?")
         except Exception:  # Streamlit antigo, sem page_link
             pass
         st.caption("Prefere escrever? Use a caixa **Pergunte à Lia**, na lateral.")
