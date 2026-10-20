@@ -365,7 +365,7 @@ def cartao(i):
     """Um item do catálogo: o que é, para quem, como, fonte oficial."""
     e = html.escape
     linhas = "".join(f"<li><b>{r}:</b> {e(i[c])}</li>" for r, c in (
-        ("Para quem", "para_quem"), ("O que levar", "levar"), ("Como funciona", "como"), ("Onde e contato", "contato"))
+        ("Para quem", "para_quem"), ("Como funciona", "como"), ("Onde e contato", "contato"), ("O que levar", "levar"))
         if i[c])
     classes = "escudo-cartao apoio-cartao" + (" confirmar" if i["confirmar"] else "") \
         + (" destaque" if st.session_state["ap_item"] == i["id"] else "")
@@ -598,6 +598,11 @@ if not st.session_state.get("ap_boas_vindas_fechada"):
         a4.button("Não sei por onde começar", key="bv_ap_ajuda",
                   help="A Lia pergunta em que ponto você está, sem escolher por você.",
                   on_click=lia_clicar, args=(apoio.caminho("ajuda"),), width="stretch")
+        try:
+            st.page_link("pages/onde_ser_atendida.py", label="📍 Preciso de uma unidade de saúde perto de mim")
+        except Exception:  # Streamlit antigo, sem page_link
+            pass
+        st.caption("Prefere escrever? Use a caixa **Pergunte à Lia**, na lateral.")
         st.button("Ver todas as áreas abaixo", key="bv_fechar_apoio",
                   on_click=lambda: st.session_state.update(ap_boas_vindas_fechada=True))
 
@@ -822,7 +827,17 @@ with st.sidebar:
                 st.info(f"Esta resposta é sobre {rotulo_resposta}. Você está em {rotulo_atual}.")
                 st.button("Falar sobre " + rotulo_atual, key="lia_falar_sobre_aba",
                           on_click=falar_sobre_aba_atual, width="stretch")
-            st.markdown(atual.fala)
+            fala_lateral = atual.fala
+            if getattr(atual, "tipo", None) is None and not se_contexto_diferente:
+                # Resposta da árvore da Lia: o centro da tela já mostra os cartões; aqui fica o texto de abertura.
+                linhas = fala_lateral.split("\n")
+                sem_lista = [ln for ln in linhas if not ln.startswith("- ")]
+                if len(sem_lista) < len(linhas):
+                    fala_lateral = "\n".join(sem_lista)
+                    while "\n\n\n" in fala_lateral:
+                        fala_lateral = fala_lateral.replace("\n\n\n", "\n\n")
+                    fala_lateral = fala_lateral.strip() + "\n\n*Os detalhes de cada serviço estão nos cartões, ao lado.*"
+            st.markdown(fala_lateral)
             if getattr(atual, "selo", None):
                 st.caption(atual.selo)
             if atual.numeros:

@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import time
 from collections import deque
 
@@ -176,6 +177,23 @@ checar("C. Preciso de ajuda → 'Meu exame deu alterado' leva primeiro à unidad
 botao(at, "lia_discreto_inicio_ap").click().run()
 checar("C. começar de novo volta à saudação", apoio.CIDADE in at.session_state["ap_lia"]["atual"].fala
        and not erros(at))
+
+# ---------- A2. jornada das 4 mulheres (auditoria de usabilidade, 20/10/2026) ----------
+# Cada uma chega, em UM clique a partir da abertura, a algo que ela pode FAZER: um telefone, um link oficial
+# ou um botão para o próximo passo. Sem erro e sem sair do Apoio.
+for entrada, quem in (("prevencao", "quero fazer exame / me prevenir"), ("alterado", "meu exame deu alterado"),
+                      ("diagnostico", "recebi diagnóstico"), ("ajuda", "não sei por onde começar")):
+    at = abrir()
+    botao(at, f"bv_ap_{entrada}").click().run()
+    visivel = " ".join(m.value for m in at.markdown) + " " + " ".join(str(m.value) for m in at.sidebar.markdown)
+    tem_telefone = re.search(r"0800[\s\d]{7,}|\(\d{2}\)\s?\d{4,5}-\d{4}", visivel) is not None
+    tem_link = "Abrir a página oficial" in visivel or "http" in visivel
+    tem_proximo = len(botoes_lia(at)) >= 2
+    checar(f"A2. jornada '{quem}': 1 clique leva a telefone, link ou próximo passo",
+           not erros(at) and (tem_telefone or tem_link or tem_proximo) and tem_proximo)
+    if entrada == "alterado":
+        checar("A2. exame alterado: telefone e a unidade de saúde do bairro aparecem já nesse primeiro clique",
+               tem_telefone and "unidade de saúde" in visivel.lower())
 
 # ---------- D. lâminas e caminhos ----------
 at = abrir()

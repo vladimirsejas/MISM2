@@ -1360,6 +1360,19 @@ for _id in ("hospital_da_mulher_sp", "caism_unicamp", "ha_prevencao"):
     POR_ID[_id]["tambem_caminhos"] = POR_ID[_id]["tambem_caminhos"] + ["outros"]
 
 
+# ---------- auditoria de usabilidade (20/10/2026): preencher lacunas só com o que o próprio catálogo já afirma ----------
+# Os hospitais da área "Hospitais no Estado" não são porta de entrada (a introdução da área e os cartões dizem isso):
+# chega-se a eles pela unidade de saúde e pela regulação. Isso vira o "Para quem" dos que não tinham.
+PARA_QUEM_HOSPITAL = "Mulheres encaminhadas pela unidade de saúde do bairro (não é porta de entrada)."
+for _i in ITENS:
+    if _i["lamina"] == "hospitais" and not _i["para_quem"]:
+        _i["para_quem"] = PARA_QUEM_HOSPITAL
+# Telefones que já estão verificados no cadastro da página "Onde ser atendida" (dados_geograficos/catalogo_servicos_rioclaro.json,
+# verificado em 10 e 11/10/2026): o Apoio aponta para o mesmo número, sem tirar a marca "a confirmar" dos cartões.
+POR_ID["rc_cead"]["contato"] += " Fones: (19) 3524-1463 / (19) 3524-1805 (cadastro de Onde ser atendida, verificado em 10/10/2026)."
+POR_ID["rc_ddm"]["contato"] = "Fone: (19) 3533-9009 (cadastro de Onde ser atendida, verificado em 11/10/2026)."
+
+
 def frase_carretas():
     """Orienta a consultar o itinerário oficial, sem reproduzir locais sujeitos a mudança."""
     return ("As cidades, datas e endereços das Carretas da Mamografia podem mudar. Antes de sair, consulte o "
@@ -1581,8 +1594,8 @@ def _voltar(i):
 def responder_item(id):
     i = POR_ID[id]
     partes = [f"**{i['titulo']}** · {i['onde']}"]
-    for rotulo, chave in (("Para quem", "para_quem"), ("O que levar", "levar"), ("Como funciona", "como"),
-                          ("Onde e contato", "contato")):
+    for rotulo, chave in (("Para quem", "para_quem"), ("Como funciona", "como"), ("Onde e contato", "contato"),
+                          ("O que levar", "levar")):
         if chave == "como" and i["topicos"]:   # os tópicos (o que é, sinais, exames...) vêm antes do caminho no SUS
             partes += [f"**{rotulo_t}:** {texto_t}" for rotulo_t, texto_t in i["topicos"]]
             rotulo = "Como buscar atendimento pelo SUS"
