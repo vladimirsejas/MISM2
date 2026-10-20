@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.join(AQUI, ".."))
 import hospitais_oncologia as h  # noqa: E402
 from configuracao_geografica import BANCO  # noqa: E402
 from estilo import CSS  # noqa: E402
+from navegacao import barra_de_navegacao  # noqa: E402
 from localizacao import carregar_localizacao  # noqa: E402
 
 # ============================================================
@@ -97,12 +98,7 @@ def inicio():
     st.markdown('<div style="background:#efe9f5;border-left:4px solid #5b2a55;border-radius:6px;padding:6px 12px;'
                 'margin:4px 0 10px;font-size:.95rem;color:#2a1730">📍 Você está em: <b>Hospitais habilitados em oncologia</b></div>',
                 unsafe_allow_html=True)
-    if st.button("🏠 Início", key="hc_inicio", help="Volta à página inicial do Escudo (Panorama)."):
-        st.session_state["aba"] = "Panorama"
-        try:
-            st.switch_page("app.py")
-        except Exception:  # fora do painel (teste isolado): sem destino
-            pass
+    barra_de_navegacao("hospitais", chave_inicio="hc_inicio")
 
 
 def pergunta(texto, escopo):

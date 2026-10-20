@@ -118,6 +118,15 @@ div[data-testid="stRadio"]:has(input[value="Panorama"]) > div { gap: 4px; border
     color: #ffffff !important; font-weight: 700; font-size: 1rem; }
 [class*="st-key-botao_inicio"] button { background: #ffffff; border: 1px solid #2a78d6; color: #2a78d6;
     border-radius: 12px; font-weight: 700; }
+[class*="st-key-barra_navegacao"] a, [class*="st-key-barra_navegacao"] button {
+    background: #ffffff; border: 2px solid #5b2a55; border-radius: 12px; min-height: 52px;
+    display: flex; align-items: center; justify-content: center; text-decoration: none; }
+[class*="st-key-barra_navegacao"] a p, [class*="st-key-barra_navegacao"] button p, [class*="st-key-barra_navegacao"] a span {
+    color: #5b2a55 !important; font-weight: 700; font-size: 1.05rem; }
+[class*="st-key-barra_navegacao"] a:hover, [class*="st-key-barra_navegacao"] button:hover { background: #efe9f5; }
+.nav-aqui { background: #5b2a55; color: #ffffff; border-radius: 12px; min-height: 52px; padding: 6px 10px; text-align: center;
+    font-weight: 700; font-size: 1.05rem; display: flex; flex-direction: column; justify-content: center; }
+.nav-aqui small { font-weight: 400; font-size: .72rem; opacity: .85; }
 .escudo-voce-esta { background: #5b2a55; color: #ffffff; border-radius: 8px;
     padding: 10px 16px; margin: 6px 0 14px; font-size: 1.15rem; }
 .escudo-voce-esta b { color: #ffffff; }

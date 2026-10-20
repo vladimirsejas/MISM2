@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.join(AQUI, ".."))
 import apoio  # noqa: E402
 import apoio_busca  # noqa: E402
 from estilo import CSS  # noqa: E402
+from navegacao import barra_de_navegacao  # noqa: E402
 from lia import INICIO  # noqa: E402
 from lia_rosto import img as rosto_lia  # noqa: E402
 
@@ -550,17 +551,11 @@ with col_titulo:
                 'Um guia de onde procurar, não orientação médica.</div>', unsafe_allow_html=True)
 with col_link:
     botao_inicio(st, "topo")
-    # Telefones, endereços e "Como chegar" das unidades ficam na página Onde ser atendida (uma casa só): o Apoio aponta para ela.
-    try:
-        st.page_link("pages/onde_ser_atendida.py", label="📍 Unidades, telefones e como chegar")
-    except Exception:  # Streamlit antigo, sem page_link
-        st.markdown('<a href="/onde_ser_atendida" target="_self">Unidades, telefones e como chegar</a>', unsafe_allow_html=True)
-    # Mesma lógica ("o que fica perto de mim"): o link do hospital de câncer fica ao lado, SEMPRE à vista, em qualquer tela do Apoio.
-    try:
-        st.page_link("pages/hospitais_cancer.py", label="🗺️ Hospital de câncer mais perto de mim")
-    except Exception:
-        st.markdown('<a href="/hospitais_cancer" target="_self">Hospital de câncer mais perto de mim</a>', unsafe_allow_html=True)
     st.caption("Cada cartão informa sua fonte e data de conferência. Itens marcados “a confirmar” precisam ser verificados antes de usar.")
+
+# Barra de navegação igual à das outras páginas (autor, 20/10/2026): Unidades, telefones e como chegar = "Onde ser atendida";
+# o hospital de câncer mais perto de onde a mulher mora = "Hospitais de câncer". Sempre à vista, em botões grandes.
+barra_de_navegacao("apoio")
 
 # Emergência sempre à vista (auditoria de usabilidade, 20/10/2026): o número não pode ficar dentro de um menu fechado.
 st.markdown('<div class="apoio-emergencia" role="note">🚨 <b>Em perigo agora?</b> Polícia: <b>190</b> · '

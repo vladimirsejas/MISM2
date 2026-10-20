@@ -248,10 +248,11 @@ checar("D. a área Hospitais no Estado tem a porta para o mapa de hospitais habi
 at.session_state["ap_aba"] = apoio.LAMINAS["rio_claro"]
 at.run()
 # (20/10/2026, autor: "deixe visível na área do Apoio") o atalho curto "Hospital de câncer mais perto de mim" fica SEMPRE no cabeçalho,
-# junto de "Unidades, telefones e como chegar"; o convite longo da área Hospitais no Estado continua só nela.
+# na barra de navegação (Onde ser atendida, Hospitais de câncer); o convite longo da área Hospitais no Estado continua só nela.
 tudo_rc = " ".join(m.value for m in at.markdown)
 checar("D. o convite longo do mapa NÃO se repete nas outras áreas (só o atalho do cabeçalho)", "Ver todos os hospitais habilitados no mapa" not in tudo_rc)
-checar("D. o atalho 'Hospital de câncer mais perto de mim' está sempre à vista no cabeçalho do Apoio", "Hospital de câncer mais perto de mim" in tudo_rc)
+checar("D. a barra de navegação (Onde ser atendida, Hospitais de câncer) está sempre à vista no Apoio, mesmo numa área aberta",
+       "Onde ser atendida" in tudo_rc and "Hospitais de câncer" in tudo_rc)
 at.session_state["ap_aba"] = apoio.LAMINAS["carretas"]
 at.run()
 texto = " ".join(m.value for m in at.markdown)
