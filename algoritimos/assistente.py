@@ -401,7 +401,7 @@ def _sobre_ia(ctx, ia):
     ligada = ("Neste momento a IA de linguagem (Gemini) está **ligada**." if ia.ligada else
               "Neste momento a IA de linguagem (Gemini) está **desligada** (sem chave): respondo direto dos cálculos.")
     fala = (
-        "Sou a **Lia**, uma guia do Escudo Feminino, não uma pessoa. Por trás de mim há três partes de IA, "
+        "Sou a **Lia**, uma guia do MISM2, não uma pessoa. Por trás de mim há três partes de IA, "
         "cada uma com um papel limitado:\n\n"
         f"1. **Entender a pergunta:** busca por palavras e por trechos de letras num vocabulário de {len(ent.INTENCOES)} assuntos que o Escudo "
         "sabe responder. Quando fico em dúvida, o Gemini escolhe um assunto da lista, nunca inventa outro.\n"

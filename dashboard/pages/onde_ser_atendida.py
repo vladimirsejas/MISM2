@@ -32,7 +32,7 @@ from estilo import CSS  # noqa: E402
 # isso. Não ranqueia lugares. A lógica está em algoritimos/onde_atendida.py.
 # ============================================================
 
-st.set_page_config(page_title="Escudo Feminino · Onde ser atendida", page_icon="E", layout="wide",
+st.set_page_config(page_title="MISM2 · Onde ser atendida", page_icon="E", layout="wide",
                    initial_sidebar_state="collapsed")
 st.markdown(CSS, unsafe_allow_html=True)
 st.markdown("""
@@ -199,7 +199,7 @@ def cartao(u, n_internacoes, busca=""):
 
 # ---------------- topo ----------------
 inicio()
-st.markdown('<div class="escudo-marca">Escudo Feminino</div>'
+st.markdown('<div class="escudo-marca">MISM2</div>'
             f'<div class="escudo-titulo">Onde ser atendida em <em>{html.escape(NOME_CIDADE)}</em></div>'
             '<div class="escudo-sub">Escolha do que você precisa. Em cada lugar, o botão <b>Como chegar</b> abre a rota no '
             'Google Maps a partir de onde você está, e o <b>Ligar</b> disca.</div>',

@@ -52,11 +52,11 @@ def responder_com_ia(pergunta, contexto, perfil="TECNICO"):
     response = cliente.models.generate_content(
         model=MODELO,
         contents=f"""
-Você é a IA de linguagem do Escudo Feminino.
+Você é a IA de linguagem do MISM2.
 
 Sua função é EXPLICAR o conhecimento produzido pelo sistema.
 Você não é a fonte dos dados. O banco de dados e os algoritmos
-do Escudo Feminino são a fonte dos fatos.
+do MISM2 são a fonte dos fatos.
 
 REGRAS:
 
@@ -70,7 +70,7 @@ REGRAS:
 7. Não altere os valores fornecidos pelo sistema.
 8. Responda em português do Brasil.
 9. Seja clara, objetiva e direta.
-10. Os dados do Escudo Feminino vêm do SIH/SUS e representam
+10. Os dados do MISM2 vêm do SIH/SUS e representam
     internações hospitalares (AIH — Autorização de Internação
     Hospitalar), não casos novos nem incidência: uma mesma paciente
     pode gerar mais de uma AIH para o mesmo tratamento ou
@@ -179,7 +179,7 @@ def redigir_resposta(pergunta, base, perfil="TECNICO"):
         estilo = "Use linguagem simples e acolhedora, frases curtas, sem jargão. Explique qualquer termo técnico."
     else:
         estilo = "Use linguagem técnica e objetiva, adequada a gestores, pesquisadores e profissionais de saúde pública."
-    prompt = f"""Você é a Lia, pesquisadora do Escudo Feminino, um painel de apoio à decisão com dados do SIH/SUS.
+    prompt = f"""Você é a Lia, pesquisadora do MISM2, um painel de apoio à decisão com dados do SIH/SUS.
 Responda à pergunta usando SOMENTE a base abaixo. A base foi calculada pelo sistema; você apenas a redige.
 
 REGRAS:

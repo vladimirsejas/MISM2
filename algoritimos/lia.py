@@ -33,7 +33,7 @@ from inteligencia import (
 )
 
 # =====================================
-# LIA — a guia do Escudo Feminino (ver docs/LIA.md)
+# LIA — a guia do MISM2 (ver docs/LIA.md)
 #
 # Árvore de conversa com 3 níveis: caminhos -> câncer -> ação. Cada
 # nó devolve uma Resposta com a fala, a expressão do rosto, os
@@ -164,7 +164,7 @@ def _nota_2025(ctx):
 
 def saudacao(ctx):
     return Resposta(
-        fala=(f"Olá, eu sou a **Lia**, pesquisadora do Escudo Feminino. Vamos olhar juntas os dados de "
+        fala=(f"Olá, eu sou a **Lia**, pesquisadora do MISM2. Vamos olhar juntas os dados de "
               f"câncer em mulheres de **{ctx.cidade}**? O que você quer descobrir?"),
         expressao="acolhedora",
         botoes=[(r, caminho(c)) for r, c in CAMINHOS],

@@ -29,7 +29,7 @@ from localizacao import carregar_localizacao  # noqa: E402
 # algoritimos/hospitais_oncologia.py; a porta de entrada é a área "Hospitais no Estado" do Apoio à mulher.
 # ============================================================
 
-st.set_page_config(page_title="Escudo Feminino · Hospitais de câncer", page_icon="E", layout="wide",
+st.set_page_config(page_title="MISM2 · Hospitais de câncer", page_icon="E", layout="wide",
                    initial_sidebar_state="collapsed")
 st.markdown(CSS, unsafe_allow_html=True)
 st.markdown("""
@@ -140,7 +140,7 @@ try:  # quem chegou pela área "Hospitais no Estado" do Apoio volta para ela sem
     st.page_link("pages/apoio.py", label="← Voltar ao Apoio à mulher")
 except Exception:  # Streamlit antigo, ou fora do painel (teste isolado)
     pass
-st.markdown('<div class="escudo-marca">Escudo Feminino</div>'
+st.markdown('<div class="escudo-marca">MISM2</div>'
             '<div class="escudo-titulo">Hospitais habilitados em <em>oncologia</em></div>'
             '<div class="escudo-sub">Onde ficam os hospitais que o Ministério da Saúde habilitou para tratar câncer pelo SUS, '
             'e qual está mais perto da sua cidade. <b>Habilitado não é vaga:</b> o acesso é pela regulação.</div>',

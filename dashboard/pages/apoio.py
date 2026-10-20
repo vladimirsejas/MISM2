@@ -33,7 +33,7 @@ from lia_rosto import img as rosto_lia  # noqa: E402
 # Streamlit: chave do widget atrelada ao valor (ver app.py).
 # ============================================================
 
-st.set_page_config(page_title="Escudo Feminino · Apoio à mulher", page_icon="E", layout="wide",
+st.set_page_config(page_title="MISM2 · Apoio à mulher", page_icon="E", layout="wide",
                    initial_sidebar_state="expanded")
 st.markdown(CSS, unsafe_allow_html=True)
 st.markdown("""
@@ -543,7 +543,7 @@ def porta_ajuda():
 
 col_titulo, col_link = st.columns([2.2, 1])
 with col_titulo:
-    st.markdown('<div class="escudo-marca">Escudo Feminino · Apoio à mulher</div>', unsafe_allow_html=True)
+    st.markdown('<div class="escudo-marca">MISM2 · Apoio à mulher</div>', unsafe_allow_html=True)
     st.markdown('<div class="escudo-titulo">Encontre um caminho</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="escudo-sub">Onde a mulher de {apoio.CIDADE} encontra prevenção, diagnóstico, '
                 'tratamento e proteção, com as páginas oficiais do Estado de SP, da região e da cidade. '
@@ -581,7 +581,7 @@ if not st.session_state.get("ap_boas_vindas_fechada"):
     with c_rosto:
         st.markdown(rosto("acolhedora", 150), unsafe_allow_html=True)
     with c_fala, balao("centro"):
-        st.markdown('<div class="lia-nome">Lia <span>· pesquisadora do Escudo Feminino</span></div>'
+        st.markdown('<div class="lia-nome">Lia <span>· pesquisadora do MISM2</span></div>'
                     '<div class="lia-fala-grande">Vamos por partes. Escolha o que mais se parece com a sua situação; você pode voltar e mudar de caminho.</div>',
                     unsafe_allow_html=True)
         st.markdown("**Por onde você quer começar?**")
@@ -811,7 +811,7 @@ with st.sidebar:
     with c_rosto:
         st.markdown(rosto(atual.expressao, 76), unsafe_allow_html=True)
     with c_nome:
-        st.markdown('<div class="lia-nome">Lia</div><div class="lia-cargo">Pesquisadora do Escudo Feminino'
+        st.markdown('<div class="lia-nome">Lia</div><div class="lia-cargo">Pesquisadora do MISM2'
                     f'<br>Apoio à mulher · {apoio.CIDADE}</div>', unsafe_allow_html=True)
     with balao("lateral"):
         if not st.session_state.get("ap_boas_vindas_fechada"):
@@ -890,4 +890,4 @@ with st.sidebar:
     st.divider()
     botao_inicio(st.sidebar, "lateral")
 
-st.caption("Escudo Feminino · Apoio à mulher · guia de onde procurar; confirme sempre na unidade de saúde.")
+st.caption("MISM2 · Apoio à mulher · guia de onde procurar; confirme sempre na unidade de saúde.")

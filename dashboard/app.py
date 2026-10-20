@@ -111,7 +111,7 @@ from inteligencia import (
 
 
 st.set_page_config(
-    page_title="Escudo Feminino",
+    page_title="MISM2",
     page_icon="E",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -409,8 +409,8 @@ serie = serie_municipio(ORIGEM)
 resumo = resumo_doencas(serie) if not serie.empty else pd.DataFrame()
 
 with col_titulo:
-    st.markdown(f'<div class="mism-marca">{simbolo_mism(40)}<div class="escudo-marca">Escudo Feminino'
-                f'<span> · MISM2 · observatório da saúde da mulher</span></div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="mism-marca">{simbolo_mism(40)}<div class="escudo-marca">MISM2'
+                f'<span> · observatório da saúde da mulher</span></div></div>', unsafe_allow_html=True)
     st.markdown(f'<div class="escudo-titulo">Câncer em mulheres de <em>{html.escape(nome_cidade)}</em></div>',
                 unsafe_allow_html=True)
     if not resumo.empty:
@@ -649,7 +649,7 @@ if not st.session_state.get("lia_fechada"):
     with c_rosto:
         st.markdown(rosto("acolhedora", 150), unsafe_allow_html=True)
     with c_fala, balao("centro"):
-        st.markdown(f'<div class="lia-nome">Lia <span>· pesquisadora do Escudo Feminino</span></div>'
+        st.markdown(f'<div class="lia-nome">Lia <span>· pesquisadora do MISM2</span></div>'
                     f'<div class="lia-fala-grande">{boas_vindas.fala.replace("**", "")}</div>',
                     unsafe_allow_html=True)
         # 4 portas de entrada (docs/LIA.md); os 8 caminhos ficam na lateral
@@ -1606,7 +1606,7 @@ with st.sidebar:
     with c_rosto:
         st.markdown(rosto(atual.expressao, 76), unsafe_allow_html=True)
     with c_nome:
-        st.markdown('<div class="lia-nome">Lia</div><div class="lia-cargo">Pesquisadora do Escudo Feminino'
+        st.markdown('<div class="lia-nome">Lia</div><div class="lia-cargo">Pesquisadora do MISM2'
                     f'<br>{nome_cidade}</div>', unsafe_allow_html=True)
 
     # Passeio ativo: o cartão dele fica aqui, logo abaixo do rosto (a
@@ -1682,4 +1682,4 @@ with st.sidebar:
         with lugar_do_passeio:  # passeio ativo: logo abaixo do rosto
             desenhar_passeio(indice_passeio)
 
-st.caption("Escudo Feminino · dados públicos do SIH/SUS · internações não equivalem a casos novos.")
+st.caption("MISM2 · dados públicos do SIH/SUS · internações não equivalem a casos novos.")
