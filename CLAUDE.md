@@ -597,6 +597,10 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   (ano, **mulheres que moram na cidade x internações nos hospitais da cidade**, um câncer ou os 7 somados; mês que a fonte não tem = "sem dado", NUNCA zero; mês da fonte sem registro = zero de
   verdade; total é o registrado; diz o último mês e que o ano está incompleto; o ano é o da competência). Cenário L de `teste_painel.py`. Ainda não foi visto no navegador nem com o banco real.
   **Falta:** a Lia responder "quantas internações em <cidade> neste ano?" (hoje só o painel) e decidir se `ANO_CMPT` = ano da internação (ver `analises\investigacao_2025.txt` no notebook).
+  **O que o DATASUS oferece (CONFIRMADO no notebook em 20/10/2026, `listar_meses_pysus.py --ano 2024/2025/2026`):** SIH/RD 2024 só 8 meses (faltam 02, 06, 08, 12; lacuna da fonte); SIA 2024 e 2025 12/12; CNES 2024 e 2025 12/12 e 2026 jan-ago (o ETL usa dezembro, então 2026 ainda não entra);
+  **SIM: 2024 existe como `DOSP2024` (o ETL atual lê: `py -3.12 etl\baixar_sim_obitos.py --anos 2024-2024`, e o padrão do ETL agora é 2013-2024); 2025 e 2026 NÃO têm `DOSP`: o PySUS lista só
+  `Mortalidade_Geral_2025.parquet` / `_2026` (provavelmente do Brasil inteiro, por residência, e DOSP é por ocorrência em SP: misturar pode criar queda falsa nos totais do Estado).**
+  Por isso o ETL NÃO lê esse arquivo ainda: antes, `py -3.12 etl\sondar_mortalidade_geral.py --ano 2025` (só conta; não grava nem mostra declaração; teste `etl/teste_sondar_mortalidade_geral.py`) diz as colunas, se é nacional, até que mês vai.
   **SIA/SIM/CNES no painel:** hoje só a Lia usa; entram no painel (uma seção própria, nunca somadas ao SIH) depois de conferir os códigos com o banco real.
   A afirmação do ChatGPT de que o SIH ainda não tem regra territorial única está desatualizada (resolvido em 08/10/2026).
 

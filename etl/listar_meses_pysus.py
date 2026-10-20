@@ -86,7 +86,12 @@ def main(ano=None, pysus_cls=None):
             if valor[1]:
                 print(f"  existe o arquivo de {ano} (DO{ESTADO}{ano})")
             else:
-                print(f"  NÃO LISTADO pelo DATASUS: o arquivo de {ano} (lacuna da fonte; a fonte lista: {valor[2] or 'nada'})")
+                outro = [n for n in valor[2] if str(n).upper().startswith("MORTALIDADE_GERAL")]
+                if outro:
+                    print(f"  NÃO existe DO{ESTADO}{ano}, mas o DATASUS lista {outro[0]} (outro formato, do Brasil inteiro): "
+                          "o Escudo ainda não lê. Veja: py -3.12 etl\\sondar_mortalidade_geral.py --ano " + str(ano))
+                else:
+                    print(f"  NÃO LISTADO pelo DATASUS: o arquivo de {ano} (lacuna da fonte; a fonte lista: {valor[2] or 'nada'})")
             continue
         presentes, faltando, ilegiveis = valor
         print(f"  existem {len(presentes)} de 12 meses: {', '.join(f'{m:02d}' for m in presentes) or 'nenhum'}")

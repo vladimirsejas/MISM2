@@ -20,7 +20,7 @@ import baixar_sih_sp as sih
 #
 # O SIM se oferece no PySUS sem grupo: DO<UF><ANO> (ex.: DOSP2022) e Mortalidade_Geral_<ANO>. Usa-se o DOSP.
 #
-# Uso (Python 3.12):  py -3.12 etl\baixar_sim_obitos.py [--anos 2013-2023]
+# Uso (Python 3.12):  py -3.12 etl\baixar_sim_obitos.py [--anos 2013-2024]
 # =====================================
 
 RAIZ_PROJETO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -157,7 +157,7 @@ def _anos(argv):
     if "--anos" in argv:
         inicio, _, fim = argv[argv.index("--anos") + 1].partition("-")
         return list(range(int(inicio), int(fim or inicio) + 1))
-    return list(range(2013, 2024))
+    return list(range(2013, 2025))   # 2024 existe como DOSP2024 (confirmado em 20/10/2026); 2025 em diante só como Mortalidade_Geral (ver sondar_mortalidade_geral.py)
 
 
 def main(pysus_cls=None, anos=None, banco=BANCO, verboso=True):

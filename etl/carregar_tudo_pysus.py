@@ -26,7 +26,7 @@ def etapas():
         ("populacao", "População de mulheres (IBGE, Censo 2022)", lambda: pop.main()),
         ("geo", "Centro de cada município de SP (IBGE, para a distância até os hospitais)", lambda: (geo.main(), None)),
         ("sia", "Quimio e radio ambulatoriais (SIA) 2013-2025", lambda: sia.main(anos=list(range(2013, 2026)), verboso=False)),
-        ("sim", "Mortalidade real por câncer (SIM) 2013-2023", lambda: sim.main(anos=list(range(2013, 2024)), verboso=False)),
+        ("sim", "Mortalidade real por câncer (SIM) 2013-2024", lambda: sim.main(anos=list(range(2013, 2025)), verboso=False)),
         ("cnes", "Leitos e equipamentos (CNES) 2013-2025", lambda: cnes.main(anos=list(range(2013, 2026)), verboso=False)),
     ]
 

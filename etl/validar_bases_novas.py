@@ -95,7 +95,7 @@ def main(banco=BANCO):
         if tem(conn, "obitos_sim"):
             anos = linhas(conn, "SELECT ano, SUM(obitos) FROM obitos_sim GROUP BY ano ORDER BY ano")
             print("  óbitos de mulheres pelos 7 cânceres, por ano: " + " ".join(f"{a}:{n:,}".replace(",", ".") for a, n in anos))
-            falta = [a for a in range(2013, 2024) if a not in {x for x, _ in anos}]
+            falta = [a for a in range(2013, 2025) if a not in {x for x, _ in anos}]   # 2025 em diante o SIM só existe como Mortalidade_Geral (outro formato)
             print("  anos que NÃO entraram: " + (", ".join(map(str, falta)) if falta else "nenhum"))
             print("  por câncer: " + ", ".join(f"{c}={n:,}".replace(",", ".") for c, n in
                                                linhas(conn, "SELECT tipo_cancer, SUM(obitos) FROM obitos_sim GROUP BY 1 ORDER BY 2 DESC")))

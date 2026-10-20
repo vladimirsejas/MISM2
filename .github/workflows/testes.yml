@@ -86,6 +86,7 @@ jobs:
           python teste_baixar_centroides.py
           python teste_validar_bases_novas.py
           python teste_listar_meses_pysus.py
+          python teste_sondar_mortalidade_geral.py
       - name: Painel (clica em tudo)
         run: python dashboard/teste_painel.py
       - name: Lâmina de apoio (clica em tudo)
