@@ -369,6 +369,15 @@ def main():
     rm = ti.resumo_mortalidade(sim, 3543907, serie=ctx.serie[ctx.serie["grupo"] == "MUNICIPIO"])
     checar("7g. SIM: 40 óbitos na cidade e 1.000 no Estado; 75% no hospital e 25% em casa", rm["obitos_ultimo"] == 40
            and rm["estado_ultimo"] == 1000 and abs(rm["onde"]["no hospital"] - 75) < 1e-9 and abs(rm["onde"]["em casa"] - 25) < 1e-9)
+    sim_misto = sim.assign(fonte_arquivo=["Mortalidade_Geral"] * 3, fonte_meses=[8] * 3)
+    sim_misto = _pd.concat([sim_misto, _pd.DataFrame([(2023, "330455", "MAMA", "50 a 69", "1", "1", 500, "Mortalidade_Geral", 8)],
+                                                     columns=sim_misto.columns)], ignore_index=True)   # moradora do RJ
+    rm2 = ti.resumo_mortalidade(sim_misto, 3543907)
+    lt2 = ti.leitura_mortalidade(rm2, "Rio Claro")
+    checar("7g. SIM: o 'Estado' conta só moradoras de SP (a do RJ não entra), e o ano vindo do Mortalidade_Geral com 8 meses é avisado",
+           rm2["estado_ultimo"] == 1000 and "outro arquivo do SIM" in lt2 and "só 8 meses" in lt2 and "preliminar" in lt2)
+    checar("7g. SIM: ano do DOSP com 12 meses não leva aviso", "outro arquivo do SIM" not in ti.leitura_mortalidade(rm, "Rio Claro")
+           and "Atenção" not in ti.leitura_mortalidade(rm, "Rio Claro"))
     ctx_novo = Contexto(serie=ctx.serie, cidade="Rio Claro", faixas=ctx.faixas, codigo_ibge=3543907, tratamento=trat, obitos_sim=sim)
     r = asst.responder_pergunta(ctx_novo, "quantas mulheres fazem quimioterapia na cidade?", foco, ia=asst.IA())
     checar("7g. a Lia responde a quimio e radio com APAC (não mulheres), sem causa, sem 'vai', sem IA",

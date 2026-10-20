@@ -19,6 +19,9 @@ import baixar_sih_sp as sih
 # obitos). Nenhum número de declaração, data exata ou endereço entra no banco.
 #
 # O SIM se oferece no PySUS sem grupo: DO<UF><ANO> (ex.: DOSP2022) e Mortalidade_Geral_<ANO>. Usa-se o DOSP.
+# SÓ quando o DOSP do ano não existe (2025 e 2026, confirmado em 20/10/2026) lê-se o Mortalidade_Geral, que é do BRASIL INTEIRO: nele
+# ficam apenas as MORADORAS DE SP (CODMUNRES começando em 35) e o ano é marcado em `obitos_sim_fonte` (arquivo e meses com óbito),
+# para o painel e a Lia dizerem que veio de outro arquivo e se o ano está incompleto. O "Estado" do SIM conta sempre moradoras de SP.
 #
 # Uso (Python 3.12):  py -3.12 etl\baixar_sim_obitos.py [--anos 2013-2024]
 # =====================================
@@ -28,6 +31,9 @@ BANCO = os.path.join(RAIZ_PROJETO, "banco", "escudo_feminino.db")
 ESTADO = "SP"
 FEMININO = {"2", "F", "FEMININO"}  # SIM: 1 masculino, 2 feminino, 0/9 ignorado
 OBRIGATORIAS = ["CAUSABAS", "SEXO", "CODMUNRES"]
+UF_CODIGO = "35"                      # SP no código do IBGE; o Mortalidade_Geral é nacional e só as moradoras de SP ficam
+ARQUIVO_NACIONAL = "MORTALIDADE_GERAL"
+USADAS = ["CAUSABAS", "SEXO", "CODMUNRES", "IDADE", "LOCOCOR", "RACACOR", "DTOBITO"]
 
 
 def idade_sim(valor):
@@ -45,8 +51,19 @@ def idade_sim(valor):
     return None
 
 
-def preparar(df):
-    """Mulheres que morreram de um dos 7 cânceres (causa básica), só com o que o Escudo usa."""
+def meses_com_obito(df):
+    """Quantos meses distintos têm óbito no arquivo (DTOBITO DDMMAAAA). None se a coluna não existe ou não dá para ler.
+    Só conta meses; nenhuma data individual é guardada."""
+    colunas = {str(c).strip().upper(): c for c in df.columns}
+    if "DTOBITO" not in colunas:
+        return None
+    datas = pd.to_datetime(df[colunas["DTOBITO"]].astype("string").str.strip().str.zfill(8), format="%d%m%Y", errors="coerce").dropna()
+    return int(datas.dt.to_period("M").nunique()) if len(datas) else None
+
+
+def preparar(df, residentes_uf=None):
+    """Mulheres que morreram de um dos 7 cânceres (causa básica), só com o que o Escudo usa.
+    residentes_uf="35": só quem MORA em SP (para o arquivo nacional)."""
     df = df.copy()
     df.columns = [str(c).strip().upper() for c in df.columns]
     faltando = [c for c in OBRIGATORIAS if c not in df.columns]
@@ -56,6 +73,9 @@ def preparar(df):
     causa = df["CAUSABAS"].astype("string").fillna("").str.strip().str.upper()
     tipo = causa.str[:3].map(sia.CID_PARA_CANCER)
     manter = sexo.isin(FEMININO) & tipo.notna()
+    if residentes_uf:
+        residencia = df["CODMUNRES"].astype("string").fillna("").str.replace(r"\D", "", regex=True)
+        manter = manter & residencia.str.startswith(residentes_uf)
     idade = df.loc[manter, "IDADE"].map(idade_sim) if "IDADE" in df.columns else pd.Series(None, index=df.index[manter], dtype=float)
     texto = lambda coluna: (df.loc[manter, coluna].astype("string").fillna("").str.strip().replace("", "sem_info")
                             if coluna in df.columns else pd.Series("sem_info", index=df.index[manter], dtype="string"))
@@ -99,9 +119,12 @@ def perfil(bruto, preparado, ano):
         print("      ATENÇÃO: nenhum óbito de mulher pelos 7 cânceres. Confira o perfil acima (sexo e causa).")
 
 
-def gravar(agregado, ano, banco=BANCO):
+def gravar(agregado, ano, banco=BANCO, fonte="DOSP", meses=None):
     conn = sqlite3.connect(banco, timeout=120)  # espera até 2 min se o painel ou outro programa estiver com o banco aberto
     try:
+        conn.execute("CREATE TABLE IF NOT EXISTS obitos_sim_fonte (ano INTEGER PRIMARY KEY, arquivo TEXT, meses INTEGER)")
+        conn.execute("DELETE FROM obitos_sim_fonte WHERE ano = ?", (ano,))
+        conn.execute("INSERT INTO obitos_sim_fonte VALUES (?, ?, ?)", (ano, fonte, meses))
         conn.execute("""CREATE TABLE IF NOT EXISTS obitos_sim (ano INTEGER, codigo_residencia TEXT, tipo_cancer TEXT, faixa TEXT,
             local_obito TEXT, raca_cor TEXT, obitos INTEGER)""")
         conn.execute("DELETE FROM obitos_sim WHERE ano = ?", (ano,))
@@ -123,11 +146,16 @@ async def baixar(anos, pysus_cls=None, banco=BANCO, verboso=True):
                 falhas.append(f"SIM {ano}: a consulta falhou: {erro.splitlines()[0]}")
                 continue
             doe = [a for a in arquivos or [] if sih.nome_do_arquivo(a).upper().startswith(f"DO{ESTADO}{ano}")]
+            nacional = not doe
+            if nacional:
+                doe = [a for a in arquivos or [] if sih.nome_do_arquivo(a).upper().startswith(ARQUIVO_NACIONAL)]
             if not doe:
                 nomes = ", ".join(sih.nome_do_arquivo(a) for a in (arquivos or [])[:6])
-                falhas.append(f"SIM {ano}: não há arquivo DO{ESTADO}{ano} (a fonte lista: {nomes or 'nada'})")
+                falhas.append(f"SIM {ano}: não há arquivo DO{ESTADO}{ano} nem Mortalidade_Geral (a fonte lista: {nomes or 'nada'})")
                 continue
-            partes = []
+            if nacional:
+                print(f"  SIM {ano}: não há DO{ESTADO}{ano}; usando {sih.nome_do_arquivo(doe[0])} (Brasil inteiro, só moradoras de SP)")
+            partes, meses = [], None
             for arquivo in doe:
                 baixado, erro_arq = await sih.com_tentativas(sih.nome_do_arquivo(arquivo), lambda: pysus.download(arquivo))
                 if erro_arq:
@@ -135,8 +163,12 @@ async def baixar(anos, pysus_cls=None, banco=BANCO, verboso=True):
                     continue
                 local = sih.caminho_local(baixado)
                 try:
-                    bruto = pd.read_parquet(local)
-                    preparado = preparar(bruto)
+                    try:   # o arquivo nacional é grande: lê só as colunas que o Escudo usa
+                        bruto = pd.read_parquet(local, columns=USADAS) if nacional else pd.read_parquet(local)
+                    except Exception:  # noqa: BLE001 -- nome de coluna diferente: lê tudo
+                        bruto = pd.read_parquet(local)
+                    meses = meses_com_obito(bruto)
+                    preparado = preparar(bruto, residentes_uf=UF_CODIGO if nacional else None)
                     if not perfilado:
                         perfil(bruto, preparado, ano)
                         perfilado = True
@@ -147,7 +179,7 @@ async def baixar(anos, pysus_cls=None, banco=BANCO, verboso=True):
                     sih.remover(local)
             if partes:
                 agregado = pd.concat(partes, ignore_index=True)
-                gravar(agregado, ano, banco)
+                gravar(agregado, ano, banco, "Mortalidade_Geral" if nacional else "DOSP", meses)
                 resumo.append((ano, len(agregado), int(agregado["obitos"].sum())))
                 print(f"  SIM {ano}: {int(agregado['obitos'].sum()):,} óbitos de mulheres pelos 7 cânceres".replace(",", "."))
     return falhas, resumo

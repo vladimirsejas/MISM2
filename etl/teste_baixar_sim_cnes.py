@@ -106,6 +106,38 @@ def main():
         n_eq = conn.execute("SELECT COUNT(*) FROM cnes_equipamentos").fetchone()[0]
         n_lt = conn.execute("SELECT COUNT(*) FROM cnes_leitos").fetchone()[0]
         checar("CNES: usa dezembro e grava equipamentos e leitos agregados", n_eq == 2 and n_lt == 1 and f2 == [])
+        # --- 2025 em diante: sem DOSP, usa o Mortalidade_Geral (nacional) e fica só com moradoras de SP ---
+        class FalsoNacional:
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *a):
+                return False
+
+            async def query(self, dataset, state, year, group=None):
+                return [Arq(f"Mortalidade_Geral_{year}.parquet")] if year >= 2025 else [Arq(f"DOSP{year}.parquet")]
+
+            async def download(self, arquivo):
+                caminho = os.path.join(pasta, arquivo.name)
+                base = obitos().assign(DTOBITO=["05012025", "20022025", "01032025", "15032025", "10032025", "30042025", "02042025"])
+                outro = pd.DataFrame([("2", "C509", "330455", "455", "1", "1", "07012025")],   # moradora do RJ: fica de fora
+                                     columns=["SEXO", "CAUSABAS", "CODMUNRES", "IDADE", "LOCOCOR", "RACACOR", "DTOBITO"])
+                pd.concat([base, outro], ignore_index=True).to_parquet(caminho)
+                return caminho
+        f3, r3 = asyncio.run(sim.baixar([2025], FalsoNacional, banco))
+        c2 = sqlite3.connect(banco)
+        soma25 = c2.execute("SELECT SUM(obitos) FROM obitos_sim WHERE ano = 2025").fetchone()[0]
+        rj = c2.execute("SELECT COUNT(*) FROM obitos_sim WHERE ano = 2025 AND codigo_residencia LIKE '33%'").fetchone()[0]
+        fonte25 = c2.execute("SELECT arquivo, meses FROM obitos_sim_fonte WHERE ano = 2025").fetchone()
+        fonte22 = c2.execute("SELECT arquivo FROM obitos_sim_fonte WHERE ano = 2022").fetchone()
+        checar("SIM 2025 sem DOSP: lê o Mortalidade_Geral e grava só as moradoras de SP (4; a do RJ fica fora)",
+               f3 == [] and soma25 == 4 and rj == 0)
+        checar("SIM: registra de qual arquivo veio cada ano e quantos meses têm óbito (2025: Mortalidade_Geral, 4 meses; 2022: DOSP)",
+               fonte25 == ("Mortalidade_Geral", 4) and fonte22 == ("DOSP",))
+        checar("SIM: preparar com residentes_uf='35' tira quem mora fora de SP e sem o filtro não tira",
+               len(sim.preparar(obitos().assign(CODMUNRES=["330455"] + ["354390"] * 6), residentes_uf="35")) == 3
+               and len(sim.preparar(obitos().assign(CODMUNRES=["330455"] + ["354390"] * 6))) == 4)
+        c2.close()
         conn.close()
     print()
     if falhas:

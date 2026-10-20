@@ -97,6 +97,9 @@ def main(banco=BANCO):
             print("  óbitos de mulheres pelos 7 cânceres, por ano: " + " ".join(f"{a}:{n:,}".replace(",", ".") for a, n in anos))
             falta = [a for a in range(2013, 2025) if a not in {x for x, _ in anos}]   # 2025 em diante o SIM só existe como Mortalidade_Geral (outro formato)
             print("  anos que NÃO entraram: " + (", ".join(map(str, falta)) if falta else "nenhum"))
+            if tem(conn, "obitos_sim_fonte"):   # de qual arquivo veio cada ano e quantos meses têm óbito
+                fontes = linhas(conn, "SELECT ano, arquivo, meses FROM obitos_sim_fonte ORDER BY ano")
+                print("  fonte por ano: " + ", ".join(f"{a}:{arq}{'' if m is None or m >= 12 else f' ({m} meses)'}" for a, arq, m in fontes))
             print("  por câncer: " + ", ".join(f"{c}={n:,}".replace(",", ".") for c, n in
                                                linhas(conn, "SELECT tipo_cancer, SUM(obitos) FROM obitos_sim GROUP BY 1 ORDER BY 2 DESC")))
             loc = dict(linhas(conn, "SELECT local_obito, SUM(obitos) FROM obitos_sim GROUP BY 1"))

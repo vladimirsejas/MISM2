@@ -2548,11 +2548,18 @@ def leitura_tratamento(resumo, cidade, cancer=None):
 
 def carregar_obitos_sim(conexao):
     """Óbitos por câncer (mulheres) do SIM já agregados. Vazio se o banco ainda não tem a tabela."""
+    colunas = ["ano", "codigo6", "tipo_cancer", "faixa", "local_obito", "raca_cor", "obitos"]
+    try:   # com a fonte de cada ano (DOSP ou Mortalidade_Geral) e os meses com óbito, quando a carga os guardou
+        return pd.read_sql("SELECT s.ano, substr(s.codigo_residencia, 1, 6) AS codigo6, s.tipo_cancer, s.faixa, s.local_obito, "
+                           "s.raca_cor, s.obitos, f.arquivo AS fonte_arquivo, f.meses AS fonte_meses "
+                           "FROM obitos_sim AS s LEFT JOIN obitos_sim_fonte AS f ON f.ano = s.ano", conexao)
+    except Exception:
+        pass
     try:
         return pd.read_sql("SELECT ano, substr(codigo_residencia, 1, 6) AS codigo6, tipo_cancer, faixa, local_obito, raca_cor, obitos "
                            "FROM obitos_sim", conexao)
     except Exception:
-        return _sem_tabela(["ano", "codigo6", "tipo_cancer", "faixa", "local_obito", "raca_cor", "obitos"])
+        return _sem_tabela(colunas)
 
 
 def resumo_mortalidade(sim, codigo_ibge, tipo_cancer=None, serie=None):
@@ -2578,8 +2585,17 @@ def resumo_mortalidade(sim, codigo_ibge, tipo_cancer=None, serie=None):
             sih = int(s["obitos_reg"].sum())
         elif len(s) and "obitos" in s:
             sih = int(s["obitos"].sum())
+    # "Estado" = moradoras de SP (código 35...), em todos os anos: o DOSP tem também moradoras de outros estados e o Mortalidade_Geral
+    # (2025 em diante) é filtrado por residência; só assim os anos são comparáveis.
+    do_ano = sim[sim["ano"] == ultimo]
+    estado = do_ano[do_ano["codigo6"].astype("string").str.startswith("35")]["obitos"].sum()
+    fonte = meses = None
+    if "fonte_arquivo" in do_ano and do_ano["fonte_arquivo"].notna().any():
+        fonte = str(do_ano["fonte_arquivo"].dropna().iloc[0])
+    if "fonte_meses" in do_ano and do_ano["fonte_meses"].notna().any():
+        meses = int(do_ano["fonte_meses"].dropna().iloc[0])
     return {"por_ano": por_ano, "ultimo_ano": int(ultimo), "obitos_ultimo": int(por_ano[ultimo]), "onde": onde,
-            "estado_ultimo": int(sim[sim["ano"] == ultimo]["obitos"].sum()), "sih_ultimo": sih}
+            "estado_ultimo": int(estado), "sih_ultimo": sih, "fonte_ultimo": fonte, "meses_ultimo": meses}
 
 
 def leitura_mortalidade(resumo, cidade, cancer=None):
@@ -2596,6 +2612,14 @@ def leitura_mortalidade(resumo, cidade, cancer=None):
     if resumo["sih_ultimo"] is not None:
         texto += (f"\n\nNo mesmo ano, o **SIH** registrou {formatar_numero(resumo['sih_ultimo'])} óbitos durante internações (as internações que "
                   "o painel mostra).")
+    avisos = []
+    if resumo.get("fonte_ultimo") and resumo["fonte_ultimo"] != "DOSP":
+        avisos.append(f"{ano} vem de outro arquivo do SIM ({resumo['fonte_ultimo']}, do Brasil inteiro, só com moradoras de SP); o Escudo "
+                      "o trata como preliminar e ele pode ser revisado")
+    if resumo.get("meses_ultimo") and resumo["meses_ultimo"] < 12:
+        avisos.append(f"{ano} tem óbitos de só {resumo['meses_ultimo']} meses: não compare com um ano de 12 meses")
+    if avisos:
+        texto += "\n\n**Atenção:** " + "; ".join(avisos) + "."
     anos = sorted(resumo["por_ano"])
     if len(anos) >= 3:
         texto += f"\n\nA série do SIM nesta cidade vai de {anos[0]} a {anos[-1]}."
