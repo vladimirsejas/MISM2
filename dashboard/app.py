@@ -18,7 +18,7 @@ import hospitais_oncologia as hosp_onco
 from passeio import PARADAS, parada as passeio_parada
 from lia_rosto import img as rosto_lia
 from estilo import CSS
-from identidade import regua_cobertura as regua_mism, simbolo as simbolo_mism
+from identidade import regua_cobertura as regua_mism
 from inteligencia import (
     ranking_municipios,
     ranking_atendimento,
@@ -409,7 +409,7 @@ serie = serie_municipio(ORIGEM)
 resumo = resumo_doencas(serie) if not serie.empty else pd.DataFrame()
 
 with col_titulo:
-    st.markdown(f'<div class="mism-marca">{simbolo_mism(40)}<div class="escudo-marca">MISM2'
+    st.markdown(f'<div class="mism-marca"><div class="escudo-marca">MISM2'
                 f'<span> · observatório da saúde da mulher</span></div></div>', unsafe_allow_html=True)
     st.markdown(f'<div class="escudo-titulo">Câncer em mulheres de <em>{html.escape(nome_cidade)}</em></div>',
                 unsafe_allow_html=True)
