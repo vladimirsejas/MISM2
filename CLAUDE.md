@@ -591,7 +591,7 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   **Como atualizar (feito em 20/10/2026, falta rodar no notebook):** `py -3.12 etl\baixar_sih_sp.py --anos 2026` (modo incremental `main_incremental`/`atualizar_anos`:
   baixa só esses meses e troca, dentro do CSV atual de cada câncer, só as linhas de ANO_CMPT=2026; o resto fica intacto, CSV antigo vai para `_backup_*`, erro de
   download de verdade não troca nada, sem CSV atual não inventa; rodar de novo não duplica); `py -3.12 etl\baixar_sia_oncologia.py --anos 2026-2026` (já troca só o ano);
-  depois `py etl\carga_todas_bases.py` (feche o painel). Teste: `etl/teste_baixar_sih_sp.py`. SIM (`DOSP`) e CNES não têm 2026. Os textos "2013–2025" do painel agora vêm do
+  depois `py etl\carga_todas_bases.py` (feche o painel). Teste: `etl/teste_baixar_sih_sp.py`. SIM (`DOSP`) e CNES: NÃO sabemos se têm 2024/2026 (a carga de 17/10 foi SIM até 2023 e CNES até 2025); `py -3.12 etl\\listar_meses_pysus.py --ano 2024` (e 2025, 2026) agora também pergunta CNES/EQ, CNES/LT e o SIM (um arquivo por ano), sem baixar nada. Os textos "2013–2025" do painel agora vêm do
   banco (`ano_ini`–`ano_fim`). 2026 entra como ano INCOMPLETO pelas regras que já existiam (`meses_por_ano`, `anos_incompletos`, `ajustar_meses`; teste em `teste_inteligencia.py`).
   **Consulta nova "Quantas internações o SIH registrou em <ano>, mês a mês?"** (fim da aba Evolução; pedido da Secretaria da Mulher): `inteligencia.internacoes_do_periodo`/`leitura_internacoes_periodo`
   (ano, **mulheres que moram na cidade x internações nos hospitais da cidade**, um câncer ou os 7 somados; mês que a fonte não tem = "sem dado", NUNCA zero; mês da fonte sem registro = zero de
