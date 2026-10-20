@@ -669,7 +669,7 @@ def _responder_pergunta(pergunta, classificar=None, contexto=None, cancer_em_foc
             return resposta
     r = apoio.saudacao()
     r.fala = ("Não encontrei isso no guia. Ele cobre prevenção, exames, diagnóstico, regulação, tratamento, direitos e proteção "
-              "contra violência, e os principais tipos de câncer. Escolha uma porta, ou escreva de outro jeito. Se for sobre a "
+              "contra violência, e os principais tipos de câncer. Escolha um assunto, ou escreva de outro jeito. Se for sobre a "
               "sua saúde agora, procure a unidade de saúde; em emergência, ligue 192.")
     return _de(r, tipo="nada", selo="Nada foi inventado: o guia só mostra o que está no catálogo.", **comum)
 

@@ -64,6 +64,7 @@ checar("A. emergência (190, 180, 192) à vista na primeira tela, fora de qualqu
        "apoio-emergencia" in _txt_abertura and all(n in _txt_abertura for n in ("190", "180", "192")))
 checar("A. antes de escolher a situação não abre cartões de nenhum câncer (nada de mama por padrão)",
        'class="escudo-cartao' not in _txt_abertura and botao(at, "ir_carretas_mama") is None)
+checar("A. a primeira tela não usa a palavra interna 'porta'", " porta" not in _txt_abertura.split("</style>")[-1].lower())
 checar("A. faixa 'Você está em' mostra onde a mulher está", "Você está em" in _txt_abertura)
 checar("A. contadores internos não ocupam a entrada de quem procura atendimento",
        not any(m.label in ("Caminhos de orientação", "Informações cadastradas", "Pedem confirmação")

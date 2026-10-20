@@ -184,6 +184,27 @@ checar("carretas: o grupo estadual não mistura a ação histórica do Hospital 
 checar("Rio Claro: não mostra o registro antigo da carreta do Hospital de Amor",
        all(i["id"] != "rc_carreta_hospital_de_amor" for i in apoio.itens(lamina="rio_claro")))
 
+# ---------- auditoria de usabilidade (20/10/2026) ----------
+for id_ in ("santa_casa_piracicaba", "fornecedores_cana", "santa_casa_limeira"):
+    checar(f"{id_}: o botão avisa que o link é o boletim da região (PDF), não a página do hospital",
+           "boletim" in apoio.rotulo_do_link(apoio.POR_ID[id_]).lower() and "PDF" in apoio.responder_item(id_).fala)
+checar("os outros cartões continuam com 'Abrir a página oficial'",
+       all(apoio.rotulo_do_link(i) == "Abrir a página oficial" for i in apoio.ITENS if i["id"] not in apoio.ROTULO_LINK))
+termos = [t for t, _ in apoio.GLOSSARIO]
+checar("glossário explica as palavras que a usuária não conhece (UBS, regulação, UNACON, RRAS, TFD...)",
+       all(any(k in t for t in termos) for k in ("UBS", "Regulação", "UNACON", "RRAS", "TFD", "Rede oncológica")))
+checar("glossário: nenhuma explicação vazia e a região de Rio Claro bate com o catálogo",
+       all(len(e) > 20 for _, e in apoio.GLOSSARIO) and any(apoio.REGIAO in e for _, e in apoio.GLOSSARIO))
+visivel = " ".join(r.fala + " ".join(b[0] for b in r.botoes) for r in (
+    [apoio.saudacao()] + [apoio.responder_caminho(c) for c in apoio.NOME_CAMINHO]
+    + [apoio.responder_etapa(e) for e in apoio.NOME_ETAPA]))
+botoes_lia = " ".join(b[0].lower() for r in [apoio.saudacao()] + [apoio.responder_etapa(e) for e in apoio.NOME_ETAPA] for b in r.botoes)
+checar("Lia: sem a metáfora interna ('Porta X', 'esta porta', 'uma porta'); 'porta de entrada' é expressão comum e fica",
+       "porta " not in botoes_lia and not any(t in visivel.lower() for t in ("esta porta", "uma porta", "as portas", "nas portas")))
+curto = apoio.onde_mora(apoio.POR_ID["colo_utero"]), apoio.onde_mora(apoio.POR_ID["icesp"])
+checar("onde_mora diz 'no assunto' ou 'na área', já com a preposição", curto[0].startswith("no assunto")
+       and curto[1].startswith("na área"))
+
 print()
 print("Todas as checagens do apoio passaram." if not falhas else f"{len(falhas)} falha(s).")
 sys.exit(1 if falhas else 0)

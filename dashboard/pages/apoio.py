@@ -376,7 +376,7 @@ def cartao(i):
         + (f"<ul>{linhas}</ul>" if linhas else "")
         + (f'<div class="acao">Atenção: {e(i["cuidado"])}</div>' if i["cuidado"] else "")
         + (f'<div class="acao">A confirmar: {e(i["confirmar"])}</div>' if i["confirmar"] else "")
-        + f'<a class="apoio-botao" href="{e(i["link"])}" target="_blank" rel="noopener">Abrir a página oficial ↗</a>'
+        + f'<a class="apoio-botao" href="{e(i["link"])}" target="_blank" rel="noopener">{e(apoio.rotulo_do_link(i))} ↗</a>'
         + "".join(f'<br><a class="apoio-botao" href="{e(u)}" target="_blank" rel="noopener">{e(r)} ↗</a>'
                   for r, u in i["mais_links"])
         + f'<div class="apoio-fonte">Fonte: {e(i["fonte"])} · conferido em {i.get("conferido", apoio.CONFERIDO)}</div></div>',
@@ -391,10 +391,23 @@ def cartao_curto(i):
     st.markdown(
         f'<div class="escudo-cartao apoio-cartao curto"><h4>{e(i["titulo"])}<span class="apoio-selo">{e(i["onde"])}'
         f'</span></h4><div class="apoio-resumo">{e(i["resumo"][0].upper() + i["resumo"][1:])}.</div>'
-        f'<a class="apoio-botao" href="{e(i["link"])}" target="_blank" rel="noopener">Abrir a página oficial ↗</a>'
+        f'<a class="apoio-botao" href="{e(i["link"])}" target="_blank" rel="noopener">{e(apoio.rotulo_do_link(i))} ↗</a>'
         + "".join(f'<br><a class="apoio-botao" href="{e(u)}" target="_blank" rel="noopener">{e(r)} ↗</a>'
                   for r, u in i["mais_links"])
         + f'<div class="apoio-fonte">Detalhes completos na {apoio.onde_mora(i)}.</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def cartao_carretas(titulo, resumo):
+    """O quadro com os dois canais oficiais das carretas (uma casa só para o texto dos botões)."""
+    e = html.escape
+    st.markdown(
+        f'<div class="escudo-cartao apoio-cartao"><h4>{e(titulo)}</h4><div class="apoio-resumo">{e(resumo)}</div>'
+        f'<a class="apoio-botao" href="{e(apoio.URL_CARRETAS_SP_POR_TODAS)}" target="_blank" rel="noopener">'
+        'Consultar cidades e locais · SP Por Todas ↗</a><br>'
+        f'<a class="apoio-botao" href="{e(apoio.URL_CARRETAS_POUPATEMPO)}" target="_blank" rel="noopener">'
+        'Consultar itinerário, horários e documentos · Poupatempo ↗</a></div>',
         unsafe_allow_html=True,
     )
 
@@ -404,15 +417,8 @@ def onde_esta_a_carreta():
     e = html.escape
     pergunta("Consulte o itinerário atualizado das carretas")
     dica("As cidades, datas e endereços mudam. Confira a programação oficial antes de sair de casa.")
-    st.markdown(
-        '<div class="escudo-cartao apoio-cartao"><h4>Carretas da Mamografia · Mulheres de Peito</h4>'
-        '<div class="apoio-resumo">Veja no canal oficial quais cidades estão no roteiro e onde a carreta vai atender.</div>'
-        f'<a class="apoio-botao" href="{e(apoio.URL_CARRETAS_SP_POR_TODAS)}" target="_blank" rel="noopener">'
-        'Consultar cidades e locais · SP Por Todas ↗</a><br>'
-        f'<a class="apoio-botao" href="{e(apoio.URL_CARRETAS_POUPATEMPO)}" target="_blank" rel="noopener">'
-        'Consultar itinerário, horários e documentos · Poupatempo ↗</a></div>',
-        unsafe_allow_html=True,
-    )
+    cartao_carretas("Carretas da Mamografia · Mulheres de Peito",
+                    "Veja no canal oficial quais cidades estão no roteiro e onde a carreta vai atender.")
     info = apoio.POR_ID["carretas_estado"]
     st.markdown(
         '<div class="escudo-info"><b>Para quem:</b> '
@@ -444,8 +450,8 @@ def lamina_por_grupos(lam, rotulo_seletor):
 def apontados(c):
     """O que serve a esta porta mas mora em outra porta ou lâmina."""
     for lam, fora in apoio.nas_laminas(c).items():
-        nome = "outras portas" if lam == "caminho" else f"área {apoio.LAMINAS[lam]}"
-        st.markdown(f'<div class="apoio-grupo">Também para esta porta: {nome}</div>', unsafe_allow_html=True)
+        nome = "outros assuntos" if lam == "caminho" else f"área {apoio.LAMINAS[lam]}"
+        st.markdown(f'<div class="apoio-grupo">Também serve a este assunto: {nome}</div>', unsafe_allow_html=True)
         if lam != "caminho" and len(fora) > apoio.MAX_APONTADOS:
             st.button(f"Ver os {len(fora)} itens na área {apoio.LAMINAS[lam]} →", key=f"ir_{c}_{lam}",
                       type="primary", on_click=aplicar_destino, args=({"aba": apoio.LAMINAS[lam]},))
@@ -517,7 +523,7 @@ def porta_ajuda():
     if portas or e == "nao_fiz":
         colunas = st.columns(max(len(portas) + (e == "nao_fiz"), 1))
         for col, porta_id in zip(colunas, portas):
-            col.button(f"Porta {ROTULO[porta_id]} →", key=f"etapa_{e}_{porta_id}", type="primary",
+            col.button(f"Ver: {ROTULO[porta_id]} →", key=f"etapa_{e}_{porta_id}", type="primary",
                        on_click=aplicar_destino, args=({"aba": apoio.LAMINAS["caminho"], "caminho": porta_id},),
                        width="stretch")
         if e == "nao_fiz":
@@ -649,10 +655,10 @@ st.markdown(f'<div class="escudo-voce-esta">📍 Você está em: <b>{html.escape
 
 if aba == apoio.LAMINAS["caminho"] and not _boas_vindas_abertas:
     pergunta("O que você precisa?")
-    dica("Escolha uma necessidade abaixo. As portas tratam de prevenção, diagnóstico, encaminhamento, tratamento e direitos. "
+    dica("Escolha uma necessidade abaixo. Os assuntos tratam de prevenção, diagnóstico, encaminhamento, tratamento e direitos. "
          "Hospitais, Carretas e os serviços de Rio Claro ficam em áreas próprias. Se estiver em dúvida, escolha <b>Preciso de ajuda</b>.")
     codigos = [c for c, _, _, _ in apoio.CAMINHOS]
-    onde_clicar("Clique numa porta. Depois, em cada cartão, clique no botão azul <b>Abrir a página oficial</b>.")
+    onde_clicar("Clique num assunto. Depois, em cada cartão, clique no botão azul <b>Abrir a página oficial</b>.")
     with pilulas("caminho"):
         c = seletor(st, "Caminho", "ap_caminho", codigos, format_func=ROTULO.get, horizontal=True,
                     label_visibility="collapsed")
@@ -662,6 +668,9 @@ if aba == apoio.LAMINAS["caminho"] and not _boas_vindas_abertas:
         porta_ajuda()
     else:
         porta(c, rotulo, dentro, abertura)
+    with st.expander("O que significam estas palavras? (UBS, regulação, UNACON...)"):
+        for termo, explicacao in apoio.GLOSSARIO:
+            st.markdown(f"**{termo}:** {explicacao}")
     leitura("Como usar", [
         "Cada cartão traz a página oficial e a data em que foi conferido. Borda laranja = ainda falta confirmar "
         "algum detalhe na própria página.",
@@ -690,7 +699,7 @@ if aba == apoio.LAMINAS["hospitais"]:
         "Com suspeita ou diagnóstico de câncer, procure a unidade de saúde do bairro: o médico do SUS pede a vaga "
         "pela CROSS, que encaminha a um centro perto de onde você mora.",
         "Se o tratamento não existir no município onde você mora, o SUS pode pagar transporte e diárias (TFD, "
-        "na porta Direitos e acesso).",
+        "no assunto Direitos e acesso).",
         "A lista completa e oficial é a da FOSP (primeira região desta área).",
     ])
 
@@ -711,16 +720,9 @@ if aba == apoio.LAMINAS["rio_claro"]:
     pergunta(f"O que {apoio.CIDADE} oferece às mulheres?")
     dica(f"{apoio.CIDADE} faz parte da {apoio.REGIAO}. As referências de câncer da região são Rio Claro e "
          "Piracicaba, e o HC da Unicamp também atende a região (área Hospitais no Estado).")
-    st.markdown(
-        '<div class="escudo-cartao apoio-cartao"><h4>Carretas da Mamografia: veja a programação atual</h4>'
-        '<div class="apoio-resumo">As cidades e datas das Carretas da Mamografia do Estado (Mulheres de Peito) mudam. '
-        'Consulte o roteiro atual nos canais oficiais antes de sair:</div>'
-        f'<a class="apoio-botao" href="{html.escape(apoio.URL_CARRETAS_SP_POR_TODAS)}" target="_blank" rel="noopener">'
-        'Consultar cidades e locais · SP Por Todas ↗</a><br>'
-        f'<a class="apoio-botao" href="{html.escape(apoio.URL_CARRETAS_POUPATEMPO)}" target="_blank" rel="noopener">'
-        'Consultar itinerário, horários e documentos · Poupatempo ↗</a></div>',
-        unsafe_allow_html=True,
-    )
+    cartao_carretas("Carretas da Mamografia: veja a programação atual",
+                    "As cidades e datas das Carretas da Mamografia do Estado (Mulheres de Peito) mudam. "
+                    "Consulte o roteiro atual nos canais oficiais antes de sair:")
     onde_clicar("Em cada cartão, clique no botão azul <b>Abrir a página oficial</b>.")
     lista = apoio.itens(lamina="rio_claro")
     for c in [c for c, _, _, _ in apoio.CAMINHOS]:
@@ -734,7 +736,7 @@ if aba == apoio.LAMINAS["rio_claro"]:
               on_click=aplicar_destino, args=({"aba": apoio.LAMINAS["hospitais"],
                                               "grupo": "Rio Claro e Piracicaba (RRAS 14)"},))
     leitura("Como usar", [
-        "Para quase tudo, a porta é a Unidade de Saúde da Família ou a UBS do bairro.",
+        "Para quase tudo, o começo é a Unidade de Saúde da Família ou a UBS do bairro.",
         "Vários dados de Rio Claro vêm de páginas antigas da Prefeitura e da Fundação Municipal de Saúde: estão "
         "marcados para confirmar.",
     ])
@@ -754,7 +756,7 @@ if aba == apoio.LAMINAS["barretos"]:
                 'referência da própria região (RRAS 14: Rio Claro e Piracicaba). Converse com a equipe que '
                 'acompanha você.</div>', unsafe_allow_html=True)
     leitura("A ligação com Rio Claro", [
-        "Prevenção e tratamento têm portas diferentes: a prevenção chega pelas ações com a prefeitura; o "
+        "Prevenção e tratamento têm caminhos diferentes: a prevenção chega pelas ações com a prefeitura; o "
         "tratamento, com o câncer confirmado, segue os fluxos do SUS.",
     ])
 
@@ -781,7 +783,7 @@ if aba == apoio.LAMINAS["sobre"]:
   "a confirmar".
 - **O que isto não é:** não é orientação médica, não garante vaga e não substitui a unidade de saúde.
   A Lia não é médica.
-- **Cidades:** não há uma área por cidade. Campinas, Ribeirão Preto, Rio Preto e Piracicaba entram nas portas
+- **Cidades:** não há uma área por cidade. Campinas, Ribeirão Preto, Rio Preto e Piracicaba entram nos assuntos
   quando têm algo útil; Rio Claro (a cidade do trabalho) e Barretos (Hospital de Amor) têm área própria.
 - **Para gestores:** o Plano Estadual de Oncologia 2025–2028 organiza a rede por região (RRAS); Rio Claro está na
   {apoio.REGIAO}.

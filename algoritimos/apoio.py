@@ -1447,10 +1447,37 @@ def nas_laminas(c):
 
 
 def onde_mora(i):
-    """Onde está o texto completo do item (para o cartão curto)."""
+    """Onde está o texto completo do item (para o cartão curto), já com a preposição."""
     if i["lamina"] == "caminho":
-        return f"porta {NOME_CAMINHO[i['caminho']]}"
-    return f"área {LAMINAS[i['lamina']]}"
+        return f"no assunto {NOME_CAMINHO[i['caminho']]}"
+    return f"na área {LAMINAS[i['lamina']]}"
+
+
+# O botão de cada cartão diz "Abrir a página oficial". Três hospitais de Piracicaba/Limeira só têm o boletim da região
+# (um PDF único): o botão avisa, para ela não achar que é a página do hospital.
+ROTULO_LINK_PADRAO = "Abrir a página oficial"
+ROTULO_LINK = {id_: "Abrir o boletim da região (PDF)"
+               for id_ in ("santa_casa_piracicaba", "fornecedores_cana", "santa_casa_limeira")}
+
+
+def rotulo_do_link(i):
+    return ROTULO_LINK.get(i["id"], ROTULO_LINK_PADRAO)
+
+
+# Palavras do sistema de saúde que aparecem nos cartões, em linguagem do dia a dia (uma casa só; a página mostra num quadro).
+# Nada aqui é regra nova: repete o que os cartões já dizem.
+GLOSSARIO = [
+    ("UBS e USF", "a unidade de saúde do seu bairro. É por ela que o cuidado começa e é ela que pede exames e vagas."),
+    ("Regulação (CROSS)", "a central do SUS que organiza as vagas em consultas e hospitais especializados. Quem pede a vaga "
+                          "é a equipe da unidade de saúde; você pode acompanhar o pedido."),
+    ("Rede oncológica", "o conjunto de serviços que cuidam do câncer, da unidade de saúde ao tratamento e ao acompanhamento."),
+    ("UNACON e CACON", "hospitais que o Ministério da Saúde habilitou para tratar câncer pelo SUS. Não são porta de entrada: "
+                       "chega-se a eles pela regulação."),
+    ("RRAS e DRS", "as regiões de saúde do Estado. Rio Claro faz parte da " + REGIAO + "."),
+    ("Mastologia", "a especialidade médica que cuida das mamas."),
+    ("Biópsia", "a retirada de uma pequena amostra para análise. É ela que confirma ou afasta o diagnóstico."),
+    ("TFD", "Tratamento Fora do Domicílio: apoio do SUS para viajar quando o tratamento não existe na sua cidade."),
+]
 
 
 def itens_da_etapa(e):
@@ -1462,7 +1489,7 @@ def itens_da_etapa(e):
 
 def saudacao():
     return Resposta(
-        fala=f"Você está em **{CIDADE}**. O que você precisa? Escolha uma porta e eu mostro o caminho na rede de "
+        fala=f"Você está em **{CIDADE}**. O que você precisa? Escolha uma opção e eu mostro o caminho na rede de "
              "saúde, com as páginas oficiais.",
         expressao="acolhedora",
         botoes=[(r, caminho(c)) for c, r, _, _ in CAMINHOS]
@@ -1489,7 +1516,7 @@ def responder_etapa(e):
     return Resposta(
         fala=texto,
         expressao="acolhedora" if e in ("violencia", "diagnostico_cancer") else "explicando",
-        botoes=[(f"Porta {NOME_CAMINHO[c]}", caminho(c)) for c in portas]
+        botoes=[(f"Ver: {NOME_CAMINHO[c]}", caminho(c)) for c in portas]
         + ([("Consultar itinerário das Carretas", lamina("carretas"))] if e == "nao_fiz" else [])
         + [(i["titulo"], item(i["id"])) for i in lista]
         + [("Outro ponto do caminho", caminho("ajuda"))],
@@ -1517,7 +1544,7 @@ def responder_caminho(c):
             partes += [f"{i['titulo']} ({onde_mora(i)})" for i in fora]
             botoes += [(i["titulo"], item(i["id"])) for i in fora]
     if partes:
-        fala += "\n\nTambém para esta porta: " + "; ".join(partes) + "."
+        fala += "\n\nTambém serve a este assunto: " + "; ".join(partes) + "."
     if c == "mama":
         fala += "\n\n" + frase_carretas()
         botoes.append(("Consultar itinerário das Carretas", lamina("carretas")))
@@ -1565,7 +1592,7 @@ def responder_item(id):
         partes.append(f"**Atenção:** {i['cuidado']}")
     if i["confirmar"]:
         partes.append(f"**A confirmar:** {i['confirmar']}")
-    partes.append(f"[Abrir a página oficial]({i['link']})")
+    partes.append(f"[{rotulo_do_link(i)}]({i['link']})")
     if i["mais_links"]:
         partes.append("**Outras páginas que ajudam:** " + " · ".join(f"[{r}]({u})" for r, u in i["mais_links"]))
     partes.append(AVISO)
