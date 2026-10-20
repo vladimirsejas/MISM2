@@ -387,6 +387,21 @@ def main():
     checar("7g. a Lia responde a mortalidade real explicando que SIM e SIH não se subtraem",
            r.intencao == "mortalidade_real" and "SIM" in r.fala and "SIH" in r.fala and "não se subtraem" in r.fala
            and not asst.PROMETE.search(r.fala) and not asst.CAUSA_ATRIBUIDA.search(r.fala))
+    for q in ("quantas mulheres morreram de câncer em Rio Claro?", "quantas morreram de câncer de mama em rio claro",
+              "quantas mortes por câncer teve em Rio Claro", "qual o número de óbitos por câncer na cidade?"):
+        r = asst.responder_pergunta(ctx_novo, q, foco, ia=asst.IA())
+        checar(f"7g. '{q}' com o SIM no banco: responde o TOTAL de mortes (SIM), com o que o SIH viu na internação ao lado",
+               r.intencao == "mortalidade_real" and "SIM" in r.fala and "SIH" in r.fala and "não contém" not in r.fala
+               and not asst.PROMETE.search(r.fala) and not asst.CAUSA_ATRIBUIDA.search(r.fala) and not r.usou_ia)
+    r = asst.responder_pergunta(ctx_novo, "quantas mulheres morreram de câncer em Rio Claro?", foco, ia=asst.IA())
+    checar("7g. o total de mortes de Rio Claro no exemplo é 40 (30 no hospital + 10 em casa pelo SIM)", "**40**" in r.fala)
+    for q in ("qual câncer tem mais óbitos?", "qual a letalidade hospitalar do câncer de mama?"):
+        r = asst.responder_pergunta(ctx_novo, q, foco, ia=asst.IA())
+        checar(f"7g. '{q}' continua no caminho dos óbitos de internação (SIH)", r.intencao == "obitos")
+    r = asst.responder_pergunta(ctx_novo, "quantos óbitos tiveram durante a internação?", foco, ia=asst.IA())
+    checar("7g. 'durante a internação' nunca vira o total do SIM (mesmo que a busca só ofereça palpites)", r.intencao != "mortalidade_real")
+    r = asst.responder_pergunta(ctx, "quantas mulheres morreram de câncer em Rio Claro?", foco, ia=asst.IA())
+    checar("7g. sem o SIM no banco a pergunta continua no caminho dos óbitos de internação (nada de inventar o total)", r.intencao == "obitos")
     r = asst.responder_pergunta(ctx, "quantas mulheres fazem quimioterapia na cidade?", foco, ia=asst.IA())
     checar("7g. sem as tabelas no banco a Lia diz o que falta e como trazer, sem inventar número",
            r.intencao == "tratamento" and "carregar_tudo_pysus" in r.fala)

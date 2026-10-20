@@ -228,6 +228,24 @@ SEM_POPULACAO = (
     "diz nada sobre o risco de cada mulher.\n\n"
     "O que consigo mostrar hoje, sem depender do tamanho da cidade: a **parcela de cada câncer**, a **letalidade hospitalar**, o "
     "**tempo médio de internação** e o **ritmo de crescimento**, comparando a sua cidade com outra.")
+# "Quantas mulheres morreram de câncer em Rio Claro?" pede o TOTAL de mortes (SIM, dentro e fora do hospital), não só as que acontecem durante uma
+# internação (SIH). Quando o banco tem o SIM, pergunta de contagem de mortes vai para ele; pergunta sobre hospital, ranking ou "qual câncer mata mais"
+# continua no caminho de antes (20/10/2026, teste do autor: a Lia respondeu "a base não contém o total de mortes", e contém).
+CONTA_MORTES = re.compile(r"\b(quantas?|quantos?|numero de|total de|quantidade de)\b")
+SO_HOSPITAL_OBITO = re.compile(r"\b(internad\w*|internac\w*|hospitalar|hospital|hospitais|durante|alta|letalidade|uti|mais|menos|maior|maiores|"
+                               r"menor|menores|ranking|qual cancer|quais canceres|proporc\w+)\b")
+
+
+def _tem_sim(ctx):
+    sim = getattr(ctx, "obitos_sim", None)
+    return sim is not None and not sim.empty
+
+
+def _pede_total_de_mortes(ctx, pergunta):
+    norm = ent.normalizar(pergunta)
+    return _tem_sim(ctx) and bool(CONTA_MORTES.search(norm)) and not SO_HOSPITAL_OBITO.search(norm)
+
+
 PEDE_PROPORCAO = re.compile(r"proporcion|por habitante|per capita|ranking|em relacao a populacao|numero de habitantes|cidades que mais")
 
 LINK_APOIO = ("🩷 Abrir Apoio à mulher", "pages/apoio.py")
@@ -672,6 +690,8 @@ def montar(ctx, e, pergunta, foco, perfil="TECNICO", ia=None):
     intencao = e.intencao
     if intencao == "mais_aparece" and pedido and e.ano is not None and e.ano <= int(ctx.serie["ano"].max()):
         intencao = "evolucao"  # "quantas internações de mama em 2020?" é sobre aquele câncer e aquele ano
+    if intencao == "obitos" and _pede_total_de_mortes(ctx, pergunta):
+        intencao = "mortalidade_real"   # o total de mortes é o SIM; o texto já traz, ao lado, o que o SIH registrou na internação
     base, usado, nota = _resposta_base(ctx, intencao, pedido, foco, e.ano, ia)
     if intencao == "onde_atendida":
         hospital = _hospital_de_cancer(ctx, pergunta)
