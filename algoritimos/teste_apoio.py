@@ -80,9 +80,9 @@ checar("proteção à mulher (em Preciso de ajuda): pelo menos 8 canais", len(ap
 # corpo do útero), depois de o autor achar que o Apoio girava em torno do câncer de mama. As 8 de antes continuam, na ordem.
 # 20/10/2026 (autor): "Regulação" saiu dos assuntos (técnico demais; a paciente não opera a regulação: o conteúdo mora em "Fui
 # encaminhada") e "Tratamento" e "Rede oncológica" viraram um assunto só, "Tratamento pelo SUS".
-checar("os assuntos, na ordem: sem Regulação, e Tratamento unido à Rede oncológica", list(apoio.NOME_CAMINHO) == [
-    "mama", "colo", "outros", "diagnostico", "tratamento", "direitos", "ajuda"]
-       and "regulacao" not in apoio.NOME_CAMINHO and "rede" not in apoio.NOME_CAMINHO)
+checar("os assuntos, na ordem: sem Regulação, Tratamento unido à Rede oncológica e Diagnóstico unido a 'Meu exame deu alterado'",
+       list(apoio.NOME_CAMINHO) == ["mama", "colo", "outros", "tratamento", "direitos", "ajuda"]
+       and not {"regulacao", "rede", "diagnostico"} & set(apoio.NOME_CAMINHO))
 checar("nenhum cartão ficou num assunto que não existe mais", all(i["caminho"] is None or i["caminho"] in apoio.NOME_CAMINHO for i in apoio.ITENS))  # None = só mora numa área
 checar("Preciso de ajuda: 6 pontos do caminho, com violência", len(apoio.ETAPAS) == 6
        and "violencia" in apoio.NOME_ETAPA)

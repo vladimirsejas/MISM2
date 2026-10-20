@@ -95,6 +95,7 @@ VOCABULARIO_FILA = ("fila vaga encaminhamento encaminhada regulação cross list
                     "com especialista oncologia acompanhar a fila")
 VOCABULARIO_REDE = ("rede oncológica unacon cacon hospital habilitado hospital de referência onde tratar câncer pelo sus "
                     "lista de hospitais")
+ITENS_DO_EXAME_ALTERADO = {"lei_30_dias", "mater_ribeirao"}   # moravam no assunto Diagnóstico (unido a "Meu exame deu alterado")
 ITENS_DA_FILA = {"lista_regulacao", "nao_achei_nome", "como_chegar_cross"}
 ITENS_DO_TRATAMENTO = {"lei_60_dias", "rc_santa_casa", "ha_primeiro_atendimento", "rede_feminina", "rc_gacc", "rc_perucas",
                        "rc_rede_feminina"}
@@ -102,6 +103,8 @@ ITENS_DO_TRATAMENTO = {"lei_60_dias", "rc_santa_casa", "ha_primeiro_atendimento"
 
 def _vocabulario_do_item(i):
     """Vocabulário do assunto do item; em 'tratamento' (unido em 20/10/2026) cada conteúdo mantém o seu."""
+    if i["id"] in ITENS_DO_EXAME_ALTERADO:
+        return VOCABULARIO["diagnostico"]
     if i["caminho"] != "tratamento":
         return VOCABULARIO.get(i["caminho"])
     if i["id"] in ITENS_DA_FILA:
@@ -523,7 +526,7 @@ def _responder_cidade(pergunta, carregar=_localizacao_do_banco):
              "hospitais por região. Para saber a região (DRS) de " + nome + ", pergunte na unidade de saúde ou na Secretaria de Saúde.")
     ids = [i["id"] for i in da_cidade] + [i["id"] for _, i in proximos]
     r = Resposta(fala=fala + "\n\n" + apoio.AVISO, expressao="acolhedora",
-                 botoes=[("Tratamento pelo SUS", apoio.caminho("tratamento")), ("Exame alterado ou diagnóstico", apoio.caminho("diagnostico"))],
+                 botoes=[("Tratamento pelo SUS", apoio.caminho("tratamento")), ("Meu exame deu alterado", apoio.etapa("alterado"))],
                  destino={"aba": apoio.LAMINAS["caminho"], "caminho": "tratamento"})
     return r, ids
 
@@ -581,7 +584,7 @@ def _responder_pergunta(pergunta, classificar=None, contexto=None, cancer_em_foc
                            "exames, regulação e hospital habilitado em oncologia. O INCA tem uma página para cada tipo."),
                      expressao="cautelosa",
                      botoes=[("Páginas do INCA por tipo de câncer", apoio.item("inca_tipos_cancer")),
-                             ("Exame alterado ou diagnóstico", apoio.caminho("diagnostico")),
+                             ("Meu exame deu alterado", apoio.etapa("alterado")),
                              ("Tratamento pelo SUS", apoio.caminho("tratamento")), ("Seus direitos", apoio.caminho("direitos"))],
                      destino={"aba": apoio.LAMINAS["caminho"], "caminho": "outros"})
         return _com_inicio(_de(r, tipo="nada", selo="Nada foi inventado: o guia só mostra o que está no catálogo.", **comum))
@@ -622,9 +625,9 @@ def _responder_pergunta(pergunta, classificar=None, contexto=None, cancer_em_foc
                                                      "Em **Onde ser atendida**, as unidades da sua cidade.",
                                                      "Aqui no guia estão o caminho do exame e o que fazer depois."),
                      expressao="acolhedora",
-                     botoes=do_exame + [("Exame alterado ou diagnóstico", apoio.caminho("diagnostico")),
+                     botoes=do_exame + [("Meu exame deu alterado", apoio.etapa("alterado")),
                                         ("Unidades de Saúde em Rio Claro", apoio.item("rc_unidades"))],
-                     destino={"aba": apoio.LAMINAS["caminho"], "caminho": "diagnostico"})
+                     destino={"aba": apoio.LAMINAS["caminho"], "caminho": "ajuda", "etapa": "alterado"})
         if para_ler:   # informação geral sobre os sinais, nunca "você tem"
             r.fala += ("\n\nSe quiser entender o que costuma ser investigado, abaixo está a informação geral sobre os sinais "
                        "que merecem avaliação. Ela não diz o que você tem.")

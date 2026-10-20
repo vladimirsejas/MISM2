@@ -57,9 +57,9 @@ inicio = time.time()
 # ---------- A. boas-vindas ----------
 at = abrir()
 checar("A. abre sem erro", not erros(at))
-checar("A. boas-vindas separa prevenção, exame alterado, diagnóstico e outras situações",
-       all(botao(at, f"bv_ap_{c}") is not None
-           for c in ("prevencao", "alterado", "diagnostico", "ajuda")))
+checar("A. boas-vindas separa prevenção, exame alterado e diagnóstico; 'Preciso de ajuda' é o destaque logo acima (sem botão repetido)",
+       all(botao(at, f"bv_ap_{c}") is not None for c in ("prevencao", "alterado", "diagnostico"))
+       and botao(at, "bv_ap_ajuda") is None and botao(at, "apoio_ajuda_botao") is not None)
 _txt_abertura = " ".join(m.value for m in at.markdown)
 checar("A. emergência (190, 180, 192) à vista na primeira tela, fora de qualquer menu",
        "apoio-emergencia" in _txt_abertura and all(n in _txt_abertura for n in ("190", "180", "192")))
@@ -73,7 +73,7 @@ checar("A. contadores internos não ocupam a entrada de quem procura atendimento
 checar("A. mesma Lia na lateral (rosto + nome)",
        any("lia-nome" in m.value for m in at.sidebar.markdown) and any("lia-rosto" in m.value for m in at.sidebar.markdown))
 for entrada, caminho, etapa in (("prevencao", "ajuda", "nao_fiz"), ("alterado", "ajuda", "alterado"),
-                                ("diagnostico", "ajuda", "diagnostico_cancer"), ("ajuda", "ajuda", None)):
+                                ("diagnostico", "ajuda", "diagnostico_cancer")):
     at = abrir()
     botao(at, f"bv_ap_{entrada}").click().run()
     checar(f"A. entrada {entrada} do centro", not erros(at)
@@ -81,6 +81,10 @@ for entrada, caminho, etapa in (("prevencao", "ajuda", "nao_fiz"), ("alterado", 
            and at.session_state["ap_etapa"] == etapa
            and at.session_state["ap_aba"] == apoio.LAMINAS["caminho"]
            and botao(at, f"bv_ap_{entrada}") is None)
+at = abrir()
+botao(at, "apoio_ajuda_botao").click().run()
+checar("A. entrada 'Preciso de ajuda' (destaque)", not erros(at) and at.session_state["ap_caminho"] == "ajuda"
+       and at.session_state["ap_aba"] == apoio.LAMINAS["caminho"])
 checar("A. 'Não sei' deixa as seis etapas sem nenhuma presumida", at.session_state["ap_etapa"] is None)
 
 at = abrir()
@@ -112,17 +116,17 @@ checar("A. bloco de retomada contém os cartões do catálogo e seus links ofici
 at = abrir()
 botao(at, "bv_ap_diagnostico").click().run()
 fala_diagnostico = at.session_state["ap_lia"]["atual"].fala
-botao(at, "nav_apoio_carretas").click().run()
+botao(at, "nav_apoio_hospitais").click().run()
 aviso_contexto = any("Esta resposta é sobre" in str(i.value)
-                     and "Você está em Carretas" in str(i.value) for i in at.info)
-checar("A2. trocar para Carretas preserva a fala de diagnóstico e informa a diferença de contexto",
+                     and "Você está em Hospitais no Estado" in str(i.value) for i in at.info)
+checar("A2. trocar para Hospitais no Estado preserva a fala de diagnóstico e informa a diferença de contexto",
        not erros(at) and at.session_state["ap_lia"]["atual"].fala == fala_diagnostico and aviso_contexto)
 checar("A2. a nova fala só é solicitada por um botão explícito",
        botao(at, "lia_falar_sobre_aba") is not None
-       and botao(at, "lia_falar_sobre_aba").label == "Falar sobre Carretas")
+       and botao(at, "lia_falar_sobre_aba").label == "Falar sobre Hospitais no Estado")
 botao(at, "lia_falar_sobre_aba").click().run()
-checar("A2. após pedir, Lia responde sobre Carretas e o aviso desaparece",
-       not erros(at) and at.session_state["ap_lia"]["atual"].destino.get("aba") == apoio.LAMINAS["carretas"]
+checar("A2. após pedir, Lia responde sobre Hospitais no Estado e o aviso desaparece",
+       not erros(at) and at.session_state["ap_lia"]["atual"].destino.get("aba") == apoio.LAMINAS["hospitais"]
        and not any("Esta resposta é sobre" in str(i.value) for i in at.info)
        and botao(at, "lia_falar_sobre_aba") is None)
 
@@ -160,12 +164,13 @@ botao(at, "bv_fechar_apoio").click().run()
 next(b for b in botoes_lia(at) if b.label == "Câncer de mama").click().run()
 fala_mama = at.session_state["ap_lia"]["atual"].fala
 next(b for b in botoes_lia(at) if b.label.startswith("Próximo passo")).click().run()
-checar("C. próximo passo de Câncer de mama leva a Diagnóstico", at.session_state["ap_caminho"] == "diagnostico")
+checar("C. próximo passo de Câncer de mama leva a 'Meu exame deu alterado' (o antigo Diagnóstico foi unido a essa situação)",
+       at.session_state["ap_caminho"] == "ajuda" and at.session_state["ap_etapa"] == "alterado")
 botao(at, "lia_discreto_voltar_ap").click().run()
 checar("C. voltar devolve a fala anterior", at.session_state["ap_lia"]["atual"].fala == fala_mama
        and at.session_state["ap_caminho"] == "mama")
 at2 = abrir()
-botao(at2, "bv_ap_ajuda").click().run()
+botao(at2, "apoio_ajuda_botao").click().run()
 checar("C. sem saber o ponto: a tela não assume que a mulher ainda não fez exame",
        not erros(at2) and at2.session_state["ap_etapa"] is None
        and "Escolha uma situação acima" in " ".join(str(x.value) for x in at2.info))
@@ -184,7 +189,7 @@ checar("C. começar de novo volta à saudação", apoio.CIDADE in at.session_sta
 for entrada, quem in (("prevencao", "quero fazer exame / me prevenir"), ("alterado", "meu exame deu alterado"),
                       ("diagnostico", "recebi diagnóstico"), ("ajuda", "não sei por onde começar")):
     at = abrir()
-    botao(at, f"bv_ap_{entrada}").click().run()
+    botao(at, "apoio_ajuda_botao" if entrada == "ajuda" else f"bv_ap_{entrada}").click().run()
     visivel = " ".join(m.value for m in at.markdown) + " " + " ".join(str(m.value) for m in at.sidebar.markdown)
     tem_telefone = re.search(r"0800[\s\d]{7,}|\(\d{2}\)\s?\d{4,5}-\d{4}", visivel) is not None
     tem_link = "Abrir a página oficial" in visivel or "http" in visivel
@@ -229,7 +234,9 @@ import html as _html
 for lam in apoio.GRUPOS:
     if lam == "carretas":
         continue  # a lâmina Carretas não tem mais cartões por grupo: mostra o quadro com os links oficiais (conferido no bloco D acima)
-    at.session_state["ap_aba"] = apoio.LAMINAS[lam]
+    # Barretos mora dentro de Hospitais no Estado (modo "Barretos: Hospital de Amor"), sem botão próprio (20/10/2026)
+    at.session_state["ap_aba"] = apoio.LAMINAS["hospitais" if lam == "barretos" else lam]
+    at.session_state["ap_hosp_modo"] = "barretos" if lam == "barretos" else "regiao"
     for g in apoio.GRUPOS[lam]:
         at.session_state[f"ap_grupo_{lam}"] = g
         at.run()
@@ -253,11 +260,14 @@ tudo_rc = " ".join(m.value for m in at.markdown)
 checar("D. o convite longo do mapa NÃO se repete nas outras áreas (só o atalho do cabeçalho)", "Ver todos os hospitais habilitados no mapa" not in tudo_rc)
 checar("D. a barra de navegação (Onde ser atendida, Hospitais de câncer) está sempre à vista no Apoio, mesmo numa área aberta",
        "Onde ser atendida" in tudo_rc and "Hospitais de câncer" in tudo_rc)
-at.session_state["ap_aba"] = apoio.LAMINAS["carretas"]
+at.session_state["ap_hosp_modo"] = "regiao"
+at.session_state["ap_aba"] = apoio.LAMINAS["caminho"]      # as carretas moram em Câncer de mama (sem botão próprio, 20/10/2026)
+at.session_state["ap_boas_vindas_fechada"] = True
+at.session_state["ap_caminho"] = "mama"
 at.run()
 texto = " ".join(m.value for m in at.markdown)
-checar("D. lâmina Carretas direciona aos itinerários oficiais e preserva as orientações essenciais",
-       not erros(at) and "Consulte o itinerário atualizado das carretas" in texto
+checar("D. Câncer de mama traz as carretas (itinerários oficiais e orientações essenciais) sem botão só delas",
+       not erros(at) and "carretas da mamografia: consulte o itinerário atualizado" in texto.lower()
        and apoio.URL_CARRETAS_SP_POR_TODAS in texto
        and apoio.URL_CARRETAS_POUPATEMPO in texto
        and "O que levar" in texto and "senhas limitadas" in texto
@@ -298,7 +308,6 @@ sqlite_original = sqlite3.connect
 sqlite3.connect = lambda *a, **k: (abriu_banco.append(a), sqlite_original(*a, **k))[1]
 try:
     at = abrir()
-    at.button(key="bv_ap_ajuda").click().run() if botao(at, "bv_ap_ajuda") is not None else None
     checar("F. a caixa 'Pergunte à Lia' está na lateral do Apoio, junto da Lia, e avisa que as perguntas não são guardadas",
            not erros(at) and at.text_input(key="caixa_ap_texto") is not None and "Pergunte à Lia" in lateral(at)
            and "não guarda as perguntas" in lateral(at))
@@ -459,7 +468,7 @@ finally:
 assuntos_teste = [
     ("caminho", id, rotulo, f"Quero orientação sobre {rotulo.lower()}.")
     for id, rotulo, _, _ in apoio.CAMINHOS
-    if id in {"mama", "colo", "outros", "diagnostico", "tratamento", "direitos"}
+    if id in {"mama", "colo", "outros", "tratamento", "direitos"}
 ]
 assuntos_teste += [
     ("etapa", id, rotulo, f"Minha situação é: {rotulo.lower()}.")
@@ -468,7 +477,7 @@ assuntos_teste += [
 ]
 assuntos_teste += [
     ("lamina", id, apoio.LAMINAS[id], f"Quero consultar {apoio.LAMINAS[id].lower()}.")
-    for id in ("hospitais", "rio_claro", "barretos", "carretas")
+    for id in ("hospitais", "rio_claro")   # Barretos e Carretas moram dentro de outras áreas (20/10/2026)
 ]
 
 chamadas_assuntos = []

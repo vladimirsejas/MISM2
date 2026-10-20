@@ -81,7 +81,7 @@ def main():
     # ---- 1. estrutura ----
     ids = {i["id"] for i in apoio.ITENS}
     checar(f"1. o índice cobre os {len(ids)} itens do catálogo", set(ab.INDICE.todos) == ids)
-    checar("1. vocabulário: uma entrada por porta, e itens extras existem", set(ab.VOCABULARIO) == set(apoio.NOME_CAMINHO) and set(ab.EXTRA) <= ids)
+    checar("1. vocabulário: uma entrada por assunto (mais a do antigo Diagnóstico, que segue com os 2 itens que moravam nele), e itens extras existem", set(ab.VOCABULARIO) == set(apoio.NOME_CAMINHO) | {"diagnostico"} and set(ab.EXTRA) <= ids)
     checar("1. as opções do Gemini levam a uma porta ou lâmina que existe",
            all(ab._acao_da_opcao(i) is not None for i, _ in ab.OPCOES_IA) and ab._acao_da_opcao("invencao") is None)
     gabarito = json.load(open(os.path.join(AQUI, "gabarito_apoio.json"), encoding="utf-8"))

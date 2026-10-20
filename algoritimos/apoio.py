@@ -54,9 +54,6 @@ CAMINHOS = [
      "Cada câncer tem os seus sinais, exames e cuidados. Aqui estão o intestino (colorretal), o ovário, a pele, o "
      "pulmão, a tireoide e o corpo do útero (endométrio), com onde buscar atendimento pelo SUS. Sinais e exames "
      "mostrados aqui são informação geral: não servem para diagnosticar."),
-    ("diagnostico", "Diagnóstico", "exame alterado, biópsia, especialista",
-     "Quando um exame vem alterado, começa a investigação: exames complementares, biópsia e encaminhamento ao "
-     "especialista. Alteração não quer dizer câncer."),
     ("tratamento", "Tratamento pelo SUS", "onde se tratar, prazos e apoio",
      "Com o diagnóstico confirmado, o tratamento pelo SUS tem prazo em lei e acontece nos hospitais habilitados em "
      "oncologia. A unidade de saúde (e a regulação do Estado, que a paciente não opera: quem pede a vaga é a equipe de "
@@ -70,12 +67,12 @@ CAMINHOS = [
 ]
 NOME_CAMINHO = {c: r for c, r, _, _ in CAMINHOS}
 # O próximo passo de cada porta (a jornada da mulher na rede).
-PROXIMO = {"mama": "diagnostico", "colo": "diagnostico", "outros": "diagnostico", "diagnostico": "tratamento",
-           "tratamento": "direitos"}
+# Valor "etapa:<id>" leva a uma situação do Preciso de ajuda (o assunto Diagnóstico foi unido a "Meu exame deu alterado", 20/10/2026).
+PROXIMO = {"mama": "etapa:alterado", "colo": "etapa:alterado", "outros": "etapa:alterado", "tratamento": "direitos"}
 # A rede oncológica em passos (porta Rede oncológica): (passo, o que é, porta)
 FLUXO_REDE = [
     ("Unidade de saúde", "consulta, preventivo e pedido de mamografia", "mama"),
-    ("Diagnóstico", "exames complementares e biópsia", "diagnostico"),
+    ("Exame alterado", "exames complementares e biópsia", "etapa:alterado"),
     ("Vaga no especialista", "a unidade de saúde pede a vaga (regulação do Estado); você acompanha a fila", "etapa:encaminhada"),
     ("Especialista", "consulta no hospital de referência", "hospitais"),
     ("Tratamento", "cirurgia, quimioterapia, radioterapia", "tratamento"),
@@ -151,7 +148,7 @@ ITENS = [
           "agendar-exame-de-mamografia-em-sp-de-forma-gratuita",
           como="Procure a UBS mais próxima e passe por uma consulta. Se o exame for indicado, o encaminhamento é "
                "feito no sistema de regulação do município, que agenda o serviço."),
-    _item("lei_30_dias", "diagnostico", "caminho", "SUS (todo o Brasil)",
+    _item("lei_30_dias", "direitos", "caminho", "SUS (todo o Brasil)",
           "Direito: investigação diagnóstica em até 30 dias, quando a lei se aplica",
           "quando câncer é a principal hipótese diagnóstica, os exames necessários à investigação devem ser feitos em até 30 dias, com pedido médico fundamentado",
           "Lei federal 13.896/2019 (Câmara dos Deputados)",
@@ -159,9 +156,8 @@ ITENS = [
           para_quem="Pessoas atendidas no SUS quando a principal hipótese diagnóstica seja câncer.",
           como="A Lei 13.896/2019 prevê até 30 dias para os exames necessários à investigação quando câncer é a "
                "principal hipótese diagnóstica e o médico responsável faz uma solicitação fundamentada. Se não "
-               "souber se esse critério se aplica ao seu caso, peça à equipe de saúde que explique.",
-          tambem_caminhos=["direitos"]),
-    _item("mater_ribeirao", "diagnostico", "caminho", "Ribeirão Preto",
+               "souber se esse critério se aplica ao seu caso, peça à equipe de saúde que explique."),
+    _item("mater_ribeirao", "mama", "caminho", "Ribeirão Preto",
           "MATER – Centro de Referência da Saúde da Mulher",
           "mamografia alterada vai rápido para biópsia; atende os 26 municípios da região de Ribeirão Preto",
           "MATER / FAEPA – HC da Faculdade de Medicina de Ribeirão Preto (USP)",
@@ -1438,7 +1434,10 @@ MAX_APONTADOS = 3
 def _proximo(c):
     """O próximo passo da jornada (mama/colo → diagnóstico → regulação → tratamento → direitos)."""
     if c in PROXIMO:
-        return [(f"Próximo passo: {NOME_CAMINHO[PROXIMO[c]]}", caminho(PROXIMO[c]))]
+        alvo = PROXIMO[c]
+        if alvo.startswith("etapa:"):
+            return [(f"Próximo passo: {NOME_ETAPA[alvo[6:]]}", etapa(alvo[6:]))]
+        return [(f"Próximo passo: {NOME_CAMINHO[alvo]}", caminho(alvo))]
     return []
 
 
