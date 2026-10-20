@@ -15,7 +15,14 @@ from inteligencia import (
     prever_com_validacao,
     previsao_todos,
     leitura_previsao,
+    leitura_alcance,
+    leitura_cidade_visao,
+    leitura_mortalidade,
+    leitura_tratamento,
+    registrado,
     resumo_doencas,
+    resumo_mortalidade,
+    resumo_tratamento,
     serie_doenca,
     _variacao_pct,
 )
@@ -121,6 +128,9 @@ def numeros_novos(texto_ia, *fontes):
     return sorted(novos)
 
 
+NEGA_DADOS = re.compile(r"\b(nao contem|nao ha (dados|informac\w+|registros)|nao (ha|existem?) (informac\w+|dados|registros)|"
+                        r"(base|banco) de dados (disponibilizada )?(nao|sem)|nao (tenho|temos|dispomos)|nao foi possivel|nao consta\w*|"
+                        r"nao (apresenta|traz|possui)\b.{0,40}\b(dados|informac\w+|numeros?))\b")
 PROMETE = re.compile(r"\b(vai|ira|irá|vao|vão) (ficar|ter|aumentar|diminuir|crescer|cair|chegar|subir|piorar|melhorar)\b", re.I)
 CAUSA_ATRIBUIDA = re.compile(r"\b(por causa d\w+|devido (a|ao|aos|à|às)|causad[oa]s? (por|pel)\w*|provocad[oa]s? (por|pel)\w*|"
                    r"por conta d\w+|resultado d[eao]s?)\b", re.I)
@@ -141,6 +151,10 @@ def conferir(texto_ia, base, pergunta):
         return "a IA prometeu um resultado ('vai ficar'); projeção é só tendência"
     if CAUSA_ATRIBUIDA.search(texto_ia):
         return "a IA atribuiu causa; o Escudo detecta, não explica"
+    if NEGA_DADOS.search(ent.normalizar(texto_ia)) and not NEGA_DADOS.search(ent.normalizar(base if isinstance(base, str) else (getattr(base, "fala", "") or ""))):
+        # 20/10/2026 (teste do autor): "a base de dados não contém o total de mortes" / "...informações sobre moradoras atendidas fora",
+        # e o banco tem as duas coisas. A IA só pode dizer que um dado não existe se o próprio cálculo do Escudo já disse isso.
+        return "a IA disse que o dado não existe, mas o cálculo do Escudo não disse isso"
     return None
 
 
@@ -610,13 +624,78 @@ def _finalizar(resp):
     return resp
 
 
-def _redigir(resp, pergunta, ia, perfil):
+LIMITE_FICHA = 7000
+NOTA_MINIMA_FICHA = 0.25   # abaixo disso a pergunta é obscura demais: melhor perguntar do que responder pela ficha
+
+
+def ficha_da_cidade(ctx, limite=LIMITE_FICHA):
+    """TUDO o que o Escudo sabe da cidade, em blocos com fonte e definição, para o redator responder pelo que a pessoa perguntou e não
+    pelo assunto que a busca adivinhou (20/10/2026, teste do autor: a Lia dizia 'a base não contém' o total de mortes e as moradoras atendidas
+    fora, e o banco tem as duas coisas). Só frases já calculadas pelo Escudo; cada número continua sendo conferido depois. Bloco que falha é pulado."""
+    blocos = []
+
+    def pôr(titulo, texto):
+        texto = (texto if isinstance(texto, str) else " ".join(texto)).strip()
+        if texto:
+            blocos.append(f"[{titulo}]\n{texto}")
+
+    cidade = ctx.cidade
+    try:
+        mun = ctx.serie[ctx.serie["grupo"] == "MUNICIPIO"] if "grupo" in ctx.serie else ctx.serie
+        por_ano = mun.assign(_n=registrado(mun, "internacoes")).groupby("ano")["_n"].sum()
+        incompletos = anos_incompletos(ctx.serie)
+        pôr(f"INTERNAÇÕES POR ANO (SIH/SUS, moradoras de {cidade}, os 7 cânceres somados, valores registrados)",
+            "; ".join(f"{int(a)}: {formatar_numero(n)}" + (f" (só {incompletos[int(a)]} meses na fonte)" if int(a) in incompletos else "")
+                      for a, n in por_ano.items()))
+        r = resumo_doencas(ctx.serie)
+        pôr(f"POR CÂNCER, PERÍODO TODO (SIH/SUS, moradoras de {cidade}): internações, óbitos DURANTE a internação e letalidade hospitalar",
+            "; ".join(f"{cancer_de(l['tipo_cancer'])}: {formatar_numero(l['internacoes'])} internações, {formatar_numero(l['obitos'])} óbitos na internação"
+                      for _, l in r.iterrows()))
+    except Exception:
+        pass
+    if getattr(ctx, "fluxo_cidade", None):
+        try:
+            pôr(f"ONDE AS MORADORAS DE {cidade.upper()} SÃO ATENDIDAS (SIH/SUS; fora da cidade ou na própria cidade)",
+                leitura_cidade_visao(ctx.fluxo_cidade, cidade, "fora"))
+            pôr(f"MULHERES DE FORA ATENDIDAS NOS HOSPITAIS DE {cidade.upper()} (SIH/SUS)", leitura_cidade_visao(ctx.fluxo_cidade, cidade, "aqui"))
+        except Exception:
+            pass
+    sim = getattr(ctx, "obitos_sim", None)
+    if sim is not None and not sim.empty:
+        try:
+            cid = ctx.serie[ctx.serie["grupo"] == "MUNICIPIO"] if "grupo" in ctx.serie else ctx.serie
+            pôr(f"TODAS AS MORTES POR CÂNCER (SIM, declarações de óbito, dentro e fora do hospital, moradoras de {cidade})",
+                leitura_mortalidade(resumo_mortalidade(sim, ctx.codigo_ibge, None, cid), cidade))
+        except Exception:
+            pass
+    trat = getattr(ctx, "tratamento", None)
+    if trat is not None and not trat.empty:
+        try:
+            pôr(f"QUIMIOTERAPIA E RADIOTERAPIA AMBULATORIAIS (SIA/SUS, APACs, moradoras de {cidade})",
+                leitura_tratamento(resumo_tratamento(trat, ctx.codigo_ibge, None), cidade))
+        except Exception:
+            pass
+    if getattr(ctx, "alcance", None):
+        try:
+            pôr("O QUE O BANCO GUARDA", leitura_alcance(ctx.alcance, cidade)[:3])
+        except Exception:
+            pass
+    ficha = "\n\n".join(blocos)
+    return ficha[:limite]
+
+
+def _redigir(resp, pergunta, ia, perfil, ctx=None):
     """Pede ao Gemini a redação e confere. Altera `resp` no lugar."""
     if not (ia and ia.explicar):
         resp.selo = "Resposta direta dos cálculos do Escudo (sem IA)."
         resp.ia_motivo = "IA desligada"
         return
     base = resp.fala + (("\n" + "\n".join(f"- {n}" for n in resp.numeros)) if resp.numeros else "")
+    if ctx is not None:   # a resposta principal vem primeiro; a ficha completa vai atrás para a pergunta que cair em outra fatia
+        ficha = ficha_da_cidade(ctx)
+        if ficha:
+            base += ("\n\nOUTROS FATOS DO ESCUDO SOBRE A CIDADE (use só o que responder à pergunta e diga sempre de qual fonte "
+                     "vem cada número; fontes diferentes medem coisas diferentes e não se somam):\n\n" + ficha)
     try:
         texto = ia.explicar(pergunta, base, perfil)
     except Exception as erro:
@@ -645,6 +724,20 @@ def montar(ctx, e, pergunta, foco, perfil="TECNICO", ia=None):
         return _finalizar(_tornar(lia_responder(ctx, INICIO), **comum))
     if e.tipo == "vazio":
         return _finalizar(_tornar(_ajuda(ctx, ia), **comum))
+    topo_dados = next((i for i, _ in (e.palpites or [])[:3] if i in SO_DADOS), None)
+    if (e.tipo == "palpites" and e.origem != "gemini_sem_apoio"   # só o Gemini apontou: a pessoa confirma (regra de concordância)
+            and e.nota >= NOTA_MINIMA_FICHA and ia and ia.explicar and topo_dados):
+        # pergunta de dados que a busca não conseguiu cravar: com a IA ligada, o redator responde pela FICHA COMPLETA da cidade (cada número é
+        # conferido); se a conferência reprovar, cai nos palpites de sempre
+        topo = topo_dados
+        base_p, usado_p, _ = _resposta_base(ctx, topo, e.cancer, foco, e.ano, ia)
+        if base_p.fala:
+            tentativa = _tornar(base_p, intencao=topo, cancer=usado_p, links=[], **{**comum, "tipo": "intencao", "origem": "ficha"})
+            tentativa.fonte = _fonte(ctx, topo)
+            _redigir(tentativa, pergunta, ia, perfil, ctx)
+            if tentativa.usou_ia:
+                tentativa.botoes = tentativa.botoes + [(ent.ROTULOS[i], acao(i, e.cancer, pergunta, e.ano)) for i, _ in e.palpites[1:3]]
+                return _finalizar(tentativa)
     if e.tipo == "palpites":
         botoes = [(ent.ROTULOS[i], acao(i, e.cancer, pergunta, e.ano)) for i, _ in e.palpites]
         return _finalizar(RespostaIA(
@@ -727,7 +820,7 @@ def montar(ctx, e, pergunta, foco, perfil="TECNICO", ia=None):
         return _finalizar(resp)
     if intencao in SO_DADOS and base.fala:
         resp.fonte = _fonte(ctx, intencao)
-        _redigir(resp, pergunta, ia, perfil)
+        _redigir(resp, pergunta, ia, perfil, ctx)
         if nota:
             resp.fala = nota + "\n\n" + resp.fala
     else:

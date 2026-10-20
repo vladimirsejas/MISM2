@@ -402,6 +402,32 @@ def main():
     checar("7g. 'durante a internação' nunca vira o total do SIM (mesmo que a busca só ofereça palpites)", r.intencao != "mortalidade_real")
     r = asst.responder_pergunta(ctx, "quantas mulheres morreram de câncer em Rio Claro?", foco, ia=asst.IA())
     checar("7g. sem o SIM no banco a pergunta continua no caminho dos óbitos de internação (nada de inventar o total)", r.intencao == "obitos")
+    # ---- 7k. ficha completa da cidade: a IA responde pelo que foi perguntado, não pelo assunto que a busca adivinhou ----
+    fluxo_c = {"atendimentos": 500, "da_cidade": 300, "outras_cidades": 150, "outros_estados": 50, "moradoras": 400, "moradoras_na_cidade": 300,
+               "moradoras_fora": 100, "destinos": [("Piracicaba", 60), ("Campinas", 40)], "moradoras_sem_hospital": 0}
+    ctx_k = Contexto(serie=ctx.serie, cidade="Rio Claro", faixas=ctx.faixas, codigo_ibge=3543907, tratamento=trat, obitos_sim=sim, fluxo_cidade=fluxo_c)
+    ficha = asst.ficha_da_cidade(ctx_k)
+    checar("7k. a ficha traz, com a fonte, o fluxo da cidade (100 moradoras fora), as mortes do SIM (40) e as internações por ano",
+           "100" in ficha and "Piracicaba" in ficha and "SIM" in ficha and "40" in ficha and "INTERNAÇÕES POR ANO" in ficha)
+    checar("7k. sem fluxo, sem SIM e sem SIA a ficha só traz o SIH (nada inventado)",
+           "SIM" not in asst.ficha_da_cidade(ctx) and "SIA" not in asst.ficha_da_cidade(ctx))
+    vistos = []
+
+    def explicar_visto(pergunta, base, perfil):
+        vistos.append(base)
+        return "Em Rio Claro, 100 internações de moradoras aconteceram em hospitais de outras cidades, como Piracicaba (60)."
+    ia_k = asst.IA(explicar=explicar_visto, classificar=lambda p, o: None, ligada=True)
+    r = asst.responder_pergunta(ctx_k, "quantas mulheres de Rio Claro foram atendidas fora da cidade?", foco, ia=ia_k)
+    checar("7k. a pergunta do autor ('atendidas fora da cidade') chega ao redator COM os números do fluxo, e a resposta da IA passa na conferência",
+           vistos and "OUTROS FATOS DO ESCUDO" in vistos[-1] and "Piracicaba" in vistos[-1] and r.usou_ia and "100" in r.fala)
+    ia_ruim = asst.IA(explicar=lambda p, b, pf: "A base de dados não contém informações sobre moradoras atendidas fora do município.",
+                      classificar=lambda p, o: None, ligada=True)
+    r = asst.responder_pergunta(ctx_k, "quantas mulheres de Rio Claro foram atendidas fora da cidade?", foco, ia=ia_ruim)
+    checar("7k. se a IA disser 'a base não contém' sem o cálculo dizer isso, o texto é descartado (nunca mostra o falso 'não contém')",
+           not r.usou_ia and "não contém" not in r.fala)
+    ia_inventa = asst.IA(explicar=lambda p, b, pf: "Foram 777 internações fora da cidade.", classificar=lambda p, o: None, ligada=True)
+    r = asst.responder_pergunta(ctx_k, "quantas mulheres de Rio Claro foram atendidas fora da cidade?", foco, ia=ia_inventa)
+    checar("7k. número inventado pela IA continua sendo barrado, mesmo com a ficha maior", not r.usou_ia and "777" not in r.fala)
     r = asst.responder_pergunta(ctx, "quantas mulheres fazem quimioterapia na cidade?", foco, ia=asst.IA())
     checar("7g. sem as tabelas no banco a Lia diz o que falta e como trazer, sem inventar número",
            r.intencao == "tratamento" and "carregar_tudo_pysus" in r.fala)

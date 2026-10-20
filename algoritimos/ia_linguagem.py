@@ -184,8 +184,10 @@ Responda à pergunta usando SOMENTE a base abaixo. A base foi calculada pelo sis
 
 REGRAS:
 1. Copie os números exatamente como estão na base. Não some, não arredonde, não calcule percentuais novos.
-2. Se a base não responde à pergunta, diga isso em uma frase. Não complete com conhecimento geral.
-3. Os dados são internações hospitalares (AIH), não casos novos nem incidência.
+2. A base começa com a resposta principal e traz, depois, OUTROS FATOS do Escudo sobre a cidade. Procure a resposta nos dois. Só diga que
+   o Escudo não tem um dado se NENHUM dos dois o traz; nesse caso diga o que a base traz de mais próximo. Não complete com conhecimento geral.
+3. As fontes medem coisas diferentes: SIH = internações hospitalares (AIH); SIM = mortes por declaração de óbito (dentro e fora do hospital);
+   SIA = procedimentos ambulatoriais (APACs, não mulheres). Diga de qual fonte vem cada número e não some nem subtraia fontes. Não são casos novos nem incidência.
 4. Não atribua causa ("por causa de", "devido a"). Detectar um padrão não explica por quê.
 5. Previsões são "a tendência aponta" (projeção de tendência), nunca "vai ficar" ou "vai ter".
 6. Valores em reais são "valor hospitalar registrado no SIH/SUS", não orçamento nem custo total do tratamento.
