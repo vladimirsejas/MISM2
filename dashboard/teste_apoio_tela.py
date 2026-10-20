@@ -503,6 +503,24 @@ try:
 finally:
     apoio_busca.obter_classificador = original_classificador_assuntos
 
+# ---- H. "Preciso de ajuda" em destaque, fora da lista de assuntos (autor, 20/10/2026: "um dos mais importantes") ----
+at = AppTest.from_file(os.path.join(RAIZ, "dashboard", "pages", "apoio.py"), default_timeout=90)
+at.run()
+checar("H. 'Preciso de ajuda' tem botão próprio em destaque, visível já na abertura", botao(at, "apoio_ajuda_botao") is not None)
+botao(at, "apoio_ajuda_botao").click().run()
+tudo_h = " ".join(m.value for m in at.markdown)
+checar("H. clicar abre as situações ('Ainda não fiz o exame'...'violência') sem erro", not erros(at) and at.session_state["ap_caminho"] == "ajuda"
+       and "Ainda não fiz o exame" in str([r.options for r in at.radio]) and "Estou em situação de violência" in str([r.options for r in at.radio]))
+checar("H. a lista de assuntos NÃO traz 'Preciso de ajuda' (é uma área à parte)",
+       not any("Preciso de ajuda" in str(r.options) and "Câncer de mama" in str(r.options) for r in at.radio))
+checar("H. já dentro, o botão avisa 'você está aqui'", "você está aqui" in botao(at, "apoio_ajuda_botao").label)
+checar("H. a faixa 'Você está em' diz 'Preciso de ajuda' (não 'Orientação por assunto')",
+       "Você está em: <b>Preciso de ajuda" in tudo_h)
+botao(at, "nav_apoio_caminho").click().run()
+checar("H. 'Orientação por assunto' volta aos assuntos (Câncer de mama...), sem ficar preso na ajuda",
+       not erros(at) and at.session_state["ap_caminho"] != "ajuda" and "Câncer de mama" in str([r.options for r in at.radio]))
+botao(at, "nav_apoio_hospitais").click().run()
+checar("H. o destaque continua visível em outra área do Apoio (Hospitais no Estado)", botao(at, "apoio_ajuda_botao") is not None)
 checar("F. a página do Apoio não abriu banco de dados em nenhum momento (perguntas não são gravadas)", abriu_banco == [])
 
 print(f"\n({time.time() - inicio:.0f} s)")
