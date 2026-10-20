@@ -68,6 +68,9 @@ def main():
         ia = "IA redigiu" if getattr(a, "usou_ia", False) else "sem IA"
         fala = " ".join((getattr(a, "fala", "") or "").split())
         print(f"  assunto: {assunto} | tipo: {tipo} | origem: {origem} | {ia}")
+        motivo = getattr(a, "ia_motivo", None)
+        if motivo:   # por que o texto da IA não foi usado (conferência, cota, erro...): só informação técnica, nenhuma gravação
+            print(f"  (IA não usada: {motivo})")
         print(f"  Lia: {fala[:380]}{'...' if len(fala) > 380 else ''}")
         botoes = [r for r, _ in getattr(a, "botoes", [])][:4]
         if tipo == "palpites" and botoes:
