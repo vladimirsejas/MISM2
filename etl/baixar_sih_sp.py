@@ -5,6 +5,7 @@ import shutil
 import sys
 import time
 import traceback
+import warnings
 from datetime import datetime
 from pathlib import Path
 
@@ -318,7 +319,9 @@ def atualizar_anos(filtros, anos):
         novas.columns = [_normalizar_coluna(c) for c in novas.columns]
         novas = novas.astype("string")
         colunas = list(antigo.columns) + [c for c in novas.columns if c not in antigo.columns]
-        junto = pd.concat([mantidas.reindex(columns=colunas), novas.reindex(columns=colunas)], ignore_index=True)
+        with warnings.catch_warnings():   # aviso do pandas sobre colunas vazias: não muda o resultado
+            warnings.simplefilter("ignore", FutureWarning)
+            junto = pd.concat([mantidas.reindex(columns=colunas), novas.reindex(columns=colunas)], ignore_index=True)
         if len(junto) != len(mantidas) + len(novas) or len(mantidas) != int((~sai).sum()):
             print(f"  {codigo}: a conferência das linhas não bateu. NADA foi trocado.")
             return None
