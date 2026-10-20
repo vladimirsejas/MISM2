@@ -416,6 +416,99 @@ def _escolher_tipos(opcoes, utero_ambiguo, comum):
     return _com_inicio(_de(r, tipo="palpites", selo=SELO_GUIA, candidatos=_ids_dos_botoes(r.botoes), **comum))
 
 
+# "Moro em Araras, preciso de hospital de câncer" / "Limeira": a cidade que a pessoa diz NUNCA é trocada por outra de nome parecido
+# (antes "Araras" virava "Araraquara" pela semelhança de letras). O nome é conferido contra os municípios de SP da tabela
+# `municipios_localizacao`; com ela, a Lia mostra os hospitais do guia mais próximos em LINHA RETA entre os centros das cidades.
+_POSICOES = {}
+
+
+def _localizacao_do_banco():
+    """Municípios de SP com posição (dado público do IBGE, somente leitura, lido uma vez); None se o banco ou a tabela não existem.
+    Só é chamada quando a pessoa cita uma cidade: perguntas comuns nunca abrem o banco, e nada da pergunta é gravado."""
+    if "df" in _POSICOES:
+        return _POSICOES["df"]
+    _POSICOES["df"] = _ler_posicoes()
+    return _POSICOES["df"]
+
+
+def _ler_posicoes():
+    import sqlite3
+    import configuracao_geografica
+    import localizacao
+    try:
+        conexao = sqlite3.connect(f"file:{configuracao_geografica.BANCO}?mode=ro", uri=True, timeout=5)
+        try:
+            return localizacao.carregar_localizacao(conexao)
+        finally:
+            conexao.close()
+    except Exception:
+        return None
+
+
+def _nome_da_cidade(pergunta, carregar):
+    """(cidade_citada, nome_oficial|None). Cidade dita em 'moro em X' / 'perto de X', ou a pergunta inteira sendo só o nome (com erro
+    de digitação). O nome oficial só vem de um acerto exato ou de uma correção muito próxima e única."""
+    import difflib
+    import assistente
+    citada = assistente.cidade_citada(pergunta)
+    norm = ent.normalizar(pergunta).strip(" ?.!…")
+    so_o_nome = len(norm.split()) <= 3 and not tipos_citados(pergunta)[0] and not pistas_de(pergunta)
+    cand = citada or (norm if so_o_nome and len(norm.split()) == 1 and len(norm) >= 5 else None)
+    if not cand:
+        return None, None, None
+    municipios = carregar()
+    chaves = {} if municipios is None else dict(zip(municipios["chave"], municipios["nome"]))
+    if cand in chaves:
+        return cand, chaves[cand], municipios
+    perto = difflib.get_close_matches(cand, list(chaves), n=2, cutoff=0.8)
+    if len(perto) == 1 or (len(perto) == 2 and difflib.SequenceMatcher(None, cand, perto[0]).ratio()
+                           - difflib.SequenceMatcher(None, cand, perto[1]).ratio() > 0.08):
+        return cand, chaves[perto[0]], municipios
+    return (cand, None, municipios) if citada else (None, None, municipios)
+
+
+def _responder_cidade(pergunta, carregar=_localizacao_do_banco):
+    """Resposta de texto fixo (sem IA) quando a pessoa cita onde mora e pede hospital/tratamento de câncer. None se não for o caso."""
+    import assistente
+    import localizacao
+    norm = ent.normalizar(pergunta)
+    pede = bool(assistente.PEDE_HOSPITAL_CANCER.search(norm) or (assistente.PEDE_TRATAR.search(norm) and assistente.CITA_CANCER.search(norm))
+                or re.search(r"\b(hospital|hospitais|ospital|unacon|cacon)\b", norm))
+    citada, oficial, municipios = _nome_da_cidade(pergunta, carregar)
+    if not citada or citada == "rio claro":
+        return None
+    dita_na_frase = assistente.cidade_citada(pergunta) is not None
+    if dita_na_frase:
+        if not (pede or re.fullmatch(r"(moro|moramos|resido|vivo|sou) (em|no|na|de|do|da) " + re.escape(citada), norm.strip(" ?.!,"))):
+            return None  # 'moro em Araras e minha mamografia deu alterada' segue o caminho normal
+    elif not oficial:
+        return None      # nome solto que não é cidade conhecida: busca normal
+    nome = oficial or citada.title()
+    hospitais = [i for i in apoio.ITENS if i["lamina"] == "hospitais" or i["id"] in localizacao.IDS_EXTRAS]
+    chave = ent.normalizar(oficial) if oficial else citada
+    da_cidade = [i for i in hospitais if localizacao.cidade_do_item(i["onde"]) == chave][:3]
+    proximos = [] if da_cidade or not oficial else localizacao.hospitais_proximos(municipios, oficial, hospitais)
+    if da_cidade:
+        linhas = "\n".join(f"- **{i['titulo']}** ({i['onde']}): {i['como'] or i['resumo']} [Página oficial]({i['link']})" for i in da_cidade)
+        fala = f"Hospitais do guia em **{nome}**:\n\n{linhas}\n\n"
+    elif proximos:
+        km = "\n".join(f"- **{i['titulo']}** ({i['onde']}): cerca de **{int(round(d, -1)) if d >= 20 else int(round(d))} km** em linha reta "
+                       f"[Página oficial]({i['link']})" for d, i in proximos)
+        fala = (f"Não há hospital de câncer do guia em **{nome}**. Os mais próximos, em **linha reta entre os centros das cidades** "
+                f"(não é a rota nem o tempo de viagem):\n\n{km}\n\n")
+    else:
+        fala = (f"Entendi que você mora em **{nome}**. Não tenho a posição dessa cidade para dizer qual hospital do guia fica mais perto, "
+                "e prefiro não chutar.\n\n")
+    fala += ("**Como funciona pelo SUS:** hospital de câncer não se escolhe por proximidade. A pessoa é encaminhada, pela unidade de "
+             "saúde e pela regulação (CROSS), ao serviço de referência da **região** onde mora. Na área **Hospitais no Estado** estão os "
+             "hospitais por região. Para saber a região (DRS) de " + nome + ", pergunte na unidade de saúde ou na Secretaria de Saúde.")
+    ids = [i["id"] for i in da_cidade] + [i["id"] for _, i in proximos]
+    r = Resposta(fala=fala + "\n\n" + apoio.AVISO, expressao="acolhedora",
+                 botoes=[("Rede oncológica", apoio.caminho("rede")), ("Exame alterado ou diagnóstico", apoio.caminho("diagnostico"))],
+                 destino={"aba": apoio.LAMINAS["caminho"], "caminho": "rede"})
+    return r, ids
+
+
 def _responder_pergunta(pergunta, classificar=None, contexto=None, cancer_em_foco=None):
     """Entende a pergunta e devolve uma resposta do guia. `classificar`: função do Gemini
     (pergunta, opções, contexto=, com_cancer=) -> {"intencao"} ou None; só é chamada sem confiança.
@@ -449,6 +542,10 @@ def _responder_pergunta(pergunta, classificar=None, contexto=None, cancer_em_foc
                   "Se o assunto mudou, escreva o novo assunto ou escolha uma porta.\n\n" + r.fala)
         return _com_inicio(_de(r, tipo="esclarecimento", selo=SELO_GUIA,
                                candidatos=[contexto], **comum))
+
+    cidade = _responder_cidade(pergunta, lambda: _localizacao_do_banco())
+    if cidade:
+        return _com_inicio(_de(cidade[0], tipo="itens", selo=SELO_GUIA, candidatos=cidade[1], **comum))
 
     if _pergunta_sobre_a_lia(pergunta) and not tipos_citados(pergunta)[0]:
         return _de(responder_o_que_sei(), tipo="sobre_a_lia", selo="Texto fixo do guia. Nenhuma IA escreveu isto.", **comum)
