@@ -1280,7 +1280,7 @@ ETAPAS = [
      "a mamografia pelo Estado não precisa de pedido médico, e as carretas atendem sem agendamento. Em Rio Claro, "
      "a consulta também pode ser marcada pelo Cadu (0800 019 0505, telefone ou WhatsApp).",
      ["mama", "colo"], ["rc_cadu_agendamento", "rc_unidades", "mulheres_de_peito", "colo_utero"]),
-    ("alterado", "Meu exame deu alteração",
+    ("alterado", "Meu exame deu alterado",
      "Respire: um exame alterado não é diagnóstico de câncer, e a maior parte das alterações não é. O primeiro passo "
      "é ir, com o laudo na mão, à unidade de saúde do seu bairro (UBS ou USF) e dizer: \"meu exame deu alterado\". "
      "Foi essa equipe que pediu o exame, e é ela quem organiza os próximos exames e o encaminhamento. Não sabe qual "

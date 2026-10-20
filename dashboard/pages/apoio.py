@@ -97,6 +97,9 @@ a.apoio-botao:hover { background: #1f5fae; }
 .apoio-jornada-diagnostico li:last-child .apoio-jornada-conector { display: none; }
 .apoio-recuperar-caminho { margin-top: 18px; padding: 12px 14px; background: #f6f3fb;
                            border-left: 5px solid #7565a8; border-radius: 10px; color: #292541; }
+.apoio-emergencia { background: #fdeceb; border: 1px solid #e8a39d; border-left: 6px solid #c62839; border-radius: 10px;
+                    padding: 8px 14px; margin: 4px 0 10px; color: #6d1220; font-size: .98rem; }
+.apoio-emergencia b { color: #a51f2e; }
 .apoio-grupo { font-family: 'Manrope', sans-serif; font-weight: 700; color: #4a3d78; font-size: 1rem; margin: 18px 0 0; }
 </style>
 """, unsafe_allow_html=True)
@@ -548,6 +551,10 @@ with col_link:
         st.markdown('<a href="/onde_ser_atendida" target="_self">Unidades, telefones e como chegar</a>', unsafe_allow_html=True)
     st.caption("Cada cartão informa sua fonte e data de conferência. Itens marcados “a confirmar” precisam ser verificados antes de usar.")
 
+# Emergência sempre à vista (auditoria de usabilidade, 20/10/2026): o número não pode ficar dentro de um menu fechado.
+st.markdown('<div class="apoio-emergencia" role="note">🚨 <b>Em perigo agora?</b> Polícia: <b>190</b> · '
+            'Violência contra a mulher: <b>180</b> · Emergência de saúde (SAMU): <b>192</b></div>', unsafe_allow_html=True)
+
 # Entrada guiada: poucas escolhas principais; o catálogo completo continua nas abas abaixo.
 _pergunta_pendente = st.session_state.pop("caixa_ap_pendente", None)
 if _pergunta_pendente:
@@ -598,7 +605,7 @@ st.markdown("**Atendimento e orientação**")
 n1, n2 = st.columns(2)
 for col, chave in ((n1, "caminho"), (n2, "rio_claro")):
     nome = apoio.LAMINAS[chave]
-    col.button(nome, key=f"nav_apoio_{chave}", type="primary" if st.session_state["ap_aba"] == nome else "secondary",
+    col.button({"caminho": "Orientação por situação", "rio_claro": nome}[chave], key=f"nav_apoio_{chave}", type="primary" if st.session_state["ap_aba"] == nome else "secondary",
                on_click=ir_aba, args=(nome,), width="stretch")
 
 st.markdown("**Recursos de referência**")
@@ -611,18 +618,36 @@ for col, chave in ((r1, "hospitais"), (r2, "carretas")):
 r3, r4 = st.columns(2)
 for col, chave in ((r3, "barretos"), (r4, "sobre")):
     nome = apoio.LAMINAS[chave]
-    rotulo = {"barretos": "Hospital de Amor", "sobre": "Sobre as informações"}[chave]
+    rotulo = {"barretos": "Barretos: Hospital de Amor", "sobre": "Sobre as informações"}[chave]
     col.button(rotulo, key=f"nav_apoio_{chave}", type="primary" if st.session_state["ap_aba"] == nome else "secondary",
                on_click=ir_aba, args=(nome,), width="stretch")
 
 aba = st.session_state["ap_aba"]
+
+# "Você está em" (auditoria de usabilidade, 20/10/2026): a mulher vê onde está sem decifrar o seletor.
+_boas_vindas_abertas = not st.session_state.get("ap_boas_vindas_fechada")
+if aba == apoio.LAMINAS["caminho"]:
+    _onde = ["Orientação por situação"]
+    if _boas_vindas_abertas:
+        _onde.append("escolha uma situação acima")
+    else:
+        _c = st.session_state.get("ap_caminho")
+        _e = st.session_state.get("ap_etapa") if _c == "ajuda" else None
+        _onde.append(ROTULO.get(_c, "") if _c != "ajuda" else "Preciso de ajuda")
+        if _e in apoio.NOME_ETAPA:
+            _onde.append(apoio.NOME_ETAPA[_e])
+    _onde = " › ".join(x for x in _onde if x)
+else:
+    _onde = aba
+st.markdown(f'<div class="escudo-voce-esta">📍 Você está em: <b>{html.escape(_onde)}</b> · {apoio.CIDADE}</div>',
+            unsafe_allow_html=True)
 
 
 # ============================================================
 # ENCONTRE UM CAMINHO — Estado de SP e itens das cidades, por caminho
 # ============================================================
 
-if aba == apoio.LAMINAS["caminho"]:
+if aba == apoio.LAMINAS["caminho"] and not _boas_vindas_abertas:
     pergunta("O que você precisa?")
     dica("Escolha uma necessidade abaixo. As portas tratam de prevenção, diagnóstico, encaminhamento, tratamento e direitos. "
          "Hospitais, Carretas e os serviços de Rio Claro ficam em áreas próprias. Se estiver em dúvida, escolha <b>Preciso de ajuda</b>.")

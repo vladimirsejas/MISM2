@@ -59,6 +59,12 @@ checar("A. abre sem erro", not erros(at))
 checar("A. boas-vindas separa prevenção, exame alterado, diagnóstico e outras situações",
        all(botao(at, f"bv_ap_{c}") is not None
            for c in ("prevencao", "alterado", "diagnostico", "ajuda")))
+_txt_abertura = " ".join(m.value for m in at.markdown)
+checar("A. emergência (190, 180, 192) à vista na primeira tela, fora de qualquer menu",
+       "apoio-emergencia" in _txt_abertura and all(n in _txt_abertura for n in ("190", "180", "192")))
+checar("A. antes de escolher a situação não abre cartões de nenhum câncer (nada de mama por padrão)",
+       'class="escudo-cartao' not in _txt_abertura and botao(at, "ir_carretas_mama") is None)
+checar("A. faixa 'Você está em' mostra onde a mulher está", "Você está em" in _txt_abertura)
 checar("A. contadores internos não ocupam a entrada de quem procura atendimento",
        not any(m.label in ("Caminhos de orientação", "Informações cadastradas", "Pedem confirmação")
                for m in at.metric))
@@ -161,8 +167,8 @@ botao(at2, "bv_ap_ajuda").click().run()
 checar("C. sem saber o ponto: a tela não assume que a mulher ainda não fez exame",
        not erros(at2) and at2.session_state["ap_etapa"] is None
        and "Escolha uma situação acima" in " ".join(str(x.value) for x in at2.info))
-next(b for b in botoes_lia(at2) if b.label == "Meu exame deu alteração").click().run()
-checar("C. Preciso de ajuda → 'Meu exame deu alteração' leva primeiro à unidade de saúde do bairro (não à lei)",
+next(b for b in botoes_lia(at2) if b.label == "Meu exame deu alterado").click().run()
+checar("C. Preciso de ajuda → 'Meu exame deu alterado' leva primeiro à unidade de saúde do bairro (não à lei)",
        not erros(at2) and at2.session_state["ap_etapa"] == "alterado"
        and any("USF" in b.label and "UBS" in b.label for b in botoes_lia(at2))
        and not any("30 dias" in b.label for b in botoes_lia(at2)))
