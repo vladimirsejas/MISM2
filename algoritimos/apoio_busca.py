@@ -33,10 +33,10 @@ VOCABULARIO = {
     "outros": "outros tipos de câncer além da mama e do colo do útero câncer ginecológico sinais e sintomas exames",
     "diagnostico": "exame alterado resultado alterado laudo biópsia birads bi-rads suspeito colposcopia punção investigação "
                    "especialista diagnóstico confirmar câncer",
+    # 20/10/2026: Regulação saiu dos assuntos e Tratamento e Rede oncológica viraram um só ("tratamento"). O vocabulário continua
+    # em TRÊS pedaços (um por conteúdo): juntar tudo num texto só diluía a busca (as perguntas sobre a fila deixavam de achar a lista).
     "tratamento": "quimioterapia quimio radioterapia cirurgia tratamento do câncer oncologia prazo 60 dias hospital onde me tratar "
-                  "apoio durante o tratamento peruca fila vaga encaminhamento encaminhada regulação cross lista de espera demora "
-                  "não me chamaram consulta com especialista acompanhar a fila rede oncológica unacon cacon hospital habilitado "
-                  "hospital de referência onde tratar câncer pelo sus lista de hospitais",
+                  "apoio durante o tratamento peruca",
     "direitos": "direitos benefício inss auxílio doença fgts pis imposto de renda isenção tfd transporte para tratamento "
                 "diárias reconstrução da mama cartilha",
     "ajuda": "violência agressão ameaça medo ajuda proteção delegacia da mulher ligue 180 medida protetiva psicólogo apoio "
@@ -91,12 +91,32 @@ SEGURANCA_ETAPA = "violencia"   # etapa da Lia com os canais de proteção (apoi
 ALTO, FOLGA, BAIXO, NOTA_FORA = 0.30, 0.05, 0.17, 0.25   # escolhidos no conjunto de desenvolvimento (teste_apoio_busca.py)
 
 
+VOCABULARIO_FILA = ("fila vaga encaminhamento encaminhada regulação cross lista de espera demora não me chamaram consulta "
+                    "com especialista oncologia acompanhar a fila")
+VOCABULARIO_REDE = ("rede oncológica unacon cacon hospital habilitado hospital de referência onde tratar câncer pelo sus "
+                    "lista de hospitais")
+ITENS_DA_FILA = {"lista_regulacao", "nao_achei_nome", "como_chegar_cross"}
+ITENS_DO_TRATAMENTO = {"lei_60_dias", "rc_santa_casa", "ha_primeiro_atendimento", "rede_feminina", "rc_gacc", "rc_perucas",
+                       "rc_rede_feminina"}
+
+
+def _vocabulario_do_item(i):
+    """Vocabulário do assunto do item; em 'tratamento' (unido em 20/10/2026) cada conteúdo mantém o seu."""
+    if i["caminho"] != "tratamento":
+        return VOCABULARIO.get(i["caminho"])
+    if i["id"] in ITENS_DA_FILA:
+        return VOCABULARIO_FILA
+    if i["id"] in ITENS_DO_TRATAMENTO:
+        return VOCABULARIO["tratamento"]
+    return VOCABULARIO_REDE
+
+
 def _documentos():
     docs = []
     for i in apoio.ITENS:
         extra = EXTRA.get(i["id"]) or []
         frases = [i["titulo"], i["resumo"], i["onde"], i["para_quem"], (i["como"] or "")[:260],
-                  VOCABULARIO.get(i["caminho"])] + ([extra] if isinstance(extra, str) else list(extra))
+                  _vocabulario_do_item(i)] + ([extra] if isinstance(extra, str) else list(extra))
         docs.append({"id": i["id"], "frases": [f for f in frases if f]})
     return docs
 
