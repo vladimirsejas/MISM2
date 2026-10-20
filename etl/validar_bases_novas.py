@@ -95,6 +95,9 @@ def main(banco=BANCO):
         if tem(conn, "obitos_sim"):
             anos = linhas(conn, "SELECT ano, SUM(obitos) FROM obitos_sim GROUP BY ano ORDER BY ano")
             print("  óbitos de mulheres pelos 7 cânceres, por ano: " + " ".join(f"{a}:{n:,}".replace(",", ".") for a, n in anos))
+            so_sp = linhas(conn, "SELECT ano, SUM(obitos) FROM obitos_sim WHERE substr(codigo_residencia,1,2)='35' GROUP BY ano ORDER BY ano")
+            print("  só moradoras de SP (a base de comparação entre anos; o DOSP de 2013-2024 também tem moradoras de outros estados): "
+                  + " ".join(f"{a}:{n:,}".replace(",", ".") for a, n in so_sp))
             falta = [a for a in range(2013, 2025) if a not in {x for x, _ in anos}]   # 2025 em diante o SIM só existe como Mortalidade_Geral (outro formato)
             print("  anos que NÃO entraram: " + (", ".join(map(str, falta)) if falta else "nenhum"))
             if tem(conn, "obitos_sim_fonte"):   # de qual arquivo veio cada ano e quantos meses têm óbito
