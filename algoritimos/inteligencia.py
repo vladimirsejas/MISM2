@@ -929,16 +929,32 @@ def carregar_faixas(conexao, municipio, uf_referencia="SP"):
     return escolher_uma_fonte(dados, uf_referencia).drop(columns="origem")
 
 
+TODOS_CANCERES = "TODOS"
+NOME_TODOS_CANCERES = "Todos os cânceres acompanhados"
+
+
 def comparar_faixas(faixas, cancer):
     """Distribuição por faixa etária na primeira e na segunda metade
-    do período, para responder "a idade das internações mudou?"."""
-    dados = faixas[faixas["tipo_cancer"] == cancer]
+    do período, para responder "a idade das internações mudou?".
+
+    cancer = TODOS_CANCERES soma os cânceres que o Escudo acompanha. Com um único ano
+    com idade registrada não há dois períodos para comparar: devolve um só (o ano), em vez
+    de um primeiro período vazio que apareceria como 0%. Sem dados: (tabela vazia, None).
+    Idade ausente não entra em nenhuma faixa (a consulta já a deixa de fora)."""
+    vazia = pd.DataFrame(columns=["faixa", "periodo", "internacoes", "pct"])
+    if cancer == TODOS_CANCERES:
+        dados = faixas.groupby(["ano", "faixa"], as_index=False)["internacoes"].sum()
+    else:
+        dados = faixas[faixas["tipo_cancer"] == cancer]
     if dados.empty:
-        return pd.DataFrame(columns=["faixa", "periodo", "internacoes", "pct"]), None
+        return vazia, None
     anos = sorted(dados["ano"].unique())
-    meio = anos[len(anos) // 2]
-    periodos = {f"{anos[0]}–{meio - 1}": dados[dados["ano"] < meio],
-                f"{meio}–{anos[-1]}": dados[dados["ano"] >= meio]}
+    if len(anos) == 1:
+        periodos = {f"{anos[0]}": dados}
+    else:
+        meio = anos[len(anos) // 2]
+        periodos = {f"{anos[0]}–{meio - 1}": dados[dados["ano"] < meio],
+                    f"{meio}–{anos[-1]}": dados[dados["ano"] >= meio]}
     linhas = []
     for periodo, parte in periodos.items():
         total = parte["internacoes"].sum()
@@ -950,22 +966,33 @@ def comparar_faixas(faixas, cancer):
     return tabela, list(periodos)
 
 
+def totais_faixas(tabela):
+    """{período: total de internações com idade registrada} da tabela de comparar_faixas."""
+    if tabela.empty:
+        return {}
+    return {p: int(g["internacoes"].sum()) for p, g in tabela.groupby("periodo", sort=False)}
+
+
 def leitura_faixas(tabela, periodos):
     """A faixa que mais mudou de participação entre os dois períodos."""
     if tabela.empty or periodos is None:
         return []
-    antes = tabela[tabela["periodo"] == periodos[0]].set_index("faixa")["pct"]
-    depois = tabela[tabela["periodo"] == periodos[1]].set_index("faixa")["pct"]
-    variacao = (depois - antes).dropna()
-    faixa = variacao.abs().idxmax()
     total = tabela["internacoes"].sum()
     frases = []
-    if abs(variacao[faixa]) >= 5:
-        frases.append(f"A faixa de {faixa} passou de {formatar_numero(antes[faixa], 1)}% para "
-                      f"{formatar_numero(depois[faixa], 1)}% das internações entre {periodos[0]} e {periodos[1]}.")
+    if len(periodos) < 2:
+        frases.append(f"Só há idade registrada em {periodos[0]}: não dá para comparar dois períodos. "
+                      "O gráfico mostra a distribuição desse ano.")
     else:
-        frases.append("A distribuição por idade ficou parecida entre os dois períodos "
-                      "(nenhuma faixa mudou 5 pontos ou mais).")
+        antes = tabela[tabela["periodo"] == periodos[0]].set_index("faixa")["pct"]
+        depois = tabela[tabela["periodo"] == periodos[1]].set_index("faixa")["pct"]
+        variacao = (depois - antes).dropna()
+        faixa = variacao.abs().idxmax()
+        if abs(variacao[faixa]) >= 5:
+            frases.append(f"A faixa de {faixa} passou de {formatar_numero(antes[faixa], 1)}% para "
+                          f"{formatar_numero(depois[faixa], 1)}% das internações entre {periodos[0]} e {periodos[1]}.")
+        else:
+            frases.append("A distribuição por idade ficou parecida entre os dois períodos "
+                          "(nenhuma faixa mudou 5 pontos ou mais).")
     if total < 60:
         frases.append("Poucas internações para dividir em faixas: leia como indício, não como conclusão.")
     return frases

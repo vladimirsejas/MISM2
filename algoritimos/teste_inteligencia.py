@@ -267,6 +267,31 @@ checar("I. faixas: dois períodos e 50-69 sobe de 25% para 50%",
        and abs(tabela[(tabela["faixa"] == "50 a 69") & (tabela["periodo"] == "2019–2024")]["pct"].iloc[0] - 50) < 1e-6)
 checar("I. leitura das faixas cita a faixa que mais mudou", "50 a 69" in leitura_faixas(tabela, periodos)[0])
 
+# ---- gráfico de idade: todos os cânceres, um ano só, cidade sem dados, zero em faixa (pedido da Secretaria, 20/10/2026) ----
+from inteligencia import TODOS_CANCERES, totais_faixas
+dois = pd.concat([faixas, faixas.assign(tipo_cancer="OVARIO", internacoes=5)], ignore_index=True)
+t_todos, p_todos = comparar_faixas(dois, TODOS_CANCERES)
+t_mama, _ = comparar_faixas(dois, "MAMA")
+checar("I. faixas: 'todos os cânceres' soma os cânceres (total = mama + ovário)",
+       p_todos == ["2013–2018", "2019–2024"]
+       and sum(totais_faixas(t_todos).values()) == sum(totais_faixas(t_mama).values()) + 12 * 4 * 5)
+um_ano = faixas[faixas["ano"] == 2020]
+t1, p1 = comparar_faixas(um_ano, "MAMA")
+checar("I. faixas: um único ano vira UM período (sem período vazio mostrando 0%)",
+       p1 == ["2020"] and len(t1) == 4 and abs(t1["pct"].sum() - 100) < 1e-6 and "Só há idade registrada em 2020" in leitura_faixas(t1, p1)[0])
+vazio, pv = comparar_faixas(faixas, "OVARIO")
+checar("I. faixas: câncer sem registro na cidade devolve 'sem dados' (None), nunca uma tabela de zeros",
+       pv is None and vazio.empty and leitura_faixas(vazio, pv) == [])
+checar("I. faixas: sem nenhuma linha também não quebra com 'todos'",
+       comparar_faixas(faixas.iloc[0:0], TODOS_CANCERES)[1] is None)
+sem_70 = faixas[faixas["faixa"] != "70 ou mais"]
+t70, p70 = comparar_faixas(sem_70, "MAMA")
+checar("I. faixas: faixa sem registro aparece com 0 internações e 0% (sem dividir por zero) e as outras somam 100%",
+       t70[t70["faixa"] == "70 ou mais"]["internacoes"].sum() == 0
+       and all(abs(g["pct"].sum() - 100) < 1e-6 for _, g in t70.groupby("periodo")))
+checar("I. faixas: totais por período são a soma exata das faixas (6 anos x 40 e 6 anos x 60)",
+       totais_faixas(t_mama) == {"2013–2018": 240, "2019–2024": 360})
+
 pressao = pressao_projetada(serie(crescente, [1000] * 13), "MAMA")
 checar("I. pressão projetada: internações, dias e valor registrado em 2028",
        set(pressao) == {"internacoes", "dias_permanencia", "valor_total"}

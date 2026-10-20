@@ -613,6 +613,57 @@ def main():
         assistente.obter_ia = obter_ia_original
         conversa.registrar_pergunta = lambda *a: None
 
+    # ---- J. gráfico de idade (pedido da Secretaria da Mulher): escolher cidade e câncer dentro do gráfico ----
+    lista_original = configuracao_geografica.listar_municipios_disponiveis
+    faixas_original = inteligencia.carregar_faixas
+    colunas_faixas = ["tipo_cancer", "ano", "faixa", "internacoes"]
+    faixas_rio_claro = pd.DataFrame([(c, a_, f, 5 + a_ % 3) for c in CODIGOS.values() for a_ in range(2013, 2026)
+                                     for f in ("até 39 anos", "40 a 49", "50 a 69", "70 ou mais")], columns=colunas_faixas)
+    faixas_campinas = pd.DataFrame([("COLO_UTERO", 2025, f, 7) for f in ("até 39 anos", "40 a 49", "50 a 69", "70 ou mais")],
+                                   columns=colunas_faixas)
+    configuracao_geografica.listar_municipios_disponiveis = lambda: [
+        {"origem": "RIO_CLARO", "nome": "Rio Claro", "codigo_ibge": 3543907, "uf": "SP"},
+        {"origem": "CAMPINAS", "nome": "Campinas", "codigo_ibge": 3509502, "uf": "SP"}]
+    inteligencia.carregar_faixas = lambda conn, o, uf="SP": faixas_rio_claro.copy() if o == "RIO_CLARO" else faixas_campinas.copy()
+    try:
+        streamlit.cache_data.clear()
+        at = abrir()
+        at.session_state["aba"] = "Investigar"
+        at.run()
+        caixas = {s.label: s for s in at.selectbox}
+        textos = " ".join(str(m.value) for m in at.markdown)
+        checar("J. idade: cidade e câncer se escolhem dentro do gráfico (começam iguais ao topo)",
+               not erros(at) and "Cidade (onde as mulheres moram)" in caixas and "Câncer deste gráfico" in caixas
+               and caixas["Cidade (onde as mulheres moram)"].value == "RIO_CLARO"
+               and list(caixas["Câncer deste gráfico"].options)[0] == "Todos os cânceres acompanhados" and len(caixas["Câncer deste gráfico"].options) == 8)
+        checar("J. idade: a pergunta diz de quem são os números (selo da cidade escolhida)",
+               "A idade das mulheres internadas por câncer de mama mudou?" in textos and "📍 Rio Claro" in textos)
+        caixas["Câncer deste gráfico"].select("TODOS").run()
+        textos = " ".join(str(m.value) for m in at.markdown)
+        checar("J. idade: 'Todos os cânceres acompanhados' soma os sete e muda o título",
+               not erros(at) and "pelos cânceres acompanhados" in textos
+               and "não prova que a idade de cada mulher mudou" in textos)
+        {s.label: s for s in at.selectbox}["Cidade (onde as mulheres moram)"].select("CAMPINAS").run()
+        caixas = {s.label: s for s in at.selectbox}
+        textos = " ".join(str(m.value) for m in at.markdown)
+        checar("J. idade: trocar de cidade troca os dados e as opções de câncer (só o que a cidade tem)",
+               not erros(at) and list(caixas["Câncer deste gráfico"].options) == ["Todos os cânceres acompanhados", "Colo do útero"] and "📍 Campinas" in textos
+               and "Só há idade registrada em 2025" in " ".join(str(m.value) for m in at.markdown))
+        inteligencia.carregar_faixas = lambda conn, o, uf="SP": faixas_campinas.iloc[0:0].copy()
+        streamlit.cache_data.clear()
+        at = abrir()
+        at.session_state["aba"] = "Investigar"
+        at.session_state["faixas_origem"] = "CAMPINAS"
+        at.session_state["faixas_origem_topo"] = "RIO_CLARO"
+        at.run()
+        info = " ".join(str(i.value) for i in at.info)
+        checar("J. idade: cidade sem registro avisa 'este dado não existe', sem gráfico e sem zero inventado",
+               not erros(at) and "Este dado não existe para Campinas" in info)
+    finally:
+        configuracao_geografica.listar_municipios_disponiveis = lista_original
+        inteligencia.carregar_faixas = faixas_original
+        streamlit.cache_data.clear()
+
     print(f"\n({time.time() - inicio:.0f} s)")
     if falhas:
         print(f"{len(falhas)} checagem(ns) falharam.")

@@ -34,6 +34,9 @@ from inteligencia import (
     carregar_serie,
     cidades_parecidas,
     comparar_faixas,
+    totais_faixas,
+    TODOS_CANCERES,
+    NOME_TODOS_CANCERES,
     confiabilidade,
     destaques_cancer,
     ficha_cancer,
@@ -293,21 +296,21 @@ def reais(valor, compacto=False):
     return f"R$ {formatar_numero(valor)}"
 
 
-def selo_escopo(tipo, detalhe=""):
+def selo_escopo(tipo, detalhe="", cidade=None):
     """Diz de quem são os números do bloco: "estado" (todas as cidades de SP, não muda
     quando se troca de município) ou "cidade" (a escolhida no topo)."""
     if tipo == "estado":
         rotulo, padrao = "🌎 Todo o Estado de São Paulo", "não muda quando você troca de cidade"
     else:
-        rotulo, padrao = f"📍 {html.escape(nome_cidade)}", "muda quando você troca de cidade"
+        rotulo, padrao = f"📍 {html.escape(cidade or nome_cidade)}", "muda quando você troca de cidade"
     st.markdown(f'<div class="escudo-escopo {tipo}">{rotulo} <small>· {detalhe or padrao}</small></div>',
                 unsafe_allow_html=True)
 
 
-def pergunta(texto, escopo=None, detalhe=""):
+def pergunta(texto, escopo=None, detalhe="", cidade=None):
     st.markdown(f'<div class="escudo-pergunta">{texto}</div>', unsafe_allow_html=True)
     if escopo:
-        selo_escopo(escopo, detalhe)
+        selo_escopo(escopo, detalhe, cidade)
 
 
 def leitura(titulo, frases):
@@ -437,6 +440,21 @@ def seletor(onde, rotulo, chave, opcoes, **kwargs):
     k = chave_widget(chave)
     return onde.radio(rotulo, opcoes, index=opcoes.index(st.session_state[chave]), key=k,
                       on_change=sincronizar, args=(chave, k), **kwargs)
+
+
+def caixa_presa(onde, rotulo, chave, opcoes, **kwargs):
+    """st.selectbox preso à chave persistente (mesma defesa de seletor)."""
+    k = chave_widget(chave)
+    return onde.selectbox(rotulo, opcoes, index=opcoes.index(st.session_state[chave]), key=k,
+                          on_change=sincronizar, args=(chave, k), **kwargs)
+
+
+def seguir_o_topo(chave, chave_topo, valor_topo):
+    """A escolha local começa igual à do topo e volta a ela quando o topo muda; entre uma troca e outra,
+    vale o que a pessoa escolheu no próprio gráfico."""
+    if st.session_state.get(chave_topo) != valor_topo or chave not in st.session_state:
+        st.session_state[chave_topo] = valor_topo
+        st.session_state[chave] = valor_topo
 
 
 def chave_liga(onde, rotulo, chave, **kwargs):
@@ -1207,29 +1225,65 @@ if aba == "Investigar":
     st.dataframe(tabela_aparece_para_tela(aparece, ano_ini), width="stretch", hide_index=True)
     leitura("O que a tabela mostra", leitura_aparece(aparece, anos_incompletos(serie), ano_fim, ano_ini))
 
-    pergunta(f"A idade das mulheres internadas por {cancer_de(doenca)} mudou?", "cidade",
-             f"moradoras de {html.escape(nome_cidade)}")
-    faixas = faixas_municipio(ORIGEM)
-    tabela_faixas, periodos = comparar_faixas(faixas, doenca)
-    if periodos is None:
-        st.info("Não há idade registrada para esta seleção.")
+    # Cidade e câncer deste gráfico (pedido da Secretaria da Mulher): começam iguais aos do topo, mas se escolhem aqui.
+    seguir_o_topo("faixas_origem", "faixas_origem_topo", ORIGEM)
+    nomes_por_origem = {m["origem"]: m["nome"] for m in lista_municipios}
+    st.markdown('<div class="escudo-dica">Escolha a cidade e o câncer deste gráfico. Eles começam iguais aos do topo '
+                'da página, mas valem só aqui.</div>', unsafe_allow_html=True)
+    col_c, col_d = st.columns(2)
+    with col_c:
+        origem_faixas = caixa_presa(st, "Cidade (onde as mulheres moram)", "faixas_origem",
+                                    list(nomes_por_origem), format_func=nomes_por_origem.get)
+    faixas = faixas_municipio(origem_faixas)
+    nome_faixas = nomes_por_origem[origem_faixas]
+    existentes = [c for c in codigos if c in set(faixas["tipo_cancer"])] + sorted(
+        c for c in set(faixas["tipo_cancer"]) - set(codigos))
+    opcoes_cancer = ([TODOS_CANCERES] if existentes else []) + existentes
+    seguir_o_topo("faixas_cancer", "faixas_cancer_topo", doenca)
+    if st.session_state["faixas_cancer"] not in opcoes_cancer and opcoes_cancer:
+        st.session_state["faixas_cancer"] = opcoes_cancer[0]
+    with col_d:
+        if opcoes_cancer:
+            cancer_faixas = caixa_presa(
+                st, "Câncer deste gráfico", "faixas_cancer", opcoes_cancer,
+                format_func=lambda c: NOME_TODOS_CANCERES if c == TODOS_CANCERES else nome_doenca(c))
+        else:
+            cancer_faixas = None
+    if cancer_faixas is None:
+        pergunta("A idade das mulheres internadas por câncer mudou?", "cidade",
+                 f"moradoras de {html.escape(nome_faixas)}", cidade=nome_faixas)
+        st.info(f"Este dado não existe para {nome_faixas}: não há internação com idade registrada para os cânceres "
+                "acompanhados.")
     else:
-        fig = go.Figure()
-        for periodo, cor in zip(periodos, [CINZA, AZUL]):
-            parte = tabela_faixas[tabela_faixas["periodo"] == periodo]
-            fig.add_trace(go.Bar(
-                x=parte["faixa"], y=parte["pct"], name=periodo, marker={"color": cor, "line": {"width": 0}},
-                text=[f"{formatar_numero(v)}%" for v in parte["pct"]], textposition="outside", cliponaxis=False,
-                customdata=parte[["internacoes"]].values,
-                hovertemplate="%{x}: %{y:.1f}% (%{customdata[0]} internações)<extra>" + periodo + "</extra>",
-            ))
-        fig.update_layout(barmode="group", bargap=0.3, bargroupgap=0.08)
-        fig.update_yaxes(ticksuffix="%", rangemode="tozero")
-        estilizar(fig, altura=340)
-        st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO)
-        leitura("O que o gráfico mostra", leitura_faixas(tabela_faixas, periodos)
-                + ["A faixa de 50 a 69 anos é a do rastreamento de câncer de mama recomendado pelo INCA."
-                   if doenca == "MAMA" else "Percentual de cada faixa dentro de cada período."])
+        sujeito = "pelos cânceres acompanhados" if cancer_faixas == TODOS_CANCERES else f"por {cancer_de(cancer_faixas)}"
+        pergunta(f"A idade das mulheres internadas {sujeito} mudou?", "cidade",
+                 f"moradoras de {html.escape(nome_faixas)}", cidade=nome_faixas)
+        tabela_faixas, periodos = comparar_faixas(faixas, cancer_faixas)
+        if periodos is None:
+            st.info(f"Este dado não existe para {nome_faixas}: não há idade registrada para "
+                    f"{NOME_TODOS_CANCERES.lower() if cancer_faixas == TODOS_CANCERES else cancer_de(cancer_faixas)} "
+                    "nesta cidade. Isso não significa zero internações: o banco não tem o registro.")
+        else:
+            totais = totais_faixas(tabela_faixas)
+            fig = go.Figure()
+            for periodo, cor in zip(periodos, [CINZA, AZUL]):
+                parte = tabela_faixas[tabela_faixas["periodo"] == periodo]
+                fig.add_trace(go.Bar(
+                    x=parte["faixa"], y=parte["pct"], name=f"{periodo} ({formatar_numero(totais[periodo])} internações)",
+                    marker={"color": cor, "line": {"width": 0}},
+                    text=[f"{formatar_numero(v)}%" for v in parte["pct"]], textposition="outside", cliponaxis=False,
+                    customdata=parte[["internacoes"]].values,
+                    hovertemplate="%{x}: %{y:.1f}% (%{customdata[0]} internações)<extra>" + periodo + "</extra>",
+                ))
+            fig.update_layout(barmode="group", bargap=0.3, bargroupgap=0.08)
+            fig.update_yaxes(ticksuffix="%", rangemode="tozero")
+            estilizar(fig, altura=340)
+            st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO)
+            leitura("O que o gráfico mostra", leitura_faixas(tabela_faixas, periodos)
+                    + ["A faixa de 50 a 69 anos é a do rastreamento de câncer de mama recomendado pelo INCA."
+                       if cancer_faixas == "MAMA" else "Percentual de cada faixa dentro de cada período.",
+                       "Compara a distribuição das internações registradas por faixa de idade; não prova que a idade "
+                       "de cada mulher mudou. Só entram internações com idade registrada."])
 
     pergunta(f"Como {nome_cidade} se compara com outra cidade?", "cidade",
              f"moradoras de {html.escape(nome_cidade)} e da cidade escolhida abaixo")
