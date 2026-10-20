@@ -332,7 +332,7 @@ def fluxo(ctx):
                   "a mostrar de onde vêm as mulheres de outros estados atendidas em SP."),
             expressao="cautelosa",
             botoes=[("Como esses dados funcionam?", caminho("metodo"))],
-            destino={"aba": "Investigar"},
+            destino={"aba": "Rede hospitalar"},
         )
     r = resumo_fluxo(ctx.fluxo)
     if not r["internacoes_fora"]:
@@ -363,7 +363,7 @@ def fluxo(ctx):
         expressao="atenta" if r["internacoes_fora"] else "explicando",
         botoes=[("Comparar com São Paulo", caminho("estado")), ("Os dados estão completos?", caminho("completude")),
                 ("Como esses dados funcionam?", caminho("metodo"))],
-        destino={"aba": "Investigar"},
+        destino={"aba": "Rede hospitalar"},
         numeros=numeros,
     )
 
@@ -651,10 +651,10 @@ def polos(ctx, cancer=None):
         return Resposta(
             fala=("Ainda não consigo mostrar onde as internações acontecem: o banco foi carregado sem o município do hospital. "
                   "Quando a carga for rodada de novo (py etl\\carga_todas_bases.py), eu passo a mostrar as cidades que mais tratam."),
-            expressao="cautelosa", botoes=[("Mulheres de outros estados", caminho("fluxo"))], destino={"aba": "Investigar"})
+            expressao="cautelosa", botoes=[("Mulheres de outros estados", caminho("fluxo"))], destino={"aba": "Rede hospitalar"})
     return Resposta(fala=leitura_atendimento(tabela, usado, ctx.cidade, ctx.codigo_ibge), expressao="explicando",
                     botoes=[("Mulheres de outros estados", caminho("fluxo")), ("Como esses dados funcionam?", caminho("metodo"))],
-                    destino={"aba": "Investigar"})
+                    destino={"aba": "Rede hospitalar"})
 
 
 def mortalidade_real(ctx, cancer=None):

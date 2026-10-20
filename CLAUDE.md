@@ -571,6 +571,26 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
 - Ainda não feito (combinar): população do IBGE; testar com pessoas de verdade; revisar com o autor o
   vocabulário popular do Apoio (`apoio_busca.VOCABULARIO`/`EXTRA`).
 
+- **Decisões de 20/10/2026 (o autor mandou decidir sem pedir autorização, com a régua "o dashboard tem de ser legível, não um quebra-cabeça").**
+  (1) **Apoio:** faixa fixa de emergência (190/180/192), faixa "Você está em", a página não abre mais em câncer de mama, nomes unificados
+  ("Meu exame deu alterado", "Barretos: Hospital de Amor"; "porta" virou "assunto" para a usuária), glossário (`apoio.GLOSSARIO`), botão
+  "Abrir o boletim da região (PDF)" nos 3 hospitais da RRAS 14, carretas num bloco só, Lia da lateral sem repetir a lista de cartões, ordem do cartão
+  (Para quem, Como funciona, Onde e contato, O que levar), "Para quem" dos hospitais, fones de CEAD e DDM vindos do cadastro de Onde ser atendida.
+  **O Cadu fica como está** (ninguém em Rio Claro sabe quem opera; cartão "a confirmar"). Cuidado: texto novo em `contato`/`para_quem` entra no índice da busca
+  (a palavra "telefone" ou "regulação" ali já derrubou `teste_conversa_apoio`). Teste de jornada das 4 mulheres em `dashboard/teste_apoio_tela.py` (A2).
+  (2) **Gráfico de idade** (pedido da Secretaria da Mulher): cidade e câncer escolhidos no próprio gráfico, "Todos os cânceres acompanhados"
+  (`inteligencia.TODOS_CANCERES`), um único ano vira um período, cidade sem dado diz "este dado não existe". Cenário J de `teste_painel.py`.
+  (3) **Aba Investigar dividida:** nova aba **Rede hospitalar** (fluxo, hospitais, mapa, tabela de fluxo, cidade atendida) e Investigar fica só com
+  perguntas da cidade escolhida (câncer que cresce, idade, comparar cidades). Cada pergunta numa aba só (cenário K). Destinos da Lia de fluxo e polos
+  agora vão a "Rede hospitalar". Inventário em `docs/INVENTARIO_DO_PAINEL.md`.
+  (4) **2025 e 2026:** 2025 já está no banco; **2026 NÃO existe nos arquivos do autor** e o `baixar_sih_sp.py` termina em 2025 (`ANOS`, texto "2013 a 2025").
+  A nuvem não alcança o DATASUS (proxy 403) e a web não traz cronograma de 2026: descobrir no notebook com `py -3.12 etl\listar_meses_pysus.py --ano 2026`
+  (só lista; teste `etl/teste_listar_meses_pysus.py`). Regras do autor: preservar as lacunas, nunca preencher/estimar, lacuna da fonte != falha de download,
+  não repetir download nem verificação já feitos, ano incompleto não se compara como ano completo. **Próximo:** atualização incremental só de 2025–2026
+  (trocar só essas competências; textos "2013–2025" passam a vir do banco) e a consulta "internações por ano" (residência x hospital), depois de ver a lista de meses.
+  **SIA/SIM/CNES no painel:** hoje só a Lia usa; entram no painel (uma seção própria, nunca somadas ao SIH) depois de conferir os códigos com o banco real.
+  A afirmação do ChatGPT de que o SIH ainda não tem regra territorial única está desatualizada (resolvido em 08/10/2026).
+
 ## Notas de contexto do domínio
 
 - Banco de dados: `banco/escudo_feminino.db` (SQLite). O caminho é

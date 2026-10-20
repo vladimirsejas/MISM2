@@ -19,7 +19,7 @@ from lia import CAMINHOS, EXPRESSOES, INICIO, Contexto, caminho, responder, sobr
 
 DIRETORIO_ATUAL = os.path.dirname(os.path.abspath(__file__))
 CSV_REAL = os.path.join(DIRETORIO_ATUAL, "..", "analises", "base_preditiva_2013_2025.csv")
-ABAS = {"Panorama", "Evolução", "Investigar", "Planejamento", "Método"}
+ABAS = {"Panorama", "Evolução", "Rede hospitalar", "Investigar", "Planejamento", "Método"}
 MEDIDAS = {"Internações", "Valor hospitalar registrado", "Óbitos na internação", "Dias de internação"}
 
 falhas = []
@@ -122,7 +122,7 @@ checar("E. a Lia avisa os anos incompletos ao falar de evolução", "não oferec
 # ---- F. fluxo de mulheres de outros estados ----
 r = responder(ctx, caminho("fluxo"))
 checar("F. sem o fluxo no banco, a Lia diz que ainda não sabe e manda rodar a carga",
-       "carga" in r.fala and r.expressao == "cautelosa" and r.destino == {"aba": "Investigar"})
+       "carga" in r.fala and r.expressao == "cautelosa" and r.destino == {"aba": "Rede hospitalar"})
 ufs_f = pd.DataFrame({"uf": ["MG", "GO"], "estado": ["Minas Gerais", "Goiás"], "internacoes": [60, 20], "pct": [75.0, 25.0]})
 fluxo_falso = {"internacoes_fora": 80, "internacoes_total": 800, "pct_fora": 10.0, "n_ufs": 2, "ufs": ufs_f,
                "concentracao": {"destino": "Barretos", "pct": 88.0, "hospitais": 2, "n_para_90": 2}}
@@ -138,8 +138,8 @@ try:
 finally:
     _lia.resumo_fluxo = _original
     _lia.hospitais_fluxo = _original_h
-checar("F. com o fluxo: cita estados e destino, vai para Investigar, descreve sem atribuir causa",
-       "Minas Gerais" in r.fala and "Barretos" in r.fala and r.destino == {"aba": "Investigar"}
+checar("F. com o fluxo: cita estados e destino, vai para a Rede hospitalar, descreve sem atribuir causa",
+       "Minas Gerais" in r.fala and "Barretos" in r.fala and r.destino == {"aba": "Rede hospitalar"}
        and "internações, não pessoas" in r.fala and "porque" not in r.fala.lower() and "R$" not in r.fala)
 checar("F. a Lia cita o hospital que mais recebe (pelo nome); sem o nome carregado, não cita",
        "O hospital que mais recebe é FUNDACAO PIO XII BARRETOS" in r.fala

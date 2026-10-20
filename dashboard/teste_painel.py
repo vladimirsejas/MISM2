@@ -207,7 +207,7 @@ def main():
         checar(f"C. passeio, parada {i + 1}: sem erro", not erros(at) and at.session_state["passeio"] == i)
         if i < len(PARADAS) - 1:
             at.button(key="pbtn_seguir").click().run()
-    checar(f"C. passeio leva o painel por {abas}", abas == ["Panorama", "Evolução", "Investigar", "Evolução",
+    checar(f"C. passeio leva o painel por {abas}", abas == ["Panorama", "Evolução", "Rede hospitalar", "Evolução",
                                                            "Planejamento", "Método"])
     at.button(key="pbtn_anterior").click().run()
     checar("C. passeio: '← anterior' volta uma parada", at.session_state["passeio"] == len(PARADAS) - 2)
@@ -216,7 +216,7 @@ def main():
            and at.session_state["lia"]["atual"].fala.strip())
 
     # ---- D. as 5 abas, com as camadas ligadas ----
-    for aba in ["Panorama", "Evolução", "Investigar", "Planejamento", "Método"]:
+    for aba in ["Panorama", "Evolução", "Rede hospitalar", "Investigar", "Planejamento", "Método"]:
         at.session_state["aba"] = aba
         for camada in ("ver_estado", "ver_fora", "ver_projecao"):
             at.session_state[camada] = True
@@ -224,7 +224,7 @@ def main():
         checar(f"D. aba {aba} abre sem erro", not erros(at))
 
     # ---- D2. botão Início: de qualquer aba volta ao Panorama ----
-    for aba in ["Evolução", "Investigar", "Planejamento", "Método"]:
+    for aba in ["Evolução", "Rede hospitalar", "Investigar", "Planejamento", "Método"]:
         at.session_state["aba"] = aba
         at.run()
         at.button(key="inicio_painel").click().run()
@@ -251,7 +251,7 @@ def main():
     finally:
         inteligencia.carregar_serie = serie_original
 
-    # ---- F. fluxo de mulheres de outros estados (aba Investigar) ----
+    # ---- F. fluxo de mulheres de outros estados (aba Rede hospitalar) ----
     # Sem dados de fluxo (banco só com a carga antiga) a seção avisa e não quebra: é o que as abas
     # do cenário D já mostraram, com o banco vazio. Aqui, com dados de fluxo:
     fluxo_original, cidade_original = inteligencia.carregar_fluxo, inteligencia.fluxo_da_cidade
@@ -261,11 +261,11 @@ def main():
         "moradoras_na_cidade": 140, "moradoras_fora": 10, "destinos": [("Campinas", 10)]}
     try:
         at = abrir()
-        at.session_state["aba"] = "Investigar"
+        at.session_state["aba"] = "Rede hospitalar"
         at.run()
         textos = " ".join(str(m.value) for m in at.markdown)
         rotulos = {m.label: m.value for m in at.metric}
-        checar("F. fluxo: a aba Investigar abre sem erro", not erros(at))
+        checar("F. fluxo: a aba Rede hospitalar abre sem erro", not erros(at))
         checar("F. fluxo: perguntas do fluxo e da cidade aparecem",
                "De onde vêm as mulheres de outros estados atendidas em São Paulo?" in textos
                and "Quem é atendida nos hospitais de Rio Claro" in textos)
@@ -339,7 +339,7 @@ def main():
             try:
                 st_cache.clear()
                 at = abrir()
-                at.session_state["aba"] = "Investigar"
+                at.session_state["aba"] = "Rede hospitalar"
                 at.run()
                 textos = " ".join(str(m.value) for m in at.markdown)
                 liga = [x for x in at.toggle if "hospitais habilitados em oncologia" in x.label]
@@ -360,7 +360,7 @@ def main():
                 hosp_onco.carregar = lambda: carregar_original(pasta_h + "_nao_existe")
                 st_cache.clear()
                 at = abrir()
-                at.session_state["aba"] = "Investigar"
+                at.session_state["aba"] = "Rede hospitalar"
                 at.run()
                 legendas = " ".join(str(c.value) for c in at.caption)
                 checar("F. hospitais no mapa: sem arquivo de posições a seção avisa o comando e não quebra",
@@ -402,7 +402,7 @@ def main():
         configuracao_geografica.listar_municipios_disponiveis = lista_original
         inteligencia.porte_das_cidades = porte_original
 
-    # ---- H. ficha de um hospital (aba Investigar): escolher o câncer muda a lista e a ficha ----
+    # ---- H. ficha de um hospital (aba Rede hospitalar): escolher o câncer muda a lista e a ficha ----
     def hospitais_falsos():
         linhas, ufs = [], []
         for cnes, cidade, mun, n_mama, n_colo in (("2090236", "350550", "BARRETOS", 20, 6), ("2077590", "355030", "SAO_PAULO", 8, 0)):
@@ -432,7 +432,7 @@ def main():
     streamlit.cache_data.clear()  # a carga do hospital e do fluxo ficam em cache entre cenários
     try:
         at = abrir()
-        at.session_state["aba"] = "Investigar"
+        at.session_state["aba"] = "Rede hospitalar"
         at.run()
         textos = " ".join(str(m.value) for m in at.markdown)
         caixas = {s.label: list(s.options) for s in at.selectbox}
@@ -663,6 +663,40 @@ def main():
         configuracao_geografica.listar_municipios_disponiveis = lista_original
         inteligencia.carregar_faixas = faixas_original
         streamlit.cache_data.clear()
+
+    # ---- K. divisão da aba Investigar (20/10/2026): cada pergunta mora numa aba só, e a orientação diz qual ----
+    hospitais_original_k, fluxo_original_k = inteligencia.carregar_hospitais, inteligencia.carregar_fluxo
+    cidade_original_k = inteligencia.fluxo_da_cidade
+    inteligencia.carregar_hospitais = lambda conn, uf="SP": hospitais_falsos()
+    inteligencia.carregar_fluxo = lambda conn, uf="SP": fluxo_falso()
+    inteligencia.fluxo_da_cidade = lambda conn, o, cod, uf="SP": None
+    streamlit.cache_data.clear()
+    textos_aba = {}
+    try:
+        for nome_aba in ("Rede hospitalar", "Investigar"):
+            at = abrir()
+            at.session_state["aba"] = nome_aba
+            at.run()
+            textos_aba[nome_aba] = (" ".join(str(m.value) for m in at.markdown), erros(at))
+    finally:
+        inteligencia.carregar_hospitais, inteligencia.carregar_fluxo = hospitais_original_k, fluxo_original_k
+        inteligencia.fluxo_da_cidade = cidade_original_k
+        streamlit.cache_data.clear()
+    rede, inv = textos_aba["Rede hospitalar"][0], textos_aba["Investigar"][0]
+    checar("K. as 6 abas existem na ordem: Panorama, Evolução, Rede hospitalar, Investigar, Planejamento, Método",
+           [r for r in at.radio if r.label == "Navegação"][0].options == ["Panorama", "Evolução", "Rede hospitalar", "Investigar", "Planejamento", "Método"])
+    checar("K. Rede hospitalar abre sem erro, tem a orientação 'Nesta aba' e as perguntas de fluxo e hospital",
+           not textos_aba["Rede hospitalar"][1] and "Nesta aba:" in rede
+           and "De onde vêm as mulheres de outros estados" in rede and "Como é o atendimento em um hospital específico?" in rede)
+    checar("K. Investigar abre sem erro, tem a orientação e as perguntas da cidade escolhida",
+           not textos_aba["Investigar"][1] and "Nesta aba:" in inv
+           and "Qual câncer cresce mais rápido" in inv and "A idade das mulheres internadas" in inv
+           and "se compara com outra cidade" in inv)
+    checar("K. nenhuma pergunta aparece nas duas abas (cada informação tem uma casa só)",
+           "De onde vêm as mulheres de outros estados" not in inv and "Como é o atendimento em um hospital" not in inv
+           and "Qual câncer cresce mais rápido" not in rede and "A idade das mulheres internadas" not in rede
+           and "se compara com outra cidade" not in rede)
+    checar("K. a faixa 'Você está em' nomeia a aba nova", "Rede hospitalar · onde as mulheres são atendidas" in rede)
 
     print(f"\n({time.time() - inicio:.0f} s)")
     if falhas:

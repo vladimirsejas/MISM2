@@ -73,7 +73,7 @@ def main():
     except Exception:  # noqa: BLE001  (boas-vindas já fechadas)
         pass
 
-    for aba in ["Panorama", "Evolução", "Investigar", "Planejamento", "Método"]:
+    for aba in ["Panorama", "Evolução", "Rede hospitalar", "Investigar", "Planejamento", "Método"]:
         at.session_state["aba"] = aba
         for camada in ("ver_estado", "ver_fora", "ver_projecao"):
             at.session_state[camada] = True

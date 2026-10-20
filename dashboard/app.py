@@ -415,7 +415,7 @@ if resumo.empty:
 # sem lembrança velha. definir() é como a Lia "leva" o painel.
 # ------------------------------------------------------------
 
-ABAS = ["Panorama", "Evolução", "Investigar", "Planejamento", "Método"]
+ABAS = ["Panorama", "Evolução", "Rede hospitalar", "Investigar", "Planejamento", "Método"]
 PADROES = {"aba": "Panorama", "medida": "Internações",
            "ver_estado": True, "ver_fora": True, "ver_projecao": False, "ver_hospitais": True,
            "fluxo_visao": "Moradoras atendidas fora da cidade"}
@@ -649,7 +649,8 @@ with col_abas:
 # "Você está em" (autor, 19/10/2026): a aba aberta fica escrita, não só marcada no seletor.
 _ONDE = {"Panorama": "Panorama · a página inicial: o que está acontecendo",
          "Evolução": "Evolução · como os números mudaram ao longo dos anos",
-         "Investigar": "Investigar · de onde vêm as pacientes e quando cada câncer aparece",
+         "Rede hospitalar": "Rede hospitalar · onde as mulheres são atendidas e de onde vêm",
+         "Investigar": "Investigar · perguntas sobre a cidade escolhida: câncer que cresce, idade e comparação",
          "Planejamento": "Planejamento · onde a cidade pode ter problema nos próximos anos",
          "Método": "Método · como os números são feitos"}
 st.markdown(f'<div class="escudo-voce-esta">📍 Você está em: <b>{html.escape(_ONDE.get(aba, aba))}</b>'
@@ -876,7 +877,13 @@ if aba == "Evolução":
 # INVESTIGAR — o que merece ser pesquisado?
 # ============================================================
 
-if aba == "Investigar":
+if aba == "Rede hospitalar":
+    # Divisão da aba Investigar (20/10/2026, "o dashboard tem de ser legível, não um quebra-cabeça"): tudo o que é fluxo
+    # de pacientes e hospitais mora aqui (quase tudo é do Estado, selo roxo); as perguntas da cidade escolhida ficam em Investigar.
+    st.markdown('<div class="escudo-dica"><b>Nesta aba:</b> onde as mulheres são atendidas. Primeiro, as mulheres de '
+                'outros estados atendidas em São Paulo e os hospitais (todo o Estado, selo roxo); no fim, a sua cidade '
+                '(selo azul). Os hospitais habilitados em oncologia mostram onde há rede; habilitação não é vaga.</div>',
+                unsafe_allow_html=True)
     # ---- fluxo: mulheres de outros estados atendidas em SP (pedido do autor, 10/2026) ----
     pergunta("De onde vêm as mulheres de outros estados atendidas em São Paulo?", "estado",
              "todas as cidades de SP, 7 cânceres somados, 2013–2025 · não muda quando você troca de cidade")
@@ -1217,6 +1224,15 @@ if aba == "Investigar":
                 leitura("O que mostra", leitura_cidade_visao(info_cidade, nome_cidade, "aqui"))
         st.markdown("---")
 
+
+# ============================================================
+# INVESTIGAR — perguntas sobre a cidade escolhida (câncer que cresce, idade, comparação)
+# ============================================================
+
+if aba == "Investigar":
+    st.markdown(f'<div class="escudo-dica"><b>Nesta aba:</b> perguntas sobre {html.escape(nome_cidade)}, a cidade '
+                'escolhida no topo: qual câncer cresce mais, se a idade mudou e como a cidade se compara com outra. '
+                'Tudo aqui conta internações de moradoras.</div>', unsafe_allow_html=True)
     pergunta("Qual câncer cresce mais rápido, e quando foi o ponto mais alto?", "cidade",
              f"moradoras de {html.escape(nome_cidade)}, {ano_ini}–{ano_fim}")
     st.markdown('<div class="escudo-dica">Do que mais cresce para o que menos cresce. Uma linha por câncer.</div>',

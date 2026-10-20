@@ -25,7 +25,7 @@ MESES = {2013: 10, 2014: 10, 2015: 8, 2016: 9, 2017: 11, 2018: 6, 2019: 7, 2020:
          2023: 11, 2024: 8, 2025: 12}
 CODIGOS = {"Mama": "MAMA", "Colo do útero": "COLO_UTERO", "Colorretal": "COLORRETAL", "Ovário": "OVARIO",
            "Pele não melanoma": "PELE_NAO_MELANOMA", "Pulmão": "PULMAO", "Tireoide": "TIREOIDE"}
-ABAS = {"Panorama", "Evolução", "Investigar", "Planejamento", "Método"}
+ABAS = {"Panorama", "Evolução", "Rede hospitalar", "Investigar", "Planejamento", "Método"}
 falhas = []
 
 
