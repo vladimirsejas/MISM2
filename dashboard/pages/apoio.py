@@ -541,11 +541,12 @@ with col_titulo:
                 'Um guia de onde procurar, não orientação médica.</div>', unsafe_allow_html=True)
 with col_link:
     botao_inicio(st, "topo")
-    # Telefones, endereços e "Como chegar" das unidades ficam na página Onde ser atendida (uma casa só): o Apoio aponta para ela.
+    # Atalho prioritário preservado: a mulher escolhe a cidade e consulta hospitais próximos.
     try:
+        st.page_link("pages/hospitais_cancer.py", label="🗺️ Encontrar hospitais perto da minha cidade")
         st.page_link("pages/onde_ser_atendida.py", label="📍 Unidades, telefones e como chegar")
     except Exception:  # Streamlit antigo, sem page_link
-        st.markdown('<a href="/onde_ser_atendida" target="_self">Unidades, telefones e como chegar</a>', unsafe_allow_html=True)
+        st.markdown('<a href="/hospitais_cancer" target="_self">Encontrar hospitais perto da minha cidade</a><br><a href="/onde_ser_atendida" target="_self">Unidades, telefones e como chegar</a>', unsafe_allow_html=True)
     st.caption("Cada cartão informa sua fonte e data de conferência. Itens marcados “a confirmar” precisam ser verificados antes de usar.")
 
 # Entrada guiada: poucas escolhas principais; o catálogo completo continua nas abas abaixo.
@@ -585,35 +586,45 @@ if not st.session_state.get("ap_boas_vindas_fechada"):
         a4.button("Não sei por onde começar", key="bv_ap_ajuda",
                   help="A Lia pergunta em que ponto você está, sem escolher por você.",
                   on_click=lia_clicar, args=(apoio.caminho("ajuda"),), width="stretch")
+        try:
+            st.page_link("pages/hospitais_cancer.py",
+                         label="🗺️ Escolher minha cidade e encontrar hospitais próximos")
+        except Exception:
+            st.markdown('<a href="/hospitais_cancer" target="_self">Escolher minha cidade e encontrar hospitais próximos</a>', unsafe_allow_html=True)
         st.button("Ver todas as áreas abaixo", key="bv_fechar_apoio",
                   on_click=lambda: st.session_state.update(ap_boas_vindas_fechada=True))
 
-# Navegação organizada em dois grupos: primeiro o que a mulher procura; depois os recursos de referência.
+# Navegação principal: poucas escolhas claras. O mapa de hospitais fica sempre em destaque.
 def ir_aba(nome):
     st.session_state["ap_aba"] = nome
     st.session_state["ap_item"] = None
     st.session_state["caixa_ap_contexto"] = None
 
-st.markdown("**Atendimento e orientação**")
-n1, n2 = st.columns(2)
+st.markdown("**Comece por aqui**")
+n1, n2, n3 = st.columns(3)
 for col, chave in ((n1, "caminho"), (n2, "rio_claro")):
     nome = apoio.LAMINAS[chave]
     col.button(nome, key=f"nav_apoio_{chave}", type="primary" if st.session_state["ap_aba"] == nome else "secondary",
                on_click=ir_aba, args=(nome,), width="stretch")
+try:
+    n3.page_link("pages/hospitais_cancer.py", label="🗺️ Hospitais perto da minha cidade")
+except Exception:
+    n3.markdown('<a href="/hospitais_cancer" target="_self">Hospitais perto da minha cidade</a>', unsafe_allow_html=True)
 
-st.markdown("**Recursos de referência**")
-r1, r2 = st.columns(2)
-for col, chave in ((r1, "hospitais"), (r2, "carretas")):
-    nome = apoio.LAMINAS[chave]
-    rotulo = {"hospitais": "Hospitais no Estado", "carretas": "Carretas da mamografia"}[chave]
-    col.button(rotulo, key=f"nav_apoio_{chave}", type="primary" if st.session_state["ap_aba"] == nome else "secondary",
-               on_click=ir_aba, args=(nome,), width="stretch")
-r3, r4 = st.columns(2)
-for col, chave in ((r3, "barretos"), (r4, "sobre")):
-    nome = apoio.LAMINAS[chave]
-    rotulo = {"barretos": "Hospital de Amor", "sobre": "Sobre as informações"}[chave]
-    col.button(rotulo, key=f"nav_apoio_{chave}", type="primary" if st.session_state["ap_aba"] == nome else "secondary",
-               on_click=ir_aba, args=(nome,), width="stretch")
+with st.expander("Outros recursos e informações", expanded=st.session_state["ap_aba"] in
+                 (apoio.LAMINAS["hospitais"], apoio.LAMINAS["carretas"], apoio.LAMINAS["barretos"], apoio.LAMINAS["sobre"])):
+    r1, r2 = st.columns(2)
+    for col, chave in ((r1, "hospitais"), (r2, "carretas")):
+        nome = apoio.LAMINAS[chave]
+        rotulo = {"hospitais": "Hospitais no Estado", "carretas": "Carretas da mamografia"}[chave]
+        col.button(rotulo, key=f"nav_apoio_{chave}", type="primary" if st.session_state["ap_aba"] == nome else "secondary",
+                   on_click=ir_aba, args=(nome,), width="stretch")
+    r3, r4 = st.columns(2)
+    for col, chave in ((r3, "barretos"), (r4, "sobre")):
+        nome = apoio.LAMINAS[chave]
+        rotulo = {"barretos": "Hospital de Amor", "sobre": "Sobre as informações"}[chave]
+        col.button(rotulo, key=f"nav_apoio_{chave}", type="primary" if st.session_state["ap_aba"] == nome else "secondary",
+                   on_click=ir_aba, args=(nome,), width="stretch")
 
 aba = st.session_state["ap_aba"]
 
