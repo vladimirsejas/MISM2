@@ -212,9 +212,9 @@ for c in apoio.NOME_CAMINHO:
     esperados = [i["titulo"] for i in apoio.itens(caminho=c, lamina="caminho")]
     checar(f"D. porta {c} mostra seus {len(esperados)} cartões",
            not erros(at) and all(_html_esc(t) in texto for t in esperados))
-at.session_state["ap_caminho"] = "rede"
+at.session_state["ap_caminho"] = "tratamento"
 at.run()
-checar("D. porta Rede oncológica desenha o caminho em 6 passos",
+checar("D. porta Tratamento pelo SUS desenha o caminho em 6 passos",
        not erros(at) and sum('class="apoio-fluxo"' in m.value for m in at.markdown) == len(apoio.FLUXO_REDE))
 at.session_state["ap_caminho"] = "ajuda"
 for e in apoio.NOME_ETAPA:
@@ -459,7 +459,7 @@ finally:
 assuntos_teste = [
     ("caminho", id, rotulo, f"Quero orientação sobre {rotulo.lower()}.")
     for id, rotulo, _, _ in apoio.CAMINHOS
-    if id in {"mama", "colo", "outros", "diagnostico", "regulacao", "tratamento", "rede", "direitos"}
+    if id in {"mama", "colo", "outros", "diagnostico", "tratamento", "direitos"}
 ]
 assuntos_teste += [
     ("etapa", id, rotulo, f"Minha situação é: {rotulo.lower()}.")
@@ -503,6 +503,11 @@ try:
 finally:
     apoio_busca.obter_classificador = original_classificador_assuntos
 
+at_antigo = AppTest.from_file(os.path.join(RAIZ, "dashboard", "pages", "apoio.py"), default_timeout=90)
+at_antigo.session_state["ap_boas_vindas_fechada"] = True
+at_antigo.session_state["ap_caminho"] = "rede"      # assunto que saiu em 20/10/2026 (sessão aberta antes da mudança)
+at_antigo.run()
+checar("D. sessão antiga com o assunto 'rede' (que não existe mais) não quebra a página", not erros(at_antigo))
 # ---- H. "Preciso de ajuda" em destaque, fora da lista de assuntos (autor, 20/10/2026: "um dos mais importantes") ----
 at = AppTest.from_file(os.path.join(RAIZ, "dashboard", "pages", "apoio.py"), default_timeout=90)
 at.run()

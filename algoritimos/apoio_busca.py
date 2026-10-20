@@ -33,11 +33,10 @@ VOCABULARIO = {
     "outros": "outros tipos de câncer além da mama e do colo do útero câncer ginecológico sinais e sintomas exames",
     "diagnostico": "exame alterado resultado alterado laudo biópsia birads bi-rads suspeito colposcopia punção investigação "
                    "especialista diagnóstico confirmar câncer",
-    "regulacao": "fila vaga encaminhamento encaminhada regulação cross lista de espera demora não me chamaram consulta "
-                 "com especialista oncologia acompanhar a fila",
     "tratamento": "quimioterapia quimio radioterapia cirurgia tratamento do câncer oncologia prazo 60 dias hospital onde me tratar "
-                  "apoio durante o tratamento peruca",
-    "rede": "rede oncológica unacon cacon hospital habilitado hospital de referência onde tratar câncer pelo sus lista de hospitais",
+                  "apoio durante o tratamento peruca fila vaga encaminhamento encaminhada regulação cross lista de espera demora "
+                  "não me chamaram consulta com especialista acompanhar a fila rede oncológica unacon cacon hospital habilitado "
+                  "hospital de referência onde tratar câncer pelo sus lista de hospitais",
     "direitos": "direitos benefício inss auxílio doença fgts pis imposto de renda isenção tfd transporte para tratamento "
                 "diárias reconstrução da mama cartilha",
     "ajuda": "violência agressão ameaça medo ajuda proteção delegacia da mulher ligue 180 medida protetiva psicólogo apoio "
@@ -504,8 +503,8 @@ def _responder_cidade(pergunta, carregar=_localizacao_do_banco):
              "hospitais por região. Para saber a região (DRS) de " + nome + ", pergunte na unidade de saúde ou na Secretaria de Saúde.")
     ids = [i["id"] for i in da_cidade] + [i["id"] for _, i in proximos]
     r = Resposta(fala=fala + "\n\n" + apoio.AVISO, expressao="acolhedora",
-                 botoes=[("Rede oncológica", apoio.caminho("rede")), ("Exame alterado ou diagnóstico", apoio.caminho("diagnostico"))],
-                 destino={"aba": apoio.LAMINAS["caminho"], "caminho": "rede"})
+                 botoes=[("Tratamento pelo SUS", apoio.caminho("tratamento")), ("Exame alterado ou diagnóstico", apoio.caminho("diagnostico"))],
+                 destino={"aba": apoio.LAMINAS["caminho"], "caminho": "tratamento"})
     return r, ids
 
 
@@ -563,7 +562,7 @@ def _responder_pergunta(pergunta, classificar=None, contexto=None, cancer_em_foc
                      expressao="cautelosa",
                      botoes=[("Páginas do INCA por tipo de câncer", apoio.item("inca_tipos_cancer")),
                              ("Exame alterado ou diagnóstico", apoio.caminho("diagnostico")),
-                             ("Rede oncológica", apoio.caminho("rede")), ("Seus direitos", apoio.caminho("direitos"))],
+                             ("Tratamento pelo SUS", apoio.caminho("tratamento")), ("Seus direitos", apoio.caminho("direitos"))],
                      destino={"aba": apoio.LAMINAS["caminho"], "caminho": "outros"})
         return _com_inicio(_de(r, tipo="nada", selo="Nada foi inventado: o guia só mostra o que está no catálogo.", **comum))
     texto_norm = ent.normalizar(pergunta)

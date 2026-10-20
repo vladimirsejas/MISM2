@@ -78,10 +78,12 @@ checar("Hospitais no Estado: pelo menos 20 hospitais", len(apoio.itens(lamina="h
 checar("proteção à mulher (em Preciso de ajuda): pelo menos 8 canais", len(apoio.itens(caminho="ajuda")) >= 8)
 # 10/2026: as 8 portas combinadas com o autor ganharam a porta "Outros cânceres" (intestino, ovário, pele, pulmão, tireoide e
 # corpo do útero), depois de o autor achar que o Apoio girava em torno do câncer de mama. As 8 de antes continuam, na ordem.
-checar("as portas combinadas com o autor (8) mais Outros cânceres, na mesma ordem", list(apoio.NOME_CAMINHO) == [
-    "mama", "colo", "outros", "diagnostico", "regulacao", "tratamento", "rede", "direitos", "ajuda"]
-       and [c for c in apoio.NOME_CAMINHO if c != "outros"] == [
-    "mama", "colo", "diagnostico", "regulacao", "tratamento", "rede", "direitos", "ajuda"])
+# 20/10/2026 (autor): "Regulação" saiu dos assuntos (técnico demais; a paciente não opera a regulação: o conteúdo mora em "Fui
+# encaminhada") e "Tratamento" e "Rede oncológica" viraram um assunto só, "Tratamento pelo SUS".
+checar("os assuntos, na ordem: sem Regulação, e Tratamento unido à Rede oncológica", list(apoio.NOME_CAMINHO) == [
+    "mama", "colo", "outros", "diagnostico", "tratamento", "direitos", "ajuda"]
+       and "regulacao" not in apoio.NOME_CAMINHO and "rede" not in apoio.NOME_CAMINHO)
+checar("nenhum cartão ficou num assunto que não existe mais", all(i["caminho"] is None or i["caminho"] in apoio.NOME_CAMINHO for i in apoio.ITENS))  # None = só mora numa área
 checar("Preciso de ajuda: 6 pontos do caminho, com violência", len(apoio.ETAPAS) == 6
        and "violencia" in apoio.NOME_ETAPA)
 checar("todo ponto do caminho aponta para portas e itens que existem",
@@ -98,9 +100,14 @@ checar("prazo legal de 30 dias explicita hipótese principal e pedido médico fu
 checar("diagnóstico recente tem um próximo passo prático sem indicar hospital por conta própria",
        "quem está responsável pelo encaminhamento" in next(x[2] for x in apoio.ETAPAS if x[0] == "diagnostico_cancer")
        and "60 dias" in next(x[2] for x in apoio.ETAPAS if x[0] == "diagnostico_cancer"))
-checar("regulação diz o que fazer se o nome não aparecer", "nao_achei_nome" in apoio.POR_ID
-       and apoio.POR_ID["nao_achei_nome"]["caminho"] == "regulacao")
-checar("fluxo da rede aponta para portas que existem", all(p in apoio.NOME_CAMINHO for _, _, p in apoio.FLUXO_REDE))
+checar("o que fazer se o nome não aparecer na fila continua no guia (assunto Tratamento) e na situação 'Fui encaminhada'",
+       apoio.POR_ID["nao_achei_nome"]["caminho"] == "tratamento"
+       and "nao_achei_nome" in next(x[4] for x in apoio.ETAPAS if x[0] == "encaminhada"))
+checar("o passo da vaga explica que quem pede é a equipe de saúde (a paciente não opera a regulação)",
+       any("a unidade de saúde pede a vaga" in o for _, o, _ in apoio.FLUXO_REDE))
+checar("fluxo do caminho na rede aponta para assuntos, situações ou áreas que existem",
+       all(p in apoio.NOME_CAMINHO or p == "hospitais" or (p.startswith("etapa:") and p[6:] in apoio.NOME_ETAPA)
+           for _, _, p in apoio.FLUXO_REDE))
 checar("caminho Seus direitos com TFD e reconstrução da mama",
        {"tfd", "reconstrucao_mamaria"} <= {i["id"] for i in apoio.itens(caminho="direitos")})
 checar("todo caminho tem pelo menos um item", all(apoio.itens(caminho=c) for c in apoio.NOME_CAMINHO))

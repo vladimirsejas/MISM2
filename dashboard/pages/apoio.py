@@ -244,8 +244,7 @@ def assuntos_do_guia():
         ("Prevenção e exames", [("caminho", "mama"), ("caminho", "colo"), ("caminho", "outros"), ("etapa", "nao_fiz")]),
         ("Exame alterado e diagnóstico", [("caminho", "diagnostico"), ("etapa", "alterado"),
                                          ("etapa", "diagnostico_cancer")]),
-        ("Tratamento e direitos", [("caminho", "regulacao"), ("caminho", "tratamento"),
-                                   ("caminho", "rede"), ("caminho", "direitos"),
+        ("Tratamento e direitos", [("caminho", "tratamento"), ("caminho", "direitos"),
                                    ("etapa", "encaminhada"), ("etapa", "em_tratamento")]),
         ("Onde procurar (hospitais, Rio Claro, Barretos, carretas)",
          [("lamina", "hospitais"), ("lamina", "rio_claro"), ("lamina", "barretos"),
@@ -470,27 +469,43 @@ def apontados(c):
 
 
 def fluxo_rede():
-    """A rede oncológica em passos, cada um levando à sua porta."""
+    """O caminho na rede em passos, cada um levando ao seu lugar (a vaga leva à situação 'Fui encaminhada')."""
     colunas = st.columns(len(apoio.FLUXO_REDE))
-    for n, (col, (passo, o_que, porta_id)) in enumerate(zip(colunas, apoio.FLUXO_REDE), start=1):
+    for n, (col, (passo, o_que, destino_id)) in enumerate(zip(colunas, apoio.FLUXO_REDE), start=1):
         seta = " →" if n < len(apoio.FLUXO_REDE) else ""
         col.markdown(f'<div class="apoio-fluxo"><span class="n">{n}{seta}</span><b>{passo}</b>'
                      f'<span>{o_que}</span></div>', unsafe_allow_html=True)
-        destino = ({"aba": apoio.LAMINAS["hospitais"]} if passo == "Especialista"
-                   else {"aba": apoio.LAMINAS["caminho"], "caminho": porta_id})
-        col.button("Hospitais" if passo == "Especialista" else ROTULO[porta_id], key=f"fluxo_{n}",
-                   on_click=aplicar_destino, args=(destino,), width="stretch")
+        if destino_id == "hospitais":
+            destino, rotulo = {"aba": apoio.LAMINAS["hospitais"]}, "Hospitais"
+        elif destino_id.startswith("etapa:"):
+            etapa = destino_id.split(":", 1)[1]
+            destino = {"aba": apoio.LAMINAS["caminho"], "caminho": "ajuda", "etapa": etapa}
+            rotulo = "Acompanhar a fila"
+        elif destino_id == "tratamento":
+            destino, rotulo = None, None   # é esta mesma página
+        else:
+            destino, rotulo = {"aba": apoio.LAMINAS["caminho"], "caminho": destino_id}, ROTULO[destino_id]
+        if destino:
+            col.button(rotulo, key=f"fluxo_{n}", on_click=aplicar_destino, args=(destino,), width="stretch")
+
+
+# Ordem dos cartões da página Tratamento pelo SUS: primeiro onde se tratar, depois o prazo, a fila e o apoio.
+ORDEM_TRATAMENTO = ["como_chegar_cross", "inca_onde_tratar", "fosp_hospitais_sus", "rede_oncologica", "lei_60_dias",
+                    "lista_regulacao", "nao_achei_nome", "rede_feminina"]
 
 
 def porta(c, rotulo, dentro, abertura):
     pergunta(f"{rotulo}: {dentro}")
     dica(abertura)
-    if c == "rede":
+    if c == "tratamento":
         fluxo_rede()
     if c == "mama":
         st.button("Consultar itinerário das carretas →", key="ir_carretas_mama", type="primary",
                   on_click=aplicar_destino, args=({"aba": apoio.LAMINAS["carretas"]},))
-    for i in apoio.itens(caminho=c, lamina="caminho"):
+    lista = apoio.itens(caminho=c, lamina="caminho")
+    if c == "tratamento":
+        lista = sorted(lista, key=lambda i: ORDEM_TRATAMENTO.index(i["id"]) if i["id"] in ORDEM_TRATAMENTO else 99)
+    for i in lista:
         cartao(i)
     apontados(c)
     if c in apoio.PROXIMO:
@@ -716,6 +731,8 @@ if aba == apoio.LAMINAS["caminho"] and not _boas_vindas_abertas:
              "Hospitais, Carretas e os serviços de Rio Claro ficam em áreas próprias. Se estiver em dúvida, use o botão "
              "<b>💜 Preciso de ajuda</b>, acima.")
         codigos = [c for c, _, _, _ in apoio.CAMINHOS if c != "ajuda"]
+        if st.session_state.get("ap_caminho") not in codigos:   # assunto que não existe mais (sessão antiga): volta ao primeiro
+            definir("ap_caminho", PADROES["ap_caminho"])
         onde_clicar("Clique num assunto. Depois, em cada cartão, clique no botão azul <b>Abrir a página oficial</b>.")
         with pilulas("caminho"):
             c = seletor(st, "Caminho", "ap_caminho", codigos, format_func=ROTULO.get, horizontal=True,

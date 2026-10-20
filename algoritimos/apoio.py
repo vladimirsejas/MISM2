@@ -57,14 +57,11 @@ CAMINHOS = [
     ("diagnostico", "Diagnóstico", "exame alterado, biópsia, especialista",
      "Quando um exame vem alterado, começa a investigação: exames complementares, biópsia e encaminhamento ao "
      "especialista. Alteração não quer dizer câncer."),
-    ("regulacao", "Regulação", "já fui encaminhada, e agora?",
-     "Depois do encaminhamento, a vaga é organizada pela regulação do Estado. Dá para acompanhar a fila e pedir "
-     "ajuda se algo não andar."),
-    ("tratamento", "Tratamento", "onde e como se trata pelo SUS",
-     "Com o diagnóstico confirmado, o tratamento pelo SUS tem prazo em lei e acontece nos hospitais habilitados."),
-    ("rede", "Rede oncológica", "do posto de saúde ao tratamento",
-     "A rede oncológica do Estado liga a unidade de saúde, o diagnóstico, a regulação, o especialista, o "
-     "tratamento e o acompanhamento."),
+    ("tratamento", "Tratamento pelo SUS", "onde se tratar, prazos e apoio",
+     "Com o diagnóstico confirmado, o tratamento pelo SUS tem prazo em lei e acontece nos hospitais habilitados em "
+     "oncologia. A unidade de saúde (e a regulação do Estado, que a paciente não opera: quem pede a vaga é a equipe de "
+     "saúde) encaminha ao hospital de referência. Aqui estão o caminho, os prazos, a fila que dá para acompanhar, os "
+     "hospitais e o apoio durante o tratamento."),
     ("direitos", "Direitos e acesso", "benefícios, transporte e como o SUS funciona",
      "Quem recebe um diagnóstico de câncer tem direitos garantidos por lei e um caminho no SUS. Aqui, em "
      "linguagem simples."),
@@ -73,15 +70,14 @@ CAMINHOS = [
 ]
 NOME_CAMINHO = {c: r for c, r, _, _ in CAMINHOS}
 # O próximo passo de cada porta (a jornada da mulher na rede).
-PROXIMO = {"mama": "diagnostico", "colo": "diagnostico", "outros": "diagnostico", "diagnostico": "regulacao",
-           "regulacao": "tratamento",
+PROXIMO = {"mama": "diagnostico", "colo": "diagnostico", "outros": "diagnostico", "diagnostico": "tratamento",
            "tratamento": "direitos"}
 # A rede oncológica em passos (porta Rede oncológica): (passo, o que é, porta)
 FLUXO_REDE = [
     ("Unidade de saúde", "consulta, preventivo e pedido de mamografia", "mama"),
     ("Diagnóstico", "exames complementares e biópsia", "diagnostico"),
-    ("Regulação", "a vaga no especialista, pela CROSS", "regulacao"),
-    ("Especialista", "consulta no hospital de referência", "rede"),
+    ("Vaga no especialista", "a unidade de saúde pede a vaga (regulação do Estado); você acompanha a fila", "etapa:encaminhada"),
+    ("Especialista", "consulta no hospital de referência", "hospitais"),
     ("Tratamento", "cirurgia, quimioterapia, radioterapia", "tratamento"),
     ("Acompanhamento", "direitos, transporte e apoio", "direitos"),
 ]
@@ -191,7 +187,7 @@ ITENS = [
                "solicitação fundamentada. Os prazos têm marcos e critérios diferentes; a equipe de saúde pode explicar "
                "qual se aplica ao seu caso.",
           tambem_caminhos=["direitos"]),
-    _item("rede_oncologica", "rede", "caminho", "Estado de SP",
+    _item("rede_oncologica", "tratamento", "caminho", "Estado de SP",
           "Rede de Atenção Oncológica do Estado de São Paulo",
           "a lista oficial dos hospitais habilitados para tratar câncer pelo SUS, por região",
           "Fundação Oncocentro de São Paulo (FOSP)",
@@ -202,7 +198,7 @@ ITENS = [
                "serve para saber quais são as referências da sua região."),
 
     # ---------------- ACOMPANHAR ----------------
-    _item("lista_regulacao", "regulacao", "caminho", "Estado de SP",
+    _item("lista_regulacao", "tratamento", "caminho", "Estado de SP",
           "Lista de Regulação de Oncologia",
           "quem aguarda a consulta especializada em oncologia pelo SUS-SP consulta a própria fila",
           "Secretaria de Estado da Saúde de SP e Poupatempo (Lei estadual 17.745/2023)",
@@ -227,7 +223,7 @@ ITENS = [
           grupo="Carretas da Mamografia do Estado"),
 
     # ---------------- ENCONTRAR REFERÊNCIA ----------------
-    _item("santa_casa_piracicaba", "rede", "hospitais", "Piracicaba (região de Rio Claro)",
+    _item("santa_casa_piracicaba", "tratamento", "hospitais", "Piracicaba (região de Rio Claro)",
           "Santa Casa de Piracicaba",
           "UNACON com radioterapia, na mesma região de saúde de Rio Claro",
           "FOSP – boletim da RRAS 14 (DRS Piracicaba)",
@@ -235,7 +231,7 @@ ITENS = [
           como="Hospital habilitado como UNACON com serviço de radioterapia. Faz parte da RRAS 14, a mesma de Rio "
                "Claro. O acesso é pela regulação do SUS.",
           grupo="Rio Claro e Piracicaba (RRAS 14)"),
-    _item("fornecedores_cana", "rede", "hospitais", "Piracicaba (região de Rio Claro)",
+    _item("fornecedores_cana", "tratamento", "hospitais", "Piracicaba (região de Rio Claro)",
           "Hospital dos Fornecedores de Cana de Piracicaba",
           "UNACON com radioterapia e hematologia, na mesma região de saúde de Rio Claro",
           "FOSP – boletim da RRAS 14 (DRS Piracicaba)",
@@ -243,7 +239,7 @@ ITENS = [
           como="Hospital habilitado como UNACON com radioterapia e hematologia. Faz parte da RRAS 14, a mesma de Rio "
                "Claro. O acesso é pela regulação do SUS.",
           grupo="Rio Claro e Piracicaba (RRAS 14)"),
-    _item("santa_casa_limeira", "rede", "hospitais", "Limeira (região de Rio Claro)",
+    _item("santa_casa_limeira", "tratamento", "hospitais", "Limeira (região de Rio Claro)",
           "Santa Casa de Limeira",
           "citada como UNACON com radioterapia na região de Rio Claro (a confirmar)",
           "FOSP – boletim da RRAS 14 (DRS Piracicaba)",
@@ -251,7 +247,7 @@ ITENS = [
           como="O acesso é pela regulação do SUS.",
           confirmar="Não consegui abrir o boletim da FOSP inteiro para confirmar a habilitação de Limeira.",
           grupo="Rio Claro e Piracicaba (RRAS 14)"),
-    _item("caism_unicamp", "rede", "hospitais", "Campinas",
+    _item("caism_unicamp", "tratamento", "hospitais", "Campinas",
           "CAISM Unicamp – Hospital da Mulher",
           "maior hospital de saúde da mulher do interior; câncer ginecológico e de mama; só SUS",
           "CAISM – Unicamp",
@@ -281,7 +277,7 @@ ITENS = [
           grupo="Campinas",
           conferido="18/10/2026",
           tambem_caminhos=["mama", "colo"]),
-    _item("hospital_base_rio_preto", "rede", "hospitais", "São José do Rio Preto",
+    _item("hospital_base_rio_preto", "tratamento", "hospitais", "São José do Rio Preto",
           "Hospital de Base – Centro de Oncologia",
           "um dos hospitais que mais diagnosticam câncer no Estado; atende SUS com encaminhamento",
           "Hospital de Base de São José do Rio Preto",
@@ -415,7 +411,7 @@ ITENS = [
           confirmar="Endereço e telefones vêm de uma página da Prefeitura sem data visível na busca."),
 
     # ================ LÂMINA BARRETOS (Hospital de Amor) ================
-    _item("ha_quem_e", "rede", "barretos", "Barretos",
+    _item("ha_quem_e", "tratamento", "barretos", "Barretos",
           "Hospital de Amor (Fundação Pio XII)",
           "hospital filantrópico dedicado ao câncer, fundado em 1962 em Barretos; atende pelo SUS",
           "Hospital de Amor",
@@ -463,7 +459,7 @@ ITENS = [
           cuidado="Para quem mora em Rio Claro, o caminho do SUS passa primeiro pela referência da própria região "
                   "(RRAS 14). Converse com a equipe que acompanha você.",
           grupo="Tratamento e acesso pelo SUS"),
-    _item("ha_unidades", "rede", "barretos", "Barretos",
+    _item("ha_unidades", "tratamento", "barretos", "Barretos",
           "As três unidades do Hospital de Amor em Barretos",
           "hospital adulto, Hospital Infantojuvenil e Hospital São Judas Tadeu (cuidados paliativos)",
           "Hospital de Amor",
@@ -852,7 +848,7 @@ ITENS = [
 
     # ---------------- DIAGNÓSTICO: depois que aparece uma alteração ----------------
     # ---------------- REGULAÇÃO: quando o nome não aparece ----------------
-    _item("nao_achei_nome", "regulacao", "caminho", "SUS (todo o Brasil)",
+    _item("nao_achei_nome", "tratamento", "caminho", "SUS (todo o Brasil)",
           "Não achei meu nome na lista, ou a fila não anda: o que fazer",
           "procure a unidade que encaminhou; se não resolver, a Ouvidoria do SUS (Disque Saúde 136)",
           "Ministério da Saúde – Ouvidoria-Geral do SUS",
@@ -864,7 +860,7 @@ ITENS = [
           cuidado="A Secretaria da Saúde não publica um passo a passo para este caso: este é o caminho geral do SUS."),
 
     # ---------------- ENCONTRAR REFERÊNCIA: como chegar e listas oficiais ----------------
-    _item("como_chegar_cross", "regulacao", "caminho", "Estado de SP",
+    _item("como_chegar_cross", "tratamento", "caminho", "Estado de SP",
           "Como se chega a um hospital de referência pelo SUS",
           "os hospitais de câncer não são porta de entrada: a unidade de saúde pede a vaga pela regulação (CROSS)",
           "ICESP e HC Unicamp (orientações aos pacientes)",
@@ -874,8 +870,8 @@ ITENS = [
                "encaminha a paciente a um centro de oncologia perto de onde ela mora, seguindo protocolos clínicos. "
                "É a Rede Hebe Camargo de Combate ao Câncer, do Estado.",
           tambem=[("hospitais", "Como chegar e listas oficiais")],
-          tambem_caminhos=["direitos", "rede"]),
-    _item("fosp_hospitais_sus", "rede", "caminho", "Estado de SP",
+          tambem_caminhos=["direitos"]),
+    _item("fosp_hospitais_sus", "tratamento", "caminho", "Estado de SP",
           "Lista oficial: hospitais do SUS com atendimento em câncer no Estado",
           "a lista da FOSP com todos os hospitais habilitados (CACON e UNACON) do Estado de São Paulo",
           "Fundação Oncocentro de São Paulo (FOSP) – Espaço do Paciente",
@@ -884,7 +880,7 @@ ITENS = [
           como="A lista completa e atualizada pelo Estado. Os hospitais desta área são os que a pesquisa encontrou "
                "com fonte; a lista da FOSP tem todos.",
           tambem=[("hospitais", "Como chegar e listas oficiais")]),
-    _item("inca_onde_tratar", "rede", "caminho", "SUS (todo o Brasil)",
+    _item("inca_onde_tratar", "tratamento", "caminho", "SUS (todo o Brasil)",
           "Onde tratar pelo SUS (INCA)",
           "a página do Instituto Nacional de Câncer com os hospitais habilitados de cada estado",
           "Instituto Nacional de Câncer (INCA)",
@@ -894,7 +890,7 @@ ITENS = [
           tambem=[("hospitais", "Como chegar e listas oficiais")]),
 
     # ================ LÂMINA HOSPITAIS NO ESTADO (por região) ================
-    _item("hc_unicamp", "rede", "hospitais", "Campinas",
+    _item("hc_unicamp", "tratamento", "hospitais", "Campinas",
           "HC da Unicamp – Oncologia",
           "referência em câncer para as regiões de Campinas, Piracicaba (a de Rio Claro) e São João da Boa Vista",
           "HC Unicamp e Governo do Estado de SP",
@@ -904,7 +900,7 @@ ITENS = [
                "insere o caso na CROSS. Tem também enfermagem, nutrição, serviço social, psicologia e odontologia.",
           contato="Oncologia Clínica: (19) 3521-7496 e (19) 3521-7363.",
           grupo="Campinas"),
-    _item("icesp", "rede", "hospitais", "São Paulo (capital)",
+    _item("icesp", "tratamento", "hospitais", "São Paulo (capital)",
           "ICESP – Instituto do Câncer do Estado de São Paulo",
           "hospital público estadual só de câncer; atende pacientes encaminhados pela regulação",
           "ICESP",
@@ -927,7 +923,7 @@ ITENS = [
           contato="(11) 3893-2000.",
           conferido="18/10/2026",
           grupo="Capital e Grande São Paulo"),
-    _item("hospital_da_mulher_sp", "rede", "hospitais", "São Paulo (capital)",
+    _item("hospital_da_mulher_sp", "tratamento", "hospitais", "São Paulo (capital)",
           "Hospital da Mulher (antigo Pérola Byington)",
           "centro estadual de referência em saúde da mulher: câncer de mama, de útero e de ovário",
           "Secretaria de Estado da Saúde de SP e Hospital da Mulher",
@@ -938,7 +934,7 @@ ITENS = [
           confirmar="O hospital mudou de nome e de prédio: confira endereço e telefone na página oficial.",
           grupo="Capital e Grande São Paulo",
           tambem_caminhos=["mama", "colo"]),
-    _item("ibcc", "rede", "hospitais", "São Paulo (capital)",
+    _item("ibcc", "tratamento", "hospitais", "São Paulo (capital)",
           "IBCC Oncologia – Instituto Brasileiro de Controle do Câncer",
           "pioneiro no controle do câncer de mama e ginecológico em São Paulo; atende SUS e convênios",
           "IBCC",
@@ -948,7 +944,7 @@ ITENS = [
           contato="Av. Alcântara Machado, 2576 – Mooca. (11) 3474-4222.",
           confirmar="Pelo SUS, o acesso é pela regulação: confirme com a unidade de saúde.",
           grupo="Capital e Grande São Paulo"),
-    _item("hc_ribeirao", "rede", "hospitais", "Ribeirão Preto",
+    _item("hc_ribeirao", "tratamento", "hospitais", "Ribeirão Preto",
           "HC de Ribeirão Preto (FMRP-USP) – Oncologia Clínica",
           "referência da Rede Hebe Camargo; recebe pacientes encaminhados pela CROSS",
           "Oncologia Clínica – FMRP-USP",
@@ -957,7 +953,7 @@ ITENS = [
                "gerais, sempre encaminhados pela Central de Regulação (CROSS). Não há atendimento direto.",
           contato="Av. Bandeirantes, 3900 – HC, 7º andar – Campus USP, Ribeirão Preto.",
           grupo="Barretos, Franca, Ribeirão Preto e Araraquara (RRAS 13)"),
-    _item("cancer_franca", "rede", "hospitais", "Franca",
+    _item("cancer_franca", "tratamento", "hospitais", "Franca",
           "Hospital do Câncer do Grupo Santa Casa de Franca",
           "atende pelo SUS Franca e mais 20 municípios, com radioterapia e quimioterapia",
           "Grupo Santa Casa de Franca",
@@ -965,7 +961,7 @@ ITENS = [
           como="Hospital de referência regional em câncer, com consultas, radioterapia, quimioterapia e "
                "hormonioterapia pelo SUS para cerca de 750 mil habitantes da região.",
           grupo="Barretos, Franca, Ribeirão Preto e Araraquara (RRAS 13)"),
-    _item("santa_casa_araraquara", "rede", "hospitais", "Araraquara",
+    _item("santa_casa_araraquara", "tratamento", "hospitais", "Araraquara",
           "Hospital do Câncer da Santa Casa de Araraquara",
           "UNACON com quimioterapia, radioterapia e onco-hematologia; referência regional do SUS",
           "Santa Casa de Araraquara",
@@ -973,14 +969,14 @@ ITENS = [
           como="Habilitada como UNACON pelo Ministério da Saúde. Atende pelo SUS e convênios, com equipe "
                "multiprofissional.",
           grupo="Barretos, Franca, Ribeirão Preto e Araraquara (RRAS 13)"),
-    _item("santa_casa_sao_carlos", "rede", "hospitais", "São Carlos",
+    _item("santa_casa_sao_carlos", "tratamento", "hospitais", "São Carlos",
           "Santa Casa de São Carlos – Oncologia",
           "UNACON com radioterapia, para cerca de 390 mil habitantes da microrregião",
           "Santa Casa de São Carlos",
           "https://www.santacasasaocarlos.com.br/",
           como="Habilitada como UNACON com radioterapia: diagnóstico e tratamento do câncer pelo SUS.",
           grupo="Barretos, Franca, Ribeirão Preto e Araraquara (RRAS 13)"),
-    _item("santa_casa_aracatuba", "rede", "hospitais", "Araçatuba",
+    _item("santa_casa_aracatuba", "tratamento", "hospitais", "Araçatuba",
           "Santa Casa de Araçatuba – Centro de Tratamento Oncológico",
           "UNACON com radioterapia e hematologia, referência para 40 municípios",
           "Santa Casa de Araçatuba",
@@ -988,14 +984,14 @@ ITENS = [
           como="Integra a Rede Hebe Camargo. Referência para o tratamento especializado de quase todos os tipos de "
                "câncer na região.",
           grupo="Rio Preto, Araçatuba e Jales (RRAS 12)"),
-    _item("hospital_de_amor_jales", "rede", "hospitais", "Jales",
+    _item("hospital_de_amor_jales", "tratamento", "hospitais", "Jales",
           "Hospital de Amor Jales",
           "a primeira unidade do Hospital de Amor fora de Barretos, 100% SUS",
           "Hospital de Amor",
           "https://hospitaldeamor.com.br/hospital-de-amor-jales/",
           como="Inaugurado em 2010, atende 100% pelo SUS, com radioterapia de alta precisão e cirurgias oncológicas.",
           grupo="Rio Preto, Araçatuba e Jales (RRAS 12)"),
-    _item("amaral_carvalho", "rede", "hospitais", "Jaú",
+    _item("amaral_carvalho", "tratamento", "hospitais", "Jaú",
           "Hospital Amaral Carvalho",
           "referência nacional em câncer e transplante de medula óssea; quase toda a capacidade é para o SUS",
           "Hospital Amaral Carvalho",
@@ -1004,7 +1000,7 @@ ITENS = [
                "Serviço Social do hospital.",
           contato="Rua Dona Silvéria, 150 – Chácara Braz Miraglia, Jaú. (14) 3602-1200.",
           grupo="Centro-Oeste: Jaú, Bauru, Botucatu e Marília"),
-    _item("hc_botucatu", "rede", "hospitais", "Botucatu",
+    _item("hc_botucatu", "tratamento", "hospitais", "Botucatu",
           "HC da Faculdade de Medicina de Botucatu (Unesp) – Oncologia",
           "centro de oncologia de referência regional, com quimioterapia e onco-hematologia",
           "HC Botucatu (Unesp)",
@@ -1013,7 +1009,7 @@ ITENS = [
           confirmar="O site do hospital mudou de endereço e a página específica de oncologia não foi localizada: o botão abre "
                     "o site geral do HC de Botucatu.",
           grupo="Centro-Oeste: Jaú, Bauru, Botucatu e Marília"),
-    _item("bauru_oncologia", "rede", "hospitais", "Bauru",
+    _item("bauru_oncologia", "tratamento", "hospitais", "Bauru",
           "Bauru: SOPC (prevenção e diagnóstico) e Hospital Estadual de Bauru",
           "o SOPC investiga a suspeita de câncer e encaminha ao tratamento pela Rede Hebe Camargo",
           "Prefeitura de Bauru",
@@ -1024,7 +1020,7 @@ ITENS = [
           confirmar="A habilitação do Hospital Estadual de Bauru veio de lista de associação de pacientes: confira na "
                     "lista da FOSP.",
           grupo="Centro-Oeste: Jaú, Bauru, Botucatu e Marília"),
-    _item("hc_famema", "rede", "hospitais", "Marília",
+    _item("hc_famema", "tratamento", "hospitais", "Marília",
           "HC da Famema (Marília) – Oncologia",
           "alta complexidade em câncer, com quimioterapia e radioterapia, para 62 municípios",
           "HC Famema (Governo do Estado de SP)",
@@ -1034,7 +1030,7 @@ ITENS = [
           confirmar="A habilitação mudou em 2026 (de CACON para UNACON com radioterapia, segundo notícia): confira "
                     "na lista da FOSP.",
           grupo="Centro-Oeste: Jaú, Bauru, Botucatu e Marília"),
-    _item("prudente_cancer", "rede", "hospitais", "Presidente Prudente",
+    _item("prudente_cancer", "tratamento", "hospitais", "Presidente Prudente",
           "Hospital Regional do Câncer de Presidente Prudente (Hospital de Esperança)",
           "UNACON com hematologia, oncologia pediátrica e radioterapia pelo SUS",
           "Agência Brasil – credenciamento de 2021",
@@ -1043,7 +1039,7 @@ ITENS = [
                "(habilitação 2023) traz também o Hospital Regional Dr. Domingos Leonardo Cerávolo, UNACON com hematologia.",
           confirmar="Notícia de 2021 (o hospital hoje se chama Hospital de Esperança): confira na lista da FOSP.",
           grupo="Oeste, Sorocaba, Vale do Paraíba e Litoral"),
-    _item("sorocaba_oncologia", "rede", "hospitais", "Sorocaba",
+    _item("sorocaba_oncologia", "tratamento", "hospitais", "Sorocaba",
           "Sorocaba: Santa Casa (Hospital do Câncer) e Conjunto Hospitalar",
           "Santa Casa: UNACON com radioterapia; Conjunto Hospitalar: UNACON com hematologia",
           "Prefeitura de Sorocaba (Agência de Notícias)",
@@ -1053,14 +1049,14 @@ ITENS = [
           confirmar="A habilitação do Conjunto Hospitalar veio de lista de associação de pacientes: confira na lista "
                     "da FOSP.",
           grupo="Oeste, Sorocaba, Vale do Paraíba e Litoral"),
-    _item("pio_xii_sjc", "rede", "hospitais", "São José dos Campos",
+    _item("pio_xii_sjc", "tratamento", "hospitais", "São José dos Campos",
           "Hospital Pio XII (São José dos Campos)",
           "UNACON do Vale do Paraíba; mais de 80% dos pacientes são do SUS",
           "Hospital Pio XII",
           "https://www.hpioxii.org.br/o-hospital/",
           como="Referência em oncologia (UNACON) desde 1977 para São José dos Campos e o Vale do Paraíba.",
           grupo="Oeste, Sorocaba, Vale do Paraíba e Litoral"),
-    _item("guilherme_alvaro", "rede", "hospitais", "Santos",
+    _item("guilherme_alvaro", "tratamento", "hospitais", "Santos",
           "Hospital Guilherme Álvaro (Santos)",
           "UNACON com radioterapia; unidade regional do ICESP na Baixada Santista",
           "Secretaria de Estado da Saúde de SP",
@@ -1292,12 +1288,12 @@ ETAPAS = [
     ("encaminhada", "Fui encaminhada",
      "Depois do encaminhamento, a vaga é organizada pela regulação do Estado. Você pode acompanhar a fila da "
      "oncologia e, se o nome não aparecer, sabe onde procurar ajuda.",
-     ["regulacao"], ["lista_regulacao", "nao_achei_nome", "como_chegar_cross"]),
+     [], ["lista_regulacao", "nao_achei_nome", "como_chegar_cross"]),
     ("diagnostico_cancer", "Recebi diagnóstico de câncer",
      "Converse com a equipe de saúde que acompanha seu caso para saber quem está responsável pelo encaminhamento e "
      "como acompanhar a vaga. O primeiro tratamento no SUS tem prazo de até 60 dias a partir do diagnóstico em "
      "laudo patológico, ou prazo menor conforme a necessidade terapêutica registrada no prontuário.",
-     ["tratamento", "rede", "direitos"], ["lei_60_dias", "como_chegar_cross", "cartilha_inca"]),
+     ["tratamento", "direitos"], ["lei_60_dias", "como_chegar_cross", "cartilha_inca"]),
     ("em_tratamento", "Estou em tratamento",
      "Durante o tratamento, vale conhecer os seus direitos (transporte, FGTS, INSS) e o apoio de entidades como a "
      "Rede Feminina de Combate ao Câncer e, em Rio Claro, o GACC (para crianças e adolescentes).",
@@ -1544,7 +1540,7 @@ def responder_caminho(c):
     _, rotulo, _, abertura = next(x for x in CAMINHOS if x[0] == c)
     lista = itens(caminho=c, lamina="caminho")
     fala = f"**{rotulo}.** {abertura}"
-    if c == "rede":
+    if c == "tratamento":
         fala += "\n\n**O caminho na rede:** " + " → ".join(p for p, _, _ in FLUXO_REDE) + "."
     fala += "\n\n" + "\n".join(f"- **{i['titulo']}** · {i['onde']}: {i['resumo']}." for i in lista)
     botoes = [(i["titulo"], item(i["id"])) for i in lista]
