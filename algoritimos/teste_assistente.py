@@ -411,6 +411,28 @@ def main():
            "100" in ficha and "Piracicaba" in ficha and "SIM" in ficha and "40" in ficha and "INTERNAÇÕES POR ANO" in ficha)
     checar("7k. sem fluxo, sem SIM e sem SIA a ficha só traz o SIH (nada inventado)",
            "SIM" not in asst.ficha_da_cidade(ctx) and "SIA" not in asst.ficha_da_cidade(ctx))
+    texto_cheio, om0, fa0 = asst.ficha_com_diagnostico(ctx_k)
+    checar("7k. com espaço, nenhum bloco fica de fora e nenhum falha", not om0 and not fa0)
+    pequeno = len(texto_cheio) - 50
+    texto_p, om1, fa1 = asst.ficha_com_diagnostico(ctx_k, limite=pequeno)
+    checar("7k. se a ficha não cabe, o bloco que sobra é ANOTADO (nada some em silêncio)", len(om1) >= 1)
+    checar("7k. ficha limitada traz só blocos inteiros: é o começo exato da ficha cheia, termina na fronteira de um bloco e cabe no limite",
+           texto_cheio.startswith(texto_p) and texto_cheio[len(texto_p):len(texto_p) + 3] == "\n\n[" and len(texto_p) <= pequeno)
+    ctx_ruim = Contexto(serie=ctx.serie, cidade="Rio Claro", codigo_ibge=3543907, obitos_sim=pd.DataFrame({"coluna_inesperada": [1]}))
+    _, _, fa2 = asst.ficha_com_diagnostico(ctx_ruim)
+    checar("7k. bloco que não pôde ser montado vira 'falhou' no diagnóstico (não é engolido)", any("SIM" in f for f in fa2))
+    ia_c = asst.IA(ligada=True)
+    chamadas_gemini = []
+    ia_c.explicar = asst._contando(ia_c, lambda *a, **k: chamadas_gemini.append(1) or "texto")
+    ia_c.classificar = asst._contando(ia_c, lambda *a, **k: chamadas_gemini.append(2) or None)
+    checar("7k. IA nova começa com 0 chamadas", ia_c.chamadas == 0)
+    ia_c.explicar("p", "b", "TECNICO"); ia_c.classificar("p", [])
+    checar("7k. cada chamada real ao Gemini conta 1 (2 chamadas = 2)", ia_c.chamadas == 2 and len(chamadas_gemini) == 2)
+    base_n = "Em março de 2026 não há registro na fonte (mês ausente). Mortes: 40 no SIM."
+    checar("7k. negação sobre OUTRO assunto não é autorizada por uma frase de 'não há registro' da ficha (mortes != março)",
+           asst.conferir("A base não contém o total de mortes por câncer em Rio Claro.", base_n, "quantas morreram?") is not None)
+    checar("7k. negação do MESMO assunto que o cálculo já negou continua permitida",
+           asst.conferir("Não há registro de março de 2026 na fonte.", base_n, "e março?") is None)
     vistos = []
 
     def explicar_visto(pergunta, base, perfil):

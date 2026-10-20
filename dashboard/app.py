@@ -565,8 +565,8 @@ def perfil_da_lia():
 
 def guardar_resposta_da_caixa(resposta, ia):
     """Memória mínima para 'e no estado?': só o assunto e o câncer da última resposta, na sessão."""
-    if ia.ligada:
-        st.session_state["lia_perguntas_ia"] = st.session_state.get("lia_perguntas_ia", 0) + 1
+    # o limite protege a cota: conta só as chamadas que o Gemini realmente recebeu (resposta direta do roteador não gasta nada)
+    st.session_state["lia_perguntas_ia"] = st.session_state.get("lia_perguntas_ia", 0) + getattr(ia, "chamadas", 0)
     if getattr(resposta, "intencao", None):
         st.session_state["lia_memoria"] = {"intencao": resposta.intencao, "cancer": resposta.cancer}
     lia_mostrar(resposta)

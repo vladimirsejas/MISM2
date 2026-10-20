@@ -62,6 +62,7 @@ class RespostaIA(Resposta):
     base: str = None              # a resposta determinística, quando a IA a reescreveu
     usou_ia: bool = False
     ia_motivo: str = None         # por que a IA não foi usada / foi descartada
+    ficha_aviso: str = None       # o que ficou fora da ficha enviada à IA (bloco que não coube ou que falhou), para diagnóstico
     links: list = field(default_factory=list)   # [(rótulo, página)]
     fonte: str = None             # de onde vêm os números e o limite principal (só respostas de dados)
 
@@ -71,6 +72,15 @@ class IA:
     explicar: object = None       # (pergunta, base, perfil) -> texto
     classificar: object = None    # (pergunta, opções) -> {"intencao", "cancer"}
     ligada: bool = False
+    chamadas: int = 0             # chamadas REAIS ao Gemini feitas por esta IA (o limite por sessão conta estas, não as respostas)
+
+
+def _contando(ia, funcao):
+    """Envolve uma função do Gemini para contar cada chamada tentada (a cota é gasta mesmo se a chamada falhar)."""
+    def chamar(*args, **kwargs):
+        ia.chamadas += 1
+        return funcao(*args, **kwargs)
+    return chamar
 
 
 def obter_ia():
@@ -79,7 +89,10 @@ def obter_ia():
         import ia_linguagem
         if not ia_linguagem.chave_configurada():
             return IA()
-        return IA(explicar=ia_linguagem.redigir_resposta, classificar=ia_linguagem.classificar_pergunta, ligada=True)
+        ia = IA(ligada=True)
+        ia.explicar = _contando(ia, ia_linguagem.redigir_resposta)
+        ia.classificar = _contando(ia, ia_linguagem.classificar_pergunta)
+        return ia
     except Exception:
         return IA()
 
@@ -136,6 +149,32 @@ CAUSA_ATRIBUIDA = re.compile(r"\b(por causa d\w+|devido (a|ao|aos|à|às)|causad
                    r"por conta d\w+|resultado d[eao]s?)\b", re.I)
 
 
+_GENERICAS = {"dados", "dado", "base", "banco", "informacao", "informacoes", "registro", "registros", "contem", "consta", "existe",
+              "existem", "numero", "numeros", "disponivel", "disponiveis", "possui", "apresenta", "temos", "tenho", "sobre", "ainda",
+              "esta", "estao", "para", "desta", "deste", "nesta", "neste", "pelo", "pela", "essa", "esse", "isso", "total", "cidade"}
+
+
+def _frases_de_negacao(texto):
+    """Frases (normalizadas) que dizem que um dado não existe, cada uma com seus termos de assunto (sem as palavras genéricas)."""
+    saida = []
+    for frase in re.split(r"[.;:!?\n]+", ent.normalizar(texto)):
+        if NEGA_DADOS.search(frase):
+            saida.append({t for t in re.findall(r"[a-z0-9]{4,}", frase) if t not in _GENERICAS})
+    return saida
+
+
+def _negacao_sem_apoio(texto_ia, base):
+    """True se a IA nega a existência de um dado e o cálculo do Escudo não nega o mesmo assunto."""
+    da_ia = _frases_de_negacao(texto_ia)
+    if not da_ia:
+        return False
+    da_base = _frases_de_negacao(base if isinstance(base, str) else (getattr(base, "fala", "") or ""))
+    for termos in da_ia:
+        if not any((termos & outros) or (not termos and not outros) for outros in da_base):
+            return True
+    return False
+
+
 def conferir(texto_ia, base, pergunta):
     """None se o texto da IA pode ser mostrado; senão, o motivo de descartá-lo."""
     if not texto_ia or not texto_ia.strip():
@@ -151,9 +190,10 @@ def conferir(texto_ia, base, pergunta):
         return "a IA prometeu um resultado ('vai ficar'); projeção é só tendência"
     if CAUSA_ATRIBUIDA.search(texto_ia):
         return "a IA atribuiu causa; o Escudo detecta, não explica"
-    if NEGA_DADOS.search(ent.normalizar(texto_ia)) and not NEGA_DADOS.search(ent.normalizar(base if isinstance(base, str) else (getattr(base, "fala", "") or ""))):
+    if _negacao_sem_apoio(texto_ia, base):
         # 20/10/2026 (teste do autor): "a base de dados não contém o total de mortes" / "...informações sobre moradoras atendidas fora",
-        # e o banco tem as duas coisas. A IA só pode dizer que um dado não existe se o próprio cálculo do Escudo já disse isso.
+        # e o banco tem as duas coisas. A IA só pode dizer que um dado não existe se o próprio cálculo do Escudo já disse ISSO, sobre o MESMO
+        # assunto: uma frase "não há registro de março" na ficha não autoriza "não há dados de mortes".
         return "a IA disse que o dado não existe, mas o cálculo do Escudo não disse isso"
     return None
 
@@ -628,11 +668,12 @@ LIMITE_FICHA = 7000
 NOTA_MINIMA_FICHA = 0.25   # abaixo disso a pergunta é obscura demais: melhor perguntar do que responder pela ficha
 
 
-def ficha_da_cidade(ctx, limite=LIMITE_FICHA):
+def _blocos_da_ficha(ctx):
     """TUDO o que o Escudo sabe da cidade, em blocos com fonte e definição, para o redator responder pelo que a pessoa perguntou e não
     pelo assunto que a busca adivinhou (20/10/2026, teste do autor: a Lia dizia 'a base não contém' o total de mortes e as moradoras atendidas
     fora, e o banco tem as duas coisas). Só frases já calculadas pelo Escudo; cada número continua sendo conferido depois. Bloco que falha é pulado."""
     blocos = []
+    falhas = []
 
     def pôr(titulo, texto):
         texto = (texto if isinstance(texto, str) else " ".join(texto)).strip()
@@ -651,37 +692,59 @@ def ficha_da_cidade(ctx, limite=LIMITE_FICHA):
         pôr(f"POR CÂNCER, PERÍODO TODO (SIH/SUS, moradoras de {cidade}): internações, óbitos DURANTE a internação e letalidade hospitalar",
             "; ".join(f"{cancer_de(l['tipo_cancer'])}: {formatar_numero(l['internacoes'])} internações, {formatar_numero(l['obitos'])} óbitos na internação"
                       for _, l in r.iterrows()))
-    except Exception:
-        pass
+    except Exception as erro:
+        falhas.append("internações por ano / por câncer (SIH): " + type(erro).__name__)
     if getattr(ctx, "fluxo_cidade", None):
         try:
             pôr(f"ONDE AS MORADORAS DE {cidade.upper()} SÃO ATENDIDAS (SIH/SUS; fora da cidade ou na própria cidade)",
                 leitura_cidade_visao(ctx.fluxo_cidade, cidade, "fora"))
             pôr(f"MULHERES DE FORA ATENDIDAS NOS HOSPITAIS DE {cidade.upper()} (SIH/SUS)", leitura_cidade_visao(ctx.fluxo_cidade, cidade, "aqui"))
-        except Exception:
-            pass
+        except Exception as erro:
+            falhas.append("fluxo da cidade (SIH): " + type(erro).__name__)
     sim = getattr(ctx, "obitos_sim", None)
     if sim is not None and not sim.empty:
         try:
             cid = ctx.serie[ctx.serie["grupo"] == "MUNICIPIO"] if "grupo" in ctx.serie else ctx.serie
             pôr(f"TODAS AS MORTES POR CÂNCER (SIM, declarações de óbito, dentro e fora do hospital, moradoras de {cidade})",
                 leitura_mortalidade(resumo_mortalidade(sim, ctx.codigo_ibge, None, cid), cidade))
-        except Exception:
-            pass
+        except Exception as erro:
+            falhas.append("mortes (SIM): " + type(erro).__name__)
     trat = getattr(ctx, "tratamento", None)
     if trat is not None and not trat.empty:
         try:
             pôr(f"QUIMIOTERAPIA E RADIOTERAPIA AMBULATORIAIS (SIA/SUS, APACs, moradoras de {cidade})",
                 leitura_tratamento(resumo_tratamento(trat, ctx.codigo_ibge, None), cidade))
-        except Exception:
-            pass
+        except Exception as erro:
+            falhas.append("tratamento (SIA): " + type(erro).__name__)
     if getattr(ctx, "alcance", None):
         try:
             pôr("O QUE O BANCO GUARDA", leitura_alcance(ctx.alcance, cidade)[:3])
-        except Exception:
-            pass
-    ficha = "\n\n".join(blocos)
-    return ficha[:limite]
+        except Exception as erro:
+            falhas.append("alcance do banco: " + type(erro).__name__)
+    return blocos, falhas
+
+
+def ficha_com_diagnostico(ctx, limite=LIMITE_FICHA):
+    """(texto, omitidos, falhas). Entram blocos INTEIROS, na ordem; o que não cabe no limite é anotado em `omitidos` e o que não pôde ser
+    montado em `falhas` (nada some em silêncio). Um bloco maior que o limite sozinho é cortado numa fronteira de frase, com aviso."""
+    blocos, falhas = _blocos_da_ficha(ctx)
+    texto, omitidos = "", []
+    for bloco in blocos:
+        extra = (2 if texto else 0) + len(bloco)
+        if len(texto) + extra <= limite:
+            texto += ("\n\n" if texto else "") + bloco
+        elif not texto:
+            corte = bloco[:limite].rsplit(";", 1)[0]
+            texto = corte + " [lista cortada pelo limite]"
+            omitidos.append(bloco.split("]")[0].lstrip("[")[:60] + " (parcial)")
+        else:
+            omitidos.append(bloco.split("]")[0].lstrip("[")[:60])
+    return texto, omitidos, falhas
+
+
+def ficha_da_cidade(ctx, limite=LIMITE_FICHA):
+    """Só o texto da ficha (ver `ficha_com_diagnostico` para saber o que ficou de fora)."""
+    return ficha_com_diagnostico(ctx, limite)[0]
 
 
 def _redigir(resp, pergunta, ia, perfil, ctx=None):
@@ -692,7 +755,10 @@ def _redigir(resp, pergunta, ia, perfil, ctx=None):
         return
     base = resp.fala + (("\n" + "\n".join(f"- {n}" for n in resp.numeros)) if resp.numeros else "")
     if ctx is not None:   # a resposta principal vem primeiro; a ficha completa vai atrás para a pergunta que cair em outra fatia
-        ficha = ficha_da_cidade(ctx)
+        ficha, omitidos, falhas = ficha_com_diagnostico(ctx)
+        if omitidos or falhas:
+            resp.ficha_aviso = "; ".join(([f"fora da ficha por limite: {', '.join(omitidos)}"] if omitidos else [])
+                                         + ([f"falhou: {', '.join(falhas)}"] if falhas else []))
         if ficha:
             base += ("\n\nOUTROS FATOS DO ESCUDO SOBRE A CIDADE (use só o que responder à pergunta e diga sempre de qual fonte "
                      "vem cada número; fontes diferentes medem coisas diferentes e não se somam):\n\n" + ficha)

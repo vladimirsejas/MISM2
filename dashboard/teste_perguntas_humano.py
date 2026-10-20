@@ -71,6 +71,9 @@ def main():
         motivo = getattr(a, "ia_motivo", None)
         if motivo:   # por que o texto da IA não foi usado (conferência, cota, erro...): só informação técnica, nenhuma gravação
             print(f"  (IA não usada: {motivo})")
+        aviso = getattr(a, "ficha_aviso", None)
+        if aviso:    # blocos que não chegaram ao redator (limite ou falha): a Lia não pode dizer 'o banco não tem' por causa disso
+            print(f"  (ficha incompleta: {aviso})")
         print(f"  Lia: {fala[:380]}{'...' if len(fala) > 380 else ''}")
         botoes = [r for r, _ in getattr(a, "botoes", [])][:4]
         if tipo == "palpites" and botoes:
