@@ -1576,7 +1576,7 @@ def leitura_hospital(ficha):
     n, p = ficha["internacoes"], ficha["procedencia"]
     assunto = cancer_de(ficha["tipo_cancer"]) if ficha.get("tipo_cancer") else "câncer feminino"
     frases = [f"{ficha['hospital']} ({ficha['municipio']}) registrou {formatar_numero(n)} internações por {assunto} "
-              f"entre 2013 e 2025."]
+              f"no período carregado no banco (de 2013 até o último mês publicado pelo DATASUS)."]
     partes = [f"{formatar_numero(_pct(p['cidade'], n), 1)}% de moradoras de {ficha['municipio']}",
               f"{formatar_numero(_pct(p['outra_cidade'], n), 1)}% de outras cidades de SP",
               f"{formatar_numero(ficha['pct_fora'], 1)}% de outros estados"]
@@ -1903,6 +1903,92 @@ def fluxo_da_cidade(conexao, origem, codigo_ibge, uf_referencia="SP"):
         "moradoras_fora": moradoras - na_cidade, "destinos": destinos[:10],
         "moradoras_sem_hospital": sem_hospital,
     }
+
+
+# =====================================
+# INTERNAÇÕES DE UM ANO, MÊS A MÊS (pedido da Secretaria da Mulher, 20/10/2026: "quantas internações em Rio Claro neste ano?")
+#
+# Duas perguntas que parecem iguais: (a) MORADORAS da cidade (residência, MUNIC_RES) e (b) internações NOS HOSPITAIS da cidade
+# (MUNIC_MOV). O ano é o de competência. Mês que a fonte não tem NÃO é zero: sai como "sem dado" (None). Mês que a fonte tem, sem
+# internação da cidade, é zero de verdade.
+# =====================================
+
+PERSPECTIVAS = ("moradoras", "hospitais")
+NOMES_MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro",
+               "novembro", "dezembro"]
+
+
+def anos_com_dados(conexao, uf_referencia="SP"):
+    """Anos que têm alguma internação no banco (ordem crescente). [] se o banco não existe ou não tem a coluna ano."""
+    try:
+        return [int(a) for (a,) in conexao.execute(
+            "SELECT DISTINCT ano FROM internacoes WHERE origem = ? ORDER BY ano", (uf_referencia,)).fetchall()]
+    except Exception:
+        return []
+
+
+def internacoes_do_periodo(conexao, origem, codigo_ibge, ano, perspectiva="moradoras", cancer=None, uf_referencia="SP"):
+    """Internações registradas em um ano, por mês, para a cidade.
+
+    perspectiva: "moradoras" (mulheres que moram na cidade, onde quer que tenham sido internadas em SP) ou "hospitais"
+    (internações nos hospitais da cidade, de moradoras ou não). cancer: um tipo ou None (os sete somados).
+    Devolve None se o banco não guarda o mês (carga antiga) ou, em "hospitais", o município do hospital."""
+    if perspectiva not in PERSPECTIVAS:
+        raise ValueError(f"perspectiva desconhecida: {perspectiva}")
+    try:
+        colunas = {linha[1] for linha in conexao.execute("PRAGMA table_info(internacoes)")}
+    except Exception:
+        return None
+    if "mes" not in colunas or (perspectiva == "hospitais" and "municipio_hospital" not in colunas):
+        return None
+    filtro, parametros = ("municipio = ?", [origem]) if perspectiva == "moradoras" else (
+        "municipio_hospital = ?", [str(codigo_ibge)[:6]])
+    if cancer:
+        filtro += " AND tipo_cancer = ?"
+        parametros.append(cancer)
+    try:
+        na_fonte = {int(m) for (m,) in conexao.execute(
+            "SELECT DISTINCT mes FROM internacoes WHERE origem = ? AND ano = ? AND mes IS NOT NULL",
+            (uf_referencia, ano)).fetchall()}
+        linhas = conexao.execute(
+            f"SELECT mes, tipo_cancer, COUNT(*) FROM internacoes WHERE origem = ? AND ano = ? AND mes IS NOT NULL "
+            f"AND {filtro} GROUP BY mes, tipo_cancer", [uf_referencia, ano] + parametros).fetchall()
+    except Exception:
+        return None
+    contagem, por_cancer = {}, {}
+    for mes, tipo, n in linhas:
+        contagem[int(mes)] = contagem.get(int(mes), 0) + int(n)
+        por_cancer[tipo] = por_cancer.get(tipo, 0) + int(n)
+    meses = {m: (contagem.get(m, 0) if m in na_fonte else None) for m in range(1, 13)}
+    return {"ano": int(ano), "perspectiva": perspectiva, "cancer": cancer, "meses": meses,
+            "na_fonte": sorted(na_fonte), "sem_dado": [m for m in range(1, 13) if m not in na_fonte],
+            "total": sum(contagem.values()), "por_cancer": por_cancer,
+            "ultimo_mes": max(na_fonte) if na_fonte else None}
+
+
+def leitura_internacoes_periodo(info, nome_cidade):
+    """Frases que dizem o que o número é, até que mês vai e o que NÃO se pode concluir."""
+    if info is None:
+        return ["Este dado não existe no banco carregado: a carga não guardou o mês (ou o município do hospital). "
+                "Rode a carga de novo (py etl\\carga_todas_bases.py)."]
+    ano, total, na_fonte = info["ano"], info["total"], info["na_fonte"]
+    quem = (f"mulheres que moram em {nome_cidade}" if info["perspectiva"] == "moradoras"
+            else f"internações nos hospitais de {nome_cidade} (de moradoras ou não)")
+    assunto = cancer_de(info["cancer"]) if info["cancer"] else "os 7 cânceres acompanhados"
+    if not na_fonte:
+        return [f"Este dado não existe para {ano}: o banco não tem nenhum mês de {ano}. Isso não significa zero internações."]
+    frases = [f"Em {ano}, o SIH/SUS registrou {formatar_numero(total)} internações por {assunto} ({quem}), "
+              f"nos {len(na_fonte)} {'mês' if len(na_fonte) == 1 else 'meses'} que o DATASUS já publicou "
+              f"(último: {NOMES_MESES[info['ultimo_mes'] - 1]})."]
+    if info["sem_dado"]:
+        nomes = ", ".join(NOMES_MESES[m - 1] for m in info["sem_dado"])
+        frases.append(f"Sem dado na fonte: {nomes}. Mês sem dado não é zero: o DATASUS não publicou esse arquivo (ainda ou nunca).")
+        frases.append(f"{ano} está incompleto: não compare este total com o de um ano de 12 meses.")
+    elif total == 0:
+        frases.append(f"A fonte tem os 12 meses de {ano}, e nenhum registro desta seleção.")
+    frases.append("Conta internações (uma mulher pode ter várias), só de mulheres com os 7 cânceres acompanhados, no SUS. "
+                  "Não são casos novos de câncer. O ano é o da competência da AIH, que pode diferir do da internação.")
+    return frases
 
 
 def leitura_cidade_visao(info, nome_cidade, visao):

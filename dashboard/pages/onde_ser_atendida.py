@@ -102,7 +102,7 @@ def lista(arquivo, modificado):
 
 @st.cache_data
 def internacoes_por_cnes(modificado):
-    """CNES (7 dígitos) -> internações por câncer feminino registradas no hospital (2013-2025, 7 cânceres), ou {}
+    """CNES (7 dígitos) -> internações por câncer feminino registradas no hospital (2013 até o último mês carregado, 7 cânceres), ou {}
     se o banco não existe ou é antigo (sem CNES). Não é qualidade nem preferência: é só o que o SIH registrou."""
     try:
         import inteligencia as ti
@@ -145,7 +145,7 @@ def cartao(u, n_internacoes, busca=""):
         selos += f'<span class="un-selo conferido" title="Telefone e horário conferidos na fonte oficial">conferido em {html.escape(u.conferido_em)}</span>'
     if n_internacoes:
         quantas = f"{int(n_internacoes):,}".replace(",", ".")
-        selos += (f'<span class="un-selo cancer" title="Internações dos 7 cânceres femininos acompanhados, 2013–2025, '
+        selos += (f'<span class="un-selo cancer" title="Internações dos 7 cânceres femininos acompanhados, 2013 até o último mês carregado, '
                   f'registradas no SIH/SUS (não mede qualidade)">{quantas} internações por câncer</span>')
     linhas = []
     if u.endereco:
@@ -342,7 +342,7 @@ else:
 
 if internacoes:
     st.caption("O selo roxo “internações por câncer” liga o cadastro ao restante do Escudo: é quantas internações dos 7 cânceres "
-               "femininos o SIH/SUS registrou naquele hospital em 2013–2025, de pacientes de qualquer cidade. Descreve o que "
+               "femininos o SIH/SUS registrou naquele hospital de 2013 até o último mês carregado, de pacientes de qualquer cidade. Descreve o que "
                "aconteceu; não diz qual hospital é melhor.")
 
 with st.expander("De onde vêm estes dados e quais são os limites"):

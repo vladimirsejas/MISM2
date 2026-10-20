@@ -267,6 +267,64 @@ checar("I. faixas: dois períodos e 50-69 sobe de 25% para 50%",
        and abs(tabela[(tabela["faixa"] == "50 a 69") & (tabela["periodo"] == "2019–2024")]["pct"].iloc[0] - 50) < 1e-6)
 checar("I. leitura das faixas cita a faixa que mais mudou", "50 a 69" in leitura_faixas(tabela, periodos)[0])
 
+# ---- 2026 entrando só com os meses já publicados (20/10/2026): ano parcial é marcado, nunca tratado como ano completo ----
+from inteligencia import ajustar_meses, anos_incompletos, registrado
+_anos26 = list(range(2013, 2027))
+_s26 = pd.DataFrame({"tipo_cancer": "MAMA", "grupo": "MUNICIPIO", "ano": _anos26, "internacoes": [120] * 13 + [60],
+                     "obitos": 5, "valor_total": 1000.0, "dias_permanencia": 300})
+_s26 = ajustar_meses(_s26, {a: 12 for a in _anos26[:-1]} | {2026: 6})
+checar("2026 com 6 meses: o ano é marcado como incompleto (e só ele)", anos_incompletos(_s26) == {2026: 6})
+checar("2026 com 6 meses: o REGISTRADO é 60 e o comparável (média mensal x 12) é 120, separados",
+       int(registrado(_s26, "internacoes").iloc[-1]) == 60 and int(_s26["internacoes"].iloc[-1]) == 120)
+checar("2026 parcial não cria zero nos outros anos nem muda o total registrado do período",
+       int(registrado(_s26, "internacoes").sum()) == 120 * 13 + 60)
+
+# ---- internações de um ano, mês a mês: residência x hospital, mês sem dado não é zero (20/10/2026) ----
+import sqlite3
+from inteligencia import PERSPECTIVAS, anos_com_dados, internacoes_do_periodo, leitura_internacoes_periodo
+_c = sqlite3.connect(":memory:")
+_c.execute("CREATE TABLE internacoes (origem TEXT, municipio TEXT, tipo_cancer TEXT, ano INT, mes INT, municipio_hospital TEXT)")
+_linhas = []
+for _mes in (1, 3, 4, 5, 6, 7):                        # 2026: o DATASUS só listou estes meses (fevereiro e agosto em diante faltam)
+    _linhas += [("SP", "RIO_CLARO", "MAMA", 2026, _mes, "354390")] * 2          # moradoras internadas na própria cidade
+    _linhas += [("SP", "RIO_CLARO", "MAMA", 2026, _mes, "351620")]              # moradora internada em outra cidade (Barretos)
+    _linhas += [("SP", "OUTRO_ESTADO", "COLO_UTERO", 2026, _mes, "354390")]     # mulher de fora internada em Rio Claro
+    _linhas += [("SP", "CAMPINAS", "MAMA", 2026, _mes, "350950")]
+_linhas += [("SP", "RIO_CLARO", "MAMA", 2025, m, "354390") for m in range(1, 13)]
+_linhas += [("SP", "CAMPINAS", "MAMA", 2025, m, "350950") for m in range(1, 13)]
+_c.executemany("INSERT INTO internacoes VALUES (?,?,?,?,?,?)", _linhas)
+mor = internacoes_do_periodo(_c, "RIO_CLARO", 3543907, 2026, "moradoras")
+hos = internacoes_do_periodo(_c, "RIO_CLARO", 3543907, 2026, "hospitais")
+checar("ano: moradoras e hospitais da cidade são perguntas diferentes (3 x 3 por mês nos 6 meses: 18 e 18, mas compostos diferentes)",
+       mor["total"] == 18 and hos["total"] == 18 and mor["por_cancer"] == {"MAMA": 18} and hos["por_cancer"] == {"MAMA": 12, "COLO_UTERO": 6})
+checar("ano: mês que a fonte não tem é None (sem dado), nunca zero", mor["meses"][2] is None and mor["meses"][8] is None
+       and mor["meses"][1] == 3 and mor["sem_dado"] == [2, 8, 9, 10, 11, 12] and mor["ultimo_mes"] == 7)
+checar("ano: mês que a fonte TEM e a seleção não registra é zero de verdade",
+       internacoes_do_periodo(_c, "RIO_CLARO", 3543907, 2026, "moradoras", cancer="COLO_UTERO")["meses"][1] == 0
+       and internacoes_do_periodo(_c, "RIO_CLARO", 3543907, 2026, "moradoras", cancer="COLO_UTERO")["meses"][2] is None)
+checar("ano: 2025 completo soma os 12 meses e não tem mês sem dado",
+       internacoes_do_periodo(_c, "RIO_CLARO", 3543907, 2025)["total"] == 12 and not internacoes_do_periodo(_c, "RIO_CLARO", 3543907, 2025)["sem_dado"])
+checar("ano: anos disponíveis vêm do banco", anos_com_dados(_c) == [2025, 2026] and anos_com_dados(sqlite3.connect(":memory:")) == [])
+lt = " ".join(leitura_internacoes_periodo(mor, "Rio Claro"))
+checar("ano: a leitura diz o último mês, que mês sem dado não é zero e que o ano está incompleto",
+       "julho" in lt and "não é zero" in lt and "incompleto" in lt and "não são casos novos" in lt.replace("Não são", "não são"))
+lt25 = " ".join(leitura_internacoes_periodo(internacoes_do_periodo(_c, "RIO_CLARO", 3543907, 2025), "Rio Claro"))
+checar("ano: ano completo não leva o aviso de ano incompleto", "incompleto" not in lt25)
+vazio = internacoes_do_periodo(_c, "RIO_CLARO", 3543907, 2030)
+checar("ano: ano sem nenhum mês no banco diz 'este dado não existe' (e não zero)",
+       vazio["na_fonte"] == [] and "Este dado não existe" in leitura_internacoes_periodo(vazio, "Rio Claro")[0])
+_antigo = sqlite3.connect(":memory:")
+_antigo.execute("CREATE TABLE internacoes (origem TEXT, municipio TEXT, tipo_cancer TEXT, ano INT)")
+checar("ano: banco antigo, sem a coluna mes, devolve None e a leitura manda recarregar",
+       internacoes_do_periodo(_antigo, "RIO_CLARO", 3543907, 2025) is None
+       and "carga" in leitura_internacoes_periodo(None, "Rio Claro")[0])
+try:
+    internacoes_do_periodo(_c, "RIO_CLARO", 3543907, 2026, "xx")
+    _erro_perspectiva = False
+except ValueError:
+    _erro_perspectiva = True
+checar("ano: perspectiva inválida é erro, não resposta silenciosa", _erro_perspectiva and PERSPECTIVAS == ("moradoras", "hospitais"))
+
 # ---- gráfico de idade: todos os cânceres, um ano só, cidade sem dados, zero em faixa (pedido da Secretaria, 20/10/2026) ----
 from inteligencia import TODOS_CANCERES, totais_faixas
 dois = pd.concat([faixas, faixas.assign(tipo_cancer="OVARIO", internacoes=5)], ignore_index=True)

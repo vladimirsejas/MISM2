@@ -34,6 +34,10 @@ from inteligencia import (
     carregar_serie,
     cidades_parecidas,
     comparar_faixas,
+    anos_com_dados,
+    internacoes_do_periodo,
+    leitura_internacoes_periodo,
+    NOMES_MESES,
     totais_faixas,
     TODOS_CANCERES,
     NOME_TODOS_CANCERES,
@@ -160,6 +164,30 @@ def duplicados_municipio(origem):
     conn = sqlite3.connect(BANCO)
     try:
         return canceres_com_duplicidade(conn, origem)
+    finally:
+        conn.close()
+
+
+@st.cache_data
+def anos_do_banco():
+    try:
+        conn = sqlite3.connect(BANCO)
+    except Exception:
+        return []
+    try:
+        return anos_com_dados(conn, UF_REFERENCIA)
+    finally:
+        conn.close()
+
+
+@st.cache_data
+def internacoes_do_ano(origem, codigo_ibge, ano, perspectiva, cancer):
+    try:
+        conn = sqlite3.connect(BANCO)
+    except Exception:
+        return None
+    try:
+        return internacoes_do_periodo(conn, origem, codigo_ibge, ano, perspectiva, cancer, UF_REFERENCIA)
     finally:
         conn.close()
 
@@ -872,6 +900,62 @@ if aba == "Evolução":
         unsafe_allow_html=True,
     )
 
+    # ---- Quantas internações em um ano, mês a mês? (pedido da Secretaria da Mulher, 20/10/2026) ----
+    anos_ip = anos_do_banco()
+    if st.session_state.get("ip_ano") not in anos_ip and anos_ip:
+        st.session_state["ip_ano"] = anos_ip[-1]
+    st.session_state.setdefault("ip_quem", "moradoras")
+    if st.session_state.get("ip_cancer") not in [TODOS_CANCERES] + list(codigos):
+        st.session_state["ip_cancer"] = TODOS_CANCERES
+    st.markdown("---")
+    if not anos_ip:
+        pergunta("Quantas internações o SIH registrou em cada ano, mês a mês?", "cidade",
+                 f"moradoras de {html.escape(nome_cidade)} ou hospitais da cidade, conforme a escolha")
+        st.info("Este dado não existe: o painel não conseguiu ler os anos do banco.")
+    else:
+        col_a, col_q, col_k = st.columns([1, 2, 2])
+        with col_a:
+            ano_ip = caixa_presa(st, "Ano das internações", "ip_ano", anos_ip)
+        with col_q:
+            quem_ip = caixa_presa(st, "Quem contar", "ip_quem", ["moradoras", "hospitais"], format_func={
+                "moradoras": f"Mulheres que moram em {nome_cidade}",
+                "hospitais": f"Internações nos hospitais de {nome_cidade}"}.get)
+        with col_k:
+            cancer_ip = caixa_presa(st, "Câncer das internações", "ip_cancer", [TODOS_CANCERES] + list(codigos),
+                                    format_func=lambda c: NOME_TODOS_CANCERES if c == TODOS_CANCERES else nome_doenca(c))
+        pergunta(f"Quantas internações o SIH registrou em {ano_ip}, mês a mês?", "cidade",
+                 (f"moradoras de {html.escape(nome_cidade)}" if quem_ip == "moradoras"
+                  else f"hospitais de {html.escape(nome_cidade)}") + f" · {ano_ip}")
+        info_ip = internacoes_do_ano(ORIGEM, cidade["codigo_ibge"], ano_ip, quem_ip,
+                                     None if cancer_ip == TODOS_CANCERES else cancer_ip)
+        if info_ip is None or not info_ip["na_fonte"]:
+            st.info(" ".join(leitura_internacoes_periodo(info_ip, nome_cidade)[:1]))
+        else:
+            m1, m2, m3 = st.columns(3)
+            m1.metric(f"Internações registradas em {ano_ip}", formatar_numero(info_ip["total"]))
+            m2.metric("Meses que a fonte tem", f"{len(info_ip['na_fonte'])} de 12")
+            m3.metric("Último mês publicado", NOMES_MESES[info_ip["ultimo_mes"] - 1])
+            rotulos = [nm[:3] for nm in NOMES_MESES]
+            com_dado = [m for m in range(1, 13) if info_ip["meses"][m] is not None]
+            fig_ip = go.Figure(go.Bar(x=[rotulos[m - 1] for m in com_dado], y=[info_ip["meses"][m] for m in com_dado],
+                                      name="Internações registradas", marker={"color": AZUL, "line": {"width": 0}},
+                                      text=[formatar_numero(info_ip["meses"][m]) for m in com_dado],
+                                      textposition="outside", cliponaxis=False))
+            if info_ip["sem_dado"]:
+                fig_ip.add_trace(go.Scatter(
+                    x=[rotulos[m - 1] for m in info_ip["sem_dado"]], y=[0] * len(info_ip["sem_dado"]), mode="markers",
+                    name="Sem dado na fonte (não é zero)", marker={"symbol": "x", "size": 9, "color": LARANJA},
+                    hovertemplate="%{x}: a fonte não tem este mês<extra></extra>"))
+            fig_ip.update_xaxes(categoryorder="array", categoryarray=rotulos)
+            fig_ip.update_yaxes(rangemode="tozero")
+            estilizar(fig_ip, altura=300)
+            st.plotly_chart(fig_ip, width="stretch", theme=None, config=CONFIG_GRAFICO)
+            if cancer_ip == TODOS_CANCERES and info_ip["por_cancer"]:
+                st.dataframe(pd.DataFrame(sorted(((nome_doenca(c), n) for c, n in info_ip["por_cancer"].items()),
+                                                 key=lambda x: -x[1]), columns=["Câncer", "Internações registradas"]),
+                             hide_index=True, width="stretch")
+            leitura("O que o gráfico mostra", leitura_internacoes_periodo(info_ip, nome_cidade))
+
 
 # ============================================================
 # INVESTIGAR — o que merece ser pesquisado?
@@ -886,7 +970,7 @@ if aba == "Rede hospitalar":
                 unsafe_allow_html=True)
     # ---- fluxo: mulheres de outros estados atendidas em SP (pedido do autor, 10/2026) ----
     pergunta("De onde vêm as mulheres de outros estados atendidas em São Paulo?", "estado",
-             "todas as cidades de SP, 7 cânceres somados, 2013–2025 · não muda quando você troca de cidade")
+             f"todas as cidades de SP, 7 cânceres somados, {ano_ini}–{ano_fim} · não muda quando você troca de cidade")
     st.markdown('<div class="escudo-dica">Internações de mulheres que moram em outros estados, registradas em '
                 'hospitais de SP. Conta internações (uma mulher pode ter várias) e só enxerga hospitais de SP.'
                 '</div>', unsafe_allow_html=True)
@@ -1025,7 +1109,7 @@ if aba == "Rede hospitalar":
         leitura("O que a tabela mostra", leitura_hospitais(fluxo, hosp))
 
         pergunta("Como é o atendimento em um hospital específico?", "estado",
-                 "um hospital por vez, todas as pacientes do hospital (de qualquer lugar), 2013–2025")
+                 f"um hospital por vez, todas as pacientes do hospital (de qualquer lugar), {ano_ini}–{ano_fim}")
         dados_h = hospitais_dados()
         if dados_h is None:
             st.info("O banco ainda não guarda o CNES e a residência de cada internação. Rode a carga de novo "
@@ -1124,7 +1208,7 @@ if aba == "Rede hospitalar":
         leitura("O que o gráfico mostra", leitura_evolucao_fluxo(e_fluxo))
 
         pergunta("Quem vem de fora, de qual câncer e para qual hospital? Pesquise tudo", "estado",
-                 "todas as internações de mulheres de outros estados em hospitais de SP, 2013–2025 · "
+                 f"todas as internações de mulheres de outros estados em hospitais de SP, {ano_ini}–{ano_fim} · "
                  "uma linha por câncer, estado de origem e hospital")
         st.markdown('<div class="escudo-dica">Digite um nome na busca (hospital, cidade, estado ou câncer) ou use os '
                     'filtros. Clique no título de uma coluna para ordenar. "De fora" = mulher que mora em outro '
@@ -1456,7 +1540,7 @@ if aba == "Método":
   total do tratamento (quimioterapia e radioterapia ambulatoriais ficam fora). Valores nominais, sem inflação.
 - **O ano é o de processamento da internação** (competência da AIH), que pode não coincidir com o ano em que
   ela aconteceu.
-- **Meses que a fonte não oferece:** o DATASUS não disponibiliza todos os meses de 2013 a 2024 (2018 tem só 6).
+- **Meses que a fonte não oferece:** o DATASUS não disponibiliza todos os meses desde 2013 (2018 tem só 6) e o ano mais recente só tem os meses já publicados.
   Conferimos duas vezes, nos arquivos e na própria fonte: esses dados não existem para recuperar. Mês ausente não
   é zero e ano incompleto não é ano normal: para comparar anos, o Escudo usa a média dos meses disponíveis × 12
   (marcador vazado no gráfico); os totais do período são o que foi registrado.

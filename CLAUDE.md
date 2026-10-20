@@ -583,11 +583,20 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   (3) **Aba Investigar dividida:** nova aba **Rede hospitalar** (fluxo, hospitais, mapa, tabela de fluxo, cidade atendida) e Investigar fica só com
   perguntas da cidade escolhida (câncer que cresce, idade, comparar cidades). Cada pergunta numa aba só (cenário K). Destinos da Lia de fluxo e polos
   agora vão a "Rede hospitalar". Inventário em `docs/INVENTARIO_DO_PAINEL.md`.
-  (4) **2025 e 2026:** 2025 já está no banco; **2026 NÃO existe nos arquivos do autor** e o `baixar_sih_sp.py` termina em 2025 (`ANOS`, texto "2013 a 2025").
-  A nuvem não alcança o DATASUS (proxy 403) e a web não traz cronograma de 2026: descobrir no notebook com `py -3.12 etl\listar_meses_pysus.py --ano 2026`
-  (só lista; teste `etl/teste_listar_meses_pysus.py`). Regras do autor: preservar as lacunas, nunca preencher/estimar, lacuna da fonte != falha de download,
-  não repetir download nem verificação já feitos, ano incompleto não se compara como ano completo. **Próximo:** atualização incremental só de 2025–2026
-  (trocar só essas competências; textos "2013–2025" passam a vir do banco) e a consulta "internações por ano" (residência x hospital), depois de ver a lista de meses.
+  (4) **2025 e 2026 (CONFIRMADO no notebook do autor em 20/10/2026 com `py -3.12 etl\listar_meses_pysus.py --ano 2026` e `--ano 2025`):**
+  **2025** tem 12/12 meses nas três bases (SIH/RD, SIA/AQ, SIA/AR): já está no banco, NÃO baixar de novo. **2026:** SIH/RD tem só **jan, mar, abr, mai, jun, jul**
+  (fevereiro não foi listado; agosto em diante ainda não existe); SIA/AQ e SIA/AR têm **jan a jul**. É lacuna da fonte, nunca preenchida. A nuvem não alcança o DATASUS
+  (proxy 403) e a web não traz cronograma de 2026. Regras do autor: preservar as lacunas, nunca preencher/estimar, lacuna da fonte != falha de download, não repetir
+  download nem verificação já feitos, ano incompleto não se compara como ano completo.
+  **Como atualizar (feito em 20/10/2026, falta rodar no notebook):** `py -3.12 etl\baixar_sih_sp.py --anos 2026` (modo incremental `main_incremental`/`atualizar_anos`:
+  baixa só esses meses e troca, dentro do CSV atual de cada câncer, só as linhas de ANO_CMPT=2026; o resto fica intacto, CSV antigo vai para `_backup_*`, erro de
+  download de verdade não troca nada, sem CSV atual não inventa; rodar de novo não duplica); `py -3.12 etl\baixar_sia_oncologia.py --anos 2026-2026` (já troca só o ano);
+  depois `py etl\carga_todas_bases.py` (feche o painel). Teste: `etl/teste_baixar_sih_sp.py`. SIM (`DOSP`) e CNES não têm 2026. Os textos "2013–2025" do painel agora vêm do
+  banco (`ano_ini`–`ano_fim`). 2026 entra como ano INCOMPLETO pelas regras que já existiam (`meses_por_ano`, `anos_incompletos`, `ajustar_meses`; teste em `teste_inteligencia.py`).
+  **Consulta nova "Quantas internações o SIH registrou em <ano>, mês a mês?"** (fim da aba Evolução; pedido da Secretaria da Mulher): `inteligencia.internacoes_do_periodo`/`leitura_internacoes_periodo`
+  (ano, **mulheres que moram na cidade x internações nos hospitais da cidade**, um câncer ou os 7 somados; mês que a fonte não tem = "sem dado", NUNCA zero; mês da fonte sem registro = zero de
+  verdade; total é o registrado; diz o último mês e que o ano está incompleto; o ano é o da competência). Cenário L de `teste_painel.py`. Ainda não foi visto no navegador nem com o banco real.
+  **Falta:** a Lia responder "quantas internações em <cidade> neste ano?" (hoje só o painel) e decidir se `ANO_CMPT` = ano da internação (ver `analises\investigacao_2025.txt` no notebook).
   **SIA/SIM/CNES no painel:** hoje só a Lia usa; entram no painel (uma seção própria, nunca somadas ao SIH) depois de conferir os códigos com o banco real.
   A afirmação do ChatGPT de que o SIH ainda não tem regra territorial única está desatualizada (resolvido em 08/10/2026).
 

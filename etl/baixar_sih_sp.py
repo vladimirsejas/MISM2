@@ -40,6 +40,12 @@ import carga_todas_bases as carga
 #     pelos meses que EXISTEM, mas só se o único problema for "a fonte
 #     não lista o mês" (erro de download de verdade continua barrando).
 #
+# ATUALIZAR SÓ OS ANOS NOVOS (20/10/2026, regra do autor: não baixar de novo o que já foi baixado e verificado):
+#     py -3.12 etl\baixar_sih_sp.py --anos 2026        (ou 2025-2026)
+#   baixa só esses anos (os meses que o DATASUS lista; os que ele não lista são lacuna da fonte, NUNCA preenchida) e troca, dentro
+#   do CSV atual de cada câncer, só as linhas dessas competências. Os outros anos não são tocados. O CSV antigo vai para backup e
+#   nada é trocado se algum mês falhar por erro de download de verdade. Depois: py etl\carga_todas_bases.py
+#
 # Uso (no Windows, da pasta do projeto, com internet):
 #     py -3.12 etl\baixar_sih_sp.py --aceitar-lacunas-da-fonte
 # Pode levar horas (cada mês de SP é grande). Se parar, rode de novo.
@@ -186,12 +192,12 @@ async def com_tentativas(descricao, funcao):
 
 # ---------- download ----------
 
-async def baixar(filtros, pysus_cls=None):
+async def baixar(filtros, pysus_cls=None, anos=None):
     if pysus_cls is None:
         from pysus import PySUS as pysus_cls
     falhas = {}  # (ano, mes) ou ("ano", ano) -> motivo
     async with pysus_cls() as pysus:
-        for ano in ANOS:
+        for ano in (anos or ANOS):
             faltam = [m for m in MESES if not mes_pronto(ano, m)]
             if not faltam:
                 print(f"{ano}: os 12 meses já estão prontos.")
@@ -278,6 +284,93 @@ def consolidar(filtros):
     return backup
 
 
+def _normalizar_coluna(nome):
+    return str(nome).strip().strip('"').upper()
+
+
+def atualizar_anos(filtros, anos):
+    """Troca, dentro do CSV atual de cada câncer, SÓ as competências dos `anos` pelos meses prontos deles.
+    Os outros anos ficam exatamente como estão. Tudo é montado e conferido em memória antes de mexer em qualquer arquivo;
+    se algo não bater, nada é trocado (devolve None). Devolve a pasta do backup."""
+    anos_txt = {str(a) for a in anos}
+    prontos = [(a, m) for a in anos for m in MESES if mes_pronto(a, m)]
+    if not prontos:
+        print("  nenhum mês novo ficou pronto: nada a atualizar.")
+        return None
+    montados = {}
+    for pasta_cancer, (codigo, _, _) in filtros.items():
+        destino = BASE_DADOS / pasta_cancer
+        csv = carga.selecionar_csv_unico(str(destino), pasta_cancer) if destino.is_dir() else None
+        if csv is None:
+            print(f"  {codigo}: não há CSV atual em {destino}; a atualização por anos precisa do arquivo atual "
+                  "(rode antes o download completo). NADA foi trocado.")
+            return None
+        antigo = pd.read_csv(csv, sep=carga.detectar_separador(csv), encoding="latin1", dtype=str)
+        antigo.columns = [_normalizar_coluna(c) for c in antigo.columns]
+        if "ANO_CMPT" not in antigo.columns:
+            print(f"  {codigo}: o CSV atual não tem ANO_CMPT. NADA foi trocado.")
+            return None
+        ano_antigo = antigo["ANO_CMPT"].astype("string").str.strip().str.replace(r"\.0$", "", regex=True)
+        sai = ano_antigo.isin(anos_txt)
+        mantidas = antigo.loc[~sai]
+        novas = pd.concat([pd.read_parquet(pasta_do_mes(a, m) / f"{codigo}.parquet") for a, m in prontos],
+                          ignore_index=True)
+        novas.columns = [_normalizar_coluna(c) for c in novas.columns]
+        novas = novas.astype("string")
+        colunas = list(antigo.columns) + [c for c in novas.columns if c not in antigo.columns]
+        junto = pd.concat([mantidas.reindex(columns=colunas), novas.reindex(columns=colunas)], ignore_index=True)
+        if len(junto) != len(mantidas) + len(novas) or len(mantidas) != int((~sai).sum()):
+            print(f"  {codigo}: a conferência das linhas não bateu. NADA foi trocado.")
+            return None
+        anos_do_arquivo = pd.to_numeric(junto["ANO_CMPT"].astype("string").str.strip(), errors="coerce").dropna()
+        nome = f"{pasta_cancer.replace('_sp', '')}_mulheres_sp_{int(anos_do_arquivo.min())}_{int(anos_do_arquivo.max())}"
+        montados[pasta_cancer] = (codigo, junto, nome, int(sai.sum()), len(novas), len(mantidas))
+    backup = BASE_DADOS / f"_backup_{datetime.now():%Y%m%d_%H%M}"
+    for pasta_cancer, (codigo, junto, nome, tiradas, postas, mantidas) in montados.items():
+        destino = BASE_DADOS / pasta_cancer
+        antigos = [p for p in destino.iterdir() if p.suffix.lower() in (".csv", ".parquet")]
+        (backup / pasta_cancer).mkdir(parents=True, exist_ok=True)
+        for p in antigos:
+            shutil.move(str(p), str(backup / pasta_cancer / p.name))
+        junto.to_parquet(destino / f"{nome}.parquet", index=False)
+        junto.to_csv(destino / f"{nome}.csv", index=False, encoding="latin1", errors="replace")
+        print(f"  {codigo}: {mantidas:,} linhas de outros anos mantidas, {tiradas:,} de {', '.join(map(str, anos))} trocadas "
+              f"por {postas:,} -> {nome}.csv".replace(",", "."))
+    return backup
+
+
+def anos_da_linha(argv):
+    """--anos 2026 ou --anos 2025-2026 -> [2026] / [2025, 2026]; None se não veio."""
+    if "--anos" not in argv:
+        return None
+    valor = argv[argv.index("--anos") + 1]
+    inicio, _, fim = valor.partition("-")
+    return list(range(int(inicio), int(fim or inicio) + 1))
+
+
+def main_incremental(anos, pysus_cls=None):
+    print(f"ATUALIZAR SIH/SUS DE SP SÓ EM {anos[0]}-{anos[-1]} -- os outros anos não são baixados nem tocados")
+    filtros = definir_filtros()
+    falhas = asyncio.run(baixar(filtros, pysus_cls, anos=anos))
+    erros_de_verdade = {k: v for k, v in falhas.items() if v != FALTA_NA_FONTE}
+    lacunas = sorted(k for k, v in falhas.items() if v == FALTA_NA_FONTE)
+    print("\n" + "=" * 70)
+    if lacunas:
+        print("NÃO LISTADOS pelo DATASUS (lacuna da fonte; ficam como estão, sem preencher): "
+              + ", ".join(f"{a}/{m:02d}" for a, m in lacunas))
+    if erros_de_verdade:
+        print("\nFALHAS DE DOWNLOAD (nada foi trocado; rode de novo, os meses prontos são pulados):")
+        for (ano, mes), motivo in sorted(erros_de_verdade.items()):
+            print(f"  {ano}/{mes:02d}: {motivo.splitlines()[0]}")
+        return 1
+    backup = atualizar_anos(filtros, anos)
+    if backup is None:
+        return 1
+    print(f"\nCSVs antigos guardados em {backup}")
+    print("Próximo passo: py etl\\carga_todas_bases.py   (feche o painel antes)")
+    return 0
+
+
 def main(pysus_cls=None, aceitar_lacunas=False):
     print("BAIXAR SIH/SUS DE SP -- 7 cânceres, 2013 a 2025 (atendimento em SP, inclusive moradoras de outros estados)")
     filtros = definir_filtros()
@@ -316,4 +409,5 @@ def main(pysus_cls=None, aceitar_lacunas=False):
 
 
 if __name__ == "__main__":
-    sys.exit(main(aceitar_lacunas="--aceitar-lacunas-da-fonte" in sys.argv))
+    _anos = anos_da_linha(sys.argv)
+    sys.exit(main_incremental(_anos) if _anos else main(aceitar_lacunas="--aceitar-lacunas-da-fonte" in sys.argv))

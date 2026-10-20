@@ -698,6 +698,65 @@ def main():
            and "se compara com outra cidade" not in rede)
     checar("K. a faixa 'Você está em' nomeia a aba nova", "Rede hospitalar · onde as mulheres são atendidas" in rede)
 
+    # ---- L. internações de um ano, mês a mês (Secretaria da Mulher): 2026 parcial, residência x hospital, sem dado != zero ----
+    anos_original, periodo_original = inteligencia.anos_com_dados, inteligencia.internacoes_do_periodo
+    chamadas_l = []
+
+    def periodo_falso(conn, origem, codigo, ano, perspectiva="moradoras", cancer=None, uf="SP"):
+        chamadas_l.append((ano, perspectiva, cancer))
+        if ano == 2030:
+            return {"ano": 2030, "perspectiva": perspectiva, "cancer": cancer, "meses": {m: None for m in range(1, 13)},
+                    "na_fonte": [], "sem_dado": list(range(1, 13)), "total": 0, "por_cancer": {}, "ultimo_mes": None}
+        na_fonte = [1, 3, 4, 5, 6, 7] if ano == 2026 else list(range(1, 13))
+        base = 10 if perspectiva == "moradoras" else 25
+        meses = {m: (base if m in na_fonte else None) for m in range(1, 13)}
+        return {"ano": ano, "perspectiva": perspectiva, "cancer": cancer, "meses": meses, "na_fonte": na_fonte,
+                "sem_dado": [m for m in range(1, 13) if m not in na_fonte], "total": base * len(na_fonte),
+                "por_cancer": {"MAMA": base * len(na_fonte)}, "ultimo_mes": max(na_fonte)}
+
+    inteligencia.anos_com_dados = lambda conn, uf="SP": [2024, 2025, 2026]
+    inteligencia.internacoes_do_periodo = periodo_falso
+    try:
+        streamlit.cache_data.clear()
+        at = abrir()
+        at.session_state["aba"] = "Evolução"
+        at.run()
+        caixas = {s.label: s for s in at.selectbox}
+        textos = " ".join(str(m.value) for m in at.markdown)
+        metricas = {m.label: m.value for m in at.metric}
+        checar("L. abre sem erro, com ano (o mais recente de início), 'Quem contar' e câncer",
+               not erros(at) and caixas["Ano das internações"].value == 2026 and "Quem contar" in caixas
+               and "Câncer das internações" in caixas)
+        checar("L. 2026 parcial: 6 de 12 meses, último mês julho e o total é o REGISTRADO (60)",
+               metricas.get("Meses que a fonte tem") == "6 de 12" and metricas.get("Último mês publicado") == "julho"
+               and metricas.get("Internações registradas em 2026") == "60")
+        leitura_txt = " ".join(str(m.value) for m in at.markdown)
+        checar("L. a leitura diz que mês sem dado não é zero e que 2026 está incompleto",
+               "não é zero" in leitura_txt and "incompleto" in leitura_txt)
+        caixas["Quem contar"].select("hospitais").run()
+        metricas = {m.label: m.value for m in at.metric}
+        checar("L. trocar para 'hospitais da cidade' recalcula (6 meses x 25 = 150) e passa a perspectiva certa",
+               not erros(at) and metricas.get("Internações registradas em 2026") == "150" and chamadas_l[-1][1] == "hospitais")
+        {s.label: s for s in at.selectbox}["Ano das internações"].select(2025).run()
+        metricas = {m.label: m.value for m in at.metric}
+        textos = " ".join(str(m.value) for m in at.markdown)
+        checar("L. 2025 (completo): 12 de 12 meses e sem aviso de ano incompleto",
+               metricas.get("Meses que a fonte tem") == "12 de 12" and "2025 está incompleto" not in textos)
+    finally:
+        inteligencia.anos_com_dados, inteligencia.internacoes_do_periodo = anos_original, periodo_original
+        streamlit.cache_data.clear()
+    inteligencia.anos_com_dados = lambda conn, uf="SP": []
+    try:
+        streamlit.cache_data.clear()
+        at = abrir()
+        at.session_state["aba"] = "Evolução"
+        at.run()
+        checar("L. sem anos no banco: avisa 'este dado não existe', sem erro e sem gráfico",
+               not erros(at) and "Este dado não existe: o painel não conseguiu ler os anos" in " ".join(str(i.value) for i in at.info))
+    finally:
+        inteligencia.anos_com_dados = anos_original
+        streamlit.cache_data.clear()
+
     print(f"\n({time.time() - inicio:.0f} s)")
     if falhas:
         print(f"{len(falhas)} checagem(ns) falharam.")
