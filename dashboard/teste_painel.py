@@ -742,6 +742,13 @@ def main():
         textos = " ".join(str(m.value) for m in at.markdown)
         checar("L. 2025 (completo): 12 de 12 meses e sem aviso de ano incompleto",
                metricas.get("Meses que a fonte tem") == "12 de 12" and "2025 está incompleto" not in textos)
+        # Estado velho/inválido numa caixa não pode derrubar a tela ("list.index(x): x not in list", 22/10/2026).
+        at = abrir()
+        at.session_state["aba"] = "Evolução"
+        at.session_state["ip_quem"] = "valor_que_nao_existe"
+        at.run()
+        checar("L. valor inválido guardado em 'Quem contar' volta ao padrão, sem erro",
+               not erros(at) and {s.label: s for s in at.selectbox}["Quem contar"].value == "moradoras")
     finally:
         inteligencia.anos_com_dados, inteligencia.internacoes_do_periodo = anos_original, periodo_original
         streamlit.cache_data.clear()

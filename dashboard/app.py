@@ -468,8 +468,16 @@ def sincronizar(chave, chave_do_widget):
     st.session_state[chave] = st.session_state[chave_do_widget]
 
 
+def valor_valido(chave, opcoes):
+    """Garante que o valor guardado existe entre as opções (estado velho ou inválido volta à primeira opção,
+    em vez de derrubar a tela com 'x not in list')."""
+    if st.session_state.get(chave) not in opcoes:
+        st.session_state[chave] = opcoes[0]
+
+
 def seletor(onde, rotulo, chave, opcoes, **kwargs):
     """st.radio preso à chave persistente (ver ESTADO DA TELA)."""
+    valor_valido(chave, opcoes)
     k = chave_widget(chave)
     return onde.radio(rotulo, opcoes, index=opcoes.index(st.session_state[chave]), key=k,
                       on_change=sincronizar, args=(chave, k), **kwargs)
@@ -477,6 +485,7 @@ def seletor(onde, rotulo, chave, opcoes, **kwargs):
 
 def caixa_presa(onde, rotulo, chave, opcoes, **kwargs):
     """st.selectbox preso à chave persistente (mesma defesa de seletor)."""
+    valor_valido(chave, opcoes)
     k = chave_widget(chave)
     return onde.selectbox(rotulo, opcoes, index=opcoes.index(st.session_state[chave]), key=k,
                           on_change=sincronizar, args=(chave, k), **kwargs)
@@ -909,7 +918,8 @@ if aba == "Evolução":
     anos_ip = anos_do_banco()
     if st.session_state.get("ip_ano") not in anos_ip and anos_ip:
         st.session_state["ip_ano"] = anos_ip[-1]
-    st.session_state.setdefault("ip_quem", "moradoras")
+    if st.session_state.get("ip_quem") not in ("moradoras", "hospitais"):
+        st.session_state["ip_quem"] = "moradoras"
     if st.session_state.get("ip_cancer") not in [TODOS_CANCERES] + list(codigos):
         st.session_state["ip_cancer"] = TODOS_CANCERES
     st.markdown("---")
