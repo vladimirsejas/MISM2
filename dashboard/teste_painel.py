@@ -544,6 +544,43 @@ def main():
             next(o for o in at.selectbox(key="hospital_perfil_todos").options if o.startswith("FUNDACAO"))).run()
         checar("H. hospital sem lacunas: a caixa 'por que alguns anos ficam sem barra' não aparece",
                not erros(at) and "Por que alguns anos ficam sem barra?" not in [e.label for e in at.expander])
+
+        # ---- ficha mais completa para gestor e pesquisador (22/10/2026): CNES, anos, estados de origem, CSV e atalho para a tabela ----
+        textos = " ".join(str(m.value) for m in at.markdown)
+        legendas = " ".join(str(c.value) for c in at.caption)
+        graficos_e = [g for g in at.get("plotly_chart") if "Minas Gerais" in str(g.proto.spec)]
+        baixar = [b for b in at.get("download_button") if "por ano" in str(b.proto.label)]
+        checar("H. ficha: mostra o CNES, o filtro de anos, o gráfico dos estados de origem e o CSV por ano",
+               not erros(at) and "CNES 2090236 · Barretos" in legendas and at.select_slider(key="hospital_anos") is not None
+               and "De quais estados vêm as mulheres de fora de FUNDACAO PIO XII BARRETOS?" in textos
+               and len(graficos_e) >= 1 and len(baixar) == 1
+               and "vindas de 1 estado: Minas Gerais" in textos and "residência da mulher" in textos)
+        # o período vale para tudo e a escolha do hospital NÃO pula (fica guardada pelo CNES)
+        at.selectbox(key="hospital_perfil_todos").select(
+            next(o for o in at.selectbox(key="hospital_perfil_todos").options if o.startswith("CNES 2077590"))).run()
+        at.select_slider(key="hospital_anos").set_value((2016, 2020)).run()
+        textos = " ".join(str(m.value) for m in at.markdown)
+        legendas = " ".join(str(c.value) for c in at.caption)
+        caixa_h = next(s for s in at.selectbox if s.label == "Escolha um hospital (pode digitar o nome)")
+        checar("H. período: o título mostra os anos e o hospital escolhido continua o mesmo (guardado pelo CNES)",
+               not erros(at) and at.session_state["hospital_cnes"] == "2077590" and "2016–2020" in textos
+               and "CNES 2077590" in legendas and caixa_h.value.startswith("CNES 2077590"))
+        at.select_slider(key="hospital_anos").set_value((2013, 2025)).run()
+        checar("H. período: voltar ao período inteiro mantém o hospital e a ficha",
+               not erros(at) and "CNES 2077590" in " ".join(str(c.value) for c in at.caption))
+        # atalho para a tabela completa: filtra "Quem vem de fora..." para este hospital (CNES), este câncer e estes anos
+        at.selectbox(key="hospital_perfil_todos").select(
+            next(o for o in at.selectbox(key="hospital_perfil_todos").options if o.startswith("FUNDACAO"))).run()
+        at.selectbox(key="hospital_cancer").select("Colo do útero").run()
+        at.button(key="hospital_ver_na_tabela").click().run()
+        legendas = " ".join(str(c.value) for c in at.caption)
+        tabela_f = [d.value for d in at.dataframe if {"Estado de origem", "Hospital"} <= set(d.value.columns)]
+        checar("H. atalho: filtra a tabela completa para este hospital e este câncer, e avisa que ela está filtrada",
+               not erros(at) and at.session_state["fluxo_tab_busca"] == "2090236"
+               and at.text_input(key="fluxo_tab_busca").value == "2090236"
+               and at.multiselect(key="fluxo_tab_cancer").value == ["Colo do útero"]
+               and "está filtrada para este hospital" in legendas
+               and len(tabela_f) == 1 and set(tabela_f[0]["Câncer"]) == {"Colo do útero"})
     finally:
         inteligencia.carregar_hospitais, inteligencia.carregar_fluxo = hospitais_original, fluxo_original
         inteligencia.fluxo_da_cidade = cidade_original

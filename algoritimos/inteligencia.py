@@ -1377,10 +1377,10 @@ GROUP BY cnes, tipo_cancer, ano, municipio_hospital, procedencia
 """
 
 SQL_HOSPITAL_UF = """
-SELECT cnes, tipo_cancer, uf_residencia, COUNT(*) AS internacoes
+SELECT cnes, tipo_cancer, ano, uf_residencia, COUNT(*) AS internacoes
 FROM internacoes
 WHERE origem = ? AND municipio = 'OUTRO_ESTADO' AND cnes IS NOT NULL AND TRIM(cnes) <> ''
-GROUP BY cnes, tipo_cancer, uf_residencia
+GROUP BY cnes, tipo_cancer, ano, uf_residencia
 """
 
 
@@ -1406,16 +1406,31 @@ def carregar_hospitais(conexao, uf_referencia="SP"):
             "meses": meses_por_ano(conexao, uf_referencia)}
 
 
-def _da_base(dados, cancer):
+def texto_do_periodo(anos):
+    """(2022, 2022) -> 'em 2022'; (2022, 2024) -> 'de 2022 a 2024'; None -> None."""
+    if not anos:
+        return None
+    return f"em {anos[0]}" if anos[0] == anos[1] else f"de {anos[0]} a {anos[1]}"
+
+
+def _no_periodo(tabela, anos):
+    """Linhas dentro do intervalo de anos (fechado). `anos` None = todos; tabela sem coluna `ano` (dados antigos) fica como está."""
+    if not anos or "ano" not in tabela.columns:
+        return tabela
+    return tabela[(tabela["ano"] >= anos[0]) & (tabela["ano"] <= anos[1])]
+
+
+def _da_base(dados, cancer, anos=None):
     base = dados["base"]
-    return base[base["tipo_cancer"] == cancer] if cancer else base
+    base = base[base["tipo_cancer"] == cancer] if cancer else base
+    return _no_periodo(base, anos)
 
 
-def lista_hospitais(dados, cancer=None):
+def lista_hospitais(dados, cancer=None, anos=None):
     """Os hospitais, do que mais interna para o que menos: cnes, hospital
     (nome ou 'CNES 0000000'), municipio, internacoes. `cancer` limita a um
-    câncer (só entram os hospitais que internaram esse câncer)."""
-    base = _da_base(dados, cancer)
+    câncer (só entram os hospitais que internaram esse câncer); `anos` = (primeiro, último) limita o período."""
+    base = _da_base(dados, cancer, anos)
     total = base.groupby("cnes")["internacoes"].sum().sort_values(ascending=False)
     cidade = (base.groupby(["cnes", "municipio_hospital"])["internacoes"].sum().reset_index()
               .sort_values("internacoes", ascending=False).drop_duplicates("cnes").set_index("cnes")["municipio_hospital"])
@@ -1440,15 +1455,17 @@ def _indicadores_hospital(base):
     }
 
 
-def internacoes_por_ano_hospital(dados, meu):
+def internacoes_por_ano_hospital(dados, meu, anos=None):
     """Por ano: internações registradas, na escala de 12 meses (média dos
     meses que a fonte oferece x 12, a mesma regra do resto do Escudo) e por
     procedência (moradoras da cidade do hospital, outras cidades de SP,
     outros estados). Os meses do ano vêm do Estado, não do hospital."""
     meses = dados.get("meses") or {}
-    anos = sorted(set(meses) | {int(a) for a in meu["ano"].unique()})
+    anos_da_tabela = sorted(set(meses) | {int(a) for a in meu["ano"].unique()})
+    if anos:  # só os anos do período escolhido (senão os de fora apareceriam como "sem registro")
+        anos_da_tabela = [a for a in anos_da_tabela if anos[0] <= a <= anos[1]]
     linhas = []
-    for ano in anos:
+    for ano in anos_da_tabela:
         do_ano = meu[meu["ano"] == ano]
         m = meses.get(ano)
         fator = MESES_NO_ANO / m if m else 1.0
@@ -1463,12 +1480,13 @@ def internacoes_por_ano_hospital(dados, meu):
     return pd.DataFrame(linhas, columns=["ano", "meses", "registrado", "ajustado", "cidade", "outra_cidade", "fora"])
 
 
-def ficha_hospital(dados, cnes, cancer=None):
+def ficha_hospital(dados, cnes, cancer=None, anos=None):
     """O perfil de um hospital: de onde vêm as pacientes, quais cânceres,
     urgência, permanência e óbitos na internação, com a referência do
     Estado. `cancer` limita tudo a um câncer, inclusive a referência do
-    Estado. None se o hospital não internou (esse câncer)."""
-    base = _da_base(dados, cancer)
+    Estado; `anos` = (primeiro, último) limita tudo ao período, também a referência
+    do Estado. None se o hospital não internou (esse câncer, nesse período)."""
+    base = _da_base(dados, cancer, anos)
     meu = base[base["cnes"] == cnes]
     if meu.empty:
         return None
@@ -1476,16 +1494,17 @@ def ficha_hospital(dados, cnes, cancer=None):
     n = ind["internacoes"]
     por_proc = meu.groupby("procedencia")["internacoes"].sum()
     procedencia = {chave: int(por_proc.get(chave, 0)) for chave in ("cidade", "outra_cidade", "fora", "sem_info")}
-    ufs = dados["ufs"]
+    ufs = _no_periodo(dados["ufs"], anos)
     if cancer:
         ufs = ufs[ufs["tipo_cancer"] == cancer]
     ufs = ufs[ufs["cnes"] == cnes].groupby("uf_residencia", as_index=False)["internacoes"].sum()
     ufs = ufs.sort_values("internacoes", ascending=False)
     por_cancer = meu.groupby("tipo_cancer")["internacoes"].sum().sort_values(ascending=False)
-    lista = lista_hospitais(dados, cancer)
+    lista = lista_hospitais(dados, cancer, anos)
     linha = lista[lista["cnes"] == cnes].iloc[0]
     return {
         "cnes": cnes, "hospital": linha["hospital"], "municipio": linha["municipio"], "tipo_cancer": cancer,
+        "anos": tuple(anos) if anos else None,
         "tem_nome": cnes in (dados.get("hospitais") or {}),
         **ind,
         "procedencia": procedencia,
@@ -1498,7 +1517,7 @@ def ficha_hospital(dados, cnes, cancer=None):
             "pct": [_pct(v, n) for v in por_cancer.values],
         }),
         "estado": _indicadores_hospital(base),
-        "por_ano": internacoes_por_ano_hospital(dados, meu),
+        "por_ano": internacoes_por_ano_hospital(dados, meu, anos),
     }
 
 
@@ -1569,14 +1588,38 @@ def leitura_hospital_anos(ficha):
     return frases
 
 
+def agrupar_estados(ufs, maximo=10):
+    """[(estado, n)] da maior para a menor -> (principais, n_dos_outros, quantos_outros). Os estados além do `maximo` viram um bloco só."""
+    pares = [(nome, int(n)) for nome, n in ufs or []]
+    return pares[:maximo], sum(n for _, n in pares[maximo:]), len(pares[maximo:])
+
+
+def leitura_estados_do_hospital(ficha):
+    """Frases do gráfico "de quais estados vêm as mulheres de fora deste hospital". Descreve; não explica o porquê."""
+    quando = f" {texto_do_periodo(ficha.get('anos'))}" if ficha.get("anos") else ""
+    ufs = ficha["ufs"]
+    if not ufs:
+        return [f"Nenhuma internação de mulher de outro estado foi registrada em {ficha['hospital']}{quando}.",
+                "Conta internações, não pessoas, e só enxerga hospitais de SP."]
+    total = sum(n for _, n in ufs)
+    frases = [f"{ficha['hospital']} registrou {formatar_numero(total)} internações de mulheres de outros estados{quando}, "
+              f"vindas de {formatar_numero(len(ufs))} {'estado' if len(ufs) == 1 else 'estados'}: " + ", ".join(
+                  f"{nome} ({formatar_numero(n)}, {formatar_numero(_pct(n, total), 1)}%)" for nome, n in ufs[:3]) + "."]
+    frases.append("O estado é o de residência da mulher; mostra de onde vêm, não explica por quê. "
+                  "Conta internações, não pessoas, e só enxerga hospitais de SP.")
+    return frases
+
+
 def leitura_hospital(ficha):
     """Frases do perfil de um hospital. Só descreve: não ranqueia nem explica."""
     if not ficha:
         return ["Hospital sem internações registradas."]
     n, p = ficha["internacoes"], ficha["procedencia"]
     assunto = cancer_de(ficha["tipo_cancer"]) if ficha.get("tipo_cancer") else "câncer feminino"
+    periodo = (texto_do_periodo(ficha.get("anos"))
+               or "no período carregado no banco (de 2013 até o último mês publicado pelo DATASUS)")
     frases = [f"{ficha['hospital']} ({ficha['municipio']}) registrou {formatar_numero(n)} internações por {assunto} "
-              f"no período carregado no banco (de 2013 até o último mês publicado pelo DATASUS)."]
+              f"{periodo}."]
     partes = [f"{formatar_numero(_pct(p['cidade'], n), 1)}% de moradoras de {ficha['municipio']}",
               f"{formatar_numero(_pct(p['outra_cidade'], n), 1)}% de outras cidades de SP",
               f"{formatar_numero(ficha['pct_fora'], 1)}% de outros estados"]

@@ -635,6 +635,18 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   0 de outros estados nos hospitais da cidade; Santa Gertrudes 143, Itirapina 59, Ipeúna 56, Analândia 28, Corumbataí 18 (as 14 maiores somam 343, as 7 restantes têm 1 cada);
   `OUTRO_ESTADO` = 0 por consulta direta. Testes: `teste_fluxo.py` e o cenário F de `dashboard/teste_painel.py`. Visto só com posições aproximadas (demonstração) e dados de teste.
 
+- **Ficha do hospital mais completa, para gestor e pesquisador (22/10/2026, o autor ama a ficha e a tabela "Quem vem de fora, de qual câncer e para qual hospital? Pesquise tudo" e pediu para decidir o melhor
+  sem juntá-las; a tabela NÃO mudou).** Os dois itens olham de lados opostos e ficam separados: a **tabela** é o lado da ORIGEM (só mulheres de outros estados, todos os hospitais, estado de origem,
+  óbitos, dias de leito, anos, busca, CSV); a **ficha** é o lado do HOSPITAL (todas as pacientes de um hospital, por procedência, urgência, permanência vs Estado, ano a ano). O que a ficha ganhou:
+  (1) **filtro de Anos** (`hospital_anos`, intervalo; vale para a lista de hospitais, os números, o gráfico por ano, os estados e a referência do Estado: `ficha_hospital(..., anos=)`,
+  `lista_hospitais(..., anos=)`, `texto_do_periodo`; a consulta `SQL_HOSPITAL_UF` agora guarda o `ano`; dados antigos sem a coluna não quebram); (2) o **hospital escolhido fica guardado pelo CNES**
+  (`hospital_cnes`, `guardar_hospital`) e não pula quando o câncer ou os anos mudam; a chave do seletor só ganha sufixo quando há período, então `hospital_perfil_todos` continua valendo;
+  (3) **"De quais estados vêm as mulheres de fora de <hospital>?"** (barras, `agrupar_estados`, `leitura_estados_do_hospital`; selo 🌎); (4) **atalho** "Ver estas internações na tabela completa": preenche a busca (CNES),
+  o câncer e os anos da tabela de baixo (`abrir_tabela_do_hospital`; só põe câncer e anos que existem nas opções da tabela, senão o Streamlit dá erro); (5) **CNES visível** e **CSV por ano**
+  (`hospital_baixar_anos`). **Deliberadamente NÃO entrou letalidade/óbitos por hospital na ficha:** a própria leitura diz que ela "não serve para comparar hospitais nem medir qualidade" (hospital de referência
+  recebe casos mais graves), e um número de óbito ao lado do nome do hospital seria lido como nota. A redundância que sobra na aba é a tabela "Quais hospitais de SP mais atendem..." (os 10 maiores),
+  que é a tabela completa somada por hospital; deixada como está. Testes: `teste_hospital.py` (período) e o cenário H de `teste_painel.py`.
+
 ## Notas de contexto do domínio
 
 - Banco de dados: `banco/escudo_feminino.db` (SQLite). O caminho é

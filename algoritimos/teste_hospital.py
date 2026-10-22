@@ -197,6 +197,48 @@ def main():
     assert list(ti.lista_hospitais(d)["hospital"]) == ["CNES 2090236"]
     print("[OK] banco antigo, sem código IBGE ou vazio: None; sem a tabela de nomes: mostra o número do CNES")
 
+    # ---- período (anos), pedido do autor (22/10/2026): vale para a lista, a ficha, o Estado de referência, os estados de origem e o gráfico ----
+    p = banco()
+    add(p, 10, "MAMA", "BARRETOS", 3505500, "SP", "350550", "2090236", 2, "01", ano=2022)
+    add(p, 3, "MAMA", "OUTRO_ESTADO", 3106200, "MG", "350550", "2090236", 6, "02", ano=2022)
+    add(p, 20, "MAMA", "BARRETOS", 3505500, "SP", "350550", "2090236", 2, "01", ano=2024)
+    add(p, 5, "MAMA", "OUTRO_ESTADO", 5208707, "GO", "350550", "2090236", 6, "01", ano=2024)
+    add(p, 4, "MAMA", "SAO_PAULO", 3550308, "SP", "355030", "2077590", 1, "01", ano=2022)  # este hospital só aparece em 2022
+    p.commit()
+    dp = ti.carregar_hospitais(p)
+    assert {"cnes", "tipo_cancer", "ano", "uf_residencia", "internacoes"} <= set(dp["ufs"].columns)  # a consulta guarda o ano
+    tudo = ti.ficha_hospital(dp, "2090236")
+    assert tudo["internacoes"] == 38 and tudo["anos"] is None and tudo["ufs"] == [("Goiás", 5), ("Minas Gerais", 3)]
+    so22 = ti.ficha_hospital(dp, "2090236", anos=(2022, 2022))
+    assert so22["internacoes"] == 13 and so22["procedencia"]["fora"] == 3 and so22["anos"] == (2022, 2022)
+    assert so22["ufs"] == [("Minas Gerais", 3)] and so22["estado"]["internacoes"] == 17  # o Estado também é do período (13 + 4)
+    assert list(so22["por_ano"]["ano"]) == [2022] and int(so22["por_ano"]["registrado"].sum()) == 13
+    de22a24 = ti.ficha_hospital(dp, "2090236", anos=(2022, 2024))
+    assert de22a24["internacoes"] == 38 and list(de22a24["por_ano"]["ano"]) == [2022, 2024] and de22a24["ufs"] == tudo["ufs"]
+    assert list(ti.lista_hospitais(dp, anos=(2022, 2022))["internacoes"]) == [13, 4]
+    assert list(ti.lista_hospitais(dp, anos=(2024, 2024))["cnes"]) == ["2090236"]  # quem não internou no período sai da lista
+    assert ti.ficha_hospital(dp, "2077590", anos=(2024, 2024)) is None
+    assert ti.ficha_hospital(dp, "2077590", anos=(2022, 2022))["ufs"] == []
+    # dados antigos (estados sem a coluna `ano`): o período não derruba nada, só não filtra os estados
+    antigo = {**dp, "ufs": dp["ufs"].drop(columns="ano")}
+    assert ti.ficha_hospital(antigo, "2090236", anos=(2022, 2022))["internacoes"] == 13
+    # textos: o período aparece, e a leitura dos estados descreve sem causa
+    assert "internações por câncer feminino em 2022." in ti.leitura_hospital(so22)[0]
+    assert "de 2022 a 2024." in ti.leitura_hospital(de22a24)[0] and "no período carregado" in ti.leitura_hospital(tudo)[0]
+    est = " ".join(ti.leitura_estados_do_hospital(tudo))
+    assert "8 internações de mulheres de outros estados" in est and "2 estados" in est and "Goiás (5, 62,5%)" in est
+    assert "residência da mulher" in est and "não explica por quê" in est and "internações, não pessoas" in est
+    assert " em 2022," in " ".join(ti.leitura_estados_do_hospital(so22)) and "1 estado:" in " ".join(ti.leitura_estados_do_hospital(so22))
+    vazio = " ".join(ti.leitura_estados_do_hospital(ti.ficha_hospital(dp, "2077590")))
+    assert vazio.startswith("Nenhuma internação de mulher de outro estado foi registrada em CNES 2077590")
+    for proibido in ("porque", "devido", "por causa", "em razão", "r$"):
+        assert proibido not in est.lower() + vazio.lower(), proibido
+    muitos = [(f"E{i}", 5) for i in range(12)]
+    assert ti.agrupar_estados(muitos) == (muitos[:10], 10, 2) and ti.agrupar_estados([]) == ([], 0, 0)
+    assert ti.texto_do_periodo((2022, 2022)) == "em 2022" and ti.texto_do_periodo((2022, 2024)) == "de 2022 a 2024" \
+        and ti.texto_do_periodo(None) is None
+    print("[OK] período: lista, ficha, Estado de referência, estados e gráfico respeitam os anos; sem a coluna ano nada quebra; textos sem causa")
+
     print("\nTodas as checagens do perfil por hospital passaram.")
 
 

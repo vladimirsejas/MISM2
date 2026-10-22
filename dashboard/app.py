@@ -64,6 +64,7 @@ from inteligencia import (
     ficha_hospital,
     leitura_hospital,
     leitura_hospital_anos,
+    agrupar_estados, leitura_estados_do_hospital,
     nome_uf,
     CENTROS_UF,
     leitura_ponta_projecao,
@@ -1259,87 +1260,184 @@ if aba == "Rede hospitalar":
             st.dataframe(tabela_h, width="stretch", hide_index=True)
         leitura("O que a tabela mostra", leitura_hospitais(fluxo, hosp))
 
-        pergunta("Como é o atendimento em um hospital específico?", "estado",
-                 f"um hospital por vez, todas as pacientes do hospital (de qualquer lugar), {ano_ini}–{ano_fim}")
+        # Ficha de um hospital (área do gestor e do pesquisador). O título sai depois dos controles porque mostra o período escolhido.
+        def guardar_hospital(chave, rotulos, cnes_lista):
+            """Guarda o hospital pelo CNES: a escolha continua quando o câncer ou os anos mudam (se ele ainda tiver internações)."""
+            try:
+                st.session_state["hospital_cnes"] = cnes_lista[rotulos.index(st.session_state[chave])]
+            except (KeyError, ValueError):
+                pass
+
+        def abrir_tabela_do_hospital(cnes, nome_cancer, periodo):
+            """Atalho da ficha: filtra a tabela completa do fluxo ("Quem vem de fora...") para este hospital, este câncer e estes anos."""
+            todas_t, fluxo_t = None, fluxo_geral()
+            try:
+                todas_t = tabela_fluxo(fluxo_t) if fluxo_t is not None else None
+            except Exception:
+                todas_t = None
+            st.session_state["fluxo_tab_busca"] = cnes
+            st.session_state["fluxo_tab_estado"] = []
+            st.session_state["fluxo_tab_cancer"] = ([nome_cancer] if nome_cancer and todas_t is not None
+                                                   and nome_cancer in set(todas_t["cancer"]) else [])
+            anos_t_ = sorted(int(a) for a in todas_t["ano"].unique()) if todas_t is not None else []
+            dentro = [a for a in anos_t_ if periodo and periodo[0] <= a <= periodo[1]]
+            if len(anos_t_) > 1 and dentro:
+                st.session_state["fluxo_tab_anos"] = (dentro[0], dentro[-1])
+            else:
+                st.session_state.pop("fluxo_tab_anos", None)
+
+        cabecalho_hospital = st.container()
         dados_h = hospitais_dados()
         if dados_h is None:
+            with cabecalho_hospital:
+                pergunta("Como é o atendimento em um hospital específico?", "estado",
+                         f"um hospital por vez, todas as pacientes do hospital (de qualquer lugar), {ano_ini}–{ano_fim}")
             st.info("O banco ainda não guarda o CNES e a residência de cada internação. Rode a carga de novo "
                     "(py etl\\carga_todas_bases.py) para consultar um hospital.")
         else:
             codigos_h = sorted(dados_h["base"]["tipo_cancer"].unique(), key=nome_doenca)
             nomes_h = ["Todos os cânceres"] + [nome_doenca(c) for c in codigos_h]
+            anos_h_todos = sorted(int(a) for a in dados_h["base"]["ano"].unique())
             col_c, col_h = st.columns([1, 2])
             nome_c = col_c.selectbox("Câncer", nomes_h, index=0, key="hospital_cancer",
                                      help="Limita a lista, os números, o gráfico e a referência do Estado a um câncer.")
             cancer_h = None if nome_c == nomes_h[0] else codigos_h[nomes_h.index(nome_c) - 1]
-            todos_h = lista_hospitais(dados_h, cancer_h)
-            rotulos = [f"{h.hospital} · {h.municipio} ({formatar_numero(h.internacoes)} internações)"
-                       for h in todos_h.itertuples()]
-            escolhido = col_h.selectbox("Escolha um hospital (pode digitar o nome)", rotulos, index=0,
-                                        key=f"hospital_perfil_{cancer_h or 'todos'}",
-                                        help="Do que mais interna para o que menos.")
-            ficha = ficha_hospital(dados_h, todos_h.iloc[rotulos.index(escolhido)]["cnes"], cancer_h)
-            assunto_h = nome_doenca(cancer_h).lower() if cancer_h else "7 cânceres somados"
-            h1, h2, h3, h4 = st.columns(4)
-            h1.metric("Internações", formatar_numero(ficha["internacoes"]))
-            h2.metric("De outros estados", f"{formatar_numero(ficha['pct_fora'], 1)}%",
-                      help=f"{formatar_numero(ficha['procedencia']['fora'])} internações de mulheres que moram em outros estados")
-            h3.metric("Urgência", "—" if ficha["pct_urgencia"] is None else f"{formatar_numero(ficha['pct_urgencia'], 1)}%",
-                      help="Parcela das internações em que o caráter foi informado como urgência. "
-                           + ("" if ficha["estado"]["pct_urgencia"] is None
-                              else f"No Estado: {formatar_numero(ficha['estado']['pct_urgencia'], 1)}%."))
-            h4.metric("Permanência média", f"{formatar_numero(ficha['permanencia'], 1)} dias",
-                      help=f"No Estado: {formatar_numero(ficha['estado']['permanencia'], 1)} dias")
-            pergunta(f"Quantas internações {ficha['hospital']} registrou em cada ano?", "estado",
-                     f"este hospital, {assunto_h} · anos com meses ausentes na fonte na escala de 12 meses")
-            anos_h = ficha["por_ano"]
-            fig = go.Figure()
-            for coluna, nome_barra, cor in (("cidade", f"Moradoras de {ficha['municipio']}", CINZA),
-                                            ("outra_cidade", "Outras cidades de SP", "#8db8ec"),
-                                            ("fora", "Outros estados", AZUL)):
-                fig.add_trace(go.Bar(
-                    x=anos_h["ano"], y=anos_h[coluna], name=nome_barra, marker_color=cor,
-                    customdata=anos_h[["registrado", "meses"]].fillna(12).values,
-                    hovertemplate=nome_barra + " em %{x}: %{y:.0f} (escala de 12 meses)"
-                                  "<br>registrado: %{customdata[0]:.0f} internações em %{customdata[1]:.0f} meses"
-                                  "<extra></extra>"))
-            sem_registro = anos_h[anos_h["registrado"] == 0]
-            if len(sem_registro):  # ano vazio não pode parecer "dado que sumiu": o x marca e o mouse explica
-                fig.add_trace(go.Scatter(
-                    x=sem_registro["ano"], y=[0] * len(sem_registro), mode="markers", cliponaxis=False,
-                    name="Sem internação registrada", marker={"symbol": "x", "size": 9, "color": LARANJA},
-                    customdata=sem_registro[["meses"]].fillna(12).values,
-                    hovertemplate="%{x}: nenhuma internação registrada neste hospital "
-                                  "(a fonte oferece %{customdata[0]:.0f} de 12 meses)<extra></extra>"))
-            fig.update_layout(barmode="stack", legend={"orientation": "h", "y": -0.2})
-            fig.update_xaxes(dtick=1)
-            estilizar(fig, altura=340)
-            fig.update_layout(showlegend=True)
-            st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO)
-            leitura("O que o gráfico mostra", leitura_hospital_anos(ficha))
-            if len(sem_registro):
-                with st.expander("Por que alguns anos ficam sem barra?"):
-                    st.markdown(
-                        "Um **x** no gráfico marca um ano em que este hospital não tem nenhuma internação "
-                        "registrada na base do SIH/SUS, a fonte oficial das internações. **O banco não guarda o "
-                        "motivo**, e o Escudo não chuta um. O que dá para dizer com segurança é o seguinte.")
-                    st.markdown(
-                        "Primeiro, o DATASUS não oferece todos os meses de todos os anos. Quando o ano tem menos "
-                        "de 12 meses na fonte, o hospital pode ficar sem registro naquele ano; passe o mouse sobre "
-                        "o x para ver quantos meses a fonte tem. Segundo, ausência no SIH não é ausência de "
-                        "atendimento: o hospital pode ter atendido pelo ambulatório, por convênio ou de forma "
-                        "particular, ou ter registrado as internações sob outro número de CNES. Terceiro, um "
-                        "hospital com poucos casos por ano pode simplesmente não ter internado esse câncer em "
-                        "certo ano. Para saber o que houve em um hospital específico, é preciso conferir com o "
-                        "próprio hospital ou no cadastro do CNES.")
+            col_anos, _vazio = st.columns([3, 2])
+            if len(anos_h_todos) > 1:
+                faixa_h = col_anos.select_slider(
+                    "Anos", options=anos_h_todos, value=(anos_h_todos[0], anos_h_todos[-1]), key="hospital_anos",
+                    help="Limita a lista de hospitais, os números, o gráfico, os estados de origem e a referência do Estado ao período.")
+            else:
+                faixa_h = (anos_h_todos[0], anos_h_todos[0])
+                col_anos.caption(f"Só há dados de {anos_h_todos[0]}.")
+            periodo_h = None if faixa_h == (anos_h_todos[0], anos_h_todos[-1]) else faixa_h
+            with cabecalho_hospital:
+                pergunta("Como é o atendimento em um hospital específico?", "estado",
+                         f"um hospital por vez, todas as pacientes do hospital (de qualquer lugar), {faixa_h[0]}–{faixa_h[1]}")
+            todos_h = lista_hospitais(dados_h, cancer_h, periodo_h)
+            if todos_h.empty:
+                st.info("Nenhum hospital registrou internações com estes filtros (câncer e anos). Amplie o período.")
+            else:
+                rotulos = [f"{h.hospital} · {h.municipio} ({formatar_numero(h.internacoes)} internações)"
+                           for h in todos_h.itertuples()]
+                cnes_lista = list(todos_h["cnes"])
+                guardado = st.session_state.get("hospital_cnes")
+                chave_sel = f"hospital_perfil_{cancer_h or 'todos'}" + (f"_{faixa_h[0]}_{faixa_h[1]}" if periodo_h else "")
+                escolhido = col_h.selectbox("Escolha um hospital (pode digitar o nome)", rotulos,
+                                            index=cnes_lista.index(guardado) if guardado in cnes_lista else 0,
+                                            key=chave_sel, on_change=guardar_hospital, args=(chave_sel, rotulos, cnes_lista),
+                                            help="Do que mais interna para o que menos, no câncer e nos anos escolhidos. A escolha "
+                                                 "continua se você mudar o câncer ou os anos e o hospital ainda tiver internações.")
+                ficha = ficha_hospital(dados_h, cnes_lista[rotulos.index(escolhido)], cancer_h, periodo_h)
+                st.caption(f"CNES {ficha['cnes']} · {ficha['municipio']}")
+                assunto_h = nome_doenca(cancer_h).lower() if cancer_h else "7 cânceres somados"
+                h1, h2, h3, h4 = st.columns(4)
+                h1.metric("Internações", formatar_numero(ficha["internacoes"]))
+                h2.metric("De outros estados", f"{formatar_numero(ficha['pct_fora'], 1)}%",
+                          help=f"{formatar_numero(ficha['procedencia']['fora'])} internações de mulheres que moram em outros estados")
+                h3.metric("Urgência", "—" if ficha["pct_urgencia"] is None else f"{formatar_numero(ficha['pct_urgencia'], 1)}%",
+                          help="Parcela das internações em que o caráter foi informado como urgência. "
+                               + ("" if ficha["estado"]["pct_urgencia"] is None
+                                  else f"No Estado: {formatar_numero(ficha['estado']['pct_urgencia'], 1)}%."))
+                h4.metric("Permanência média", f"{formatar_numero(ficha['permanencia'], 1)} dias",
+                          help=f"No Estado: {formatar_numero(ficha['estado']['permanencia'], 1)} dias")
+                pergunta(f"Quantas internações {ficha['hospital']} registrou em cada ano?", "estado",
+                         f"este hospital, {assunto_h} · anos com meses ausentes na fonte na escala de 12 meses")
+                anos_h = ficha["por_ano"]
+                fig = go.Figure()
+                for coluna, nome_barra, cor in (("cidade", f"Moradoras de {ficha['municipio']}", CINZA),
+                                                ("outra_cidade", "Outras cidades de SP", "#8db8ec"),
+                                                ("fora", "Outros estados", AZUL)):
+                    fig.add_trace(go.Bar(
+                        x=anos_h["ano"], y=anos_h[coluna], name=nome_barra, marker_color=cor,
+                        customdata=anos_h[["registrado", "meses"]].fillna(12).values,
+                        hovertemplate=nome_barra + " em %{x}: %{y:.0f} (escala de 12 meses)"
+                                      "<br>registrado: %{customdata[0]:.0f} internações em %{customdata[1]:.0f} meses"
+                                      "<extra></extra>"))
+                sem_registro = anos_h[anos_h["registrado"] == 0]
+                if len(sem_registro):  # ano vazio não pode parecer "dado que sumiu": o x marca e o mouse explica
+                    fig.add_trace(go.Scatter(
+                        x=sem_registro["ano"], y=[0] * len(sem_registro), mode="markers", cliponaxis=False,
+                        name="Sem internação registrada", marker={"symbol": "x", "size": 9, "color": LARANJA},
+                        customdata=sem_registro[["meses"]].fillna(12).values,
+                        hovertemplate="%{x}: nenhuma internação registrada neste hospital "
+                                      "(a fonte oferece %{customdata[0]:.0f} de 12 meses)<extra></extra>"))
+                fig.update_layout(barmode="stack", legend={"orientation": "h", "y": -0.2})
+                fig.update_xaxes(dtick=1)
+                estilizar(fig, altura=340)
+                fig.update_layout(showlegend=True)
+                st.plotly_chart(fig, width="stretch", theme=None, config=CONFIG_GRAFICO)
+                tabela_anos = anos_h.rename(columns={
+                    "ano": "Ano", "meses": "Meses que a fonte oferece", "registrado": "Internações registradas",
+                    "ajustado": "Internações (escala de 12 meses)", "cidade": f"Moradoras de {ficha['municipio']} (escala de 12 meses)",
+                    "outra_cidade": "Outras cidades de SP (escala de 12 meses)", "fora": "Outros estados (escala de 12 meses)"})
+                tabela_anos.insert(0, "Câncer", assunto_h)
+                tabela_anos.insert(0, "Hospital", ficha["hospital"])
+                tabela_anos.insert(0, "CNES", ficha["cnes"])
+                st.download_button("Baixar os números por ano (CSV)",
+                                   tabela_anos.to_csv(index=False, sep=";", decimal=",").encode("utf-8-sig"),
+                                   file_name=f"escudo_hospital_{ficha['cnes']}_por_ano.csv", mime="text/csv",
+                                   key="hospital_baixar_anos")
+                leitura("O que o gráfico mostra", leitura_hospital_anos(ficha))
+                if len(sem_registro):
+                    with st.expander("Por que alguns anos ficam sem barra?"):
+                        st.markdown(
+                            "Um **x** no gráfico marca um ano em que este hospital não tem nenhuma internação "
+                            "registrada na base do SIH/SUS, a fonte oficial das internações. **O banco não guarda o "
+                            "motivo**, e o Escudo não chuta um. O que dá para dizer com segurança é o seguinte.")
+                        st.markdown(
+                            "Primeiro, o DATASUS não oferece todos os meses de todos os anos. Quando o ano tem menos "
+                            "de 12 meses na fonte, o hospital pode ficar sem registro naquele ano; passe o mouse sobre "
+                            "o x para ver quantos meses a fonte tem. Segundo, ausência no SIH não é ausência de "
+                            "atendimento: o hospital pode ter atendido pelo ambulatório, por convênio ou de forma "
+                            "particular, ou ter registrado as internações sob outro número de CNES. Terceiro, um "
+                            "hospital com poucos casos por ano pode simplesmente não ter internado esse câncer em "
+                            "certo ano. Para saber o que houve em um hospital específico, é preciso conferir com o "
+                            "próprio hospital ou no cadastro do CNES.")
 
-            if cancer_h is None:  # com um câncer escolhido, a tabela teria uma linha só
-                st.dataframe(pd.DataFrame({
-                    "Câncer": ficha["cancer"]["doenca"],
-                    "Internações": [formatar_numero(v) for v in ficha["cancer"]["internacoes"]],
-                    "Parcela": [f"{formatar_numero(v, 1)}%" for v in ficha["cancer"]["pct"]],
-                }), width="stretch", hide_index=True)
-            leitura("O que a ficha mostra", leitura_hospital(ficha))
+                # De quais estados vêm as mulheres de fora deste hospital (autor, 22/10/2026: ficha mais completa para gestor e pesquisador)
+                pergunta(f"De quais estados vêm as mulheres de fora de {ficha['hospital']}?", "estado",
+                         f"este hospital, {assunto_h}, só mulheres que moram em outros estados · {faixa_h[0]}–{faixa_h[1]}")
+                if not ficha["ufs"]:
+                    st.info("Nenhuma internação de mulher de outro estado neste hospital, com estes filtros.")
+                else:
+                    principais_e, resto_e, n_resto_e = agrupar_estados(ficha["ufs"])
+                    total_e = sum(n for _, n in ficha["ufs"])
+                    rotulos_e = [nome for nome, _ in principais_e]
+                    valores_e = [n for _, n in principais_e]
+                    cores_e = [AZUL] * len(principais_e)
+                    if resto_e:
+                        rotulos_e.append(f"Outros {formatar_numero(n_resto_e)} {'estado' if n_resto_e == 1 else 'estados'}")
+                        valores_e.append(resto_e)
+                        cores_e.append(CINZA)
+                    figura_e = go.Figure(go.Bar(
+                        x=valores_e[::-1], y=rotulos_e[::-1], orientation="h",
+                        text=[f"{formatar_numero(v)} · {formatar_numero(100 * v / total_e, 1)}%" for v in valores_e[::-1]],
+                        textposition="outside", cliponaxis=False, marker={"color": cores_e[::-1], "line": {"width": 0}},
+                        hovertemplate="<b>%{y}</b><br>%{text}<extra></extra>", showlegend=False))
+                    figura_e.update_xaxes(visible=False, range=[0, max(valores_e) * 1.28])
+                    figura_e.update_yaxes(showgrid=False)
+                    estilizar(figura_e, altura=70 + 38 * len(rotulos_e))
+                    figura_e.update_layout(bargap=0.3, showlegend=False)
+                    st.plotly_chart(figura_e, width="stretch", theme=None, config=CONFIG_GRAFICO, key="hospital_estados")
+                leitura("O que o gráfico mostra", leitura_estados_do_hospital(ficha))
+                if ficha["ufs"]:
+                    st.button("Ver estas internações na tabela completa (mais abaixo)", key="hospital_ver_na_tabela",
+                              on_click=abrir_tabela_do_hospital, args=(ficha["cnes"], nome_c if cancer_h else None, periodo_h),
+                              help="Filtra a tabela \"Quem vem de fora, de qual câncer e para qual hospital?\" para este hospital, "
+                                   "este câncer e estes anos.")
+                    if st.session_state.get("fluxo_tab_busca") == ficha["cnes"]:
+                        st.caption("A tabela completa mais abaixo (\"Quem vem de fora, de qual câncer e para qual hospital?\") "
+                                   "está filtrada para este hospital. Para voltar a ver tudo, limpe a busca dela.")
+
+                if cancer_h is None:  # com um câncer escolhido, a tabela teria uma linha só
+                    st.dataframe(pd.DataFrame({
+                        "Câncer": ficha["cancer"]["doenca"],
+                        "Internações": [formatar_numero(v) for v in ficha["cancer"]["internacoes"]],
+                        "Parcela": [f"{formatar_numero(v, 1)}%" for v in ficha["cancer"]["pct"]],
+                    }), width="stretch", hide_index=True)
+                leitura("O que a ficha mostra", leitura_hospital(ficha))
+
 
         pergunta("A parcela de mulheres de fora está crescendo?", "estado", "todas as cidades de SP, 7 cânceres somados")
         st.markdown('<div class="escudo-dica">Parcela = internações de mulheres de outros estados ÷ todas as '
