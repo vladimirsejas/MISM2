@@ -111,7 +111,7 @@ Gemini só reescrevendo números que o Escudo calculou). Ver
 `docs/IA_DO_ESCUDO.md`.
 
 **Passeio pelo Escudo** (`algoritimos/passeio.py`). Uma interação a
-mais, logo abaixo da Lia na lateral, com cor e forma próprias
+mais, logo abaixo da Lia, com cor e forma próprias
 (retângulo verde-água com barra à esquerda — o balão da Lia é lilás e
 arredondado): a Lia conta a história do Escudo em 6 paradas, na
 ordem — o que mais aparece, está aumentando, anos fora do padrão,
@@ -163,8 +163,9 @@ carregada.)
   expressões.
 - `dashboard/app.py` — boas-vindas no centro no primeiro acesso (com
   4 portas: o que mais aparece, está aumentando, onde podemos ter problema,
-  olhar para frente), Lia na lateral depois disso (os 8 caminhos), e a
-  navegação que ela consegue controlar. As abas viraram um seletor
+  olhar para frente); depois disso a mesma Lia continua no centro, entre as
+  abas e os dados (os 8 caminhos em botões, com "Recolher a Lia" para os
+  dados subirem), e a navegação que ela consegue controlar. As abas viraram um seletor
   (o `st.tabs` do Streamlit não pode ser trocado pelo código), e aba,
   câncer, medida e camadas ficam em chaves próprias do session_state.
 

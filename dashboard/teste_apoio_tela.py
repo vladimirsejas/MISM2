@@ -9,7 +9,7 @@ from collections import deque
 #
 # Abre a página DE VERDADE (Streamlit AppTest) e clica como a pessoa:
 #   A. boas-vindas: cada caminho do centro leva à lâmina e ao caminho;
-#   B. Lia na lateral: todos os botões, até não sobrar botão novo; em
+#   B. Lia no centro: todos os botões, até não sobrar botão novo; em
 #      cada clique a tela não quebra e a lâmina é a do destino;
 #   C. "← Voltar" e "Começar de novo";
 #   D. as 4 lâminas abrem, e cada caminho da lâmina "Encontre um
@@ -49,7 +49,7 @@ def botao(at, key):
 
 
 def botoes_lia(at):
-    return [b for b in at.sidebar.button if b.key and b.key.startswith("lia_ap_")]
+    return [b for b in at.main.button if b.key and b.key.startswith("lia_ap_")]
 
 
 inicio = time.time()
@@ -70,8 +70,8 @@ checar("A. faixa 'Você está em' mostra onde a mulher está", "Você está em" 
 checar("A. contadores internos não ocupam a entrada de quem procura atendimento",
        not any(m.label in ("Caminhos de orientação", "Informações cadastradas", "Pedem confirmação")
                for m in at.metric))
-checar("A. mesma Lia na lateral (rosto + nome)",
-       any("lia-nome" in m.value for m in at.sidebar.markdown) and any("lia-rosto" in m.value for m in at.sidebar.markdown))
+checar("A. mesma Lia do painel, no centro (rosto + nome)",
+       any("lia-nome" in m.value for m in at.main.markdown) and any("lia-rosto" in m.value for m in at.main.markdown))
 for entrada, caminho, etapa in (("prevencao", "ajuda", "nao_fiz"), ("alterado", "ajuda", "alterado"),
                                 ("diagnostico", "ajuda", "diagnostico_cancer")):
     at = abrir()
@@ -190,7 +190,7 @@ for entrada, quem in (("prevencao", "quero fazer exame / me prevenir"), ("altera
                       ("diagnostico", "recebi diagnóstico"), ("ajuda", "não sei por onde começar")):
     at = abrir()
     botao(at, "apoio_ajuda_botao" if entrada == "ajuda" else f"bv_ap_{entrada}").click().run()
-    visivel = " ".join(m.value for m in at.markdown) + " " + " ".join(str(m.value) for m in at.sidebar.markdown)
+    visivel = " ".join(m.value for m in at.markdown) + " " + " ".join(str(m.value) for m in at.main.markdown)
     tem_telefone = re.search(r"0800[\s\d]{7,}|\(\d{2}\)\s?\d{4,5}-\d{4}", visivel) is not None
     tem_link = "Abrir a página oficial" in visivel or "http" in visivel
     tem_proximo = len(botoes_lia(at)) >= 2
@@ -283,13 +283,13 @@ checar("D. Rio Claro omite a ação passada e direciona ao itinerário oficial a
 
 # ---------- E. botão Início (volta ao painel, na aba Panorama) ----------
 at = abrir()
-checar("E. botão Início no topo e na lateral",
-       botao(at, "inicio_topo") is not None and any(b.key == "inicio_lateral" for b in at.sidebar.button))
+checar("E. botão Início no topo",
+       botao(at, "inicio_topo") is not None)
 at.session_state["aba"] = "Evolução"  # o painel tinha ficado noutra aba
 botao(at, "inicio_topo").click().run()
 checar("E. Início marca o Panorama no painel", not erros(at) and at.session_state["aba"] == "Panorama")
 
-# ---------- F. Pergunte à Lia no Apoio (caixa de texto na lateral) ----------
+# ---------- F. Pergunte à Lia no Apoio (caixa de texto no centro, abaixo da Lia) ----------
 import sqlite3  # noqa: E402
 import apoio_busca  # noqa: E402
 
@@ -300,7 +300,7 @@ def perguntar_no_apoio(at, texto):
 
 
 def lateral(at):
-    return " ".join(str(c.value) for c in at.sidebar.caption) + " " + " ".join(str(m.value) for m in at.sidebar.markdown)
+    return " ".join(str(c.value) for c in at.main.caption) + " " + " ".join(str(m.value) for m in at.main.markdown)
 
 
 abriu_banco = []
@@ -308,7 +308,7 @@ sqlite_original = sqlite3.connect
 sqlite3.connect = lambda *a, **k: (abriu_banco.append(a), sqlite_original(*a, **k))[1]
 try:
     at = abrir()
-    checar("F. a caixa 'Pergunte à Lia' está na lateral do Apoio, junto da Lia, e avisa que as perguntas não são guardadas",
+    checar("F. a caixa 'Pergunte à Lia' fica no centro do Apoio, logo abaixo da Lia, e avisa que as perguntas não são guardadas",
            not erros(at) and at.text_input(key="caixa_ap_texto") is not None and "Pergunte à Lia" in lateral(at)
            and "não guarda as perguntas" in lateral(at))
     checar("F. sem Gemini configurado a busca usa apenas o catálogo", "indisponível nesta sessão" in lateral(at)
@@ -395,7 +395,7 @@ try:
     checar("F. fora do assunto: diz que não achou e mostra as portas de novo", not erros(at) and at.session_state["ap_lia"]["atual"].tipo == "nada"
            and len(botoes_lia(at)) >= 8)
 
-    botao_assunto = next((b for b in at.sidebar.button if b.key == "assunto_caminho_mama"), None)
+    botao_assunto = next((b for b in at.main.button if b.key == "assunto_caminho_mama"), None)
     checar("F. assunto de prevenção oferece botão no grupo dinâmico", botao_assunto is not None)
     if botao_assunto:
         botao_assunto.click().run()
@@ -487,7 +487,7 @@ try:
     at = abrir()
     at.toggle(key="caixa_ap_gemini_ativo").set_value(True).run()
     for tipo, id, rotulo, pergunta_modelo in assuntos_teste:
-        botao_assunto = next((b for b in at.sidebar.button if b.key == f"assunto_{tipo}_{id}"), None)
+        botao_assunto = next((b for b in at.main.button if b.key == f"assunto_{tipo}_{id}"), None)
         if botao_assunto:
             botao_assunto.click().run()
         resposta = at.session_state["ap_lia"]["atual"]
@@ -502,7 +502,7 @@ try:
                and not erros(at) and destino_valido and bool(resposta.botoes)
                and at.session_state["caixa_ap_texto"] == pergunta_modelo
                and getattr(resposta, "pergunta", None) == pergunta_modelo)
-    botao_urgencia = next((b for b in at.sidebar.button if b.key == "assunto_urgencia_agora"), None)
+    botao_urgencia = next((b for b in at.main.button if b.key == "assunto_urgencia_agora"), None)
     if botao_urgencia:
         botao_urgencia.click().run()
     resposta_urgencia = at.session_state["ap_lia"]["atual"]

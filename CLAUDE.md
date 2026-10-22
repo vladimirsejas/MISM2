@@ -607,6 +607,20 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   **SIA/SIM/CNES no painel:** hoje só a Lia usa; entram no painel (uma seção própria, nunca somadas ao SIH) depois de conferir os códigos com o banco real.
   A afirmação do ChatGPT de que o SIH ainda não tem regra territorial única está desatualizada (resolvido em 08/10/2026).
 
+- **Layout sem barra lateral (22/10/2026, ideia de um integrante do grupo: "abas laterais"; o autor achou as abas do painel de difícil
+  visualização e sem hierarquia, e deixou a decisão final com o Claude).** A lateral saiu do painel e do Apoio; a Lia é UMA só, no centro,
+  entre as abas e os dados, com a caixa "Pergunte à Lia" logo abaixo (chaves `caixa_*`, `lia_*` e `bv_*` iguais às de antes). Ordem do painel:
+  título -> botões das outras páginas em fileira (só "Apoio à mulher" é vermelho) -> abas com cara de aba (ativa em roxo) e Início no mesmo nível
+  -> "Você está em" -> Lia -> seletor de município (junto dos dados, dizendo que 📍 muda e 🌎 não) -> números grandes (só no Panorama) e gráficos.
+  **Por que as abas pareciam círculos soltos:** o CSS antigo usava `input[value="Panorama"]`, mas o Streamlit atual põe `value="0"`, `"1"`...; o
+  estilo novo usa `data-testid="stRadioOption"` e `data-selected` dentro do container `abas_painel` (se uma versão nova do Streamlit mudar esses
+  ganchos, as abas voltam a parecer círculos: conferir ali primeiro). **Lia recolhível** (`lia_recolhida`, botões `caixa_lia_recolher` e
+  `caixa_lia_abrir`; as chaves NÃO podem começar com `lia_`, o teste do painel as trataria como caminho da árvore): faixa fina que deixa os dados
+  subirem; ela reabre sozinha quando a pessoa clica numa pergunta. Celular: abas numa linha que rola de lado, rosto menor (antes a caixa de
+  perguntas ficava escondida atrás da seta da lateral). O CSS é lido uma vez: reiniciar o painel depois de mexer em `estilo.py`. Testes de tela
+  agora procuram a Lia em `at.main` (não mais em `at.sidebar`); o Início da lateral do Apoio deixou de existir. **Visto só com dados de teste e
+  com Streamlit 1.66; não visto no navegador do autor nem com o banco real.** O texto da Lia e o do cartão no Apoio se repetem (antes ficavam lado a lado).
+
 ## Notas de contexto do domínio
 
 - Banco de dados: `banco/escudo_feminino.db` (SQLite). O caminho é

@@ -27,7 +27,6 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; color: #292541; letter-spacing:
 .escudo-leitura li { margin: 5px 0; }
 .escudo-alerta { background: #fff7ef; border: 1px solid #f6d9c2; border-radius: 16px; padding: 12px 18px; margin-top: 10px; color: #6b3d1e; font-size: .93rem; }
 div[data-baseweb="select"] > div { border-radius: 12px; background: #fff; }
-section[data-testid="stSidebar"] { min-width: 400px; }
 .escudo-info { background: #f3f2f8; border: 1px solid #e6e3ef; border-radius: 16px; padding: 12px 18px; margin-top: 10px; color: #4d4863; font-size: .92rem; }
 .escudo-cartao { background: #fff; border: 1px solid #ebe8f2; border-radius: 16px; padding: 16px 20px; margin: 10px 0; }
 .escudo-cartao h4 { margin: 0 0 6px 0; font-family: 'Manrope', sans-serif; color: #292541; }
@@ -162,9 +161,7 @@ h1, h2, h3, .escudo-pergunta { font-family: Georgia, 'Times New Roman', serif; f
 .regua-col span { display: block; margin-top: 4px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .62rem; color: #8a7a90; }
 .regua-leg { margin-top: 8px; font-size: .78rem; color: #8a7a90; }
 
-/* Lateral da Lia toda em lavanda: o passeio deixa o verde-água e entra na mesma família */
-section[data-testid="stSidebar"] { background: linear-gradient(180deg, #ebe3f4 0%, #f3eef8 100%); border-right: 1px solid #ded3e3; }
-section[data-testid="stSidebar"] > div { background: transparent; }
+/* Passeio pelo Escudo: o verde-água entra na mesma família lavanda da Lia */
 [class*="st-key-passeiocard_"] { background: #ffffffb8; border: 1px solid #d9c8e6; border-left: 6px solid #5b2a55; }
 [class*="st-key-passeiocard_"] .passeio-topo { color: #5b2a55; }
 [class*="st-key-passeiocard_"] .passeio-pontos { color: #8d6bb0; }
@@ -176,5 +173,46 @@ section[data-testid="stSidebar"] > div { background: transparent; }
 [class*="st-key-passeiocard_"] [class*="st-key-pbtn_seguir"] button:hover { background: #3c1a38; color: #ffffff; }
 [class*="st-key-passeiocard_"] .stButton button p { color: inherit; }
 [class*="st-key-passeiocard_"] [class*="st-key-pbtn_seguir"] button p { color: #ffffff; }
+
+/* ---- Abas do painel: navegação principal, com cara de aba (ganchos estáveis: data-testid + data-selected) ---- */
+[class*="st-key-abas_painel"] [data-testid="stRadioGroup"] { gap: 6px; border-bottom: 2px solid #5b2a55; flex-wrap: wrap; }
+[class*="st-key-abas_painel"] [data-testid="stRadioOption"] { padding: 10px 20px; border-radius: 12px 12px 0 0;
+    background: #f1eaf5; border: 1px solid #e3d9e8; border-bottom: none; cursor: pointer; margin: 0; }
+[class*="st-key-abas_painel"] [data-testid="stRadioOption"] > div > div:first-child { display: none; }
+[class*="st-key-abas_painel"] [data-testid="stRadioOption"] p { font-size: 1.05rem; font-weight: 600; color: #5b2a55; }
+[class*="st-key-abas_painel"] [data-testid="stRadioOption"]:hover { background: #e6dbee; }
+[class*="st-key-abas_painel"] [data-testid="stRadioOption"][data-selected="true"] { background: #5b2a55; border-color: #5b2a55; }
+[class*="st-key-abas_painel"] [data-testid="stRadioOption"][data-selected="true"] p { color: #ffffff; font-weight: 700; }
+/* sem barra lateral (decisão do autor, 22/10/2026): a Lia mora no centro, entre as abas e os dados */
+section[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"] { display: none; }
+
+/* botões das outras páginas: uma fileira, não uma pilha (a pilha empurrava as abas para baixo) */
+[class*="st-key-botao_apoio"][data-testid="stVerticalBlock"], [class*="st-key-botao_apoio"] [data-testid="stVerticalBlock"] { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+[class*="st-key-botao_apoio"] [data-testid="stVerticalBlock"] > div, [class*="st-key-botao_apoio"] > div { width: auto; }
+
+/* botões das outras páginas: fileira própria, três iguais, na largura inteira */
+[class*="st-key-botao_apoio"][data-testid="stVerticalBlock"] > div { flex: 1 1 0; min-width: 160px; }
+[class*="st-key-botao_apoio"] a { height: 100%; }
+/* "Apoio à mulher" é o único botão vermelho; as outras duas páginas usam o estilo da barra do Apoio (as abas são a navegação principal) */
+[class*="st-key-botao_apoio"][data-testid="stVerticalBlock"] > div:nth-child(n+2) a { background: #ffffff; border: 2px solid #5b2a55; }
+[class*="st-key-botao_apoio"][data-testid="stVerticalBlock"] > div:nth-child(n+2) a:hover { background: #efe9f5; border-color: #5b2a55; }
+[class*="st-key-botao_apoio"][data-testid="stVerticalBlock"] > div:nth-child(n+2) a,
+[class*="st-key-botao_apoio"][data-testid="stVerticalBlock"] > div:nth-child(n+2) a p,
+[class*="st-key-botao_apoio"][data-testid="stVerticalBlock"] > div:nth-child(n+2) a span { color: #5b2a55 !important; }
+[class*="st-key-botao_apoio"][data-testid="stVerticalBlock"] { margin-top: 12px; }
+/* seletor da cidade: faixa clara junto dos dados */
+[class*="st-key-seletor_cidade"] { background: #ffffff; border: 1px solid #e3d9e8; border-radius: 14px; padding: 10px 16px; margin: 14px 0 6px; }
+
+/* celular: abas numa linha que rola de lado, Lia com rosto menor, faixas mais baixas */
+@media (max-width: 640px) {
+    [class*="st-key-abas_painel"] [data-testid="stRadioGroup"] { flex-wrap: nowrap; overflow-x: auto; }
+    [class*="st-key-abas_painel"] [data-testid="stRadioOption"] { padding: 8px 14px; white-space: nowrap; }
+    [class*="st-key-abas_painel"] [data-testid="stRadioOption"] p { font-size: .98rem; white-space: nowrap; }
+    .lia-rosto img, .lia-rosto svg { width: 84px !important; height: 84px !important; }
+    .escudo-voce-esta { font-size: .98rem; padding: 8px 12px; }
+    [class*="st-key-botao_apoio"][data-testid="stVerticalBlock"] > div { flex: 1 1 42%; min-width: 42%; }
+    [class*="st-key-botao_apoio"] a { padding: 6px 8px; }
+    [class*="st-key-botao_apoio"] a p { font-size: .9rem !important; }
+}
 </style>
 """

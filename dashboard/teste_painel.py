@@ -101,7 +101,7 @@ def erros(at):
 
 def botoes_da_lia(at):
     """Próximos passos no balão da Lia (sem Voltar/Começar de novo)."""
-    return [b for b in at.sidebar.button if (b.key or "").startswith("lia_") and "discreto" not in (b.key or "")]
+    return [b for b in at.main.button if (b.key or "").startswith("lia_") and "discreto" not in (b.key or "")]
 
 
 def clicar(at, rotulo):
@@ -498,12 +498,12 @@ def main():
         at.button(key="caixa_enviar").click().run()
 
     def textos_da_lateral(at):
-        return " ".join(str(c.value) for c in at.sidebar.caption) + " " + " ".join(str(m.value) for m in at.sidebar.markdown)
+        return " ".join(str(c.value) for c in at.main.caption) + " " + " ".join(str(m.value) for m in at.main.markdown)
 
     try:
         at = abrir()
         at.button(key="bv_fechar").click().run()
-        checar("I. a caixa 'Pergunte à Lia' está na lateral, junto da Lia, e o painel abre sem erro",
+        checar("I. a caixa 'Pergunte à Lia' fica no centro, logo abaixo da Lia, e o painel abre sem erro",
                not erros(at) and at.text_input(key="caixa_texto") is not None and "Pergunte à Lia" in textos_da_lateral(at))
         checar("I. sem chave do Gemini a caixa avisa que está sem IA de linguagem",
                "IA de linguagem desligada" in textos_da_lateral(at))
@@ -593,7 +593,7 @@ def main():
         at.radio(key="caixa_linguagem").set_value("Simples").run()
         perguntar_na_caixa(at, "o câncer de mama está aumentando?")
         atual = at.session_state["lia"]["atual"]
-        rotulos_expanders = [e.label for e in at.sidebar.expander]
+        rotulos_expanders = [e.label for e in at.main.expander]
         checar("I. IA redigiu: selo do Gemini, base calculada guardada e perfil 'Simples' enviado",
                not erros(at) and atual.usou_ia and "Redigido pela IA" in textos_da_lateral(at)
                and "O que o Escudo calculou (base da resposta)" in rotulos_expanders and recebidos[-1][1] == "SIMPLES")

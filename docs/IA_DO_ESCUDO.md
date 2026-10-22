@@ -20,7 +20,7 @@ o Escudo calcula e comprova.
 ## 2. O caminho de uma pergunta
 
 ```
-pergunta escrita na lateral, junto da Lia (dashboard/app.py: formulário "caixa_form")
+pergunta escrita no centro, logo abaixo da Lia (dashboard/app.py: formulário "caixa_form")
   -> segurança (violência / suicídio / emergência)? texto fixo, Apoio à mulher, NÃO é gravada, a IA nem é chamada
   -> conversa social ("obrigada")? Lia responde
   -> entendimento.compreender: assunto + câncer + ano (+ contexto da resposta anterior)

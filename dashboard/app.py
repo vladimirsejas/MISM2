@@ -102,7 +102,7 @@ from inteligencia import (
 # Portas (abas): Panorama (o que está acontecendo), Evolução (como
 # mudou e para onde vai), Investigar (o que merece ser pesquisado),
 # Planejamento (que evidências entram na discussão), Método. A Lia
-# (lateral; algoritimos/lia.py, docs/LIA.md) atravessa todas: conduz
+# (no centro, entre as abas e os dados; algoritimos/lia.py, docs/LIA.md) atravessa todas: conduz
 # por botões e leva o painel até o gráfico. Sem caixa de texto livre
 # (saiu em 09/2026). Dinheiro aparece sempre como "valor hospitalar
 # registrado no SIH/SUS", nunca como orçamento.
@@ -114,7 +114,7 @@ st.set_page_config(
     page_title="MISM2",
     page_icon="E",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # Paleta validada para daltonismo (ver skill de visualização):
@@ -380,33 +380,10 @@ nomes = [m["nome"] for m in lista_municipios]
 padrao = obter_municipio()
 indice_padrao = next((i for i, m in enumerate(lista_municipios) if m["origem"] == padrao), 0)
 
-col_titulo, col_cidade = st.columns([2.2, 1])
-with col_cidade:
-    nome_cidade = st.selectbox("Município", nomes, index=indice_padrao,
-                               help="Digite para procurar entre os municípios de SP.")
-    # Apoio à mulher (dashboard/pages/apoio.py): lâminas de apoio, separadas
-    # deste estudo da doença. A única ligação é este botão vermelho (pedido
-    # do autor); o estilo está em estilo.py ("botao_apoio").
-    try:
-        caixa_apoio = st.container(key="botao_apoio")
-    except TypeError:  # Streamlit antigo: sem key em container
-        caixa_apoio = st.container()
-    with caixa_apoio:
-        try:
-            st.page_link("pages/apoio.py", label="Apoio à mulher")
-        except Exception:  # Streamlit antigo, sem page_link
-            st.markdown('<a href="/apoio" target="_self">Apoio à mulher</a>', unsafe_allow_html=True)
-        # Onde ser atendida (dashboard/pages/onde_ser_atendida.py): unidades de saúde da
-        # cidade pelo CNES. Link discreto (a página substitui a antiga "Rede local").
-        try:
-            st.page_link("pages/onde_ser_atendida.py", label="Onde ser atendida")
-        except Exception:  # Streamlit antigo, sem page_link
-            st.markdown('<a href="/onde_ser_atendida" target="_self">Onde ser atendida</a>', unsafe_allow_html=True)
-        # Hospitais de câncer (mapa e os mais próximos da cidade onde a mulher mora): mesmo grupo, uma casa só no painel.
-        try:
-            st.page_link("pages/hospitais_cancer.py", label="Hospitais de câncer")
-        except Exception:  # Streamlit antigo, sem page_link
-            st.markdown('<a href="/hospitais_cancer" target="_self">Hospitais de câncer</a>', unsafe_allow_html=True)
+col_titulo = st.container()
+nome_cidade = st.session_state.get("municipio_painel", nomes[indice_padrao])
+if nome_cidade not in nomes:
+    nome_cidade = nomes[indice_padrao]
 cidade = next(m for m in lista_municipios if m["nome"] == nome_cidade)
 ORIGEM = cidade["origem"]
 
@@ -422,14 +399,39 @@ with col_titulo:
         ano_ini, ano_fim = int(serie["ano"].min()), int(serie["ano"].max())
         st.markdown(
             f'<div class="escudo-sub">De {ano_ini} a {ano_fim}, mulheres que moram em '
-            f'{html.escape(nome_cidade)}, nos {len(resumo)} tipos de câncer acompanhados (SIH/SUS):</div>'
+            f'{html.escape(nome_cidade)}, nos {len(resumo)} tipos de câncer acompanhados (SIH/SUS).</div>',
+            unsafe_allow_html=True,
+        )
+        NUMEROS_HTML = (
             f'<div class="mism-numeros">'
             f'<div class="mism-grande"><b>{formatar_numero(resumo["internacoes"].sum())}</b><span>internações</span></div>'
             f'<div><b>{formatar_numero(resumo["obitos"].sum())}</b><span>óbitos durante a internação</span></div>'
             f'<div><b>{reais(resumo["valor_total"].sum())}</b><span>valor hospitalar registrado no SIH/SUS</span></div>'
-            f'</div>' + regua_mism(serie),
-            unsafe_allow_html=True,
-        )
+            f'</div>' + regua_mism(serie))
+
+# Apoio à mulher (dashboard/pages/apoio.py): lâminas de apoio, separadas
+# deste estudo da doença. A única ligação é este botão vermelho (pedido
+# do autor); o estilo está em estilo.py ("botao_apoio").
+try:
+    caixa_apoio = st.container(key="botao_apoio")
+except TypeError:  # Streamlit antigo: sem key em container
+    caixa_apoio = st.container()
+with caixa_apoio:
+    try:
+        st.page_link("pages/apoio.py", label="Apoio à mulher")
+    except Exception:  # Streamlit antigo, sem page_link
+        st.markdown('<a href="/apoio" target="_self">Apoio à mulher</a>', unsafe_allow_html=True)
+    # Onde ser atendida (dashboard/pages/onde_ser_atendida.py): unidades de saúde da
+    # cidade pelo CNES. Link discreto (a página substitui a antiga "Rede local").
+    try:
+        st.page_link("pages/onde_ser_atendida.py", label="Onde ser atendida")
+    except Exception:  # Streamlit antigo, sem page_link
+        st.markdown('<a href="/onde_ser_atendida" target="_self">Onde ser atendida</a>', unsafe_allow_html=True)
+    # Hospitais de câncer (mapa e os mais próximos da cidade onde a mulher mora): mesmo grupo, uma casa só no painel.
+    try:
+        st.page_link("pages/hospitais_cancer.py", label="Hospitais de câncer")
+    except Exception:  # Streamlit antigo, sem page_link
+        st.markdown('<a href="/hospitais_cancer" target="_self">Hospitais de câncer</a>', unsafe_allow_html=True)
 
 if resumo.empty:
     st.info(f"Ainda não há internações registradas para {nome_cidade}.")
@@ -536,6 +538,7 @@ def lia_mostrar(resposta):
     lia_estado["atual"] = resposta
     lia_estado["falas"] = lia_estado.get("falas", 0) + 1  # balão novo -> animação
     st.session_state["lia_fechada"] = True
+    st.session_state["lia_recolhida"] = False
     aplicar_destino(resposta.destino)
 
 
@@ -654,49 +657,166 @@ if _pergunta_pendente:
         perguntar_a_lia(_pergunta_pendente)
 
 # ------------------------------------------------------------
-# BOAS-VINDAS DA LIA (primeiro acesso)
+# NAVEGAÇÃO: abas (e Início) logo abaixo do cabeçalho, depois a Lia, depois os dados
 # ------------------------------------------------------------
 
-if not st.session_state.get("lia_fechada"):
-    boas_vindas = lia_responder(ctx_lia, INICIO)
-    c_rosto, c_fala = st.columns([1, 4.6])
-    with c_rosto:
-        st.markdown(rosto("acolhedora", 150), unsafe_allow_html=True)
-    with c_fala, balao("centro"):
-        st.markdown(f'<div class="lia-nome">Lia <span>· pesquisadora do MISM2</span></div>'
-                    f'<div class="lia-fala-grande">{boas_vindas.fala.replace("**", "")}</div>',
-                    unsafe_allow_html=True)
-        # 4 portas de entrada (docs/LIA.md); os 8 caminhos ficam na lateral
-        principais = {"mais_aparece", "aumentando", "atencao", "futuro"}
-        colunas = st.columns(2)  # 2 x 2: os rótulos cabem inteiros
-        for i, (rotulo, acao) in enumerate(a for a in boas_vindas.botoes if a[1].get("id") in principais):
-            colunas[i % 2].button(rotulo, key=f"bv_{i}", on_click=lia_clicar, args=(acao,),
-                              width="stretch")
-        st.button("Prefiro explorar sozinha", key="bv_fechar",
-                  on_click=lambda: st.session_state.update(lia_fechada=True))
-
-# Abas + botão "Início" (pedido do autor, 09/2026): de qualquer aba, um
-# clique volta ao Panorama, a página inicial do Escudo.
-col_abas, col_inicio = st.columns([5, 1])
-with col_inicio:
+def desenhar_passeio(indice):
+    """PASSEIO PELO ESCUDO (algoritimos/passeio.py): interação a mais,
+    com cor e forma próprias; só cliques. A key muda a cada parada."""
     try:
-        caixa_inicio = st.container(key="botao_inicio_painel")
-    except TypeError:  # Streamlit antigo: sem key em container
-        caixa_inicio = st.container()
-    # Sempre ativo (autor, 19/10/2026: "falta o botão home"): no Panorama só recarrega a página inicial.
-    caixa_inicio.button("🏠 Início", key="inicio_painel", on_click=definir, args=("aba", "Panorama"),
-                        width="stretch", help="Volta à página inicial do Escudo (Panorama).")
-with col_abas:
-    aba = seletor(st, "Navegação", "aba", ABAS, horizontal=True, label_visibility="collapsed")
-# "Você está em" (autor, 19/10/2026): a aba aberta fica escrita, não só marcada no seletor.
+        cartao = st.container(key=f"passeiocard_{'convite' if indice is None else indice}")
+    except TypeError:  # Streamlit antigo: container com borda
+        cartao = st.container(border=True)
+    with cartao:
+        if indice is None:
+            st.markdown('<div class="passeio-topo">🧭 Passeio pelo Escudo</div>'
+                        f'<div class="passeio-titulo">O essencial em {len(PARADAS)} paradas</div>'
+                        'A Lia conduz, na ordem, e o painel vai mostrando cada gráfico. Só clicar.',
+                        unsafe_allow_html=True)
+            st.button("Começar o passeio", key="pbtn_seguir_comecar", on_click=passeio_ir, args=(0,),
+                      width="stretch")
+        else:
+            p = passeio_parada(ctx_lia, indice)
+            pontos = "●" * p["numero"] + "○" * (p["total"] - p["numero"])
+            st.markdown(f'<div class="passeio-topo">🧭 Passeio · parada {p["numero"]} de {p["total"]}</div>'
+                        f'<div class="passeio-pontos">{pontos}</div>'
+                        f'<div class="passeio-titulo">{p["titulo"]}</div>', unsafe_allow_html=True)
+            st.markdown(p["fala"])
+            if p["destino"].get("aba"):
+                st.caption(f"O painel está na aba {p['destino']['aba']}"
+                           + (f" · {nome_doenca(p['destino']['cancer'])}" if p["destino"].get("cancer") else "")
+                           + ".")
+            c_ant, c_seg = st.columns(2)
+            if indice > 0:
+                c_ant.button("← anterior", key="pbtn_anterior", on_click=passeio_ir, args=(indice - 1,),
+                             width="stretch")
+            ultima = indice == len(PARADAS) - 1
+            c_seg.button("terminar ✓" if ultima else "próxima parada →", key="pbtn_seguir",
+                         on_click=passeio_ir, args=(None if ultima else indice + 1,), width="stretch")
+            if not ultima:
+                st.button("sair do passeio", key="pbtn_sair", on_click=passeio_ir, args=(None,))
+
+
+
 _ONDE = {"Panorama": "Panorama · a página inicial: o que está acontecendo",
          "Evolução": "Evolução · como os números mudaram ao longo dos anos",
          "Rede hospitalar": "Rede hospitalar · onde as mulheres são atendidas e de onde vêm",
          "Investigar": "Investigar · perguntas sobre a cidade escolhida: câncer que cresce, idade e comparação",
          "Planejamento": "Planejamento · onde a cidade pode ter problema nos próximos anos",
          "Método": "Método · como os números são feitos"}
+col_abas, col_inicio = st.columns([5, 1], vertical_alignment="bottom")
+with col_inicio:
+    caixa_inicio = st.container(key="botao_inicio_painel")
+    caixa_inicio.button("🏠 Início", key="inicio_painel", on_click=definir, args=("aba", "Panorama"),
+                        width="stretch", help="Volta à página inicial do Escudo (Panorama).")
+with col_abas:
+    with st.container(key="abas_painel"):
+        aba = seletor(st, "Navegação", "aba", ABAS, horizontal=True, label_visibility="collapsed")
 st.markdown(f'<div class="escudo-voce-esta">📍 Você está em: <b>{html.escape(_ONDE.get(aba, aba))}</b>'
             f' · {html.escape(nome_cidade)}</div>', unsafe_allow_html=True)
+
+# ---- A Lia: uma só, no centro, entre a navegação e os dados ----
+def desenhar_lia():
+    atual = lia_estado["atual"]
+    boas_vindas_aberta = not st.session_state.get("lia_fechada")
+    recolhida = bool(st.session_state.get("lia_recolhida")) and not boas_vindas_aberta
+    if recolhida:  # faixa fina: a Lia continua à vista, mas os dados sobem
+        c_rosto, c_fala, c_abrir = st.columns([0.5, 6, 1.6], vertical_alignment="center")
+        c_rosto.markdown(rosto(atual.expressao, 56), unsafe_allow_html=True)
+        c_fala.markdown('<div class="lia-nome">Lia <span>· pergunte ou escolha um caminho quando quiser</span></div>',
+                        unsafe_allow_html=True)
+        c_abrir.button("Abrir a Lia", key="caixa_lia_abrir", on_click=definir, args=("lia_recolhida", False), width="stretch")
+        return
+    c_rosto, c_fala = st.columns([1, 4.6] if boas_vindas_aberta else [0.55, 6])
+    with c_rosto:
+        st.markdown(rosto("acolhedora" if boas_vindas_aberta else atual.expressao, 150 if boas_vindas_aberta else 84),
+                    unsafe_allow_html=True)
+    with c_fala:
+        with balao("centro"):
+            if boas_vindas_aberta:
+                boas_vindas = lia_responder(ctx_lia, INICIO)
+                st.markdown(f'<div class="lia-nome">Lia <span>· pesquisadora do MISM2</span></div>'
+                            f'<div class="lia-fala-grande">{boas_vindas.fala.replace("**", "")}</div>', unsafe_allow_html=True)
+                principais = {"mais_aparece", "aumentando", "atencao", "futuro"}
+                colunas = st.columns(2)
+                for i, (rotulo, acao) in enumerate(a for a in boas_vindas.botoes if a[1].get("id") in principais):
+                    colunas[i % 2].button(rotulo, key=f"bv_{i}", on_click=lia_clicar, args=(acao,), width="stretch")
+                st.button("Prefiro explorar sozinha", key="bv_fechar",
+                          on_click=lambda: st.session_state.update(lia_fechada=True))
+            else:
+                cab, rec = st.columns([6, 1.4], vertical_alignment="center")
+                cab.markdown('<div class="lia-nome">Lia <span>· pesquisadora do MISM2</span></div>', unsafe_allow_html=True)
+                rec.button("Recolher a Lia", key="caixa_lia_recolher", on_click=definir, args=("lia_recolhida", True),
+                           width="stretch")
+                if getattr(atual, "pergunta", None):
+                    st.caption(f"Você perguntou: “{atual.pergunta}”")
+                st.markdown(atual.fala)
+                if getattr(atual, "selo", None):
+                    st.caption(atual.selo)
+                if getattr(atual, "fonte", None):
+                    st.caption(atual.fonte)
+                if getattr(atual, "base", None):
+                    with st.expander("O que o Escudo calculou (base da resposta)"):
+                        st.markdown(atual.base)
+                        st.caption("O texto acima foi redigido pela IA a partir disto; os números são os mesmos.")
+                for rotulo_link, pagina in getattr(atual, "links", None) or []:
+                    try:
+                        st.page_link(pagina, label=rotulo_link)
+                    except Exception:
+                        pass
+                if atual.numeros:
+                    with st.expander("Os números por trás"):
+                        st.markdown("\n".join(f"- {n}" for n in atual.numeros))
+                proximos = [(r, a) for r, a in atual.botoes if a is not INICIO and a.get("tipo") != "inicio"]
+                colunas = st.columns(4)
+                for i, (rotulo, acao) in enumerate(proximos):
+                    colunas[i % 4].button(rotulo, key=f"lia_{i}_{rotulo}", on_click=lia_clicar, args=(acao,), width="stretch")
+                c_voltar, c_inicio, _resto = st.columns([1, 1.3, 4])
+                if lia_estado["pilha"]:
+                    c_voltar.button("← Voltar", key="lia_discreto_voltar", on_click=lia_voltar)
+                c_inicio.button("Começar de novo", key="lia_discreto_inicio", on_click=lia_clicar, args=(INICIO,))
+
+        # Pergunte à Lia: logo abaixo do balão, numa linha só
+        st.markdown("**Pergunte à Lia**")
+        with st.form("caixa_form", clear_on_submit=True):
+            f1, f2 = st.columns([5, 1.2])
+            f1.text_input("Pergunte à Lia", key="caixa_texto", max_chars=300, label_visibility="collapsed",
+                          placeholder=f"Pergunte à Lia. Ex.: o câncer de mama está aumentando em {nome_cidade}?")
+            f2.form_submit_button("Perguntar", key="caixa_enviar", on_click=enviar_pergunta, width="stretch")
+        g1, g2, g3 = st.columns([1.5, 1.3, 1.4], vertical_alignment="bottom")
+        with g1:
+            st.radio("Linguagem das respostas", ["Técnica", "Simples"], horizontal=True, key="caixa_linguagem")
+        with g2:
+            with st.expander("Não sabe o que perguntar?"):
+                for i, (rotulo, assunto) in enumerate([("Qual câncer mais interna?", "mais_aparece"),
+                                                       ("O que a tendência aponta para os próximos anos?", "futuro"),
+                                                       ("Onde podemos ter problema?", "atencao"),
+                                                       ("Por que os números mudam?", "causa"),
+                                                       ("Como a IA funciona?", "sobre_ia")]):
+                    st.button(rotulo, key=f"caixa_exemplo_{i}", on_click=lia_clicar,
+                              args=(acao_assistente(assunto, pergunta=rotulo),), width="stretch")
+        with g3:
+            if st.session_state.get("passeio") is None:
+                st.button("🧭 Passeio pelo Escudo · 6 paradas", key="pbtn_seguir_comecar", on_click=passeio_ir,
+                          args=(0,), width="stretch")
+        ia_atual = ia_da_sessao()
+        st.caption(("🤖 IA de linguagem (Gemini) ligada. " if ia_atual.ligada else "IA de linguagem desligada. ")
+                   + "Os números vêm sempre dos cálculos do Escudo. Não escreva dados pessoais.")
+        if st.session_state.get("passeio") is not None:
+            desenhar_passeio(st.session_state["passeio"])
+
+
+desenhar_lia()
+
+with st.container(key="seletor_cidade"):
+    _c1, _c2 = st.columns([1.3, 3], vertical_alignment="center")
+    _c1.selectbox("Município", nomes, index=nomes.index(nome_cidade), key="municipio_painel",
+                  help="Digite para procurar entre os municípios de SP.")
+    _c2.markdown('<div class="escudo-dica" style="margin:0">A cidade escolhida vale para os gráficos marcados com '
+                 '<b>📍</b>; os marcados com <b>🌎</b> são do Estado de SP e não mudam. '
+                 'Trocar a cidade recomeça a conversa com a Lia.</div>',
+                 unsafe_allow_html=True)
+
 
 
 # ============================================================
@@ -712,6 +832,7 @@ MEDIDAS = {
 }
 
 if aba == "Panorama":
+    st.markdown(NUMEROS_HTML, unsafe_allow_html=True)
     medida = seletor(st, "Medir por", "medida", list(MEDIDAS), horizontal=True)
     coluna, titulo, formato = MEDIDAS[medida]
     pergunta(titulo.format(c=nome_cidade), "cidade", f"só moradoras de {html.escape(nome_cidade)}")
@@ -1572,129 +1693,3 @@ if aba == "Método":
 **O que estes dados não permitem responder:** causas, incidência (casos novos), orçamento ideal, efeito de uma
 política, e — até a população do IBGE entrar no banco — comparação justa entre cidades de tamanhos diferentes.
 """)
-
-
-def desenhar_passeio(indice):
-    """PASSEIO PELO ESCUDO (algoritimos/passeio.py): interação a mais,
-    com cor e forma próprias; só cliques. A key muda a cada parada."""
-    try:
-        cartao = st.container(key=f"passeiocard_{'convite' if indice is None else indice}")
-    except TypeError:  # Streamlit antigo: container com borda
-        cartao = st.container(border=True)
-    with cartao:
-        if indice is None:
-            st.markdown('<div class="passeio-topo">🧭 Passeio pelo Escudo</div>'
-                        f'<div class="passeio-titulo">O essencial em {len(PARADAS)} paradas</div>'
-                        'A Lia conduz, na ordem, e o painel vai mostrando cada gráfico. Só clicar.',
-                        unsafe_allow_html=True)
-            st.button("Começar o passeio", key="pbtn_seguir_comecar", on_click=passeio_ir, args=(0,),
-                      width="stretch")
-        else:
-            p = passeio_parada(ctx_lia, indice)
-            pontos = "●" * p["numero"] + "○" * (p["total"] - p["numero"])
-            st.markdown(f'<div class="passeio-topo">🧭 Passeio · parada {p["numero"]} de {p["total"]}</div>'
-                        f'<div class="passeio-pontos">{pontos}</div>'
-                        f'<div class="passeio-titulo">{p["titulo"]}</div>', unsafe_allow_html=True)
-            st.markdown(p["fala"])
-            if p["destino"].get("aba"):
-                st.caption(f"O painel está na aba {p['destino']['aba']}"
-                           + (f" · {nome_doenca(p['destino']['cancer'])}" if p["destino"].get("cancer") else "")
-                           + ".")
-            c_ant, c_seg = st.columns(2)
-            if indice > 0:
-                c_ant.button("← anterior", key="pbtn_anterior", on_click=passeio_ir, args=(indice - 1,),
-                             width="stretch")
-            ultima = indice == len(PARADAS) - 1
-            c_seg.button("terminar ✓" if ultima else "próxima parada →", key="pbtn_seguir",
-                         on_click=passeio_ir, args=(None if ultima else indice + 1,), width="stretch")
-            if not ultima:
-                st.button("sair do passeio", key="pbtn_sair", on_click=passeio_ir, args=(None,))
-
-
-# ============================================================
-# LIA NA LATERAL (atravessa todas as abas)
-# ============================================================
-
-with st.sidebar:
-    atual = lia_estado["atual"]
-    c_rosto, c_nome = st.columns([1, 2.6])
-    with c_rosto:
-        st.markdown(rosto(atual.expressao, 76), unsafe_allow_html=True)
-    with c_nome:
-        st.markdown('<div class="lia-nome">Lia</div><div class="lia-cargo">Pesquisadora do MISM2'
-                    f'<br>{nome_cidade}</div>', unsafe_allow_html=True)
-
-    # Passeio ativo: o cartão dele fica aqui, logo abaixo do rosto (a
-    # Lia conduz); o convite, quando inativo, fica no fim da lateral.
-    lugar_do_passeio = st.container()
-
-    # Tudo o que é dela fica DENTRO do balão, preso ao rosto: fala,
-    # números, próximos passos. Antes os botões soltos na lateral
-    # pareciam longe dela.
-    boas_vindas_aberta = not st.session_state.get("lia_fechada")
-    with balao("lateral"):
-        if boas_vindas_aberta:
-            # a saudação já está no centro da tela: aqui não se repete
-            st.markdown("Estou ali no centro da tela. Escolha um caminho por lá.")
-        else:
-            if getattr(atual, "pergunta", None):
-                st.caption(f"Você perguntou: “{atual.pergunta}”")
-            st.markdown(atual.fala)
-            if getattr(atual, "selo", None):
-                st.caption(atual.selo)
-            if getattr(atual, "fonte", None):
-                st.caption(atual.fonte)
-            if getattr(atual, "base", None):
-                with st.expander("O que o Escudo calculou (base da resposta)"):
-                    st.markdown(atual.base)
-                    st.caption("O texto acima foi redigido pela IA a partir disto; os números são os mesmos.")
-            for rotulo_link, pagina in getattr(atual, "links", None) or []:
-                try:
-                    st.page_link(pagina, label=rotulo_link)
-                except Exception:  # Streamlit antigo, sem page_link
-                    pass
-            if atual.destino and atual.destino.get("aba") and lia_estado["pilha"]:
-                st.caption(f"O painel foi para a aba {atual.destino['aba']}"
-                           + (f" · {nome_doenca(atual.destino['cancer'])}" if atual.destino.get("cancer") else "")
-                           + ".")
-            if atual.numeros:
-                with st.expander("Os números por trás"):
-                    st.markdown("\n".join(f"- {n}" for n in atual.numeros))
-            proximos = [(r, a) for r, a in atual.botoes if a is not INICIO and a.get("tipo") != "inicio"]
-            for i, (rotulo, acao) in enumerate(proximos):
-                st.button(rotulo, key=f"lia_{i}_{rotulo}", on_click=lia_clicar, args=(acao,),
-                          width="stretch")
-            c_voltar, c_inicio = st.columns(2)
-            if lia_estado["pilha"]:
-                c_voltar.button("← Voltar", key="lia_discreto_voltar", on_click=lia_voltar)
-            c_inicio.button("Começar de novo", key="lia_discreto_inicio", on_click=lia_clicar, args=(INICIO,))
-
-    # Caixa de perguntas, junto da Lia. O Gemini (se ligado) entende o que a pessoa escreveu e redige a
-    # resposta; os números sempre vêm dos cálculos do Escudo.
-    st.markdown("**Pergunte à Lia**")
-    with st.form("caixa_form", clear_on_submit=True):
-        st.text_input("Pergunte à Lia", key="caixa_texto", max_chars=300, label_visibility="collapsed",
-                      placeholder=f"Ex.: o câncer de mama está aumentando em {nome_cidade}?")
-        st.form_submit_button("Perguntar", key="caixa_enviar", on_click=enviar_pergunta, width="stretch")
-    ia_atual = ia_da_sessao()
-    st.caption("🤖 IA de linguagem (Gemini) ligada. Os números vêm sempre dos cálculos do Escudo." if ia_atual.ligada else
-               "IA de linguagem desligada: respondo direto dos cálculos do Escudo.")
-    st.radio("Linguagem das respostas", ["Técnica", "Simples"], horizontal=True, key="caixa_linguagem")
-    with st.expander("Não sabe o que perguntar?"):
-        for i, (rotulo, assunto) in enumerate([("Qual câncer mais interna?", "mais_aparece"),
-                                               ("O que a tendência aponta para os próximos anos?", "futuro"),
-                                               ("Onde podemos ter problema?", "atencao"),
-                                               ("Por que os números mudam?", "causa"),
-                                               ("Como a IA funciona?", "sobre_ia")]):
-            st.button(rotulo, key=f"caixa_exemplo_{i}", on_click=lia_clicar,
-                      args=(acao_assistente(assunto, pergunta=rotulo),), width="stretch")
-    st.caption("Não escreva dados pessoais. A pergunta só é enviada ao Gemini quando ele está ligado.")
-
-    indice_passeio = st.session_state.get("passeio")
-    if indice_passeio is None:
-        desenhar_passeio(None)  # convite, no fim da lateral
-    else:
-        with lugar_do_passeio:  # passeio ativo: logo abaixo do rosto
-            desenhar_passeio(indice_passeio)
-
-st.caption("MISM2 · dados públicos do SIH/SUS · internações não equivalem a casos novos.")
