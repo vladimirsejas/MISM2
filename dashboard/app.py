@@ -455,7 +455,7 @@ if resumo.empty:
 ABAS = ["Panorama", "Evolução", "Rede hospitalar", "Investigar", "Planejamento", "Método"]
 PADROES = {"aba": "Panorama", "medida": "Internações",
            "ver_estado": True, "ver_fora": True, "ver_projecao": False, "ver_hospitais": True,
-           "fluxo_visao": "Moradoras atendidas fora da cidade", "fluxo_origens_forma": "Mapa"}
+           "fluxo_visao": "Moradoras atendidas em cidades de fora", "fluxo_origens_forma": "Mapa"}
 for chave, valor in PADROES.items():
     st.session_state.setdefault(chave, valor)
 
@@ -1400,7 +1400,7 @@ if aba == "Rede hospitalar":
         if info_cidade is None:
             st.info("Sem o município do hospital no banco não dá para ver o fluxo da cidade.")
         else:
-            VISOES = ["Moradoras atendidas fora da cidade", "Mulheres de fora atendidas na cidade"]
+            VISOES = ["Moradoras atendidas em cidades de fora", "Mulheres de fora da cidade atendidas na cidade"]
             visao = seletor(st, "O que você quer ver?", "fluxo_visao", VISOES, horizontal=True)
             atend, morad = info_cidade["atendimentos"], info_cidade["moradoras"]
 

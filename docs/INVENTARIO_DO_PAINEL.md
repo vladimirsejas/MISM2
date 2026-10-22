@@ -17,7 +17,7 @@ e todo bloco diz de quem são os números (🌎 Estado ou 📍 cidade). Para ref
 | Rede hospitalar | A parcela de mulheres de fora está crescendo? | 🌎 Estado de SP |
 | Rede hospitalar | Quem vem de fora, de qual câncer e para qual hospital? Pesquise tudo | 🌎 Estado de SP |
 | Rede hospitalar | Quem é atendida nos hospitais de …, e para onde vão as moradoras? | 📍 cidade escolhida |
-| Rede hospitalar | De quais cidades de SP vêm as mulheres de fora? (mapa ou barras; dentro da visão "Mulheres de fora atendidas na cidade") | 📍 cidade escolhida |
+| Rede hospitalar | De quais cidades de SP vêm as mulheres de fora? (mapa ou barras; dentro da visão "Mulheres de fora da cidade atendidas na cidade") | 📍 cidade escolhida |
 | Investigar | Qual câncer cresce mais rápido, e quando foi o ponto mais alto? | 📍 cidade escolhida |
 | Investigar | A idade das mulheres internadas por câncer mudou? | 📍 cidade escolhida |
 | Investigar | A idade das mulheres internadas … mudou? | 📍 cidade escolhida |

@@ -277,7 +277,7 @@ def main():
                and rotulos.get("Internações de moradoras") == "150" and rotulos.get("Na própria cidade") == "140"
                and rotulos.get("Em outras cidades de SP") == "10" and "Campinas" in " ".join(
                    str(d.value) for d in at.dataframe))
-        at.session_state["fluxo_visao"] = "Mulheres de fora atendidas na cidade"
+        at.session_state["fluxo_visao"] = "Mulheres de fora da cidade atendidas na cidade"
         at.run()
         rot2 = {m.label: m.value for m in at.metric}
         checar("F. fluxo da cidade: 2ª visão mostra as mulheres de fora atendidas na cidade",
@@ -292,7 +292,7 @@ def main():
             "origens": [{"nome": n, "codigo6": None, "internacoes": v} for n, v in origens_reais]}
         at_o = abrir()
         at_o.session_state["aba"] = "Rede hospitalar"
-        at_o.session_state["fluxo_visao"] = "Mulheres de fora atendidas na cidade"
+        at_o.session_state["fluxo_visao"] = "Mulheres de fora da cidade atendidas na cidade"
         at_o.run()
         texto_o = " ".join(str(m.value) for m in at_o.markdown)
         graficos_o = [g for g in at_o.get("plotly_chart") if "Santa Gertrudes" in str(g.proto.spec)]
@@ -322,7 +322,7 @@ def main():
         try:
             at_m = abrir()
             at_m.session_state["aba"] = "Rede hospitalar"
-            at_m.session_state["fluxo_visao"] = "Mulheres de fora atendidas na cidade"
+            at_m.session_state["fluxo_visao"] = "Mulheres de fora da cidade atendidas na cidade"
             at_m.run()
             texto_m = " ".join(str(m.value) for m in at_m.markdown)
             mapas = [g for g in at_m.get("plotly_chart") if "diamond" in str(g.proto.spec) and "Santa Gertrudes" in str(g.proto.spec)]
@@ -345,7 +345,7 @@ def main():
             loc_mod.carregar_localizacao = lambda conn: tabela_sem_rc[["nome", "chave", "latitude", "longitude"]]
             at_s = abrir()
             at_s.session_state["aba"] = "Rede hospitalar"
-            at_s.session_state["fluxo_visao"] = "Mulheres de fora atendidas na cidade"
+            at_s.session_state["fluxo_visao"] = "Mulheres de fora da cidade atendidas na cidade"
             at_s.run()
             checar("F. mapa das cidades: sem o centro da cidade na tabela, só as barras (sem seletor, sem erro)",
                    not erros(at_s) and "Ver como" not in [r.label for r in at_s.radio]
@@ -358,11 +358,11 @@ def main():
             "moradoras_na_cidade": 140, "moradoras_fora": 10, "destinos": [("Campinas", 10)]}
         at_v = abrir()
         at_v.session_state["aba"] = "Rede hospitalar"
-        at_v.session_state["fluxo_visao"] = "Mulheres de fora atendidas na cidade"
+        at_v.session_state["fluxo_visao"] = "Mulheres de fora da cidade atendidas na cidade"
         at_v.run()
         checar("F. cidades de origem: sem a lista (banco/info antiga) a visão abre normal e sem o gráfico",
                not erros(at_v) and "De quais cidades de SP vêm as mulheres de fora?" not in " ".join(str(m.value) for m in at_v.markdown))
-        at.session_state["fluxo_visao"] = "Moradoras atendidas fora da cidade"
+        at.session_state["fluxo_visao"] = "Moradoras atendidas em cidades de fora"
         at.run()
         checar("F. anos fora do padrão: o bloco solto e confuso saiu da aba Investigar (a informação mora na Evolução)",
                not erros(at) and "saiu do padrão em Rio Claro" not in textos
