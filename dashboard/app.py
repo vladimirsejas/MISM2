@@ -1,4 +1,5 @@
 import html
+import math
 import os
 import sqlite3
 import sys
@@ -13,7 +14,7 @@ from configuracao_geografica import BANCO, listar_municipios_disponiveis, obter_
 from lia import INICIO, Contexto, responder as lia_responder
 from assistente import IA, acao as acao_assistente, obter_ia, responder_escolha, responder_pergunta
 from conversa import registrar_pergunta
-from localizacao import carregar_localizacao
+from localizacao import carregar_localizacao, pontos_origens
 import hospitais_oncologia as hosp_onco
 from passeio import PARADAS, parada as passeio_parada
 from lia_rosto import img as rosto_lia
@@ -45,7 +46,7 @@ from inteligencia import (
     destaques_cancer,
     ficha_cancer,
     fluxo_da_cidade,
-    agrupar_origens, MINIMO_POR_CIDADE,
+    agrupar_origens,
     formatar_numero,
     evolucao_fluxo,
     alcance_dados,
@@ -454,7 +455,7 @@ if resumo.empty:
 ABAS = ["Panorama", "Evolução", "Rede hospitalar", "Investigar", "Planejamento", "Método"]
 PADROES = {"aba": "Panorama", "medida": "Internações",
            "ver_estado": True, "ver_fora": True, "ver_projecao": False, "ver_hospitais": True,
-           "fluxo_visao": "Moradoras atendidas fora da cidade"}
+           "fluxo_visao": "Moradoras atendidas fora da cidade", "fluxo_origens_forma": "Mapa"}
 for chave, valor in PADROES.items():
     st.session_state.setdefault(chave, valor)
 
@@ -1448,30 +1449,92 @@ if aba == "Rede hospitalar":
                     # casos viram uma barra só; as barras somam o número "De outras cidades de SP" acima.
                     principais, resto_n, resto_c = agrupar_origens(origens_cidade)
                     total_o = info_cidade["outras_cidades"]
+                    centro_o, pontos_o, sem_pos_o = pontos_origens(principais, localizacao_dos_municipios(), nome_cidade)
+                    tem_mapa = centro_o is not None and not pontos_o.empty
                     st.markdown("**De quais cidades de SP vêm as mulheres de fora?**")
-                    st.markdown(f'<div class="escudo-dica">Cidade onde a mulher mora, nas internações dos hospitais de '
-                                f'{html.escape(nome_cidade)}, {ano_ini}–{ano_fim}, 7 cânceres somados.'
-                                + (f' Cidades com menos de {MINIMO_POR_CIDADE} internações aparecem juntas.' if resto_n else '')
-                                + '</div>', unsafe_allow_html=True)
-                    rotulos_b = [nome for nome, _ in principais]
-                    valores_b = [n for _, n in principais]
-                    cores_b = [AZUL] * len(principais)
+                    forma = "Barras"
+                    if tem_mapa:
+                        forma = seletor(st, "Ver como", "fluxo_origens_forma", ["Mapa", "Barras"], horizontal=True)
+                    nomes_principais = {nome for nome, _ in principais}
+                    resto_max = max([o["internacoes"] for o in origens_cidade if o["nome"] not in nomes_principais] or [0])
+                    juntas = ""
                     if resto_n:
-                        rotulos_b.append(f"Outras {formatar_numero(resto_c)} {'cidade' if resto_c == 1 else 'cidades'} "
-                                         f"(menos de {MINIMO_POR_CIDADE} cada)")
-                        valores_b.append(resto_n)
-                        cores_b.append(CINZA)
-                    figura_o = go.Figure(go.Bar(
-                        x=valores_b[::-1], y=rotulos_b[::-1], orientation="h",
-                        text=[f"{formatar_numero(v)} · {formatar_numero(100 * v / total_o, 1)}%" for v in valores_b[::-1]],
-                        textposition="outside", cliponaxis=False,
-                        marker={"color": cores_b[::-1], "line": {"width": 0}},
-                        hovertemplate="<b>%{y}</b><br>%{text}<extra></extra>", showlegend=False))
-                    figura_o.update_xaxes(visible=False, range=[0, max(valores_b) * 1.28])
-                    figura_o.update_yaxes(showgrid=False)
-                    estilizar(figura_o, altura=70 + 38 * len(rotulos_b))
-                    figura_o.update_layout(bargap=0.3, showlegend=False)
-                    st.plotly_chart(figura_o, width="stretch", theme=None, config=CONFIG_GRAFICO, key="fluxo_origens")
+                        unidade = "internação" if resto_max == 1 else "internações"
+                        if resto_c == 1:
+                            juntas = (f" A outra cidade ({formatar_numero(resto_max)} {unidade}) aparece à parte nas barras e "
+                                      "não entra no mapa." if tem_mapa else
+                                      f" A outra cidade ({formatar_numero(resto_max)} {unidade}) aparece à parte.")
+                        else:
+                            juntas = (f" As {formatar_numero(resto_c)} cidades menores (até {formatar_numero(resto_max)} {unidade} "
+                                      "cada) aparecem juntas" + (" nas barras e não entram no mapa." if tem_mapa else "."))
+                    if forma == "Mapa":
+                        st.markdown(f'<div class="escudo-dica">Cada círculo fica no <b>centro da cidade</b> onde a mulher mora '
+                                    f'(não é o endereço de ninguém); o tamanho é o número de internações nos hospitais de '
+                                    f'{html.escape(nome_cidade)}, {ano_ini}–{ano_fim}, 7 cânceres somados. O losango vermelho '
+                                    f'marca {html.escape(nome_cidade)}.{juntas}</div>', unsafe_allow_html=True)
+                        lat0, lon0 = centro_o
+                        maior_o = float(pontos_o["internacoes"].max())
+                        fig_m = go.Figure()
+                        linhas_x, linhas_y = [], []
+                        for lat_p, lon_p in zip(pontos_o["latitude"], pontos_o["longitude"]):
+                            linhas_x += [lon_p, lon0, None]
+                            linhas_y += [lat_p, lat0, None]
+                        fig_m.add_trace(go.Scatter(x=linhas_x, y=linhas_y, mode="lines", hoverinfo="skip", showlegend=False,
+                                                   line={"width": 1.2, "color": "rgba(42,120,214,0.35)"}))
+                        def lado_do_nome(lat_p, lon_p):  # o nome fica do lado de fora do círculo, longe da cidade dos hospitais
+                            if abs(lat_p - lat0) < 0.04:
+                                return "middle right" if lon_p > lon0 else "middle left"
+                            return "top center" if lat_p > lat0 else "bottom center"
+                        fig_m.add_trace(go.Scatter(
+                            x=pontos_o["longitude"], y=pontos_o["latitude"], mode="markers+text",
+                            text=[f"{n} · {formatar_numero(v)}" for n, v in zip(pontos_o["nome"], pontos_o["internacoes"])],
+                            textposition=[lado_do_nome(a, b) for a, b in zip(pontos_o["latitude"], pontos_o["longitude"])],
+                            textfont={"size": 11, "color": TINTA},
+                            marker={"size": 14 + 46 * (pontos_o["internacoes"] / maior_o) ** 0.5, "color": AZUL, "opacity": 0.82,
+                                    "line": {"width": 1, "color": "#ffffff"}},
+                            hovertext=[f"{n}: {formatar_numero(v)} internações ({formatar_numero(100 * v / total_o, 1)}% das de outras cidades de SP)"
+                                       for n, v in zip(pontos_o["nome"], pontos_o["internacoes"])],
+                            hoverinfo="text", showlegend=False))
+                        fig_m.add_trace(go.Scatter(
+                            x=[lon0], y=[lat0], mode="markers+text", text=[f"<b>{html.escape(nome_cidade)}</b>"],
+                            textposition="top right", textfont={"size": 12, "color": "#c0392b"},
+                            marker={"size": 16, "color": "#c0392b", "symbol": "diamond", "line": {"width": 1, "color": "#ffffff"}},
+                            hovertext=[f"{nome_cidade}: onde ficam os hospitais"], hoverinfo="text", showlegend=False))
+                        lons_m = list(pontos_o["longitude"]) + [lon0]
+                        lats_m = list(pontos_o["latitude"]) + [lat0]
+                        folga = max(0.1, 0.22 * max(max(lons_m) - min(lons_m), max(lats_m) - min(lats_m)))
+                        fig_m.update_xaxes(visible=False, range=[min(lons_m) - folga, max(lons_m) + folga])
+                        fig_m.update_yaxes(visible=False, range=[min(lats_m) - folga, max(lats_m) + folga], scaleanchor="x",
+                                           scaleratio=1 / math.cos(math.radians(lat0)))
+                        estilizar(fig_m, altura=520)
+                        fig_m.update_layout(showlegend=False, margin={"l": 0, "r": 0, "t": 10, "b": 0})
+                        st.plotly_chart(fig_m, width="stretch", theme=None, config=CONFIG_GRAFICO, key="fluxo_origens_mapa")
+                        if sem_pos_o:
+                            st.caption(f"{formatar_numero(sem_pos_o)} internações vêm de cidades sem posição na tabela e não "
+                                       "aparecem no mapa.")
+                    else:
+                        st.markdown(f'<div class="escudo-dica">Cidade onde a mulher mora, nas internações dos hospitais de '
+                                    f'{html.escape(nome_cidade)}, {ano_ini}–{ano_fim}, 7 cânceres somados.{juntas}</div>',
+                                    unsafe_allow_html=True)
+                        rotulos_b = [nome for nome, _ in principais]
+                        valores_b = [n for _, n in principais]
+                        cores_b = [AZUL] * len(principais)
+                        if resto_n:
+                            rotulos_b.append(f"Outras {formatar_numero(resto_c)} {'cidade' if resto_c == 1 else 'cidades'} "
+                                             f"(até {formatar_numero(resto_max)} cada)")
+                            valores_b.append(resto_n)
+                            cores_b.append(CINZA)
+                        figura_o = go.Figure(go.Bar(
+                            x=valores_b[::-1], y=rotulos_b[::-1], orientation="h",
+                            text=[f"{formatar_numero(v)} · {formatar_numero(100 * v / total_o, 1)}%" for v in valores_b[::-1]],
+                            textposition="outside", cliponaxis=False,
+                            marker={"color": cores_b[::-1], "line": {"width": 0}},
+                            hovertemplate="<b>%{y}</b><br>%{text}<extra></extra>", showlegend=False))
+                        figura_o.update_xaxes(visible=False, range=[0, max(valores_b) * 1.28])
+                        figura_o.update_yaxes(showgrid=False)
+                        estilizar(figura_o, altura=70 + 38 * len(rotulos_b))
+                        figura_o.update_layout(bargap=0.3, showlegend=False)
+                        st.plotly_chart(figura_o, width="stretch", theme=None, config=CONFIG_GRAFICO, key="fluxo_origens")
                 leitura("O que mostra", leitura_cidade_visao(info_cidade, nome_cidade, "aqui"))
         st.markdown("---")
 

@@ -621,6 +621,19 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   agora procuram a Lia em `at.main` (não mais em `at.sidebar`); o Início da lateral do Apoio deixou de existir. **Visto só com dados de teste e
   com Streamlit 1.66; não visto no navegador do autor nem com o banco real.** O texto da Lia e o do cartão no Apoio se repetem (antes ficavam lado a lado).
 
+- **De quais cidades vêm as mulheres de fora (22/10/2026, pedido do autor: "fica lindo e ajuda muito por serem cidades vizinhas"; o autor deixou o desenho com o Claude).**
+  Na aba Rede hospitalar, visão "Mulheres de fora atendidas na cidade", nova pergunta "De quais cidades de SP vêm as mulheres de fora?" (📍 cidade escolhida),
+  com o seletor "Ver como": **Mapa** (padrão) ou **Barras** (uma informação, uma casa só). `inteligencia.fluxo_da_cidade` devolve `origens` (cidade de
+  RESIDÊNCIA das internações nos hospitais da cidade, nome do catálogo `municipios`, plano B pela chave); `agrupar_origens` mostra só as cidades com pelo menos
+  `MINIMO_POR_CIDADE` = 5 internações e no máximo as `MAXIMO_DE_CIDADES` = 15 maiores (polo como Barretos recebe de dezenas de cidades); as demais viram uma barra só
+  ("Outras N cidades (até M cada)") e NÃO entram no mapa (se nenhuma chega a 5, vale a lista das maiores, também com teto); as barras somam o número "De outras cidades de SP".
+  **Vale para qualquer cidade do seletor** (usa o código IBGE da cidade escolhida; testado com Rio Claro e com Barretos em `teste_fluxo.py`). `localizacao.pontos_origens` dá a posição: o ponto é o CENTRO do município (`municipios_localizacao`, IBGE),
+  nunca o endereço de ninguém; cidade fora da tabela fica de fora e é contada em "sem posição" (nunca ponto inventado); sem a tabela ou sem o centro da
+  cidade dos hospitais só aparecem as barras. A leitura (`leitura_cidade_visao`, usada também pela Lia) cita as 3 maiores com a parcela e diz que a cidade é a de
+  residência e que mostra de onde vêm, não explica por quê. **Conferido com o banco real do autor (22/10/2026):** Rio Claro = 1.508 moradoras + 350 de outras cidades de SP +
+  0 de outros estados nos hospitais da cidade; Santa Gertrudes 143, Itirapina 59, Ipeúna 56, Analândia 28, Corumbataí 18 (as 14 maiores somam 343, as 7 restantes têm 1 cada);
+  `OUTRO_ESTADO` = 0 por consulta direta. Testes: `teste_fluxo.py` e o cenário F de `dashboard/teste_painel.py`. Visto só com posições aproximadas (demonstração) e dados de teste.
+
 ## Notas de contexto do domínio
 
 - Banco de dados: `banco/escudo_feminino.db` (SQLite). O caminho é

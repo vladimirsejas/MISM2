@@ -1934,18 +1934,18 @@ def _cidades_de_origem(conexao, origem, cod6, uf_referencia="SP"):
 
 
 MINIMO_POR_CIDADE = 5   # abaixo disso a cidade entra em "outras" (poucos casos: ruído e nada a ler)
+MAXIMO_DE_CIDADES = 15  # acima disso também: um polo como Barretos recebe de dezenas de cidades e o gráfico viraria ruído
 
 
-def agrupar_origens(origens, minimo=MINIMO_POR_CIDADE):
-    """Separa as cidades com `minimo` internações ou mais das pequenas, que viram um bloco só.
-    Devolve (principais [(nome, n)], n_das_outras, quantas_cidades_outras). Se NENHUMA cidade chega ao mínimo,
-    mostra todas (agrupar tudo numa barra só não diria nada)."""
+def agrupar_origens(origens, minimo=MINIMO_POR_CIDADE, maximo=MAXIMO_DE_CIDADES):
+    """Separa as cidades principais (`minimo` internações ou mais, no máximo as `maximo` maiores) das demais, que viram um
+    bloco só. Devolve (principais [(nome, n)], n_das_outras, quantas_cidades_outras). Se NENHUMA cidade chega ao mínimo,
+    a lista é a das maiores mesmo assim (agrupar tudo numa barra só não diria nada). `origens` já vem da maior para a menor."""
     pares = [(o["nome"], int(o["internacoes"])) for o in origens or []]
-    principais = [(nome, n) for nome, n in pares if n >= minimo]
-    if not principais:
-        return pares, 0, 0
-    resto = [n for nome, n in pares if n < minimo]
-    return principais, sum(resto), len(resto)
+    candidatas = [(nome, n) for nome, n in pares if n >= minimo] or pares
+    principais = candidatas[:maximo]
+    resto = pares[len(principais):] if candidatas is pares else [p for p in pares if p not in principais]
+    return principais, sum(n for _, n in resto), len(resto)
 
 
 # =====================================

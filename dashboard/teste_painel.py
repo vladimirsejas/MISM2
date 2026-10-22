@@ -300,13 +300,58 @@ def main():
                not erros(at_o) and "De quais cidades de SP vêm as mulheres de fora?" in texto_o and len(graficos_o) == 1
                and "Santa Gertrudes (143, 42,8%)" in texto_o and "vêm de 10 cidades" in texto_o)
         spec_o = str(graficos_o[0].proto.spec) if graficos_o else ""
-        checar("F. cidades de origem: cidades com menos de 5 internações viram uma barra só, e as barras fecham em 334",
-               "Outras 2 cidades (menos de 5 cada)" in spec_o and "Conchal" not in spec_o and "Limeira" not in spec_o
+        checar("F. cidades de origem: as cidades menores viram uma barra só (até 3 cada), e as barras fecham em 334",
+               "Outras 2 cidades" in spec_o and "3 cada)" in spec_o  # (o JSON do gráfico escapa o acento de "até") and "Conchal" not in spec_o and "Limeira" not in spec_o
                and "Itirapina" in spec_o and "residência da mulher" in texto_o
-               and "Cidades com menos de 5 internações aparecem juntas." in texto_o
+               and "As 2 cidades menores (até 3 internações cada) aparecem juntas." in texto_o and "não entram no mapa" not in texto_o
                and 143 + 59 + 56 + 28 + 18 + 10 + 10 + 5 + (3 + 2) == 334)
         checar("F. cidades de origem: a leitura descreve e não atribui causa",
                all(p not in texto_o.lower() for p in ("porque", "devido", "por causa", "em razão", "r$")))
+        # Mapa das cidades vizinhas (22/10/2026): com a posição das cidades (tabela do IBGE) o mapa é o padrão e as barras
+        # ficam a um clique; sem a tabela só as barras aparecem (é o caso das checagens acima).
+        import localizacao as loc_mod
+        posicoes_f = {"Rio Claro": (-22.373, -47.580), "Santa Gertrudes": (-22.457, -47.527), "Itirapina": (-22.253, -47.822),
+                      "Ipeúna": (-22.432, -47.716), "Analândia": (-22.129, -47.662), "Corumbataí": (-22.221, -47.622),
+                      "Pirassununga": (-21.996, -47.425), "Araras": (-22.357, -47.384), "Leme": (-22.181, -47.390),
+                      "Conchal": (-22.336, -47.173), "Limeira": (-22.565, -47.402)}
+        tabela_pos_f = pd.DataFrame({"nome": list(posicoes_f), "latitude": [v[0] for v in posicoes_f.values()],
+                                     "longitude": [v[1] for v in posicoes_f.values()]})
+        tabela_pos_f["chave"] = tabela_pos_f["nome"].map(loc_mod.ent.normalizar)
+        loc_original = loc_mod.carregar_localizacao
+        loc_mod.carregar_localizacao = lambda conn: tabela_pos_f[["nome", "chave", "latitude", "longitude"]]
+        try:
+            at_m = abrir()
+            at_m.session_state["aba"] = "Rede hospitalar"
+            at_m.session_state["fluxo_visao"] = "Mulheres de fora atendidas na cidade"
+            at_m.run()
+            texto_m = " ".join(str(m.value) for m in at_m.markdown)
+            mapas = [g for g in at_m.get("plotly_chart") if "diamond" in str(g.proto.spec) and "Santa Gertrudes" in str(g.proto.spec)]
+            spec_m = str(mapas[0].proto.spec) if mapas else ""
+            checar("F. mapa das cidades: com a posição das cidades, o mapa é o padrão e há o seletor 'Ver como'",
+                   not erros(at_m) and "Ver como" in [r.label for r in at_m.radio] and len(mapas) == 1
+                   and at_m.session_state["fluxo_origens_forma"] == "Mapa" and "centro da cidade" in texto_m)
+            checar("F. mapa das cidades: Rio Claro é o losango, as cidades com 5 ou mais aparecem e as pequenas não",
+                   "Rio Claro" in spec_m and "Santa Gertrudes" in spec_m and "143" in spec_m and "Leme" in spec_m
+                   and "Conchal" not in spec_m and "Limeira" not in spec_m
+                   and "As 2 cidades menores (até 3 internações cada) aparecem juntas nas barras e não entram no mapa." in texto_m)
+            at_m.session_state["fluxo_origens_forma"] = "Barras"
+            at_m.run()
+            barras = [g for g in at_m.get("plotly_chart") if "Outras 2 cidades" in str(g.proto.spec)]
+            checar("F. mapa das cidades: 'Barras' troca o mapa pelas barras (uma informação, uma casa só)",
+                   not erros(at_m) and len(barras) == 1
+                   and not [g for g in at_m.get("plotly_chart") if "diamond" in str(g.proto.spec) and "Santa Gertrudes" in str(g.proto.spec)])
+            # a cidade dos hospitais fora da tabela: sem centro não há mapa, só as barras (nunca um ponto inventado)
+            tabela_sem_rc = tabela_pos_f[tabela_pos_f["nome"] != "Rio Claro"]
+            loc_mod.carregar_localizacao = lambda conn: tabela_sem_rc[["nome", "chave", "latitude", "longitude"]]
+            at_s = abrir()
+            at_s.session_state["aba"] = "Rede hospitalar"
+            at_s.session_state["fluxo_visao"] = "Mulheres de fora atendidas na cidade"
+            at_s.run()
+            checar("F. mapa das cidades: sem o centro da cidade na tabela, só as barras (sem seletor, sem erro)",
+                   not erros(at_s) and "Ver como" not in [r.label for r in at_s.radio]
+                   and len([g for g in at_s.get("plotly_chart") if "Outras 2 cidades" in str(g.proto.spec)]) == 1)
+        finally:
+            loc_mod.carregar_localizacao = loc_original
         # info antiga (sem a lista) e visão das moradoras: seguem abrindo, sem o gráfico novo
         inteligencia.fluxo_da_cidade = lambda conn, o, cod, uf="SP": {
             "atendimentos": 142, "da_cidade": 140, "outras_cidades": 0, "outros_estados": 2, "moradoras": 150,

@@ -205,6 +205,14 @@ def main():
     todas_pequenas, r0, r1 = ti.agrupar_origens([{"nome": "A", "internacoes": 2}, {"nome": "B", "internacoes": 1}])
     assert todas_pequenas == [("A", 2), ("B", 1)] and (r0, r1) == (0, 0)  # nenhuma chega ao mínimo: mostra todas
     assert ti.agrupar_origens([]) == ([], 0, 0) and ti.agrupar_origens(None) == ([], 0, 0)
+    # polo com dezenas de cidades (Barretos): só as 15 maiores aparecem, o resto vira um bloco e a soma fecha
+    muitas = [{"nome": f"Cidade {i:02d}", "internacoes": 100 - i} for i in range(30)]
+    p15, r_n, r_c = ti.agrupar_origens(muitas)
+    assert len(p15) == ti.MAXIMO_DE_CIDADES == 15 and r_c == 15 and p15[0] == ("Cidade 00", 100)
+    assert sum(n for _, n in p15) + r_n == sum(o["internacoes"] for o in muitas)
+    pequenas = [{"nome": f"P{i}", "internacoes": 2} for i in range(20)]  # nenhuma chega a 5 e são muitas: também há teto
+    p_p, rp_n, rp_c = ti.agrupar_origens(pequenas)
+    assert len(p_p) == 15 and rp_c == 5 and rp_n == 10
     texto_o = " ".join(ti.leitura_cidade_visao(cv, "Rio Claro", "aqui"))
     assert "vêm de 7 cidades" in texto_o and "Santa Gertrudes (14, 43,8%)" in texto_o and "Itirapina (6, 18,8%)" in texto_o
     assert "residência da mulher" in texto_o and "não explica por quê" in texto_o
@@ -215,6 +223,20 @@ def main():
     assert "vêm de" not in " ".join(ti.leitura_cidade_visao(sem_origem, "Rio Claro", "aqui"))  # sem a lista, a leitura de antes
     sem_chave = {k: x for k, x in cv.items() if k != "origens"}
     assert "vêm de" not in " ".join(ti.leitura_cidade_visao(sem_chave, "Rio Claro", "aqui"))  # info antiga (sem 'origens')
+    # vale para QUALQUER cidade, não só Rio Claro: Barretos (hospital de referência) recebe de outras cidades e de outros estados
+    w = banco()
+    w.executemany("INSERT INTO municipios VALUES (?,?,?,?)", [(3543402, "RIBEIRAO_PRETO", "Ribeirão Preto", "SP")])
+    for municipio, uf, n in (("BARRETOS", "SP", 10), ("RIBEIRAO_PRETO", "SP", 30), ("COLINA", "SP", 8), ("OUTRO_ESTADO", "MG", 18),
+                             ("OUTRO_ESTADO", "GO", 6), ("RIO_CLARO", "SP", 2)):
+        add(w, n, 2024, todos, "MAMA", municipio, uf, "350550", "2090236")
+    add(w, 7, 2024, todos, "MAMA", "BARRETOS", "SP", "354390", "2082888")  # moradora de Barretos atendida em Rio Claro
+    w.commit()
+    cb = ti.fluxo_da_cidade(w, "BARRETOS", 3505500)
+    assert cb["atendimentos"] == 74 and cb["da_cidade"] == 10 and cb["outras_cidades"] == 40 and cb["outros_estados"] == 24
+    assert [(o["nome"], o["internacoes"]) for o in cb["origens"]] == [("Ribeirão Preto", 30), ("Colina", 8), ("Rio Claro", 2)], cb["origens"]
+    assert "Barretos" not in [o["nome"] for o in cb["origens"]] and sum(o["internacoes"] for o in cb["origens"]) == cb["outras_cidades"]
+    assert "Ribeirão Preto (30, 75,0%)" in " ".join(ti.leitura_cidade_visao(cb, "Barretos", "aqui"))
+    assert [o["nome"] for o in ti.fluxo_da_cidade(w, "RIO_CLARO", 3543907)["origens"]] == ["Barretos"]  # a mesma base, outra cidade
     sem_tabela = sqlite3.connect(":memory:")  # banco sem a tabela `municipios`: nomes vêm da chave
     sem_tabela.execute("CREATE TABLE internacoes (tipo_cancer TEXT, origem TEXT, municipio TEXT, ano INT, mes INT, "
                        "obito INT, valor_total REAL, dias_permanencia INT, uf_residencia TEXT, "
