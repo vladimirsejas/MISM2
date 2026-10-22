@@ -45,6 +45,7 @@ from inteligencia import (
     destaques_cancer,
     ficha_cancer,
     fluxo_da_cidade,
+    agrupar_origens, MINIMO_POR_CIDADE,
     formatar_numero,
     evolucao_fluxo,
     alcance_dados,
@@ -1441,6 +1442,36 @@ if aba == "Rede hospitalar":
                           help=f"{parte(info_cidade['outras_cidades'], atend)} das internações nos hospitais da cidade")
                 e3.metric("De outros estados", formatar_numero(info_cidade["outros_estados"]),
                           help=f"{parte(info_cidade['outros_estados'], atend)} das internações nos hospitais da cidade")
+                origens_cidade = info_cidade.get("origens") or []
+                if origens_cidade and info_cidade["outras_cidades"]:
+                    # De quais cidades de SP vêm as mulheres de fora (pedido do autor, 22/10/2026). Cidades com poucos
+                    # casos viram uma barra só; as barras somam o número "De outras cidades de SP" acima.
+                    principais, resto_n, resto_c = agrupar_origens(origens_cidade)
+                    total_o = info_cidade["outras_cidades"]
+                    st.markdown("**De quais cidades de SP vêm as mulheres de fora?**")
+                    st.markdown(f'<div class="escudo-dica">Cidade onde a mulher mora, nas internações dos hospitais de '
+                                f'{html.escape(nome_cidade)}, {ano_ini}–{ano_fim}, 7 cânceres somados.'
+                                + (f' Cidades com menos de {MINIMO_POR_CIDADE} internações aparecem juntas.' if resto_n else '')
+                                + '</div>', unsafe_allow_html=True)
+                    rotulos_b = [nome for nome, _ in principais]
+                    valores_b = [n for _, n in principais]
+                    cores_b = [AZUL] * len(principais)
+                    if resto_n:
+                        rotulos_b.append(f"Outras {formatar_numero(resto_c)} {'cidade' if resto_c == 1 else 'cidades'} "
+                                         f"(menos de {MINIMO_POR_CIDADE} cada)")
+                        valores_b.append(resto_n)
+                        cores_b.append(CINZA)
+                    figura_o = go.Figure(go.Bar(
+                        x=valores_b[::-1], y=rotulos_b[::-1], orientation="h",
+                        text=[f"{formatar_numero(v)} · {formatar_numero(100 * v / total_o, 1)}%" for v in valores_b[::-1]],
+                        textposition="outside", cliponaxis=False,
+                        marker={"color": cores_b[::-1], "line": {"width": 0}},
+                        hovertemplate="<b>%{y}</b><br>%{text}<extra></extra>", showlegend=False))
+                    figura_o.update_xaxes(visible=False, range=[0, max(valores_b) * 1.28])
+                    figura_o.update_yaxes(showgrid=False)
+                    estilizar(figura_o, altura=70 + 38 * len(rotulos_b))
+                    figura_o.update_layout(bargap=0.3, showlegend=False)
+                    st.plotly_chart(figura_o, width="stretch", theme=None, config=CONFIG_GRAFICO, key="fluxo_origens")
                 leitura("O que mostra", leitura_cidade_visao(info_cidade, nome_cidade, "aqui"))
         st.markdown("---")
 

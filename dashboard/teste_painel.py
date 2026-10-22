@@ -283,6 +283,40 @@ def main():
         checar("F. fluxo da cidade: 2ª visão mostra as mulheres de fora atendidas na cidade",
                not erros(at) and rot2.get("Internações nos hospitais") == "142" and rot2.get("Moradoras de Rio Claro") == "140"
                and rot2.get("De outros estados") == "2")
+        # De quais cidades vêm as mulheres de fora (22/10/2026): os números reais de Rio Claro, conferidos no banco do autor
+        origens_reais = [("Santa Gertrudes", 143), ("Itirapina", 59), ("Ipeúna", 56), ("Analândia", 28), ("Corumbataí", 18),
+                         ("Pirassununga", 10), ("Araras", 10), ("Leme", 5), ("Conchal", 3), ("Limeira", 2)]
+        inteligencia.fluxo_da_cidade = lambda conn, o, cod, uf="SP": {
+            "atendimentos": 1842, "da_cidade": 1508, "outras_cidades": 334, "outros_estados": 0, "moradoras": 1668,
+            "moradoras_na_cidade": 1508, "moradoras_fora": 160, "destinos": [("Barretos", 100)],
+            "origens": [{"nome": n, "codigo6": None, "internacoes": v} for n, v in origens_reais]}
+        at_o = abrir()
+        at_o.session_state["aba"] = "Rede hospitalar"
+        at_o.session_state["fluxo_visao"] = "Mulheres de fora atendidas na cidade"
+        at_o.run()
+        texto_o = " ".join(str(m.value) for m in at_o.markdown)
+        graficos_o = [g for g in at_o.get("plotly_chart") if "Santa Gertrudes" in str(g.proto.spec)]
+        checar("F. cidades de origem: a visão 'mulheres de fora' mostra a pergunta, o gráfico e a leitura, sem erro",
+               not erros(at_o) and "De quais cidades de SP vêm as mulheres de fora?" in texto_o and len(graficos_o) == 1
+               and "Santa Gertrudes (143, 42,8%)" in texto_o and "vêm de 10 cidades" in texto_o)
+        spec_o = str(graficos_o[0].proto.spec) if graficos_o else ""
+        checar("F. cidades de origem: cidades com menos de 5 internações viram uma barra só, e as barras fecham em 334",
+               "Outras 2 cidades (menos de 5 cada)" in spec_o and "Conchal" not in spec_o and "Limeira" not in spec_o
+               and "Itirapina" in spec_o and "residência da mulher" in texto_o
+               and "Cidades com menos de 5 internações aparecem juntas." in texto_o
+               and 143 + 59 + 56 + 28 + 18 + 10 + 10 + 5 + (3 + 2) == 334)
+        checar("F. cidades de origem: a leitura descreve e não atribui causa",
+               all(p not in texto_o.lower() for p in ("porque", "devido", "por causa", "em razão", "r$")))
+        # info antiga (sem a lista) e visão das moradoras: seguem abrindo, sem o gráfico novo
+        inteligencia.fluxo_da_cidade = lambda conn, o, cod, uf="SP": {
+            "atendimentos": 142, "da_cidade": 140, "outras_cidades": 0, "outros_estados": 2, "moradoras": 150,
+            "moradoras_na_cidade": 140, "moradoras_fora": 10, "destinos": [("Campinas", 10)]}
+        at_v = abrir()
+        at_v.session_state["aba"] = "Rede hospitalar"
+        at_v.session_state["fluxo_visao"] = "Mulheres de fora atendidas na cidade"
+        at_v.run()
+        checar("F. cidades de origem: sem a lista (banco/info antiga) a visão abre normal e sem o gráfico",
+               not erros(at_v) and "De quais cidades de SP vêm as mulheres de fora?" not in " ".join(str(m.value) for m in at_v.markdown))
         at.session_state["fluxo_visao"] = "Moradoras atendidas fora da cidade"
         at.run()
         checar("F. anos fora do padrão: o bloco solto e confuso saiu da aba Investigar (a informação mora na Evolução)",

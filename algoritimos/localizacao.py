@@ -44,6 +44,27 @@ def _ponto(localizacao, chave):
     return (float(achada.iloc[0]["latitude"]), float(achada.iloc[0]["longitude"])) if len(achada) else None
 
 
+def pontos_origens(pares, localizacao, cidade):
+    """Posição (centro do município) das cidades de onde vêm as mulheres atendidas em `cidade`.
+
+    `pares`: [(nome, internacoes)] (as cidades principais, de `inteligencia.agrupar_origens`). Devolve
+    (centro da cidade dos hospitais ou None, DataFrame nome/latitude/longitude/internacoes, internações sem posição).
+    Cidade que não está na tabela fica de fora e é contada em "sem posição": nunca ganha um ponto inventado. O ponto é o CENTRO
+    da cidade, não o endereço de ninguém."""
+    total = sum(int(n) for _, n in pares)
+    if localizacao is None or len(localizacao) == 0:
+        return None, pd.DataFrame(columns=["nome", "latitude", "longitude", "internacoes"]), total
+    centro = _ponto(localizacao, ent.normalizar(cidade))
+    linhas, sem_posicao = [], 0
+    for nome, n in pares:
+        ponto = _ponto(localizacao, ent.normalizar(nome))
+        if ponto is None:
+            sem_posicao += int(n)
+        else:
+            linhas.append({"nome": nome, "latitude": ponto[0], "longitude": ponto[1], "internacoes": int(n)})
+    return centro, pd.DataFrame(linhas, columns=["nome", "latitude", "longitude", "internacoes"]), sem_posicao
+
+
 def cidade_do_item(onde):
     """'Piracicaba (região de Rio Claro)' -> 'piracicaba'; 'São Paulo (capital)' -> 'sao paulo'."""
     return ent.normalizar(re.sub(r"\([^)]*\)", "", onde or ""))

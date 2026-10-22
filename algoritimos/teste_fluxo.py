@@ -181,6 +181,64 @@ def main():
     assert info["destinos"] == [("Campinas", 10)]
     print("[OK] Rio Claro: 142 atendimentos (140 moradoras, 2 de outros estados); 10 moradoras atendidas em Campinas")
 
+    # ---- de que cidades vêm as mulheres de fora atendidas na cidade (pedido do autor, 22/10/2026) ----
+    v = banco()
+    v.executemany("INSERT INTO municipios VALUES (?,?,?,?)", [
+        (3547502, "SANTA_GERTRUDES", "Santa Gertrudes", "SP"), (3523107, "ITIRAPINA", "Itirapina", "SP"),
+        (3520004, "IPEUNA", "Ipeúna", "SP"), (3503505, "ARARAS", "Araras", "SP")])  # CORDEIROPOLIS fica de fora do catálogo
+    for municipio, n in (("RIO_CLARO", 20), ("SANTA_GERTRUDES", 14), ("ITIRAPINA", 6), ("IPEUNA", 5),
+                         ("ANALANDIA", 3), ("CORUMBATAI", 2), ("ARARAS", 1), ("CORDEIROPOLIS", 1)):
+        add(v, n, 2024, todos, "MAMA", municipio, "SP", "354390", "2082888")
+    add(v, 4, 2024, todos, "MAMA", "RIO_CLARO", "SP", "350950", "2079798")      # moradora atendida fora: não conta como "de fora"
+    add(v, 9, 2024, todos, "MAMA", "SANTA_GERTRUDES", "SP", "350950", "2079798")  # hospital de Campinas: não é de Rio Claro
+    v.commit()
+    cv = ti.fluxo_da_cidade(v, "RIO_CLARO", 3543907)
+    assert cv["atendimentos"] == 52 and cv["da_cidade"] == 20 and cv["outras_cidades"] == 32 and cv["outros_estados"] == 0
+    nomes_o = [o["nome"] for o in cv["origens"]]
+    assert nomes_o == ["Santa Gertrudes", "Itirapina", "Ipeúna", "Analandia", "Corumbatai", "Araras", "Cordeiropolis"], nomes_o
+    assert [o["internacoes"] for o in cv["origens"]] == [14, 6, 5, 3, 2, 1, 1]
+    assert sum(o["internacoes"] for o in cv["origens"]) == cv["outras_cidades"]  # as barras fecham com o número do painel
+    assert cv["origens"][0]["codigo6"] == "354750" and cv["origens"][3]["codigo6"] is None  # sem catálogo: nome da chave, sem código
+    principais, resto_n, resto_c = ti.agrupar_origens(cv["origens"])
+    assert principais == [("Santa Gertrudes", 14), ("Itirapina", 6), ("Ipeúna", 5)] and (resto_n, resto_c) == (7, 4)
+    assert sum(n for _, n in principais) + resto_n == cv["outras_cidades"]
+    todas_pequenas, r0, r1 = ti.agrupar_origens([{"nome": "A", "internacoes": 2}, {"nome": "B", "internacoes": 1}])
+    assert todas_pequenas == [("A", 2), ("B", 1)] and (r0, r1) == (0, 0)  # nenhuma chega ao mínimo: mostra todas
+    assert ti.agrupar_origens([]) == ([], 0, 0) and ti.agrupar_origens(None) == ([], 0, 0)
+    texto_o = " ".join(ti.leitura_cidade_visao(cv, "Rio Claro", "aqui"))
+    assert "vêm de 7 cidades" in texto_o and "Santa Gertrudes (14, 43,8%)" in texto_o and "Itirapina (6, 18,8%)" in texto_o
+    assert "residência da mulher" in texto_o and "não explica por quê" in texto_o
+    assert "internações, não pessoas" in texto_o and "só enxerga hospitais de sp" in texto_o.lower()
+    for proibido in ("porque", "devido", "por causa", "em razão", "r$"):
+        assert proibido not in texto_o.lower(), proibido
+    sem_origem = dict(cv, origens=[])
+    assert "vêm de" not in " ".join(ti.leitura_cidade_visao(sem_origem, "Rio Claro", "aqui"))  # sem a lista, a leitura de antes
+    sem_chave = {k: x for k, x in cv.items() if k != "origens"}
+    assert "vêm de" not in " ".join(ti.leitura_cidade_visao(sem_chave, "Rio Claro", "aqui"))  # info antiga (sem 'origens')
+    sem_tabela = sqlite3.connect(":memory:")  # banco sem a tabela `municipios`: nomes vêm da chave
+    sem_tabela.execute("CREATE TABLE internacoes (tipo_cancer TEXT, origem TEXT, municipio TEXT, ano INT, mes INT, "
+                       "obito INT, valor_total REAL, dias_permanencia INT, uf_residencia TEXT, "
+                       "municipio_hospital TEXT, cnes TEXT, car_int TEXT)")
+    add(sem_tabela, 7, 2024, todos, "MAMA", "SANTA_GERTRUDES", "SP", "354390", "2082888")
+    sem_tabela.commit()
+    assert [(o["nome"], o["internacoes"]) for o in ti.fluxo_da_cidade(sem_tabela, "RIO_CLARO", 3543907)["origens"]] == [("Santa Gertrudes", 7)]
+    print("[OK] cidades de origem: 7 cidades somam as 32 internações de fora; <5 viram 'outras'; leitura cita as 3 maiores sem causa")
+
+    # ---- posição das cidades de origem (mapa) ----
+    import localizacao as loc
+    tabela_pos = pd.DataFrame({"nome": ["Rio Claro", "Santa Gertrudes", "Itirapina", "Ipeúna"],
+                               "latitude": [-22.373, -22.459, -22.253, -22.434], "longitude": [-47.580, -47.527, -47.822, -47.716]})
+    tabela_pos["chave"] = tabela_pos["nome"].map(loc.ent.normalizar)
+    centro_o, pts_o, sem_o = loc.pontos_origens(principais + [("Cidade fantasma", 3)], tabela_pos, "Rio Claro")
+    assert centro_o == (-22.373, -47.580)
+    assert list(pts_o["nome"]) == ["Santa Gertrudes", "Itirapina", "Ipeúna"] and list(pts_o["internacoes"]) == [14, 6, 5]
+    assert sem_o == 3  # a cidade que não está na tabela não ganha ponto inventado: só é contada
+    sem_tab = loc.pontos_origens(principais, loc.carregar_localizacao(sqlite3.connect(":memory:")), "Rio Claro")
+    assert sem_tab[0] is None and sem_tab[1].empty and sem_tab[2] == 25  # sem a tabela: nenhum ponto, tudo "sem posição"
+    assert loc.pontos_origens(principais, None, "Rio Claro")[0] is None
+    assert loc.pontos_origens(principais, tabela_pos, "Cidade Sem Posição")[0] is None  # sem o centro da cidade, sem mapa
+    print("[OK] mapa das cidades de origem: ponto só para quem está na tabela; sem tabela ou sem centro não desenha nada")
+
     # ---- textos: descrevem, não explicam ----
     textos = (ti.leitura_fluxo(mama, ev.reset_index()) + ti.leitura_fluxo(todos_c, None)
               + ti.leitura_cidade(info, "Rio Claro"))

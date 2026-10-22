@@ -1889,6 +1889,7 @@ def fluxo_da_cidade(conexao, origem, codigo_ibge, uf_referencia="SP"):
     except Exception:
         return None
     nomes = _nomes_municipios(conexao)
+    origens = _cidades_de_origem(conexao, origem, cod6, uf_referencia)
     com_hospital = [(c, int(n)) for c, n in onde if c is not None]
     sem_hospital = sum(int(n) for c, n in onde if c is None)
     moradoras = sum(n for _, n in com_hospital)
@@ -1901,8 +1902,50 @@ def fluxo_da_cidade(conexao, origem, codigo_ibge, uf_referencia="SP"):
         "outros_estados": int(quem.get("outros_estados", 0)),
         "moradoras": moradoras, "moradoras_na_cidade": na_cidade,
         "moradoras_fora": moradoras - na_cidade, "destinos": destinos[:10],
-        "moradoras_sem_hospital": sem_hospital,
+        "moradoras_sem_hospital": sem_hospital, "origens": origens,
     }
+
+
+def _nome_da_chave(chave):
+    """'SANTA_GERTRUDES' -> 'Santa Gertrudes' (plano B quando a cidade não está no catálogo `municipios`)."""
+    return str(chave).replace("_", " ").title()
+
+
+def _cidades_de_origem(conexao, origem, cod6, uf_referencia="SP"):
+    """De que cidades de SP vêm as internações de MULHERES DE FORA nos hospitais de `cod6` (residência, não hospital).
+    Lista de {"nome", "codigo6", "internacoes"}, da maior para a menor. Não inclui a própria cidade nem outros estados
+    (esses têm a contagem própria). Só agrega; nada de pessoa."""
+    consultas = (
+        "SELECT i.municipio, m.nome, substr(CAST(m.codigo_ibge AS TEXT), 1, 6), COUNT(*) FROM internacoes AS i "
+        "LEFT JOIN municipios AS m ON m.origem = i.municipio "
+        "WHERE i.origem = ? AND i.municipio_hospital = ? AND i.municipio NOT IN (?, 'OUTRO_ESTADO') "
+        "GROUP BY 1, 2, 3 ORDER BY 4 DESC, 1",
+        "SELECT municipio, NULL, NULL, COUNT(*) FROM internacoes "
+        "WHERE origem = ? AND municipio_hospital = ? AND municipio NOT IN (?, 'OUTRO_ESTADO') "
+        "GROUP BY 1 ORDER BY 4 DESC, 1")
+    for sql in consultas:  # a 2ª serve a banco sem a tabela `municipios`
+        try:
+            linhas = conexao.execute(sql, (uf_referencia, cod6, origem)).fetchall()
+        except Exception:
+            continue
+        return [{"nome": nome or _nome_da_chave(chave), "codigo6": codigo, "internacoes": int(n)}
+                for chave, nome, codigo, n in linhas if chave]
+    return []
+
+
+MINIMO_POR_CIDADE = 5   # abaixo disso a cidade entra em "outras" (poucos casos: ruído e nada a ler)
+
+
+def agrupar_origens(origens, minimo=MINIMO_POR_CIDADE):
+    """Separa as cidades com `minimo` internações ou mais das pequenas, que viram um bloco só.
+    Devolve (principais [(nome, n)], n_das_outras, quantas_cidades_outras). Se NENHUMA cidade chega ao mínimo,
+    mostra todas (agrupar tudo numa barra só não diria nada)."""
+    pares = [(o["nome"], int(o["internacoes"])) for o in origens or []]
+    principais = [(nome, n) for nome, n in pares if n >= minimo]
+    if not principais:
+        return pares, 0, 0
+    resto = [n for nome, n in pares if n < minimo]
+    return principais, sum(resto), len(resto)
 
 
 # =====================================
@@ -2020,6 +2063,14 @@ def leitura_cidade_visao(info, nome_cidade, visao):
               f"{formatar_numero(_pct(info['da_cidade'], a), 1)}% de moradoras da cidade e "
               f"{formatar_numero(_pct(fora, a), 1)}% de mulheres de fora ({formatar_numero(info['outras_cidades'])} de outras "
               f"cidades de SP e {formatar_numero(info['outros_estados'])} de outros estados)."]
+    origens = info.get("origens") or []
+    if origens and info["outras_cidades"]:
+        total = info["outras_cidades"]
+        frases.append(
+            f"As {formatar_numero(total)} internações de outras cidades de SP vêm de {formatar_numero(len(origens))} "
+            f"{'cidade' if len(origens) == 1 else 'cidades'}; as que mais aparecem: " + ", ".join(
+                f"{o['nome']} ({formatar_numero(o['internacoes'])}, {formatar_numero(_pct(o['internacoes'], total), 1)}%)"
+                for o in origens[:3]) + ". A cidade é a de residência da mulher; mostra de onde vêm, não explica por quê.")
     if not info["outros_estados"]:
         frases.append(f"Nenhuma internação de mulher de outro estado foi registrada em {nome_cidade}.")
     frases.append("Conta internações, não pessoas, e só enxerga hospitais de SP.")
