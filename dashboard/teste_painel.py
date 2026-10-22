@@ -843,6 +843,68 @@ def main():
         inteligencia.anos_com_dados = anos_original
         streamlit.cache_data.clear()
 
+    # ---- M. seletor de município (autor, 22/10/2026): fica colado nos dados que ele muda e a escolha sobrevive à troca de aba ----
+    # Duas cidades; o fluxo e o fluxo da cidade são os de teste (cenário F). Na Rede hospitalar o seletor mora logo acima do bloco da
+    # cidade (os gráficos de cima são do Estado); nas outras abas, no começo dos dados. É desenhado em TODA aba, uma vez só.
+    lista_original, fluxo_orig_m, cidade_orig_m = (configuracao_geografica.listar_municipios_disponiveis, inteligencia.carregar_fluxo,
+                                                   inteligencia.fluxo_da_cidade)
+    configuracao_geografica.listar_municipios_disponiveis = lambda: [
+        {"origem": "RIO_CLARO", "nome": "Rio Claro", "codigo_ibge": 3543907, "uf": "SP"},
+        {"origem": "CAMPINAS", "nome": "Campinas", "codigo_ibge": 3509502, "uf": "SP"}]
+    inteligencia.carregar_fluxo = lambda conn, uf="SP": fluxo_falso()
+    inteligencia.fluxo_da_cidade = lambda conn, o, cod, uf="SP": {
+        "atendimentos": 142, "da_cidade": 140, "outras_cidades": 0, "outros_estados": 2, "moradoras": 150,
+        "moradoras_na_cidade": 140, "moradoras_fora": 10, "destinos": [("Campinas", 10)]}
+    streamlit.cache_data.clear()  # a lista de cidades e o fluxo ficam em cache: nada de dado velho
+    try:
+        def seletores_da_cidade(app):
+            return [c for c in app.selectbox if c.key == "municipio_painel"]
+
+        def posicao(app, trecho):
+            achados = [i for i, m in enumerate(app.markdown) if trecho in str(m.value)]
+            return achados[0] if achados else None
+
+        at = abrir()
+        at.session_state["aba"] = "Rede hospitalar"
+        at.run()
+        p_tabela, p_dica, p_cidade = (posicao(at, "Quem vem de fora, de qual câncer e para qual hospital?"),
+                                      posicao(at, "A cidade escolhida muda só o bloco abaixo"),
+                                      posicao(at, "Quem é atendida nos hospitais de Rio Claro"))
+        checar("M. Rede hospitalar: o seletor da cidade aparece UMA vez, depois dos gráficos do Estado e logo antes do bloco da cidade",
+               not erros(at) and len(seletores_da_cidade(at)) == 1 and None not in (p_tabela, p_dica, p_cidade)
+               and p_tabela < p_dica < p_cidade)
+        at.selectbox(key="municipio_painel").select("Campinas").run()
+        checar("M. Rede hospitalar: trocar a cidade no seletor atualiza o bloco da cidade e o resto do painel",
+               not erros(at) and at.session_state["municipio_painel"] == "Campinas"
+               and posicao(at, "Quem é atendida nos hospitais de Campinas") is not None
+               and "Câncer em mulheres de <em>Campinas</em>" in " ".join(str(m.value) for m in at.markdown))
+        percurso_ok = True
+        for aba_m in ("Panorama", "Evolução", "Rede hospitalar", "Investigar", "Planejamento", "Método", "Rede hospitalar", "Panorama"):
+            at.session_state["aba"] = aba_m
+            at.run()
+            percurso_ok = percurso_ok and not erros(at) and len(seletores_da_cidade(at)) == 1 \
+                and at.session_state["municipio_painel"] == "Campinas"
+        checar("M. a cidade escolhida SOBREVIVE a uma volta por todas as abas (o seletor muda de lugar, nunca some nem duplica)",
+               percurso_ok)
+        at.session_state["aba"] = "Panorama"
+        at.run()
+        p_dica_p, p_numeros = posicao(at, "A cidade escolhida vale para os gráficos marcados com"), posicao(at, "internações</span>")
+        checar("M. nas abas da cidade (Panorama) o seletor fica no começo dos dados, antes dos números",
+               not erros(at) and p_dica_p is not None and (p_numeros is None or p_dica_p < p_numeros)
+               and posicao(at, "A cidade escolhida muda só o bloco abaixo") is None)
+        # banco sem o fluxo: o bloco da cidade não existe, e o seletor continua à mão no fim da aba
+        inteligencia.carregar_fluxo = lambda conn, uf="SP": None
+        streamlit.cache_data.clear()
+        at = abrir()
+        at.session_state["aba"] = "Rede hospitalar"
+        at.run()
+        checar("M. Rede hospitalar sem o fluxo no banco: o seletor continua à mão (uma vez, sem erro)",
+               not erros(at) and len(seletores_da_cidade(at)) == 1)
+    finally:
+        configuracao_geografica.listar_municipios_disponiveis = lista_original
+        inteligencia.carregar_fluxo, inteligencia.fluxo_da_cidade = fluxo_orig_m, cidade_orig_m
+        streamlit.cache_data.clear()
+
     print(f"\n({time.time() - inicio:.0f} s)")
     if falhas:
         print(f"{len(falhas)} checagem(ns) falharam.")

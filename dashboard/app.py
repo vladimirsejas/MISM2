@@ -810,14 +810,27 @@ def desenhar_lia():
 
 desenhar_lia()
 
-with st.container(key="seletor_cidade"):
-    _c1, _c2 = st.columns([1.3, 3], vertical_alignment="center")
-    _c1.selectbox("Município", nomes, index=nomes.index(nome_cidade), key="municipio_painel",
-                  help="Digite para procurar entre os municípios de SP.")
-    _c2.markdown('<div class="escudo-dica" style="margin:0">A cidade escolhida vale para os gráficos marcados com '
-                 '<b>📍</b>; os marcados com <b>🌎</b> são do Estado de SP e não mudam. '
-                 'Trocar a cidade recomeça a conversa com a Lia.</div>',
-                 unsafe_allow_html=True)
+# Seletor de município (autor, 22/10/2026: "tem de ficar perto dos dados que ele muda"). Ele é desenhado UMA vez por execução, em
+# toda aba (o Streamlit esquece um seletor que deixa de ser desenhado): no começo dos dados, nas abas da cidade; na Rede hospitalar,
+# logo acima do bloco da cidade (os gráficos de cima são do Estado e não mudam). O valor é lido do estado da sessão lá no topo.
+DICA_CIDADE = ('A cidade escolhida vale para os gráficos marcados com <b>📍</b>; os marcados com <b>🌎</b> são do Estado de SP '
+               'e não mudam. Trocar a cidade recomeça a conversa com a Lia.')
+DICA_CIDADE_REDE = ('A cidade escolhida muda só o bloco abaixo (<b>📍</b>). Os gráficos de cima são do Estado de SP (<b>🌎</b>) '
+                    'e não mudam. Trocar a cidade recomeça a conversa com a Lia.')
+_seletor_cidade = {"feito": False}
+
+
+def desenhar_seletor_cidade(dica):
+    _seletor_cidade["feito"] = True
+    with st.container(key="seletor_cidade"):
+        _c1, _c2 = st.columns([1.3, 3], vertical_alignment="center")
+        _c1.selectbox("Município", nomes, index=nomes.index(nome_cidade), key="municipio_painel",
+                      help="Digite para procurar entre os municípios de SP.")
+        _c2.markdown(f'<div class="escudo-dica" style="margin:0">{dica}</div>', unsafe_allow_html=True)
+
+
+if aba != "Rede hospitalar":
+    desenhar_seletor_cidade(DICA_CIDADE)
 
 
 
@@ -1393,6 +1406,7 @@ if aba == "Rede hospitalar":
         leitura("O que a tabela mostra",
                 leitura_tabela_fluxo(filtrada, parcela_fora_por_cancer(fluxo, faixa_anos), filtros_ativos))
 
+        desenhar_seletor_cidade(DICA_CIDADE_REDE)
         pergunta(f"Quem é atendida nos hospitais de {nome_cidade}, e para onde vão as moradoras?", "cidade",
                  f"só hospitais de {html.escape(nome_cidade)} e só moradoras de {html.escape(nome_cidade)}, "
                  "7 cânceres somados")
@@ -1537,6 +1551,10 @@ if aba == "Rede hospitalar":
                         st.plotly_chart(figura_o, width="stretch", theme=None, config=CONFIG_GRAFICO, key="fluxo_origens")
                 leitura("O que mostra", leitura_cidade_visao(info_cidade, nome_cidade, "aqui"))
         st.markdown("---")
+
+
+if aba == "Rede hospitalar" and not _seletor_cidade["feito"]:
+    desenhar_seletor_cidade(DICA_CIDADE_REDE)
 
 
 # ============================================================

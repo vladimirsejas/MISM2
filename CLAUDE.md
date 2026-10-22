@@ -620,6 +620,7 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   perguntas ficava escondida atrás da seta da lateral). O CSS é lido uma vez: reiniciar o painel depois de mexer em `estilo.py`. Testes de tela
   agora procuram a Lia em `at.main` (não mais em `at.sidebar`); o Início da lateral do Apoio deixou de existir. **Visto só com dados de teste e
   com Streamlit 1.66; não visto no navegador do autor nem com o banco real.** O texto da Lia e o do cartão no Apoio se repetem (antes ficavam lado a lado).
+  **Seletor de município colado nos dados (autor, 22/10/2026: "ele lá em cima não faz sentido"):** `desenhar_seletor_cidade` (app.py) desenha o seletor UMA vez por execução, em TODA aba (o Streamlit esquece um widget que deixa de ser desenhado, e a cidade voltaria ao padrão): nas abas da cidade, no começo dos dados; na **Rede hospitalar**, logo acima do bloco "Quem é atendida nos hospitais de <cidade>" (os gráficos de cima são do Estado e não mudam; sem o fluxo no banco ele vai para o fim da aba). A cidade é lida de `st.session_state["municipio_painel"]` no topo do script. Teste: cenário M de `teste_painel.py` (ordem, troca de cidade, volta por todas as abas).
 
 - **De quais cidades vêm as mulheres de fora (22/10/2026, pedido do autor: "fica lindo e ajuda muito por serem cidades vizinhas"; o autor deixou o desenho com o Claude).**
   Na aba Rede hospitalar, visão "Mulheres de fora da cidade atendidas na cidade", nova pergunta "De quais cidades de SP vêm as mulheres de fora?" (📍 cidade escolhida),
