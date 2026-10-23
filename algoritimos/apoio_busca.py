@@ -37,8 +37,6 @@ VOCABULARIO = {
     # em TRÊS pedaços (um por conteúdo): juntar tudo num texto só diluía a busca (as perguntas sobre a fila deixavam de achar a lista).
     "tratamento": "quimioterapia quimio radioterapia cirurgia tratamento do câncer oncologia prazo 60 dias hospital onde me tratar "
                   "apoio durante o tratamento peruca",
-    "direitos": "direitos benefício inss auxílio doença fgts pis imposto de renda isenção tfd transporte para tratamento "
-                "diárias reconstrução da mama cartilha",
     "ajuda": "violência agressão ameaça medo ajuda proteção delegacia da mulher ligue 180 medida protetiva psicólogo apoio "
              "emocional sozinha denunciar",
 }
@@ -68,9 +66,6 @@ EXTRA = {
     "lei_60_dias": "prazo começar tratamento quantos dias quimioterapia radioterapia lei 60 dias demora",
     "nao_achei_nome": "meu nome não aparece lista fila parada ninguém me chamou esperando",
     "tfd": ["tfd", "sigla tfd tratamento fora do domicílio transporte ônibus ambulância ir para outra cidade tratar viagem diárias passagem"],
-    "fgts_pis": "sacar fgts pis pasep dinheiro do fundo de garantia",
-    "auxilio_inss": "afastamento do trabalho licença imposto de renda isenção aposentadoria por invalidez",
-    "reconstrucao_mamaria": "refazer o seio prótese depois da cirurgia retirada da mama mastectomia",
     "rc_perucas": "peruca cabelo queda de cabelo quimioterapia",
     "ligue_180": "denunciar violência telefone número central",
     "casa_mulher_brasileira": "acolhimento mulher violência abrigo atendimento integrado",
@@ -80,7 +75,6 @@ EXTRA = {
     "caminho_do_exame": "nunca fiz mamografia idade para começar quantos anos primeira vez por onde começar passo a passo primeira consulta pedido médico unidade de saúde",
     "rc_unidades": "posto de saúde ubs usf unidade de saúde perto de casa ginecologista consulta pedido de ultrassom transvaginal",
     "rc_cadu_agendamento": "marcar consulta exame agendamento telefone prefeitura",
-    "cartilha_inca": "quais são os direitos de quem tem câncer direitos da pessoa com câncer guia de direitos",
     "rede_oncologica": "unacon cacon o que é unacon centro de assistência de alta complexidade em oncologia",
     "rc_gacc": "filho filha criança com câncer infantil pediátrico grupo de apoio gacc",
     "mulheres_de_peito": "0800 779 0000 agendar mamografia pelo telefone central de agendamento sem pedido médico",
@@ -218,6 +212,10 @@ _SOBRE_A_LIA = re.compile(
     r"\b(quem e voce|voce e quem|o que e a lia)\b")
 
 
+_BENEFICIOS = re.compile(r"\b(fgts|pis|pasep|inss|beneficios?|aposentadoria|auxilio doenca|imposto de renda|isencao|direitos (de quem|da pessoa|do paciente|com cancer))\b")
+_TRANSPORTE = re.compile(r"\b(tfd|transporte|passagem|onibus|diarias?|ambulancia|viagem)\b")
+
+
 def _pergunta_sobre_a_lia(pergunta):
     texto = ent.normalizar(pergunta)
     return len(texto.split()) <= 10 and bool(_SOBRE_A_LIA.search(texto))
@@ -231,9 +229,9 @@ def responder_o_que_sei():
             "perguntar, com as suas palavras, sobre:\n\n"
             "- **Prevenção e exames:** mamografia, preventivo (Papanicolau) e vacina contra o HPV.\n"
             f"- **Tipos de câncer** ({tipos}): sinais que merecem avaliação, como se investiga e como buscar atendimento.\n"
-            "- **Exame alterado e diagnóstico:** o que fazer depois e os prazos da lei (30 e 60 dias).\n"
+            "- **Sintoma, exame alterado e diagnóstico:** a quem voltar e o que fazer depois.\n"
             "- **Encaminhamento:** a fila da regulação (CROSS) e os hospitais de câncer pelo SUS no Estado.\n"
-            "- **Tratamento e direitos:** transporte (TFD), FGTS, INSS, reconstrução da mama.\n"
+            "- **Tratamento:** hospitais, a fila da regulação, transporte (TFD) e apoio durante o tratamento.\n"
             "- **Carretas da mamografia, Rio Claro e Barretos.**\n"
             "- **Proteção contra a violência:** 190 e 180.\n\n"
             "Exemplos: \"tenho câncer no intestino\", \"meu preventivo deu alterado\", \"quero fazer mamografia de graça\", "
@@ -357,7 +355,7 @@ OPCOES_IA = [(c, f"{r}: {dentro}") for c, r, dentro, _ in apoio.CAMINHOS] + [
     ("hospitais", "hospitais de câncer pelo SUS no Estado"), ("carretas", "carretas da mamografia: onde e quando"),
     ("rio_claro", "serviços de saúde e apoio em Rio Claro"), ("barretos", "Hospital de Amor de Barretos")]
 CONTEXTO_IA = ("um guia de serviços de apoio a mulheres sobre prevenção, diagnóstico e tratamento de câncer pelo SUS, "
-               "direitos e proteção contra violência")
+               "e proteção contra violência")
 
 
 def obter_classificador():
@@ -572,6 +570,15 @@ def _responder_pergunta(pergunta, classificar=None, contexto=None, cancer_em_foc
     if _pergunta_sobre_a_lia(pergunta) and not tipos_citados(pergunta)[0]:
         return _de(responder_o_que_sei(), tipo="sobre_a_lia", selo="Texto fixo do guia. Nenhuma IA escreveu isto.", **comum)
 
+    if _BENEFICIOS.search(ent.normalizar(pergunta)) and not _TRANSPORTE.search(ent.normalizar(pergunta)):
+        r = Resposta(fala=("Este guia não trata de benefícios e direitos (FGTS, INSS, imposto de renda...). Quem pode orientar é a "
+                           "assistente social da unidade de saúde ou do hospital onde você se trata. Se a dúvida é sobre transporte "
+                           "para se tratar em outra cidade, pergunte pelo TFD."),
+                     expressao="acolhedora",
+                     botoes=[("Transporte para tratamento (TFD)", apoio.item("tfd"))],
+                     destino={"aba": apoio.LAMINAS["caminho"], "caminho": "ajuda"})
+        return _com_inicio(_de(r, tipo="nada", selo="Texto fixo do guia. Nenhuma IA escreveu isto.", **comum))
+
     # Trava por tipo de câncer: o que a pessoa nomeou manda; semelhança de palavras só desempata dentro do tipo.
     tipos, utero_ambiguo, outro = tipos_citados(pergunta)
     pistas_ = pistas_de(pergunta)
@@ -585,7 +592,7 @@ def _responder_pergunta(pergunta, classificar=None, contexto=None, cancer_em_foc
                      expressao="cautelosa",
                      botoes=[("Páginas do INCA por tipo de câncer", apoio.item("inca_tipos_cancer")),
                              ("Meu exame deu alterado", apoio.etapa("alterado")),
-                             ("Tratamento pelo SUS", apoio.caminho("tratamento")), ("Seus direitos", apoio.caminho("direitos"))],
+                             ("Tratamento pelo SUS", apoio.caminho("tratamento"))],
                      destino={"aba": apoio.LAMINAS["caminho"], "caminho": "outros"})
         return _com_inicio(_de(r, tipo="nada", selo="Nada foi inventado: o guia só mostra o que está no catálogo.", **comum))
     texto_norm = ent.normalizar(pergunta)
@@ -690,7 +697,7 @@ def _responder_pergunta(pergunta, classificar=None, contexto=None, cancer_em_foc
             resposta.fala = "Acho que você procura isto:\n\n" + r.fala
             return resposta
     r = apoio.saudacao()
-    r.fala = ("Não encontrei isso no guia. Ele cobre prevenção, exames, diagnóstico, regulação, tratamento, direitos e proteção "
+    r.fala = ("Não encontrei isso no guia. Ele cobre prevenção, exames, diagnóstico, regulação, tratamento e proteção "
               "contra violência, e os principais tipos de câncer. Escolha um assunto, ou escreva de outro jeito. Se for sobre a "
               "sua saúde agora, procure a unidade de saúde; em emergência, ligue 192.")
     return _de(r, tipo="nada", selo="Nada foi inventado: o guia só mostra o que está no catálogo.", **comum)

@@ -59,24 +59,21 @@ CAMINHOS = [
      "oncologia. A unidade de saúde (e a regulação do Estado, que a paciente não opera: quem pede a vaga é a equipe de "
      "saúde) encaminha ao hospital de referência. Aqui estão o caminho, os prazos, a fila que dá para acompanhar, os "
      "hospitais e o apoio durante o tratamento."),
-    ("direitos", "Direitos e acesso", "benefícios, transporte e como o SUS funciona",
-     "Quem recebe um diagnóstico de câncer tem direitos garantidos por lei e um caminho no SUS. Aqui, em "
-     "linguagem simples."),
     ("ajuda", "Preciso de ajuda", "em que ponto você está?",
      "Me conta em que ponto você está, que eu mostro o próximo passo na rede de saúde."),
 ]
 NOME_CAMINHO = {c: r for c, r, _, _ in CAMINHOS}
 # O próximo passo de cada porta (a jornada da mulher na rede).
 # Valor "etapa:<id>" leva a uma situação do Preciso de ajuda (o assunto Diagnóstico foi unido a "Meu exame deu alterado", 20/10/2026).
-PROXIMO = {"mama": "etapa:alterado", "colo": "etapa:alterado", "outros": "etapa:alterado", "tratamento": "direitos"}
+PROXIMO = {"mama": "etapa:alterado", "colo": "etapa:alterado", "outros": "etapa:alterado"}
 # A rede oncológica em passos (porta Rede oncológica): (passo, o que é, porta)
 FLUXO_REDE = [
     ("Unidade de saúde", "consulta, preventivo e pedido de mamografia", "mama"),
     ("Exame alterado", "exames complementares e biópsia", "etapa:alterado"),
-    ("Vaga no especialista", "a unidade de saúde pede a vaga (regulação do Estado); você acompanha a fila", "etapa:encaminhada"),
+    ("Vaga no especialista", "a unidade de saúde pede a vaga (regulação do Estado); você acompanha a fila", "etapa:diagnostico_cancer"),
     ("Especialista", "consulta no hospital de referência", "hospitais"),
     ("Tratamento", "cirurgia, quimioterapia, radioterapia", "tratamento"),
-    ("Acompanhamento", "direitos, transporte e apoio", "direitos"),
+    ("Acompanhamento", "transporte e apoio durante o tratamento", "tratamento"),
 ]
 
 
@@ -148,7 +145,7 @@ ITENS = [
           "agendar-exame-de-mamografia-em-sp-de-forma-gratuita",
           como="Procure a UBS mais próxima e passe por uma consulta. Se o exame for indicado, o encaminhamento é "
                "feito no sistema de regulação do município, que agenda o serviço."),
-    _item("lei_30_dias", "direitos", "caminho", "SUS (todo o Brasil)",
+    _item("lei_30_dias", "tratamento", "caminho", "SUS (todo o Brasil)",
           "Direito: investigação diagnóstica em até 30 dias, quando a lei se aplica",
           "quando câncer é a principal hipótese diagnóstica, os exames necessários à investigação devem ser feitos em até 30 dias, com pedido médico fundamentado",
           "Lei federal 13.896/2019 (Câmara dos Deputados)",
@@ -181,8 +178,7 @@ ITENS = [
                "quimioterapia ou radioterapia). O prazo de até 30 dias para exames de investigação tem critérios "
                "próprios: câncer deve ser a principal hipótese diagnóstica e o médico responsável precisa fazer uma "
                "solicitação fundamentada. Os prazos têm marcos e critérios diferentes; a equipe de saúde pode explicar "
-               "qual se aplica ao seu caso.",
-          tambem_caminhos=["direitos"]),
+               "qual se aplica ao seu caso."),
     _item("rede_oncologica", "tratamento", "caminho", "Estado de SP",
           "Rede de Atenção Oncológica do Estado de São Paulo",
           "a lista oficial dos hospitais habilitados para tratar câncer pelo SUS, por região",
@@ -285,13 +281,6 @@ ITENS = [
           grupo="Rio Preto, Araçatuba e Jales (RRAS 12)"),
 
     # ---------------- CUIDAR ----------------
-    _item("sp_por_todas", "direitos", "caminho", "Estado de SP",
-          "SP por Todas – serviços para mulheres",
-          "portal do Estado com serviços de saúde, proteção e autonomia para mulheres",
-          "Governo do Estado de SP (Agência SP)",
-          "https://www.spportodas.sp.gov.br/sp-por-todas/saude/outubrorosa",
-          como="Reúne, num lugar só, serviços estaduais para mulheres: saúde (como o Outubro Rosa), proteção e "
-               "autonomia."),
     _item("piracicaba_cesm", "mama", "caminho", "Piracicaba",
           "Centro Especializado em Saúde da Mulher (CESM) e mamografia agendada online",
           "Piracicaba agenda mamografia pela internet e ampliou o rastreamento para 40 a 49 anos",
@@ -865,8 +854,7 @@ ITENS = [
                "do SUS insere o caso na Central de Regulação de Oferta de Serviços de Saúde (CROSS/SIRESP), que "
                "encaminha a paciente a um centro de oncologia perto de onde ela mora, seguindo protocolos clínicos. "
                "É a Rede Hebe Camargo de Combate ao Câncer, do Estado.",
-          tambem=[("hospitais", "Como chegar e listas oficiais")],
-          tambem_caminhos=["direitos"]),
+          tambem=[("hospitais", "Como chegar e listas oficiais")]),
     _item("fosp_hospitais_sus", "tratamento", "caminho", "Estado de SP",
           "Lista oficial: hospitais do SUS com atendimento em câncer no Estado",
           "a lista da FOSP com todos os hospitais habilitados (CACON e UNACON) do Estado de São Paulo",
@@ -1109,7 +1097,7 @@ ITENS = [
           confirmar="O hospital mudou de prédio: confira o endereço antes de ir."),
 
     # ---------------- SEUS DIREITOS ----------------
-    _item("tfd", "direitos", "caminho", "SUS (todo o Brasil)",
+    _item("tfd", "tratamento", "caminho", "SUS (todo o Brasil)",
           "Tratamento Fora do Domicílio (TFD): transporte e diárias para tratar em outra cidade",
           "quando o tratamento não existe no município onde você mora, o SUS pode pagar transporte e diárias; o "
           "médico do SUS pede e uma comissão autoriza",
@@ -1127,40 +1115,6 @@ ITENS = [
                     "recente sobre o auxílio do TFD que não foi conferida: em Rio Claro, pergunte à Fundação "
                     "Municipal de Saúde onde se pede o TFD e quais são as regras de hoje.",
           conferido="18/10/2026"),
-    _item("fgts_pis", "direitos", "caminho", "Todo o Brasil",
-          "Saque do FGTS e do PIS/PASEP",
-          "quem tem câncer pode sacar todo o FGTS e o PIS/PASEP na Caixa",
-          "INCA – Direitos sociais da pessoa com câncer",
-          "https://www.gov.br/inca/pt-br/acesso-a-informacao/perguntas-frequentes/direitos-sociais-da-pessoa-com-cancer",
-          levar="Atestado médico (vale 30 dias), resultado da biópsia, exame que confirma o tipo de tumor, RG, CPF e "
-                "número do PIS/PASEP.",
-          como="Vá a qualquer agência da Caixa Econômica Federal com os documentos."),
-    _item("auxilio_inss", "direitos", "caminho", "Todo o Brasil",
-          "Auxílio-doença (INSS) e isenção de imposto de renda",
-          "afastamento do trabalho pago pelo INSS e isenção de IR sobre aposentadoria e pensão",
-          "INCA – Direitos sociais da pessoa com câncer",
-          "https://www.gov.br/inca/pt-br/acesso-a-informacao/perguntas-frequentes/direitos-sociais-da-pessoa-com-cancer",
-          como="Quem contribui para o INSS e fica temporariamente sem poder trabalhar tem direito ao auxílio. A "
-               "isenção de imposto de renda vale para aposentadoria, reforma e pensão: pede-se ao órgão que paga o "
-               "benefício (INSS, prefeitura, Estado), com o formulário da Receita Federal."),
-    _item("reconstrucao_mamaria", "direitos", "caminho", "SUS (todo o Brasil)",
-          "Reconstrução da mama pelo SUS",
-          "a mulher que retira a mama tem direito à reconstrução, de preferência na mesma cirurgia",
-          "Senado Federal – Lei 12.802/2013",
-          "https://www12.senado.leg.br/noticias/materias/2013/05/07/lei-garante-reconstrucao-da-mama-em-seguida-a-"
-          "retirada-de-cancer",
-          como="Quando há condições técnicas, a reconstrução é feita no mesmo ato da retirada do tumor. Se não for "
-               "possível, a mulher é acompanhada e tem garantida a cirurgia assim que tiver condições clínicas. Não há "
-               "limite de idade.",
-          tambem_caminhos=["mama"]),
-    _item("cartilha_inca", "direitos", "caminho", "Todo o Brasil",
-          "Cartilha do INCA: direitos sociais da pessoa com câncer",
-          "todos os direitos num lugar só, em linguagem simples",
-          "Instituto Nacional de Câncer (INCA)",
-          "https://www.gov.br/inca/pt-br/assuntos/cancer/orientacoes-aos-pacientes-e-familiares/orientacoes-aos-pacientes-e-familiares",
-          como="Explica benefícios do INSS, FGTS e PIS, isenções, transporte, prioridade na Justiça e outros direitos."),
-
-    # ---------------- CUIDAR (mais apoio) ----------------
     _item("ames_estado", "mama", "caminho", "Estado de SP",
           "AMEs – Ambulatórios Médicos de Especialidades",
           "especialistas e exames do Estado, marcados pela unidade básica de saúde",
@@ -1267,33 +1221,24 @@ GRUPOS = {"barretos": GRUPOS_BARRETOS, "hospitais": GRUPOS_HOSPITAIS, "carretas"
 # "Preciso de ajuda": em que ponto a mulher está -> portas e itens.
 # (id, rótulo, fala da Lia, portas indicadas, itens mostrados)
 ETAPAS = [
-    ("nao_fiz", "Ainda não fiz o exame",
-     "O começo é a unidade de saúde do seu bairro: lá se faz o preventivo e se pede a mamografia. De 50 a 69 anos "
-     "a mamografia pelo Estado não precisa de pedido médico, e as carretas atendem sem agendamento. Em Rio Claro, "
-     "a consulta também pode ser marcada pelo Cadu (0800 019 0505, telefone ou WhatsApp).",
-     ["mama", "colo"], ["rc_cadu_agendamento", "rc_unidades", "mulheres_de_peito", "colo_utero"]),
-    ("alterado", "Meu exame deu alterado",
-     "Respire: um exame alterado não é diagnóstico de câncer, e a maior parte das alterações não é. O primeiro passo "
-     "é ir, com o laudo na mão, à unidade de saúde do seu bairro (UBS ou USF) e dizer: \"meu exame deu alterado\". "
-     "Foi essa equipe que pediu o exame, e é ela quem organiza os próximos exames e o encaminhamento. Não sabe qual "
-     "é a sua unidade? Em Rio Claro, ligue para o Cadu (0800 019 0505, telefone ou WhatsApp) ou use o botão "
-     "\"Unidades, telefones e como chegar\", no alto da página. Se depois a resposta demorar, existem prazos "
-     "legais: o de até 30 dias vale quando câncer é a principal hipótese diagnóstica e o médico responsável faz um "
-     "pedido fundamentado.",
+    ("nao_fiz", "Quero me prevenir",
+     "Procure a unidade de saúde do seu bairro: lá se faz o preventivo e se pede a mamografia. De 50 a 69 anos a "
+     "mamografia pelo Estado não precisa de pedido médico, e as carretas atendem sem agendamento. Em Rio Claro, a "
+     "consulta também pode ser marcada pelo Cadu (0800 019 0505, telefone ou WhatsApp).",
+     [], ["rc_unidades", "rc_cadu_agendamento", "mulheres_de_peito"]),
+    ("alterado", "Estou com sintoma ou meu exame deu alterado",
+     "Isso não é diagnóstico de câncer, e a maior parte das alterações não é. Volte ao médico ou à unidade de saúde do seu "
+     "bairro (a que pediu o exame ou que você procurou pelo sintoma), com o laudo na mão, e diga: \"meu exame deu alterado\". "
+     "É essa equipe que organiza os próximos exames e o encaminhamento. Não sabe qual é a sua unidade? Em Rio Claro, "
+     "ligue para o Cadu (0800 019 0505, telefone ou WhatsApp) ou use o botão \"Unidades, telefones e como chegar\", "
+     "no alto da página.",
      [], ["rc_unidades", "rc_cadu_agendamento"]),
-    ("encaminhada", "Fui encaminhada",
-     "Depois do encaminhamento, a vaga é organizada pela regulação do Estado. Você pode acompanhar a fila da "
-     "oncologia e, se o nome não aparecer, sabe onde procurar ajuda.",
-     [], ["lista_regulacao", "nao_achei_nome", "como_chegar_cross"]),
-    ("diagnostico_cancer", "Recebi diagnóstico de câncer",
-     "Converse com a equipe de saúde que acompanha seu caso para saber quem está responsável pelo encaminhamento e "
-     "como acompanhar a vaga. O primeiro tratamento no SUS tem prazo de até 60 dias a partir do diagnóstico em "
-     "laudo patológico, ou prazo menor conforme a necessidade terapêutica registrada no prontuário.",
-     ["tratamento", "direitos"], ["lei_60_dias", "como_chegar_cross", "cartilha_inca"]),
-    ("em_tratamento", "Estou em tratamento",
-     "Durante o tratamento, vale conhecer os seus direitos (transporte, FGTS, INSS) e o apoio de entidades como a "
-     "Rede Feminina de Combate ao Câncer e, em Rio Claro, o GACC (para crianças e adolescentes).",
-     ["tratamento", "direitos"], ["tfd", "fgts_pis", "auxilio_inss", "rede_feminina", "rc_gacc", "rc_perucas"]),
+    ("diagnostico_cancer", "Tenho diagnóstico ou já fui encaminhada",
+     "A equipe de saúde que acompanha você pede a vaga no hospital de referência (é a regulação do Estado): você não "
+     "precisa fazer isso sozinha. Volte a ela e pergunte quem está responsável pelo encaminhamento e como acompanhar a vaga. "
+     "Leve o laudo e os exames que já tem. O primeiro tratamento pelo SUS tem prazo de até 60 dias a partir do laudo "
+     "patológico.",
+     [], ["lista_regulacao", "nao_achei_nome", "como_chegar_cross", "tfd", "rede_feminina"]),
     ("violencia", "Estou em situação de violência",
      "Você não precisa passar por isso sozinha. Em perigo agora, ligue 190. Estes canais atendem, orientam e "
      "protegem.",
@@ -1312,8 +1257,7 @@ TIPOS_CANCER = {"mama": "câncer de mama", "colo": "câncer do colo do útero",
                 "tireoide": "câncer de tireoide", "endometrio": "câncer do corpo do útero (endométrio)"}
 _MARCAS_CANCER = {
     "mama": ("mulheres_de_peito", "caminho_do_exame", "carretas_estado", "campinas_craim",
-             "rio_preto_mamografia", "ha_mastologia", "mater_ribeirao",
-             "reconstrucao_mamaria"),
+             "rio_preto_mamografia", "ha_mastologia", "mater_ribeirao"),
     "colo": ("colo_utero", "vacina_hpv", "ha_colo_busca_ativa", "ha_pesquisa_hpv"),
 }
 _MARCAS_VARIOS = {   # itens que servem a mais de um tipo
@@ -1571,8 +1515,7 @@ def _o_que_fazer(i):
     if i["caminho"] == "outros" and i["cancer"]:
         return [("Em Rio Claro: agendar consulta (Cadu)", item("rc_cadu_agendamento")),
                 ("Recebi o diagnóstico: o que fazer", etapa("diagnostico_cancer")),
-                ("Como se chega a um hospital de referência", item("como_chegar_cross")),
-                ("Meus direitos", caminho("direitos"))]
+                ("Como se chega a um hospital de referência", item("como_chegar_cross"))]
     return []
 
 

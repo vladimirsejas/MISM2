@@ -8,7 +8,7 @@ from collections import deque
 # TESTE DE ACEITAÇÃO DA LÂMINA DE APOIO (dashboard/pages/apoio.py)
 #
 # Abre a página DE VERDADE (Streamlit AppTest) e clica como a pessoa:
-#   A. boas-vindas: cada caminho do centro leva à lâmina e ao caminho;
+#   A. o início ("De que ajuda você precisa hoje?"): cada situação leva à sua tela, com voltar;
 #   B. Lia no centro: todos os botões, até não sobrar botão novo; em
 #      cada clique a tela não quebra e a lâmina é a do destino;
 #   C. "← Voltar" e "Começar de novo";
@@ -60,72 +60,71 @@ def botoes_lia(at):
 
 inicio = time.time()
 
-# ---------- A. boas-vindas ----------
+# ---------- A. o início: "De que ajuda você precisa hoje?" ----------
+# 23/10/2026 (autor): uma pergunta, quatro situações em ordem de tempo, um botão de voltar; o resto fica em "Procurar direto".
+ENTRADAS = {"nao_fiz": "Quero me prevenir", "alterado": "Estou com sintoma ou meu exame deu alterado",
+            "diagnostico_cancer": "Tenho diagnóstico ou já fui encaminhada", "violencia": "Estou em situação de violência"}
 at = abrir()
 checar("A. abre sem erro", not erros(at))
-checar("A. boas-vindas separa prevenção, exame alterado e diagnóstico; 'Preciso de ajuda' é o destaque logo acima (sem botão repetido)",
-       all(botao(at, f"bv_ap_{c}") is not None for c in ("prevencao", "alterado", "diagnostico"))
-       and botao(at, "bv_ap_ajuda") is None and botao(at, "apoio_ajuda_botao") is not None)
-_txt_abertura = " ".join(m.value for m in at.markdown)
-checar("A. emergência (190, 180, 192) à vista na primeira tela, fora de qualquer menu",
-       "apoio-emergencia" in _txt_abertura and all(n in _txt_abertura for n in ("190", "180", "192")))
-checar("A. antes de escolher a situação não abre cartões de nenhum câncer (nada de mama por padrão)",
-       'class="escudo-cartao' not in _txt_abertura and botao(at, "ir_carretas_mama") is None)
-checar("A. a primeira tela não usa a palavra interna 'porta'", " porta" not in _txt_abertura.split("</style>")[-1].lower())
-checar("A. faixa 'Você está em' mostra onde a mulher está", "Você está em" in _txt_abertura)
+txt0 = " ".join(m.value for m in at.markdown)
+checar("A. a página abre com a pergunta única 'De que ajuda você precisa hoje?' e as 4 situações em botões",
+       "De que ajuda você precisa hoje?" in txt0 and all(botao(at, f"entrada_{e}") is not None and botao(at, f"entrada_{e}").label == r
+                                                           for e, r in ENTRADAS.items()))
+checar("A. as perguntas antigas (5 para a mesma dúvida) e as abas sumiram",
+       not any(t in txt0 for t in ("Qual destas situações", "O que você precisa?", "Por onde você quer começar?", "Preciso de ajuda"))
+       and botao(at, "nav_apoio_caminho") is None and botao(at, "apoio_ajuda_botao") is None and botao(at, "bv_fechar_apoio") is None)
+checar("A. emergência (190, 180, 192) à vista na primeira tela",
+       "apoio-emergencia" in txt0 and all(n in txt0 for n in ("190", "180", "192")))
+checar("A. nenhum cartão de câncer abre sozinho (nada de mama por padrão)",
+       'class="escudo-cartao' not in txt0 and botao(at, "apoio_voltar_inicio") is None)
+checar("A. faixa 'Você está em: Início'", "Você está em: <b>Início</b>" in txt0)
+checar("A. 'Já sabe o que procura?' reúne câncer de mama, colo do útero, outros, hospitais por região, Rio Claro e Sobre",
+       all(botao(at, k) is not None for k in ("direto_mama", "direto_colo", "direto_outros", "direto_hospitais",
+                                              "direto_rio_claro", "direto_sobre")))
 checar("A. contadores internos não ocupam a entrada de quem procura atendimento",
-       not any(m.label in ("Caminhos de orientação", "Informações cadastradas", "Pedem confirmação")
-               for m in at.metric))
-checar("A. mesma Lia do painel, no centro (rosto + nome)",
-       any("lia-nome" in m.value for m in at.main.markdown) and any("lia-rosto" in m.value for m in at.main.markdown))
-for entrada, caminho, etapa in (("prevencao", "ajuda", "nao_fiz"), ("alterado", "ajuda", "alterado"),
-                                ("diagnostico", "ajuda", "diagnostico_cancer")):
+       not any(m.label in ("Caminhos de orientação", "Informações cadastradas", "Pedem confirmação") for m in at.metric))
+checar("A. a Lia não ocupa o centro: só o botão flutuante 'Pergunte à Lia' (popover)", len(at.get("popover")) >= 1
+       and not botoes_lia(at))
+for e, rotulo in ENTRADAS.items():
     at = abrir()
-    botao(at, f"bv_ap_{entrada}").click().run()
-    checar(f"A. entrada {entrada} do centro", not erros(at)
-           and at.session_state["ap_caminho"] == caminho
-           and at.session_state["ap_etapa"] == etapa
-           and at.session_state["ap_aba"] == apoio.LAMINAS["caminho"]
-           and botao(at, f"bv_ap_{entrada}") is None)
-at = abrir()
-botao(at, "apoio_ajuda_botao").click().run()
-checar("A. entrada 'Preciso de ajuda' (destaque)", not erros(at) and at.session_state["ap_caminho"] == "ajuda"
-       and at.session_state["ap_aba"] == apoio.LAMINAS["caminho"])
-checar("A. a Lia é um botão flutuante fechado: a caixa 'Pergunte à Lia' mora num popover",
-       len(at.get("popover")) >= 1)
-checar("A. Lia só na caixa: clicar numa opção da página não abre balão nem botões da árvore", not botoes_lia(at))
-checar("A. 'Não sei' deixa as seis etapas sem nenhuma presumida", at.session_state["ap_etapa"] is None)
+    botao(at, f"entrada_{e}").click().run()
+    texto = " ".join(m.value for m in at.markdown)
+    checar(f"A. situação '{rotulo}' abre a tela dela, com voltar e a faixa certa",
+           not erros(at) and at.session_state["ap_caminho"] == "ajuda" and at.session_state["ap_etapa"] == e
+           and botao(at, "apoio_voltar_inicio") is not None and f"Início › {_html_esc(rotulo)}" in texto)
+    botao(at, "apoio_voltar_inicio").click().run()
+    checar(f"A. '← Voltar ao início' depois de '{rotulo}' volta à pergunta", not erros(at) and at.session_state["ap_etapa"] is None
+           and "De que ajuda você precisa hoje?" in " ".join(m.value for m in at.markdown))
 
 at = abrir()
-botao(at, "nav_apoio_sobre").click().run()
+botao(at, "direto_sobre").click().run()
 checar("A. os contadores e informações de confirmação continuam disponíveis em 'Sobre estas informações'",
        not erros(at) and {m.label for m in at.metric} ==
        {"Caminhos de orientação", "Informações cadastradas", "Pedem confirmação"})
 
 at = abrir()
-botao(at, "bv_ap_diagnostico").click().run()
+botao(at, "entrada_diagnostico_cancer").click().run()
 conteudo = " ".join(str(x.value) for x in at.markdown)
-checar("A. diagnóstico confirmado abre diagrama com a etapa atual e a regulação", not erros(at)
+checar("A. diagnóstico ou encaminhada abre o diagrama com a etapa atual e a regulação", not erros(at)
        and all(t in conteudo for t in ("Diagnóstico confirmado", "Você está aqui", "Regulação do SUS",
                                       "Como acompanho a vaga?")))
 checar("A. jornada do diagnóstico exibe quatro etapas numeradas e conectores visíveis",
        all(f'class="apoio-jornada-numero" aria-hidden="true">{n}' in conteudo for n in (1, 2, 3, 4))
        and conteudo.count('class="apoio-jornada-conector" aria-hidden="true">↓') == 3)
-checar("A. a segunda etapa é marcada como próximo passo",
-       "<strong>Próximo passo:</strong>" in conteudo)
-ids_retomada = ["nao_achei_nome", "lista_regulacao", "como_chegar_cross"]
-if apoio.CIDADE.casefold() == "rio claro":
-    ids_retomada.append("rc_unidades")
-checar("A. bloco de retomada contém os cartões do catálogo e seus links oficiais",
+checar("A. a segunda etapa é marcada como próximo passo", "<strong>Próximo passo:</strong>" in conteudo)
+checar("A. 'se a resposta demorar': a lista da fila, o que fazer se o nome não aparecer e como chegar, em cartões inteiros (sem apontar para um assunto sem botão)",
        "Se a resposta demorar ou o encaminhamento não chegar" in conteudo
        and all(apoio.POR_ID[i]["titulo"] in conteudo and apoio.POR_ID[i]["link"] in conteudo
-               for i in ids_retomada))
+               for i in ("lista_regulacao", "nao_achei_nome", "como_chegar_cross", "tfd", "rede_feminina"))
+       and "no assunto Tratamento" not in conteudo)
+checar("A. nenhuma tela do Apoio diz 'na na' (erro de português que existia nos cartões curtos)", " na na " not in conteudo)
 
-# ---------- A2. Trocar a aba não substitui a fala da Lia ----------
+# ---------- A2. Trocar de área não substitui a fala da Lia ----------
 at = abrir()
 perguntar(at, "recebi diagnóstico de câncer, e agora?")
 fala_diagnostico = at.session_state["ap_lia"]["atual"].fala
-botao(at, "nav_apoio_hospitais").click().run()
+botao(at, "apoio_voltar_inicio").click().run()
+botao(at, "direto_hospitais").click().run()
 aviso_contexto = any("Esta resposta é sobre" in str(i.value)
                      and "Você está em Hospitais no Estado" in str(i.value) for i in at.info)
 checar("A2. trocar para Hospitais no Estado preserva a fala de diagnóstico e informa a diferença de contexto",
@@ -141,13 +140,11 @@ checar("A2. após pedir, Lia responde sobre Hospitais no Estado e o aviso desapa
 
 # ---------- B. Lia: todos os botões ----------
 at = abrir()
-botao(at, "bv_fechar_apoio").click().run()
 perguntar(at, "xyzzy qwerty")   # fora do assunto: a Lia mostra todas as portas em botões, a raiz da árvore
 vistos, fila, cliques, problemas = set(), deque([()]), 0, []
 while fila:
     caminho_de_cliques = fila.popleft()
     at = abrir()
-    botao(at, "bv_fechar_apoio").click().run()
     perguntar(at, "xyzzy qwerty")
     for rotulo in caminho_de_cliques:
         b = next(b for b in botoes_lia(at) if b.label == rotulo)
@@ -164,57 +161,50 @@ while fila:
             vistos.add(b.label)
             fila.append(caminho_de_cliques + (b.label,))
 checar(f"B. Lia: {len(vistos)} botões diferentes, {cliques} cliques, sem erro", not problemas)
-for p in problemas[:10]:
-    print("   ", p)
+for p_ in problemas[:10]:
+    print("   ", p_)
 titulos = {i["titulo"] for i in apoio.ITENS}
 checar("B. todo item do catálogo tem botão na Lia", titulos <= vistos)
 
-# ---------- C. voltar e começar de novo ----------
+# ---------- C. voltar e fechar a resposta ----------
 at = abrir()
-botao(at, "bv_fechar_apoio").click().run()
 perguntar(at, "xyzzy qwerty")
 next(b for b in botoes_lia(at) if b.label == "Câncer de mama").click().run()
 fala_mama = at.session_state["ap_lia"]["atual"].fala
 next(b for b in botoes_lia(at) if b.label.startswith("Próximo passo")).click().run()
-checar("C. próximo passo de Câncer de mama leva a 'Meu exame deu alterado' (o antigo Diagnóstico foi unido a essa situação)",
+checar("C. próximo passo de Câncer de mama leva a 'Estou com sintoma ou meu exame deu alterado'",
        at.session_state["ap_caminho"] == "ajuda" and at.session_state["ap_etapa"] == "alterado")
 botao(at, "lia_discreto_voltar_ap").click().run()
 checar("C. voltar devolve a fala anterior", at.session_state["ap_lia"]["atual"].fala == fala_mama
        and at.session_state["ap_caminho"] == "mama")
 at2 = abrir()
-botao(at2, "apoio_ajuda_botao").click().run()
-checar("C. sem saber o ponto: a tela não assume que a mulher ainda não fez exame",
-       not erros(at2) and at2.session_state["ap_etapa"] is None
-       and "Escolha uma situação acima" in " ".join(str(x.value) for x in at2.info))
 perguntar(at2, "meu exame deu alterado")
-checar("C. Preciso de ajuda → 'Meu exame deu alterado' leva primeiro à unidade de saúde do bairro (não à lei)",
+checar("C. exame alterado leva primeiro à unidade de saúde do bairro (não à lei)",
        not erros(at2) and at2.session_state["ap_etapa"] == "alterado"
        and any("USF" in b.label and "UBS" in b.label for b in botoes_lia(at2))
        and not any("30 dias" in b.label for b in botoes_lia(at2)))
 botao(at, "lia_discreto_inicio_ap").click().run()
-checar("C. fechar a resposta volta à saudação e some o balão da Lia", apoio.CIDADE in at.session_state["ap_lia"]["atual"].fala
+checar("C. fechar a resposta volta à saudação e some a resposta da Lia", apoio.CIDADE in at.session_state["ap_lia"]["atual"].fala
        and not erros(at) and not botoes_lia(at))
 
-# ---------- A2. jornada das 4 mulheres (auditoria de usabilidade, 20/10/2026) ----------
-# Cada uma chega, em UM clique a partir da abertura, a algo que ela pode FAZER: um telefone, um link oficial
-# ou um botão para o próximo passo. Sem erro e sem sair do Apoio.
-for entrada, quem in (("prevencao", "quero fazer exame / me prevenir"), ("alterado", "meu exame deu alterado"),
-                      ("diagnostico", "recebi diagnóstico"), ("ajuda", "não sei por onde começar")):
+# ---------- A3. jornada das 4 mulheres: em UM clique, algo que ela pode FAZER ----------
+for e, quem in (("nao_fiz", "quero fazer exame / me prevenir"), ("alterado", "meu exame deu alterado ou tenho sintoma"),
+                ("diagnostico_cancer", "recebi diagnóstico / fui encaminhada"), ("violencia", "estou em situação de violência")):
     at = abrir()
-    botao(at, "apoio_ajuda_botao" if entrada == "ajuda" else f"bv_ap_{entrada}").click().run()
-    visivel = " ".join(m.value for m in at.markdown) + " " + " ".join(str(m.value) for m in at.main.markdown)
-    tem_telefone = re.search(r"0800[\s\d]{7,}|\(\d{2}\)\s?\d{4,5}-\d{4}", visivel) is not None
+    botao(at, f"entrada_{e}").click().run()
+    visivel = " ".join(m.value for m in at.markdown)
+    tem_telefone = re.search(r"0800[\s\d]{7,}|\(\d{2}\)\s?\d{4,5}-\d{4}|\b1(90|80|92)\b", visivel) is not None
     tem_link = "Abrir a página oficial" in visivel or "http" in visivel
-    tem_proximo = any(b.key and b.key.startswith(("etapa_", "prox_")) for b in at.main.button) or len(at.radio) > 0
-    checar(f"A2. jornada '{quem}': 1 clique leva a telefone, link ou próximo passo",
-           not erros(at) and (tem_telefone or tem_link or tem_proximo) and tem_proximo)
-    if entrada == "alterado":
-        checar("A2. exame alterado: telefone e a unidade de saúde do bairro aparecem já nesse primeiro clique",
+    checar(f"A3. jornada '{quem}': 1 clique leva a telefone ou link oficial, e há como voltar",
+           not erros(at) and (tem_telefone or tem_link) and botao(at, "apoio_voltar_inicio") is not None)
+    if e == "alterado":
+        checar("A3. exame alterado ou sintoma: telefone e a unidade de saúde do bairro aparecem já nesse primeiro clique",
                tem_telefone and "unidade de saúde" in visivel.lower())
+        checar("A3. exame alterado: sem lei, sem BI-RADS, sem siglas de prazo na tela",
+               "Lei 13" not in visivel and "BI-RADS" not in visivel and "30 dias" not in visivel)
 
 # ---------- D. lâminas e caminhos ----------
 at = abrir()
-botao(at, "bv_fechar_apoio").click().run()
 for nome in apoio.LAMINAS.values():
     at.session_state["ap_aba"] = nome
     at.run()
@@ -231,7 +221,7 @@ for c in apoio.NOME_CAMINHO:
            not erros(at) and all(_html_esc(t) in texto for t in esperados))
 at.session_state["ap_caminho"] = "tratamento"
 at.run()
-checar("D. porta Tratamento pelo SUS desenha o caminho em 6 passos",
+checar("D. assunto Tratamento pelo SUS (só por busca e botões) desenha o caminho em 6 passos",
        not erros(at) and sum('class="apoio-fluxo"' in m.value for m in at.markdown) == len(apoio.FLUXO_REDE))
 at.session_state["ap_caminho"] = "ajuda"
 for e in apoio.NOME_ETAPA:
@@ -239,7 +229,7 @@ for e in apoio.NOME_ETAPA:
     at.run()
     texto = " ".join(m.value for m in at.markdown)
     esperados = [i["titulo"] for i in apoio.itens_da_etapa(e)]
-    checar(f"D. Preciso de ajuda, '{apoio.NOME_ETAPA[e]}': {len(esperados)} cartões",
+    checar(f"D. situação '{apoio.NOME_ETAPA[e]}': {len(esperados)} cartões",
            not erros(at) and all(_html_esc(t) in texto for t in esperados))
 
 import html as _html
@@ -274,7 +264,6 @@ checar("D. a barra de navegação (Onde ser atendida, Hospitais de câncer) est�
        "Onde ser atendida" in tudo_rc and "Hospitais de câncer" in tudo_rc)
 at.session_state["ap_hosp_modo"] = "regiao"
 at.session_state["ap_aba"] = apoio.LAMINAS["caminho"]      # as carretas moram em Câncer de mama (sem botão próprio, 20/10/2026)
-at.session_state["ap_boas_vindas_fechada"] = True
 at.session_state["ap_caminho"] = "mama"
 at.run()
 texto = " ".join(m.value for m in at.markdown)
@@ -480,12 +469,12 @@ finally:
 assuntos_teste = [
     ("caminho", id, rotulo, f"Quero orientação sobre {rotulo.lower()}.")
     for id, rotulo, _, _ in apoio.CAMINHOS
-    if id in {"mama", "colo", "outros", "tratamento", "direitos"}
+    if id in {"mama", "colo", "outros", "tratamento"}
 ]
 assuntos_teste += [
     ("etapa", id, rotulo, f"Minha situação é: {rotulo.lower()}.")
     for id, rotulo, _, _, _ in apoio.ETAPAS
-    if id in {"nao_fiz", "alterado", "diagnostico_cancer", "encaminhada", "em_tratamento", "violencia"}
+    if id in {"nao_fiz", "alterado", "diagnostico_cancer", "violencia"}
 ]
 assuntos_teste += [
     ("lamina", id, apoio.LAMINAS[id], f"Quero consultar {apoio.LAMINAS[id].lower()}.")
@@ -525,28 +514,31 @@ finally:
     apoio_busca.obter_classificador = original_classificador_assuntos
 
 at_antigo = AppTest.from_file(os.path.join(RAIZ, "dashboard", "pages", "apoio.py"), default_timeout=90)
-at_antigo.session_state["ap_boas_vindas_fechada"] = True
-at_antigo.session_state["ap_caminho"] = "rede"      # assunto que saiu em 20/10/2026 (sessão aberta antes da mudança)
-at_antigo.run()
-checar("D. sessão antiga com o assunto 'rede' (que não existe mais) não quebra a página", not erros(at_antigo))
-# ---- H. "Preciso de ajuda" em destaque, fora da lista de assuntos (autor, 20/10/2026: "um dos mais importantes") ----
-at = AppTest.from_file(os.path.join(RAIZ, "dashboard", "pages", "apoio.py"), default_timeout=90)
-at.run()
-checar("H. 'Preciso de ajuda' tem botão próprio em destaque, visível já na abertura", botao(at, "apoio_ajuda_botao") is not None)
-botao(at, "apoio_ajuda_botao").click().run()
-tudo_h = " ".join(m.value for m in at.markdown)
-checar("H. clicar abre as situações ('Ainda não fiz o exame'...'violência') sem erro", not erros(at) and at.session_state["ap_caminho"] == "ajuda"
-       and "Ainda não fiz o exame" in str([r.options for r in at.radio]) and "Estou em situação de violência" in str([r.options for r in at.radio]))
-checar("H. a lista de assuntos NÃO traz 'Preciso de ajuda' (é uma área à parte)",
-       not any("Preciso de ajuda" in str(r.options) and "Câncer de mama" in str(r.options) for r in at.radio))
-checar("H. já dentro, o botão avisa 'você está aqui'", "você está aqui" in botao(at, "apoio_ajuda_botao").label)
-checar("H. a faixa 'Você está em' diz 'Preciso de ajuda' (não 'Orientação por assunto')",
-       "Você está em: <b>Preciso de ajuda" in tudo_h)
-botao(at, "nav_apoio_caminho").click().run()
-checar("H. 'Orientação por assunto' volta aos assuntos (Câncer de mama...), sem ficar preso na ajuda",
-       not erros(at) and at.session_state["ap_caminho"] != "ajuda" and "Câncer de mama" in str([r.options for r in at.radio]))
-botao(at, "nav_apoio_hospitais").click().run()
-checar("H. o destaque continua visível em outra área do Apoio (Hospitais no Estado)", botao(at, "apoio_ajuda_botao") is not None)
+for _antigo in ("rede", "direitos"):   # assuntos que saíram (20/10/2026 e 23/10/2026): sessão aberta antes da mudança
+    at_antigo = AppTest.from_file(os.path.join(RAIZ, "dashboard", "pages", "apoio.py"), default_timeout=90)
+    at_antigo.session_state["ap_caminho"] = _antigo
+    at_antigo.run()
+    checar(f"D. sessão antiga com o assunto '{_antigo}' (que não existe mais) não quebra a página e volta ao início",
+           not erros(at_antigo) and at_antigo.session_state["ap_caminho"] == "ajuda")
+# ---- H. um caminho de volta e o "onde estou" em toda tela (autor, 23/10/2026: "nunca sei onde estou") ----
+at = abrir()
+for nome, clique, trecho in (("Câncer de mama", "direto_mama", "Início › Procurar direto › Câncer de mama"),
+                             ("Hospitais por região", "direto_hospitais", "Início › Procurar direto › Hospitais no Estado"),
+                             ("Rio Claro", "direto_rio_claro", "Início › Procurar direto › Rio Claro"),
+                             ("Sobre", "direto_sobre", "Início › Procurar direto › Sobre estas informações")):
+    at = abrir()
+    botao(at, clique).click().run()
+    faixa = " ".join(m.value for m in at.markdown)
+    checar(f"H. '{nome}': a faixa mostra o caminho (Início › Procurar direto › ...) e há '← Voltar ao início'",
+           not erros(at) and trecho in faixa and botao(at, "apoio_voltar_inicio") is not None)
+    botao(at, "apoio_voltar_inicio").click().run()
+    checar(f"H. '{nome}': voltar ao início mostra a pergunta de novo", not erros(at)
+           and "De que ajuda você precisa hoje?" in " ".join(m.value for m in at.markdown))
+at = abrir()
+botao(at, "direto_mama").click().run()
+checar("H. Câncer de mama oferece os 3 tipos de câncer, sem 'Tratamento' nem 'Direitos'",
+       any(set(r.options) == {"mama", "colo", "outros"} or set(map(str, r.options)) >= {"Câncer de mama", "Colo do útero", "Outros cânceres"}
+           for r in at.radio) and not any("Direitos" in str(r.options) for r in at.radio))
 checar("F. a página do Apoio não abriu banco de dados em nenhum momento (perguntas não são gravadas)", abriu_banco == [])
 
 print(f"\n({time.time() - inicio:.0f} s)")

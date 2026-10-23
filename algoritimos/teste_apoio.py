@@ -81,11 +81,12 @@ checar("proteção à mulher (em Preciso de ajuda): pelo menos 8 canais", len(ap
 # 20/10/2026 (autor): "Regulação" saiu dos assuntos (técnico demais; a paciente não opera a regulação: o conteúdo mora em "Fui
 # encaminhada") e "Tratamento" e "Rede oncológica" viraram um assunto só, "Tratamento pelo SUS".
 checar("os assuntos, na ordem: sem Regulação, Tratamento unido à Rede oncológica e Diagnóstico unido a 'Meu exame deu alterado'",
-       list(apoio.NOME_CAMINHO) == ["mama", "colo", "outros", "tratamento", "direitos", "ajuda"]
-       and not {"regulacao", "rede", "diagnostico"} & set(apoio.NOME_CAMINHO))
+       list(apoio.NOME_CAMINHO) == ["mama", "colo", "outros", "tratamento", "ajuda"]
+       and not {"regulacao", "rede", "diagnostico", "direitos"} & set(apoio.NOME_CAMINHO))   # "Direitos e acesso" saiu (autor, 23/10/2026)
 checar("nenhum cartão ficou num assunto que não existe mais", all(i["caminho"] is None or i["caminho"] in apoio.NOME_CAMINHO for i in apoio.ITENS))  # None = só mora numa área
-checar("Preciso de ajuda: 6 pontos do caminho, com violência", len(apoio.ETAPAS) == 6
-       and "violencia" in apoio.NOME_ETAPA)
+# 23/10/2026 (autor): sintoma, exame alterado e positivo viram uma situação; "Fui encaminhada", diagnóstico e tratamento viram outra.
+checar("De que ajuda você precisa: 4 situações (prevenir, sintoma ou exame alterado, diagnóstico ou encaminhada, violência)",
+       list(apoio.NOME_ETAPA) == ["nao_fiz", "alterado", "diagnostico_cancer", "violencia"])
 checar("todo ponto do caminho aponta para portas e itens que existem",
        all(set(portas) <= set(apoio.NOME_CAMINHO) and all(i in apoio.POR_ID for i in ids)
            for _, _, _, portas, ids in apoio.ETAPAS) and all(apoio.itens_da_etapa(e) for e in apoio.NOME_ETAPA))
@@ -96,20 +97,21 @@ checar("cartões técnicos de BI-RADS e colposcopia saíram (autor, 19/10/2026)"
 checar("prazo legal de 30 dias explicita hipótese principal e pedido médico fundamentado",
        "principal hipótese diagnóstica" in apoio.POR_ID["lei_30_dias"]["resumo"]
        and "pedido médico fundamentado" in apoio.POR_ID["lei_30_dias"]["resumo"]
-       and "principal hipótese" in next(x[2] for x in apoio.ETAPAS if x[0] == "alterado"))
+       and "lei" not in next(x[2] for x in apoio.ETAPAS if x[0] == "alterado").lower())   # a mulher assustada lê a UBS, não a lei
 checar("diagnóstico recente tem um próximo passo prático sem indicar hospital por conta própria",
        "quem está responsável pelo encaminhamento" in next(x[2] for x in apoio.ETAPAS if x[0] == "diagnostico_cancer")
        and "60 dias" in next(x[2] for x in apoio.ETAPAS if x[0] == "diagnostico_cancer"))
-checar("o que fazer se o nome não aparecer na fila continua no guia (assunto Tratamento) e na situação 'Fui encaminhada'",
+checar("o que fazer se o nome não aparecer na fila continua no guia (assunto Tratamento) e na situação 'Tenho diagnóstico ou já fui encaminhada'",
        apoio.POR_ID["nao_achei_nome"]["caminho"] == "tratamento"
-       and "nao_achei_nome" in next(x[4] for x in apoio.ETAPAS if x[0] == "encaminhada"))
+       and "nao_achei_nome" in next(x[4] for x in apoio.ETAPAS if x[0] == "diagnostico_cancer"))
 checar("o passo da vaga explica que quem pede é a equipe de saúde (a paciente não opera a regulação)",
        any("a unidade de saúde pede a vaga" in o for _, o, _ in apoio.FLUXO_REDE))
 checar("fluxo do caminho na rede aponta para assuntos, situações ou áreas que existem",
        all(p in apoio.NOME_CAMINHO or p == "hospitais" or (p.startswith("etapa:") and p[6:] in apoio.NOME_ETAPA)
            for _, _, p in apoio.FLUXO_REDE))
-checar("caminho Seus direitos com TFD e reconstrução da mama",
-       {"tfd", "reconstrucao_mamaria"} <= {i["id"] for i in apoio.itens(caminho="direitos")})
+checar("o transporte para tratamento (TFD) ficou no assunto Tratamento; benefícios, FGTS, INSS e reconstrução saíram com 'Direitos e acesso'",
+       "tfd" in {i["id"] for i in apoio.itens(caminho="tratamento")}
+       and not {"fgts_pis", "auxilio_inss", "reconstrucao_mamaria", "cartilha_inca"} & set(apoio.POR_ID))
 checar("todo caminho tem pelo menos um item", all(apoio.itens(caminho=c) for c in apoio.NOME_CAMINHO))
 checar("Rio Claro tem lâmina com itens", len(apoio.itens(lamina="rio_claro")) >= 4)
 checar("Cadu de Rio Claro aparece como serviço de apoio à mulher",

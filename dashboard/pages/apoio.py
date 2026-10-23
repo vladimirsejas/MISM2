@@ -101,14 +101,17 @@ a.apoio-botao:hover { background: #1f5fae; }
 .apoio-emergencia { background: #fdeceb; border: 1px solid #e8a39d; border-left: 6px solid #c62839; border-radius: 10px;
                     padding: 8px 14px; margin: 4px 0 10px; color: #6d1220; font-size: .98rem; }
 .apoio-emergencia b { color: #a51f2e; }
-[class*="st-key-apoio_ajuda_destaque"] button { background: linear-gradient(135deg, #5b2a55, #7a3c8f); border: 0; border-radius: 14px;
-    min-height: 68px; box-shadow: 0 4px 14px rgba(91, 42, 85, .28); }
-[class*="st-key-apoio_ajuda_destaque"] button p { color: #ffffff !important; font-weight: 800; font-size: 1.35rem; }
-[class*="st-key-apoio_ajuda_destaque"] button:hover { background: linear-gradient(135deg, #4a2046, #6a2f7e); }
-[class*="st-key-apoio_ajuda_aqui"] button { background: #efe9f5; border: 3px solid #5b2a55; border-radius: 14px; min-height: 68px; }
-[class*="st-key-apoio_ajuda_aqui"] button p { color: #5b2a55 !important; font-weight: 800; font-size: 1.35rem; }
-.apoio-ajuda-sub { color: #4b3a52; font-size: .98rem; margin: 6px 2px 14px; }
-.apoio-ajuda-sub b { color: #5b2a55; }
+[class*="st-key-apoio_entrada"] button { min-height: 72px; justify-content: flex-start; padding: 0 22px; border: 2px solid #5b2a55;
+    border-radius: 14px; background: #ffffff; }
+[class*="st-key-apoio_entrada"] button p { font-size: 1.3rem; font-weight: 800; color: #5b2a55 !important; text-align: left; }
+[class*="st-key-apoio_entrada"] button:hover { background: #f4eef8; }
+[class*="st-key-apoio_entrada_violencia"] button { background: linear-gradient(135deg, #5b2a55, #7a3c8f); border: 0; }
+[class*="st-key-apoio_entrada_violencia"] button p { color: #ffffff !important; }
+[class*="st-key-apoio_entrada_servico"] a { min-height: 72px; height: auto; padding: 10px 16px; justify-content: center; border: 2px solid #5b2a55; border-radius: 14px;
+    background: #ffffff; }
+[class*="st-key-apoio_entrada_servico"] a p { font-size: 1.3rem; font-weight: 800; color: #5b2a55 !important; white-space: normal; text-align: center; }
+[class*="st-key-apoio_entrada_servico"] a:hover { background: #f4eef8; }
+.apoio-entrada-sub { color: #4b3a52; margin: 2px 6px 16px; font-size: 1rem; }
 .apoio-grupo { font-family: 'Manrope', sans-serif; font-weight: 700; color: #4a3d78; font-size: 1rem; margin: 18px 0 0; }
 </style>
 """, unsafe_allow_html=True)
@@ -117,7 +120,7 @@ a.apoio-botao:hover { background: #1f5fae; }
 ABAS = [apoio.LAMINAS[k] for k in ("caminho", "rio_claro", "hospitais", "sobre")]   # Carretas e Barretos moram dentro de outras (20/10/2026)
 ROTULO = apoio.NOME_CAMINHO
 TODOS = {"barretos": "Todos os temas", "hospitais": "Todas as regiões", "carretas": "Todas as carretas"}
-PADROES = {"ap_aba": ABAS[0], "ap_caminho": "mama", "ap_item": None, "ap_etapa": None, "ap_hosp_modo": "regiao",
+PADROES = {"ap_aba": ABAS[0], "ap_caminho": "ajuda", "ap_item": None, "ap_etapa": None, "ap_hosp_modo": "regiao",
            **{f"ap_grupo_{lam}": TODOS[lam] for lam in apoio.GRUPOS}}
 for chave, valor in PADROES.items():
     st.session_state.setdefault(chave, valor)
@@ -125,6 +128,8 @@ st.session_state.setdefault("caixa_ap_gemini_ativo", False)
 st.session_state.setdefault("caixa_ap_contexto", None)
 st.session_state.setdefault("ap_lia", {"atual": apoio.responder(INICIO), "pilha": [], "falas": 0})
 lia_estado = st.session_state["ap_lia"]
+if st.session_state.get("ap_caminho") not in apoio.NOME_CAMINHO:   # sessão antiga (ex.: "Direitos e acesso", que saiu)
+    st.session_state["ap_caminho"] = "ajuda"
 if st.session_state["ap_aba"] not in ABAS:   # sessão aberta antes de Carretas/Barretos virarem parte de outras áreas
     st.session_state["ap_aba"] = ABAS[0]
 
@@ -190,8 +195,6 @@ def lia_mostrar(resposta, da_caixa=False):
         lia_estado["pilha"].append(lia_estado["atual"])
     lia_estado["atual"] = resposta
     lia_estado["falas"] += 1
-    st.session_state["ap_boas_vindas_fechada"] = True
-    st.session_state["lia_recolhida"] = False
     aplicar_destino(resposta.destino)
     resposta.destino = normalizar_destino(resposta.destino)   # a fala passa a apontar para onde a página realmente foi
 
@@ -232,7 +235,7 @@ def contexto_da_aba_atual():
     if aba == apoio.LAMINAS["caminho"]:
         caminho = st.session_state.get("ap_caminho")
         etapa = st.session_state.get("ap_etapa") if caminho == "ajuda" else None
-        rotulo = apoio.NOME_ETAPA.get(etapa) or ROTULO.get(caminho) or aba
+        rotulo = apoio.NOME_ETAPA.get(etapa) or ("o início" if caminho == "ajuda" else ROTULO.get(caminho)) or aba
         return (aba, caminho, etapa), rotulo
     chave = next((k for k, nome in apoio.LAMINAS.items() if nome == aba), None)
     return (aba, chave, None), aba
@@ -269,10 +272,9 @@ def assuntos_do_guia():
     caminhos = {id: rotulo for id, rotulo, _, _ in apoio.CAMINHOS}
     etapas = apoio.NOME_ETAPA
     grupos = [
-        ("Prevenção e exames", [("caminho", "mama"), ("caminho", "colo"), ("caminho", "outros"), ("etapa", "nao_fiz")]),
-        ("Exame alterado e diagnóstico", [("etapa", "alterado"), ("etapa", "diagnostico_cancer")]),
-        ("Tratamento e direitos", [("caminho", "tratamento"), ("caminho", "direitos"),
-                                   ("etapa", "encaminhada"), ("etapa", "em_tratamento")]),
+        ("Prevenção e exames", [("etapa", "nao_fiz"), ("caminho", "mama"), ("caminho", "colo"), ("caminho", "outros")]),
+        ("Sintoma ou exame alterado", [("etapa", "alterado")]),
+        ("Diagnóstico e tratamento", [("etapa", "diagnostico_cancer"), ("caminho", "tratamento")]),
         ("Onde procurar", [("lamina", "hospitais"), ("lamina", "rio_claro")]),
         ("Proteção", [("etapa", "violencia")]),
     ]
@@ -418,7 +420,7 @@ def cartao_curto(i):
         f'<a class="apoio-botao" href="{e(i["link"])}" target="_blank" rel="noopener">{e(apoio.rotulo_do_link(i))} ↗</a>'
         + "".join(f'<br><a class="apoio-botao" href="{e(u)}" target="_blank" rel="noopener">{e(r)} ↗</a>'
                   for r, u in i["mais_links"])
-        + f'<div class="apoio-fonte">Detalhes completos na {apoio.onde_mora(i)}.</div></div>',
+        + f'<div class="apoio-fonte">Detalhes completos {apoio.onde_mora(i)}.</div></div>',
         unsafe_allow_html=True,
     )
 
@@ -498,7 +500,7 @@ def fluxo_rede():
         elif destino_id.startswith("etapa:"):
             etapa = destino_id.split(":", 1)[1]
             destino = {"aba": apoio.LAMINAS["caminho"], "caminho": "ajuda", "etapa": etapa}
-            rotulo = {"encaminhada": "Acompanhar a fila", "alterado": "Meu exame deu alterado"}.get(etapa, apoio.NOME_ETAPA[etapa])
+            rotulo = {"diagnostico_cancer": "Acompanhar a vaga", "alterado": "Meu exame deu alterado"}.get(etapa, apoio.NOME_ETAPA[etapa])
         elif destino_id == "tratamento":
             destino, rotulo = None, None   # é esta mesma página
         else:
@@ -536,15 +538,8 @@ def porta(c, rotulo, dentro, abertura):
 
 
 def porta_ajuda():
-    """Preciso de ajuda: em que ponto a mulher está -> o próximo passo."""
-    pergunta("Qual destas situações parece com a sua?")
-    dica("Escolha uma opção para ver o próximo passo. Se ainda não souber, não precisa escolher agora.")
-    with pilulas("etapa"):
-        e = seletor(st, "Escolha uma situação", "ap_etapa", list(apoio.NOME_ETAPA),
-                    format_func=apoio.NOME_ETAPA.get, horizontal=False)
-    if e is None:
-        st.info("Escolha uma situação acima. A Lia organiza as opções sem presumir o que aconteceu com você.")
-        return
+    """A situação escolhida: o que fazer agora e os cartões oficiais."""
+    e = st.session_state["ap_etapa"]
     _, _, fala, portas, _ = next(x for x in apoio.ETAPAS if x[0] == e)
     st.markdown(f'<div class="apoio-etapa">{html.escape(fala)}</div>', unsafe_allow_html=True)
     if e == "diagnostico_cancer":
@@ -560,11 +555,6 @@ def porta_ajuda():
                     )
         st.markdown('<div class="apoio-recuperar-caminho"><b>Se a resposta demorar ou o encaminhamento não chegar</b></div>',
                     unsafe_allow_html=True)
-        ids_retomada = ["nao_achei_nome", "lista_regulacao", "como_chegar_cross"]
-        if apoio.CIDADE.casefold() == "rio claro":
-            ids_retomada.append("rc_unidades")
-        for id_item in ids_retomada:
-            cartao_curto(apoio.POR_ID[id_item])
     if portas or e == "nao_fiz":
         colunas = st.columns(max(len(portas) + (e == "nao_fiz"), 1))
         for col, porta_id in zip(colunas, portas):
@@ -575,8 +565,11 @@ def porta_ajuda():
             colunas[-1].button("Consultar itinerário das carretas →", key="etapa_carretas", type="primary",
                                on_click=aplicar_destino, args=({"aba": apoio.LAMINAS["carretas"]},),
                                width="stretch")
+    # Os cartões que moram em "Tratamento pelo SUS" (um assunto sem botão próprio) aparecem inteiros aqui, sem apontar para lá.
     for i in apoio.itens_da_etapa(e):
-        (cartao if i["caminho"] == "ajuda" else cartao_curto)(i)
+        if e == "diagnostico_cancer" and i["id"] == "tfd":
+            st.markdown('<div class="apoio-grupo">Durante o tratamento</div>', unsafe_allow_html=True)
+        (cartao if i["caminho"] in ("ajuda", "tratamento") else cartao_curto)(i)
     if e == "violencia":
         for i in apoio.itens(caminho="ajuda", lamina="rio_claro"):
             cartao_curto(i)
@@ -613,38 +606,66 @@ def ir_aba(nome):
     st.session_state["caixa_ap_contexto"] = None
 
 
-def ir_assunto():
-    """Orientação por assunto: se estava em 'Preciso de ajuda', volta a um assunto (a ajuda é uma área à parte)."""
+def ir_inicio():
+    """O começo: "De que ajuda você precisa hoje?" (autor, 23/10/2026): uma pergunta, quatro situações, o resto em "Procurar direto"."""
     ir_aba(apoio.LAMINAS["caminho"])
-    if st.session_state.get("ap_caminho") == "ajuda":
-        definir("ap_caminho", PADROES["ap_caminho"])
-
-
-def ir_ajuda():
-    """Preciso de ajuda: área à parte, em destaque (autor, 20/10/2026: "um dos mais importantes")."""
-    ir_aba(apoio.LAMINAS["caminho"])
-    lia_clicar(apoio.caminho("ajuda"))   # a Lia pergunta "em que ponto você está?" e abre a área (fecha as boas-vindas)
     definir("ap_caminho", "ajuda")
+    definir("ap_etapa", None)
 
 
-_na_ajuda = st.session_state["ap_aba"] == apoio.LAMINAS["caminho"] and st.session_state.get("ap_caminho") == "ajuda" \
-    and st.session_state.get("ap_boas_vindas_fechada")
-_no_assunto = st.session_state["ap_aba"] == apoio.LAMINAS["caminho"] and not _na_ajuda
+def ir_situacao(etapa):
+    ir_aba(apoio.LAMINAS["caminho"])
+    definir("ap_caminho", "ajuda")
+    definir("ap_etapa", etapa)
 
-# DESTAQUE: "Preciso de ajuda" não é um assunto da lista, é a porta de quem não sabe por onde começar (e onde mora a proteção
-# contra a violência). Fica logo abaixo da faixa de emergência (perigo agora = 190/180/192; precisa de orientação = aqui),
-# em TODA tela do Apoio, antes de qualquer menu.
-try:
-    _caixa_ajuda = st.container(key="apoio_ajuda_aqui" if _na_ajuda else "apoio_ajuda_destaque")
-except TypeError:  # Streamlit antigo, sem key em container
-    _caixa_ajuda = st.container()
-with _caixa_ajuda:
-    st.button("💜 Preciso de ajuda" + ("  ·  você está aqui" if _na_ajuda else ""), key="apoio_ajuda_botao", on_click=ir_ajuda,
-              width="stretch", help="A Lia pergunta em que ponto você está e mostra o próximo passo, sem presumir nada.")
-    if not _na_ajuda:
-        st.markdown('<div class="apoio-ajuda-sub">Não sabe por onde começar? <b>Comece por aqui.</b> Você escolhe a sua situação '
-                    '(ainda não fiz o exame, meu exame deu alterado, fui encaminhada, recebi um diagnóstico, estou em tratamento '
-                    'ou estou em situação de violência) e vê o próximo passo.</div>', unsafe_allow_html=True)
+
+ENTRADAS = [   # (situação, o que a mulher lê, o que ela vai encontrar): em ordem de tempo, cada uma com um nome só
+    ("nao_fiz", "Quero me prevenir", "Mamografia, preventivo e vacina contra o HPV."),
+    ("alterado", "Estou com sintoma ou meu exame deu alterado", "A quem voltar e como chegar lá."),
+    ("diagnostico_cancer", "Tenho diagnóstico ou já fui encaminhada", "Quem pede a vaga, como acompanhar e onde se trata."),
+    ("violencia", "Estou em situação de violência", "Canais que atendem e protegem. Em perigo agora: 190."),
+]
+
+
+def home():
+    pergunta("De que ajuda você precisa hoje?")
+    dica("Escolha a frase que mais se parece com a sua. Você pode voltar e mudar de ideia.")
+    for e, rotulo, sub in ENTRADAS:
+        try:
+            caixa = st.container(key=f"apoio_entrada_{e}")
+        except TypeError:  # Streamlit antigo, sem key em container
+            caixa = st.container()
+        with caixa:
+            st.button(rotulo, key=f"entrada_{e}", on_click=ir_situacao, args=(e,), width="stretch")
+        st.markdown(f'<div class="apoio-entrada-sub">{html.escape(sub)}</div>', unsafe_allow_html=True)
+    try:
+        caixa_servico = st.container(key="apoio_entrada_servico")
+    except TypeError:  # Streamlit antigo, sem key em container
+        caixa_servico = st.container()
+    with caixa_servico:
+        try:
+            st.page_link("pages/onde_ser_atendida.py", label="📍 Quero encontrar um serviço ou hospital", width="stretch")
+        except TypeError:  # Streamlit sem width no page_link
+            st.page_link("pages/onde_ser_atendida.py", label="📍 Quero encontrar um serviço ou hospital")
+        except Exception:  # Streamlit antigo, sem page_link
+            st.markdown('<a href="/onde_ser_atendida" target="_self">📍 Quero encontrar um serviço ou hospital</a>', unsafe_allow_html=True)
+    st.markdown('<div class="apoio-entrada-sub">Unidades de saúde, telefones, como chegar e hospitais de câncer.</div>',
+                unsafe_allow_html=True)
+    st.markdown('<div class="apoio-grupo">Já sabe o que procura?</div>', unsafe_allow_html=True)
+    b1, b2, b3 = st.columns(3)
+    b1.button("Câncer de mama", key="direto_mama", on_click=aplicar_destino,
+              args=({"aba": apoio.LAMINAS["caminho"], "caminho": "mama"},), width="stretch")
+    b2.button("Colo do útero", key="direto_colo", on_click=aplicar_destino,
+              args=({"aba": apoio.LAMINAS["caminho"], "caminho": "colo"},), width="stretch")
+    b3.button("Outros cânceres", key="direto_outros", on_click=aplicar_destino,
+              args=({"aba": apoio.LAMINAS["caminho"], "caminho": "outros"},), width="stretch")
+    b4, b5, b6 = st.columns(3)
+    b4.button("Hospitais por região", key="direto_hospitais", on_click=aplicar_destino,
+              args=({"aba": apoio.LAMINAS["hospitais"]},), width="stretch",
+              help="Hospitais de câncer por região do Estado e o Hospital de Amor, em Barretos.")
+    b5.button(apoio.LAMINAS["rio_claro"], key="direto_rio_claro", on_click=ir_aba, args=(apoio.LAMINAS["rio_claro"],), width="stretch")
+    b6.button("Sobre estas informações", key="direto_sobre", on_click=ir_aba, args=(apoio.LAMINAS["sobre"],), width="stretch")
+
 
 # Entrada guiada: poucas escolhas principais; o catálogo completo continua nas abas abaixo.
 _pergunta_pendente = st.session_state.pop("caixa_ap_pendente", None)
@@ -661,69 +682,34 @@ if _pergunta_pendente:
         atualizar_contexto_conversa(_resposta)
         lia_mostrar(_resposta, True)
 
-# Navegação organizada em dois grupos: primeiro o que a mulher procura; depois os recursos de referência.
-n1, n2, r1, r2 = st.columns(4)
-n1.button("Orientação por assunto", key="nav_apoio_caminho", type="primary" if _no_assunto else "secondary",
-          on_click=ir_assunto, width="stretch")
-_rc = apoio.LAMINAS["rio_claro"]
-n2.button(_rc, key="nav_apoio_rio_claro", type="primary" if st.session_state["ap_aba"] == _rc else "secondary",
-          on_click=ir_aba, args=(_rc,), width="stretch")
-r1.button("Hospitais no Estado", key="nav_apoio_hospitais", type="primary" if st.session_state["ap_aba"] == apoio.LAMINAS["hospitais"] else "secondary",
-          on_click=aplicar_destino, args=({"aba": apoio.LAMINAS["hospitais"]},), width="stretch",
-          help="Hospitais de câncer por região do Estado e o Hospital de Amor, em Barretos.")
-r2.button("Sobre as informações", key="nav_apoio_sobre", type="primary" if st.session_state["ap_aba"] == apoio.LAMINAS["sobre"] else "secondary",
-          on_click=ir_aba, args=(apoio.LAMINAS["sobre"],), width="stretch")
-
 aba = st.session_state["ap_aba"]
+_home = aba == apoio.LAMINAS["caminho"] and st.session_state.get("ap_caminho") == "ajuda" and st.session_state.get("ap_etapa") is None
 
-# "Você está em" (auditoria de usabilidade, 20/10/2026): a mulher vê onde está sem decifrar o seletor.
-_boas_vindas_abertas = not st.session_state.get("ap_boas_vindas_fechada")
-if aba == apoio.LAMINAS["caminho"]:
-    _c = st.session_state.get("ap_caminho")
-    if _c == "ajuda" and not _boas_vindas_abertas:
-        _onde = ["Preciso de ajuda"]
+# "Você está em" e o caminho de volta (autor, 23/10/2026: "nunca sei onde estou"): sempre começa em "Início"; fora dele há um
+# botão só, "← Voltar ao início".
+_onde = ["Início"]
+if not _home:
+    if aba == apoio.LAMINAS["caminho"]:
+        _c = st.session_state.get("ap_caminho")
         _e = st.session_state.get("ap_etapa")
-        if _e in apoio.NOME_ETAPA:
+        if _c == "ajuda" and _e in apoio.NOME_ETAPA:
             _onde.append(apoio.NOME_ETAPA[_e])
-    else:
-        _onde = ["Orientação por assunto"]
-        if _boas_vindas_abertas:
-            _onde.append("escolha uma situação abaixo")
         else:
-            _onde.append(ROTULO.get(_c, ""))
-    _onde = " › ".join(x for x in _onde if x)
-elif aba == apoio.LAMINAS["hospitais"] and st.session_state.get("ap_hosp_modo") == "barretos":
-    _onde = f"{aba} › Barretos: Hospital de Amor"
-else:
-    _onde = aba
+            _onde += ["Procurar direto", ROTULO.get(_c, "")]
+    else:
+        _onde.append("Procurar direto")
+        _onde.append(aba)
+        if aba == apoio.LAMINAS["hospitais"] and st.session_state.get("ap_hosp_modo") == "barretos":
+            _onde.append("Barretos: Hospital de Amor")
+    st.button("← Voltar ao início", key="apoio_voltar_inicio", on_click=ir_inicio)
+_onde = " › ".join(x for x in _onde if x)
 st.markdown(f'<div class="escudo-voce-esta">📍 Você está em: <b>{html.escape(_onde)}</b> · {apoio.CIDADE}</div>',
             unsafe_allow_html=True)
 
 
-# ---- Boas-vindas e "Pergunte à Lia" ----
+# ---- "Pergunte à Lia" ----
 # A Lia mora SÓ na caixa de perguntas (autor, 23/10/2026): rosto pequeno ao lado da caixa e a resposta logo abaixo dela.
 # Sem balão grande nem botões da árvore ocupando a tela; as outras opções da página falam por si nos cartões.
-def desenhar_boas_vindas():
-    with st.container(border=True):
-        st.markdown('<div class="lia-fala-grande">Vamos por partes. Escolha o que mais se parece com a sua situação; '
-                    'você pode voltar e mudar de caminho.</div>', unsafe_allow_html=True)
-        st.markdown("**Por onde você quer começar?**")
-        a1, a2 = st.columns(2)
-        a3 = st.container()
-        a1.button("Prevenção e exames", key="bv_ap_prevencao", help="Mamografia, Papanicolau, vacina e prevenção.",
-                  on_click=lia_clicar, args=(apoio.etapa("nao_fiz"),), width="stretch")
-        a2.button("Meu exame deu alterado", key="bv_ap_alterado",
-                  help="Um resultado alterado precisa ser explicado pela equipe de saúde; não significa, por si só, câncer.",
-                  on_click=lia_clicar, args=(apoio.etapa("alterado"),), width="stretch")
-        a3.button("Recebi diagnóstico de câncer", key="bv_ap_diagnostico",
-                  help="Veja o caminho depois de um diagnóstico confirmado.", on_click=lia_clicar,
-                  args=(apoio.etapa("diagnostico_cancer"),), width="stretch")
-        st.caption("Não sabe por onde começar? Use o botão **💜 Preciso de ajuda**, logo acima. "
-                   "Prefere escrever? Use a caixa **Pergunte à Lia**, logo abaixo.")
-        st.button("Ver todas as áreas abaixo", key="bv_fechar_apoio",
-                  on_click=lambda: st.session_state.update(ap_boas_vindas_fechada=True))
-
-
 def desenhar_resposta_da_lia(atual):
     """A resposta à pergunta escrita (ou ao atalho de "Assuntos"), compacta, logo abaixo da caixa."""
     with st.container(key=f"ap_resposta_lia_{lia_estado['falas']}", border=True):
@@ -791,10 +777,7 @@ def _css_lia_flutuante(expressao):
 
 def desenhar_lia_apoio():
     atual = lia_estado["atual"]
-    boas_vindas_aberta = not st.session_state.get("ap_boas_vindas_fechada")
-    if boas_vindas_aberta:
-        desenhar_boas_vindas()
-    mostrar_resposta = getattr(atual, "da_caixa", False) and not boas_vindas_aberta
+    mostrar_resposta = getattr(atual, "da_caixa", False)
     # Lia flutuante (autor, 23/10/2026): o rosto dela fica fixo no canto de baixo à direita, sempre visível e SEMPRE fechado;
     # a pessoa aperta e abre a janelinha do chat. Só este bloco (e o CSS de lia_flutuante) cuida disso: para mudar o
     # sistema um dia, basta tirar o container; sem o CSS o popover vira um botão comum e o chat continua funcionando.
@@ -849,32 +832,31 @@ desenhar_lia_apoio()
 # ENCONTRE UM CAMINHO — Estado de SP e itens das cidades, por caminho
 # ============================================================
 
-if aba == apoio.LAMINAS["caminho"] and not _boas_vindas_abertas:
-    if st.session_state.get("ap_caminho") == "ajuda":
-        porta_ajuda()   # área à parte: não aparece entre os assuntos
+if aba == apoio.LAMINAS["caminho"]:
+    if _home:
+        home()
+    elif st.session_state.get("ap_caminho") == "ajuda":
+        porta_ajuda()   # a situação escolhida
     else:
-        pergunta("O que você precisa?")
-        dica("Escolha um assunto abaixo: prevenção, diagnóstico, encaminhamento, tratamento e direitos. "
-             "Hospitais, Carretas e os serviços de Rio Claro ficam em áreas próprias. Se estiver em dúvida, use o botão "
-             "<b>💜 Preciso de ajuda</b>, acima.")
-        codigos = [c for c, _, _, _ in apoio.CAMINHOS if c != "ajuda"]
-        if st.session_state.get("ap_caminho") not in codigos:   # assunto que não existe mais (sessão antiga): volta ao primeiro
-            definir("ap_caminho", PADROES["ap_caminho"])
-        onde_clicar("Clique num assunto. Depois, em cada cartão, clique no botão azul <b>Abrir a página oficial</b>.")
-        with pilulas("caminho"):
-            c = seletor(st, "Caminho", "ap_caminho", codigos, format_func=ROTULO.get, horizontal=True,
-                        label_visibility="collapsed")
-        _, rotulo, dentro, abertura = next(x for x in apoio.CAMINHOS if x[0] == c)
-        porta(c, rotulo, dentro, abertura)
-    with st.expander("O que significam estas palavras? (UBS, regulação, UNACON...)"):
-        for termo, explicacao in apoio.GLOSSARIO:
-            st.markdown(f"**{termo}:** {explicacao}")
-    leitura("Como usar", [
-        "Cada cartão traz a página oficial e a data em que foi conferido. Borda laranja = ainda falta confirmar "
-        "algum detalhe na própria página.",
-        "Pelo SUS, o caminho quase sempre começa na unidade de saúde do bairro, e o encaminhamento é feito pela "
-        "regulação; os hospitais de referência não são porta de entrada.",
-    ])
+        _c = st.session_state.get("ap_caminho")
+        _tipos = ["mama", "colo", "outros"]
+        if _c in _tipos:   # os três cânceres com área própria; "Tratamento pelo SUS" só se chega pelos botões da Lia e das situações
+            st.markdown("**Escolha o tipo de câncer**")
+            with pilulas("caminho"):
+                _c = seletor(st, "Tipo de câncer", "ap_caminho", _tipos, format_func=ROTULO.get, horizontal=True,
+                             label_visibility="collapsed")
+        _, rotulo, dentro, abertura = next(x for x in apoio.CAMINHOS if x[0] == _c)
+        porta(_c, rotulo, dentro, abertura)
+    if not _home:
+        with st.expander("O que significam estas palavras? (UBS, regulação, UNACON...)"):
+            for termo, explicacao in apoio.GLOSSARIO:
+                st.markdown(f"**{termo}:** {explicacao}")
+        leitura("Como usar", [
+            "Cada cartão traz a página oficial e a data em que foi conferido. Borda laranja = ainda falta confirmar "
+            "algum detalhe na própria página.",
+            "Pelo SUS, o caminho quase sempre começa na unidade de saúde do bairro, e o encaminhamento é feito pela "
+            "regulação; os hospitais de referência não são porta de entrada.",
+        ])
 
 
 def hospital_de_amor_barretos():
@@ -919,7 +901,7 @@ if aba == apoio.LAMINAS["hospitais"] and st.session_state.get("ap_hosp_modo") !=
         "Com suspeita ou diagnóstico de câncer, procure a unidade de saúde do bairro: o médico do SUS pede a vaga "
         "pela CROSS, que encaminha a um centro perto de onde você mora.",
         "Se o tratamento não existir no município onde você mora, o SUS pode pagar transporte e diárias (TFD, "
-        "no assunto Direitos e acesso).",
+        "no assunto Tratamento pelo SUS).",
         "A lista completa e oficial é a da FOSP (primeira região desta área).",
     ])
 

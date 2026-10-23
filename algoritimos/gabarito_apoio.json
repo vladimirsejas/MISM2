@@ -93,10 +93,7 @@
  },
  {
   "pergunta": "posso sacar o FGTS por causa do câncer?",
-  "tipo": "itens",
-  "aceitaveis": [
-   "fgts_pis"
-  ],
+  "tipo": "fora",
   "conjunto": "desenvolvimento"
  },
  {
@@ -110,11 +107,7 @@
  },
  {
   "pergunta": "reconstrução da mama pelo SUS",
-  "tipo": "itens",
-  "aceitaveis": [
-   "reconstrucao_mamaria",
-   "ha_mastologia"
-  ],
+  "tipo": "fora",
   "conjunto": "desenvolvimento"
  },
  {
@@ -149,11 +142,7 @@
  },
  {
   "pergunta": "auxílio doença para quem tem câncer",
-  "tipo": "itens",
-  "aceitaveis": [
-   "auxilio_inss",
-   "cartilha_inca"
-  ],
+  "tipo": "fora",
   "conjunto": "desenvolvimento"
  },
  {
@@ -176,13 +165,7 @@
  },
  {
   "pergunta": "quais são os direitos de quem tem câncer",
-  "tipo": "itens",
-  "aceitaveis": [
-   "cartilha_inca",
-   "auxilio_inss",
-   "fgts_pis",
-   "tfd"
-  ],
+  "tipo": "fora",
   "conjunto": "desenvolvimento"
  },
  {
@@ -467,18 +450,12 @@
  },
  {
   "pergunta": "dá pra usar o PIS por estar com câncer",
-  "tipo": "itens",
-  "aceitaveis": [
-   "fgts_pis"
-  ],
+  "tipo": "fora",
   "conjunto": "final"
  },
  {
   "pergunta": "quem tem câncer paga imposto de renda",
-  "tipo": "itens",
-  "aceitaveis": [
-   "auxilio_inss"
-  ],
+  "tipo": "fora",
   "conjunto": "final"
  },
  {
@@ -491,10 +468,7 @@
  },
  {
   "pergunta": "preciso refazer o seio depois da cirurgia",
-  "tipo": "itens",
-  "aceitaveis": [
-   "reconstrucao_mamaria"
-  ],
+  "tipo": "fora",
   "conjunto": "final"
  },
  {
