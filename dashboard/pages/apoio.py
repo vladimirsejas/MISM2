@@ -596,9 +596,8 @@ col_titulo, col_link = st.columns([2.2, 1])
 with col_titulo:
     st.markdown('<div class="escudo-marca">MISM2 · Apoio à mulher</div>', unsafe_allow_html=True)
     st.markdown('<div class="escudo-titulo">Encontre um caminho</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="escudo-sub">Onde a mulher de {apoio.CIDADE} encontra prevenção, diagnóstico, '
-                'tratamento e proteção, com as páginas oficiais do Estado de SP, da região e da cidade. '
-                'Um guia de onde procurar, não orientação médica.</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="escudo-sub">Orientação simples para encontrar exames, tratamento, serviços e proteção em {apoio.CIDADE}. '
+                'Escolha uma situação abaixo. Se não souber por onde começar, toque em “Preciso de ajuda”.</div>', unsafe_allow_html=True)
 with col_link:
     botao_inicio(st, "topo")
     st.caption("Cada cartão informa sua fonte e data de conferência. Itens marcados “a confirmar” precisam ser verificados antes de usar.")
@@ -667,18 +666,21 @@ if _pergunta_pendente:
         atualizar_contexto_conversa(_resposta)
         lia_mostrar(_resposta)
 
-# Navegação organizada em dois grupos: primeiro o que a mulher procura; depois os recursos de referência.
-n1, n2, r1, r2 = st.columns(4)
-n1.button("Orientação por assunto", key="nav_apoio_caminho", type="primary" if _no_assunto else "secondary",
-          on_click=ir_assunto, width="stretch")
-_rc = apoio.LAMINAS["rio_claro"]
-n2.button(_rc, key="nav_apoio_rio_claro", type="primary" if st.session_state["ap_aba"] == _rc else "secondary",
-          on_click=ir_aba, args=(_rc,), width="stretch")
-r1.button("Hospitais no Estado", key="nav_apoio_hospitais", type="primary" if st.session_state["ap_aba"] == apoio.LAMINAS["hospitais"] else "secondary",
-          on_click=aplicar_destino, args=({"aba": apoio.LAMINAS["hospitais"]},), width="stretch",
-          help="Hospitais de câncer por região do Estado e o Hospital de Amor, em Barretos.")
-r2.button("Sobre as informações", key="nav_apoio_sobre", type="primary" if st.session_state["ap_aba"] == apoio.LAMINAS["sobre"] else "secondary",
-          on_click=ir_aba, args=(apoio.LAMINAS["sobre"],), width="stretch")
+# Os recursos de referência ficam recolhidos para não disputar atenção com a orientação principal.
+# Continuam acessíveis, com as mesmas chaves e ações, quando a mulher precisar deles.
+with st.expander("Outros recursos do guia · Rio Claro, hospitais e fontes", expanded=False):
+    st.caption("Use estas áreas para consultar serviços locais, hospitais de referência e a origem das informações.")
+    n1, n2, r1, r2 = st.columns(4)
+    n1.button("Orientação por assunto", key="nav_apoio_caminho", type="primary" if _no_assunto else "secondary",
+              on_click=ir_assunto, width="stretch")
+    _rc = apoio.LAMINAS["rio_claro"]
+    n2.button(_rc, key="nav_apoio_rio_claro", type="primary" if st.session_state["ap_aba"] == _rc else "secondary",
+              on_click=ir_aba, args=(_rc,), width="stretch")
+    r1.button("Hospitais no Estado", key="nav_apoio_hospitais", type="primary" if st.session_state["ap_aba"] == apoio.LAMINAS["hospitais"] else "secondary",
+              on_click=aplicar_destino, args=({"aba": apoio.LAMINAS["hospitais"]},), width="stretch",
+              help="Hospitais de câncer por região do Estado e o Hospital de Amor, em Barretos.")
+    r2.button("Sobre as informações", key="nav_apoio_sobre", type="primary" if st.session_state["ap_aba"] == apoio.LAMINAS["sobre"] else "secondary",
+              on_click=ir_aba, args=(apoio.LAMINAS["sobre"],), width="stretch")
 
 aba = st.session_state["ap_aba"]
 
