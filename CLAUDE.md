@@ -653,6 +653,8 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   `dashboard/estilo.py`; o celular não muda): página até 1560 px, texto 10% maior (`html { font-size: 110% }`), Lia maior (rosto 210 px nas boas-vindas e 140 px nas respostas, com contorno claro e sombra),
   nome e fala dela maiores. O mesmo CSS vale para o painel, o Apoio e as outras páginas. O gráfico do Plotly passou de fonte 13 para 14.
 
+- **Lia só na caixa, no Apoio à mulher (autor, 23/10/2026: "o chat vai ficar apenas no Pergunte à Lia; ela está ocupando espaço indevido").** Em `dashboard/pages/apoio.py` a Lia deixou de ter balão grande, rosto de 140-210 px e botões da árvore no centro da página. Agora há uma linha só: o rosto pequeno (72 px) ao lado da caixa "Pergunte à Lia"; a resposta aparece compacta logo abaixo da caixa e SÓ quando veio dela (pergunta escrita ou atalho de "Assuntos"; marca `resposta.da_caixa`, `lia_mostrar(resposta, da_caixa)`). Clicar nas outras opções (boas-vindas, "Preciso de ajuda", abas) só leva ao destino: os cartões já dizem tudo e a Lia não repete a fala. A resposta tem "← Voltar" e "Fechar resposta" (chaves `lia_discreto_*_ap` mantidas); sumiram "Recolher/Abrir a Lia" e o balão `lia_balao_*` do Apoio. O painel principal NÃO mudou (a Lia dele segue como estava). Testes de tela ajustados (`perguntar()` em `teste_apoio_tela.py`). Não visto no navegador do autor.
+
 ## Notas de contexto do domínio
 
 - Banco de dados: `banco/escudo_feminino.db` (SQLite). O caminho é

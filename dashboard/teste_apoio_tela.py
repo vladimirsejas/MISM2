@@ -48,6 +48,12 @@ def botao(at, key):
     return next((b for b in at.button if b.key == key), None)
 
 
+def perguntar(at, texto):
+    """Escreve na caixa "Pergunte à Lia": só ali a Lia fala (autor, 23/10/2026); as outras opções só levam ao destino."""
+    at.text_input(key="caixa_ap_texto").set_value(texto)
+    at.button(key="caixa_ap_enviar").click().run()
+
+
 def botoes_lia(at):
     return [b for b in at.main.button if b.key and b.key.startswith("lia_ap_")]
 
@@ -85,6 +91,7 @@ at = abrir()
 botao(at, "apoio_ajuda_botao").click().run()
 checar("A. entrada 'Preciso de ajuda' (destaque)", not erros(at) and at.session_state["ap_caminho"] == "ajuda"
        and at.session_state["ap_aba"] == apoio.LAMINAS["caminho"])
+checar("A. Lia só na caixa: clicar numa opção da página não abre balão nem botões da árvore", not botoes_lia(at))
 checar("A. 'Não sei' deixa as seis etapas sem nenhuma presumida", at.session_state["ap_etapa"] is None)
 
 at = abrir()
@@ -114,7 +121,7 @@ checar("A. bloco de retomada contém os cartões do catálogo e seus links ofici
 
 # ---------- A2. Trocar a aba não substitui a fala da Lia ----------
 at = abrir()
-botao(at, "bv_ap_diagnostico").click().run()
+perguntar(at, "recebi diagnóstico de câncer, e agora?")
 fala_diagnostico = at.session_state["ap_lia"]["atual"].fala
 botao(at, "nav_apoio_hospitais").click().run()
 aviso_contexto = any("Esta resposta é sobre" in str(i.value)
@@ -133,11 +140,13 @@ checar("A2. após pedir, Lia responde sobre Hospitais no Estado e o aviso desapa
 # ---------- B. Lia: todos os botões ----------
 at = abrir()
 botao(at, "bv_fechar_apoio").click().run()
+perguntar(at, "xyzzy qwerty")   # fora do assunto: a Lia mostra todas as portas em botões, a raiz da árvore
 vistos, fila, cliques, problemas = set(), deque([()]), 0, []
 while fila:
     caminho_de_cliques = fila.popleft()
     at = abrir()
     botao(at, "bv_fechar_apoio").click().run()
+    perguntar(at, "xyzzy qwerty")
     for rotulo in caminho_de_cliques:
         b = next(b for b in botoes_lia(at) if b.label == rotulo)
         b.click().run()
@@ -161,6 +170,7 @@ checar("B. todo item do catálogo tem botão na Lia", titulos <= vistos)
 # ---------- C. voltar e começar de novo ----------
 at = abrir()
 botao(at, "bv_fechar_apoio").click().run()
+perguntar(at, "xyzzy qwerty")
 next(b for b in botoes_lia(at) if b.label == "Câncer de mama").click().run()
 fala_mama = at.session_state["ap_lia"]["atual"].fala
 next(b for b in botoes_lia(at) if b.label.startswith("Próximo passo")).click().run()
@@ -174,14 +184,14 @@ botao(at2, "apoio_ajuda_botao").click().run()
 checar("C. sem saber o ponto: a tela não assume que a mulher ainda não fez exame",
        not erros(at2) and at2.session_state["ap_etapa"] is None
        and "Escolha uma situação acima" in " ".join(str(x.value) for x in at2.info))
-next(b for b in botoes_lia(at2) if b.label == "Meu exame deu alterado").click().run()
+perguntar(at2, "meu exame deu alterado")
 checar("C. Preciso de ajuda → 'Meu exame deu alterado' leva primeiro à unidade de saúde do bairro (não à lei)",
        not erros(at2) and at2.session_state["ap_etapa"] == "alterado"
        and any("USF" in b.label and "UBS" in b.label for b in botoes_lia(at2))
        and not any("30 dias" in b.label for b in botoes_lia(at2)))
 botao(at, "lia_discreto_inicio_ap").click().run()
-checar("C. começar de novo volta à saudação", apoio.CIDADE in at.session_state["ap_lia"]["atual"].fala
-       and not erros(at))
+checar("C. fechar a resposta volta à saudação e some o balão da Lia", apoio.CIDADE in at.session_state["ap_lia"]["atual"].fala
+       and not erros(at) and not botoes_lia(at))
 
 # ---------- A2. jornada das 4 mulheres (auditoria de usabilidade, 20/10/2026) ----------
 # Cada uma chega, em UM clique a partir da abertura, a algo que ela pode FAZER: um telefone, um link oficial
@@ -193,7 +203,7 @@ for entrada, quem in (("prevencao", "quero fazer exame / me prevenir"), ("altera
     visivel = " ".join(m.value for m in at.markdown) + " " + " ".join(str(m.value) for m in at.main.markdown)
     tem_telefone = re.search(r"0800[\s\d]{7,}|\(\d{2}\)\s?\d{4,5}-\d{4}", visivel) is not None
     tem_link = "Abrir a página oficial" in visivel or "http" in visivel
-    tem_proximo = len(botoes_lia(at)) >= 2
+    tem_proximo = any(b.key and b.key.startswith(("etapa_", "prox_")) for b in at.main.button) or len(at.radio) > 0
     checar(f"A2. jornada '{quem}': 1 clique leva a telefone, link ou próximo passo",
            not erros(at) and (tem_telefone or tem_link or tem_proximo) and tem_proximo)
     if entrada == "alterado":

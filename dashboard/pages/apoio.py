@@ -182,7 +182,10 @@ def normalizar_destino(destino):
     return destino
 
 
-def lia_mostrar(resposta):
+def lia_mostrar(resposta, da_caixa=False):
+    """da_caixa: a resposta aparece sob a caixa "Pergunte à Lia". Cliques nas outras opções da página só levam ao
+    destino (os cartões já dizem tudo); a Lia não repete a fala fora da caixa (autor, 23/10/2026)."""
+    resposta.da_caixa = da_caixa
     if lia_estado["atual"] is not None:
         lia_estado["pilha"].append(lia_estado["atual"])
     lia_estado["atual"] = resposta
@@ -193,9 +196,9 @@ def lia_mostrar(resposta):
     resposta.destino = normalizar_destino(resposta.destino)   # a fala passa a apontar para onde a página realmente foi
 
 
-def lia_clicar(acao):
+def lia_clicar(acao, da_caixa=False):
     st.session_state["caixa_ap_contexto"] = None
-    lia_mostrar(apoio.responder(acao))
+    lia_mostrar(apoio.responder(acao), da_caixa)
 
 
 def atualizar_contexto_conversa(resposta):
@@ -246,7 +249,7 @@ def falar_sobre_aba_atual():
     else:
         chave = next((k for k, nome in apoio.LAMINAS.items() if nome == aba), None)
         acao = apoio.lamina(chave) if chave else INICIO
-    lia_clicar(acao)
+    lia_clicar(acao, True)
 
 
 # Pergunte à Lia no Apoio (algoritimos/apoio_busca.py): a pessoa escreve e a Lia mostra o item do guia.
@@ -304,7 +307,7 @@ def mostrar_assunto(pergunta_modelo, acao=None):
     else:
         resposta = apoio.responder(acao)
         resposta.pergunta = pergunta_modelo
-    lia_mostrar(resposta)
+    lia_mostrar(resposta, True)
 
 
 def classificador_da_sessao():
@@ -332,15 +335,6 @@ def lia_voltar():
         lia_estado["falas"] += 1
         atualizar_contexto_conversa(lia_estado["atual"])
         aplicar_destino(lia_estado["atual"].destino)
-
-
-def balao(nome):
-    """Balão da Lia (CSS em estilo.py): a key muda a cada fala."""
-    chave = f"lia_balao_{nome}_apoio_{lia_estado['falas']}"
-    try:
-        return st.container(key=chave)
-    except TypeError:
-        return st.container(border=True)
 
 
 def rosto(expressao, tamanho):
@@ -665,7 +659,7 @@ if _pergunta_pendente:
             cancer_em_foco=getattr(lia_estado.get("atual"), "tipo_cancer", None),
         )
         atualizar_contexto_conversa(_resposta)
-        lia_mostrar(_resposta)
+        lia_mostrar(_resposta, True)
 
 # Navegação organizada em dois grupos: primeiro o que a mulher procura; depois os recursos de referência.
 n1, n2, r1, r2 = st.columns(4)
@@ -706,91 +700,89 @@ st.markdown(f'<div class="escudo-voce-esta">📍 Você está em: <b>{html.escape
             unsafe_allow_html=True)
 
 
-# ---- A Lia: uma só, no centro, entre a navegação e o conteúdo ----
+# ---- Boas-vindas e "Pergunte à Lia" ----
+# A Lia mora SÓ na caixa de perguntas (autor, 23/10/2026): rosto pequeno ao lado da caixa e a resposta logo abaixo dela.
+# Sem balão grande nem botões da árvore ocupando a tela; as outras opções da página falam por si nos cartões.
+def desenhar_boas_vindas():
+    with st.container(border=True):
+        st.markdown('<div class="lia-fala-grande">Vamos por partes. Escolha o que mais se parece com a sua situação; '
+                    'você pode voltar e mudar de caminho.</div>', unsafe_allow_html=True)
+        st.markdown("**Por onde você quer começar?**")
+        a1, a2 = st.columns(2)
+        a3 = st.container()
+        a1.button("Prevenção e exames", key="bv_ap_prevencao", help="Mamografia, Papanicolau, vacina e prevenção.",
+                  on_click=lia_clicar, args=(apoio.etapa("nao_fiz"),), width="stretch")
+        a2.button("Meu exame deu alterado", key="bv_ap_alterado",
+                  help="Um resultado alterado precisa ser explicado pela equipe de saúde; não significa, por si só, câncer.",
+                  on_click=lia_clicar, args=(apoio.etapa("alterado"),), width="stretch")
+        a3.button("Recebi diagnóstico de câncer", key="bv_ap_diagnostico",
+                  help="Veja o caminho depois de um diagnóstico confirmado.", on_click=lia_clicar,
+                  args=(apoio.etapa("diagnostico_cancer"),), width="stretch")
+        st.caption("Não sabe por onde começar? Use o botão **💜 Preciso de ajuda**, logo acima. "
+                   "Prefere escrever? Use a caixa **Pergunte à Lia**, logo abaixo.")
+        st.button("Ver todas as áreas abaixo", key="bv_fechar_apoio",
+                  on_click=lambda: st.session_state.update(ap_boas_vindas_fechada=True))
+
+
+def desenhar_resposta_da_lia(atual):
+    """A resposta à pergunta escrita (ou ao atalho de "Assuntos"), compacta, logo abaixo da caixa."""
+    with st.container(key=f"ap_resposta_lia_{lia_estado['falas']}", border=True):
+        if getattr(atual, "pergunta", None):
+            st.caption(f"Você perguntou: “{atual.pergunta}”")
+        contexto_resposta, rotulo_resposta = contexto_da_resposta(atual)
+        contexto_atual, rotulo_atual = contexto_da_aba_atual()
+        se_contexto_diferente = contexto_resposta[0] != contexto_atual[0]
+        if not se_contexto_diferente and contexto_resposta[1] == "caminho":
+            se_contexto_diferente = contexto_resposta[1:] != contexto_atual[1:]
+        if se_contexto_diferente:
+            st.info(f"Esta resposta é sobre {rotulo_resposta}. Você está em {rotulo_atual}.")
+            st.button("Falar sobre " + rotulo_atual, key="lia_falar_sobre_aba",
+                      on_click=falar_sobre_aba_atual, width="stretch")
+        fala = atual.fala
+        if getattr(atual, "tipo", None) is None and not se_contexto_diferente:
+            linhas = fala.split("\n")
+            sem_lista = [ln for ln in linhas if not ln.startswith("- ")]
+            if len(sem_lista) < len(linhas):
+                fala = "\n".join(sem_lista)
+                while "\n\n\n" in fala:
+                    fala = fala.replace("\n\n\n", "\n\n")
+                fala = fala.strip() + "\n\n*Os detalhes de cada serviço estão nos cartões, abaixo.*"
+        st.markdown(fala)
+        if getattr(atual, "selo", None):
+            st.caption(atual.selo)
+        if atual.numeros:
+            with st.expander("Onde a Lia conferiu"):
+                st.markdown("\n".join(f"- {n}" for n in atual.numeros))
+        proximos = [(r, a) for r, a in atual.botoes if a is not INICIO and a.get("tipo") != "inicio"]
+        colunas = st.columns(3)
+        for n, (rotulo, acao) in enumerate(proximos):
+            colunas[n % 3].button(rotulo, key=f"lia_ap_{n}_{rotulo}", on_click=lia_clicar, args=(acao, True),
+                                  width="stretch")
+        c_voltar, c_fechar, _resto = st.columns([1, 1.3, 4])
+        if lia_estado["pilha"]:
+            c_voltar.button("← Voltar", key="lia_discreto_voltar_ap", on_click=lia_voltar)
+        c_fechar.button("Fechar resposta", key="lia_discreto_inicio_ap", on_click=lia_clicar, args=(INICIO,))
+
+
 def desenhar_lia_apoio():
     atual = lia_estado["atual"]
     boas_vindas_aberta = not st.session_state.get("ap_boas_vindas_fechada")
-    recolhida = bool(st.session_state.get("lia_recolhida")) and not boas_vindas_aberta
-    if recolhida:
-        c_rosto, c_fala, c_abrir = st.columns([0.5, 6, 1.6], vertical_alignment="center")
-        c_rosto.markdown(rosto(atual.expressao, 68), unsafe_allow_html=True)
-        c_fala.markdown('<div class="lia-nome">Lia <span>· pergunte ou escolha um caminho quando quiser</span></div>',
-                        unsafe_allow_html=True)
-        c_abrir.button("Abrir a Lia", key="caixa_lia_abrir", on_click=definir, args=("lia_recolhida", False), width="stretch")
-        return
-    c_rosto, c_fala = st.columns([1.3, 4.6] if boas_vindas_aberta else [1.0, 6])
-    with c_rosto:
-        st.markdown(rosto("acolhedora" if boas_vindas_aberta else atual.expressao, 210 if boas_vindas_aberta else 140),
-                    unsafe_allow_html=True)
-    with c_fala:
-        with balao("centro"):
-            if boas_vindas_aberta:
-                st.markdown('<div class="lia-nome">Lia <span>· pesquisadora do MISM2</span></div>'
-                            '<div class="lia-fala-grande">Vamos por partes. Escolha o que mais se parece com a sua situação; '
-                            'você pode voltar e mudar de caminho.</div>', unsafe_allow_html=True)
-                st.markdown("**Por onde você quer começar?**")
-                a1, a2 = st.columns(2)
-                a3 = st.container()
-                a1.button("Prevenção e exames", key="bv_ap_prevencao", help="Mamografia, Papanicolau, vacina e prevenção.",
-                          on_click=lia_clicar, args=(apoio.etapa("nao_fiz"),), width="stretch")
-                a2.button("Meu exame deu alterado", key="bv_ap_alterado",
-                          help="Um resultado alterado precisa ser explicado pela equipe de saúde; não significa, por si só, câncer.",
-                          on_click=lia_clicar, args=(apoio.etapa("alterado"),), width="stretch")
-                a3.button("Recebi diagnóstico de câncer", key="bv_ap_diagnostico",
-                          help="Veja o caminho depois de um diagnóstico confirmado.", on_click=lia_clicar,
-                          args=(apoio.etapa("diagnostico_cancer"),), width="stretch")
-                st.caption("Não sabe por onde começar? Use o botão **💜 Preciso de ajuda**, logo acima. "
-                           "Prefere escrever? Use a caixa **Pergunte à Lia**, logo abaixo.")
-                st.button("Ver todas as áreas abaixo", key="bv_fechar_apoio",
-                          on_click=lambda: st.session_state.update(ap_boas_vindas_fechada=True))
-            else:
-                cab, rec = st.columns([6, 1.4], vertical_alignment="center")
-                cab.markdown('<div class="lia-nome">Lia <span>· pesquisadora do MISM2</span></div>', unsafe_allow_html=True)
-                rec.button("Recolher a Lia", key="caixa_lia_recolher", on_click=definir, args=("lia_recolhida", True),
-                           width="stretch")
-                if getattr(atual, "pergunta", None):
-                    st.caption(f"Você perguntou: “{atual.pergunta}”")
-                contexto_resposta, rotulo_resposta = contexto_da_resposta(atual)
-                contexto_atual, rotulo_atual = contexto_da_aba_atual()
-                se_contexto_diferente = contexto_resposta[0] != contexto_atual[0]
-                if not se_contexto_diferente and contexto_resposta[1] == "caminho":
-                    se_contexto_diferente = contexto_resposta[1:] != contexto_atual[1:]
-                if se_contexto_diferente:
-                    st.info(f"Esta resposta é sobre {rotulo_resposta}. Você está em {rotulo_atual}.")
-                    st.button("Falar sobre " + rotulo_atual, key="lia_falar_sobre_aba",
-                              on_click=falar_sobre_aba_atual, width="stretch")
-                fala_lateral = atual.fala
-                if getattr(atual, "tipo", None) is None and not se_contexto_diferente:
-                    linhas = fala_lateral.split("\n")
-                    sem_lista = [ln for ln in linhas if not ln.startswith("- ")]
-                    if len(sem_lista) < len(linhas):
-                        fala_lateral = "\n".join(sem_lista)
-                        while "\n\n\n" in fala_lateral:
-                            fala_lateral = fala_lateral.replace("\n\n\n", "\n\n")
-                        fala_lateral = fala_lateral.strip() + "\n\n*Os detalhes de cada serviço estão nos cartões, abaixo.*"
-                st.markdown(fala_lateral)
-                if getattr(atual, "selo", None):
-                    st.caption(atual.selo)
-                if atual.numeros:
-                    with st.expander("Onde a Lia conferiu"):
-                        st.markdown("\n".join(f"- {n}" for n in atual.numeros))
-                proximos = [(r, a) for r, a in atual.botoes if a is not INICIO and a.get("tipo") != "inicio"]
-                colunas = st.columns(3)
-                for n, (rotulo, acao) in enumerate(proximos):
-                    colunas[n % 3].button(rotulo, key=f"lia_ap_{n}_{rotulo}", on_click=lia_clicar, args=(acao,),
-                                          width="stretch")
-                c_voltar, c_inicio, _resto = st.columns([1, 1.3, 4])
-                if lia_estado["pilha"]:
-                    c_voltar.button("← Voltar", key="lia_discreto_voltar_ap", on_click=lia_voltar)
-                c_inicio.button("Começar de novo", key="lia_discreto_inicio_ap", on_click=lia_clicar, args=(INICIO,))
-        # Pergunte à Lia: logo abaixo do balão
-        st.markdown("**Pergunte à Lia**")
+    if boas_vindas_aberta:
+        desenhar_boas_vindas()
+    mostrar_resposta = getattr(atual, "da_caixa", False) and not boas_vindas_aberta
+    c_rosto, c_caixa = st.columns([0.9, 8], vertical_alignment="top")
+    with c_rosto:   # a figura da Lia, pequena, num cantinho
+        st.markdown(rosto(atual.expressao if mostrar_resposta else "acolhedora", 72), unsafe_allow_html=True)
+    with c_caixa:
+        st.markdown('<div class="lia-nome">Pergunte à Lia <span>· pesquisadora do MISM2</span></div>', unsafe_allow_html=True)
         with st.form("caixa_ap_form", clear_on_submit=True):
             f1, f2 = st.columns([5, 1.2])
             f1.text_input("Pergunte à Lia", key="caixa_ap_texto", max_chars=300, label_visibility="collapsed",
                           placeholder="Ex.: onde faço mamografia pelo SUS?")
             f2.form_submit_button("Perguntar", key="caixa_ap_enviar", on_click=enviar_pergunta, width="stretch")
         st.caption("Não sabe o que perguntar? Escreva: **o que você sabe responder?**")
+        if mostrar_resposta:
+            desenhar_resposta_da_lia(atual)
         gemini_disponivel = apoio_busca.obter_classificador()
         if gemini_disponivel:
             st.toggle("Permitir que o Google Gemini ajude a identificar o assunto", key="caixa_ap_gemini_ativo",
