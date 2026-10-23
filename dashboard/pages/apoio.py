@@ -764,21 +764,49 @@ def desenhar_resposta_da_lia(atual):
         c_fechar.button("Fechar resposta", key="lia_discreto_inicio_ap", on_click=lia_clicar, args=(INICIO,))
 
 
+def _css_lia_flutuante(expressao):
+    """O botão do popover vira o rosto da Lia, redondo, fixo no canto (CSS só desta página)."""
+    import re as _re
+    fonte = _re.search(r'src="([^"]+)"', rosto_lia(expressao, 96)).group(1)
+    st.markdown("""<style>
+[class*="st-key-lia_flutuante"] { position: fixed; right: 22px; bottom: 22px; z-index: 999990; width: auto !important; }
+[class*="st-key-lia_flutuante"] button[data-testid="stPopoverButton"] {
+    width: 104px; height: 104px; min-height: 104px; padding: 0; border-radius: 50%; border: 4px solid #ffffff;
+    background: #efe9f7 url("__FOTO__") center / cover no-repeat;
+    box-shadow: 0 10px 28px rgba(91, 42, 85, .38), 0 0 0 3px #5b2a55; overflow: visible; position: relative; }
+[class*="st-key-lia_flutuante"] button[data-testid="stPopoverButton"] > * { display: none; }
+[class*="st-key-lia_flutuante"] button[data-testid="stPopoverButton"]::before {   /* a plaquinha com o convite */
+    content: "Pergunte à Lia"; position: absolute; right: 112px; top: 34px; white-space: nowrap;
+    background: #5b2a55; color: #ffffff; font-weight: 700; font-size: 1rem; padding: 8px 16px; border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(91, 42, 85, .3); }
+[class*="st-key-lia_flutuante"] button[data-testid="stPopoverButton"]:hover { transform: scale(1.05); }
+[data-testid="stPopoverBody"] { width: min(520px, 92vw) !important; max-height: 78vh; overflow-y: auto; }
+@media (max-width: 640px) {
+  [class*="st-key-lia_flutuante"] { right: 12px; bottom: 12px; }
+  [class*="st-key-lia_flutuante"] button[data-testid="stPopoverButton"] { width: 76px; height: 76px; min-height: 76px; }
+  [class*="st-key-lia_flutuante"] button[data-testid="stPopoverButton"]::before { right: 82px; top: 20px; font-size: .9rem; padding: 6px 12px; }
+}
+</style>""".replace("__FOTO__", fonte), unsafe_allow_html=True)
+
+
 def desenhar_lia_apoio():
     atual = lia_estado["atual"]
     boas_vindas_aberta = not st.session_state.get("ap_boas_vindas_fechada")
     if boas_vindas_aberta:
         desenhar_boas_vindas()
     mostrar_resposta = getattr(atual, "da_caixa", False) and not boas_vindas_aberta
-    # Recolhida por padrão (autor, 23/10/2026): a Lia só abre quando a pessoa abre, ou quando há uma resposta a mostrar.
-    with st.expander("💬 Pergunte à Lia", expanded=mostrar_resposta):
+    # Lia flutuante (autor, 23/10/2026): o rosto dela fica fixo no canto de baixo à direita, sempre visível e SEMPRE fechado;
+    # a pessoa aperta e abre a janelinha do chat. Só este bloco (e o CSS de lia_flutuante) cuida disso: para mudar o
+    # sistema um dia, basta tirar o container; sem o CSS o popover vira um botão comum e o chat continua funcionando.
+    _css_lia_flutuante(atual.expressao if mostrar_resposta else "acolhedora")
+    with st.container(key="lia_flutuante"), st.popover("Pergunte à Lia"):
         c_rosto, c_caixa = st.columns([0.9, 8], vertical_alignment="top")
         with c_rosto:   # a figura da Lia, pequena, num cantinho
             st.markdown(rosto(atual.expressao if mostrar_resposta else "acolhedora", 72), unsafe_allow_html=True)
         with c_caixa:
             st.markdown('<div class="lia-nome">Pergunte à Lia <span>· pesquisadora do MISM2</span></div>', unsafe_allow_html=True)
             with st.form("caixa_ap_form", clear_on_submit=True):
-                f1, f2 = st.columns([5, 1.2])
+                f1, f2 = st.columns([3, 2])
                 f1.text_input("Pergunte à Lia", key="caixa_ap_texto", max_chars=300, label_visibility="collapsed",
                               placeholder="Ex.: onde faço mamografia pelo SUS?")
                 f2.form_submit_button("Perguntar", key="caixa_ap_enviar", on_click=enviar_pergunta, width="stretch")

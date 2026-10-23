@@ -91,8 +91,8 @@ at = abrir()
 botao(at, "apoio_ajuda_botao").click().run()
 checar("A. entrada 'Preciso de ajuda' (destaque)", not erros(at) and at.session_state["ap_caminho"] == "ajuda"
        and at.session_state["ap_aba"] == apoio.LAMINAS["caminho"])
-checar("A. a Lia começa recolhida: a caixa 'Pergunte à Lia' está num bloco fechado",
-       any("Pergunte à Lia" in e.label and not e.proto.expanded for e in at.expander))
+checar("A. a Lia é um botão flutuante fechado: a caixa 'Pergunte à Lia' mora num popover",
+       len(at.get("popover")) >= 1)
 checar("A. Lia só na caixa: clicar numa opção da página não abre balão nem botões da árvore", not botoes_lia(at))
 checar("A. 'Não sei' deixa as seis etapas sem nenhuma presumida", at.session_state["ap_etapa"] is None)
 
