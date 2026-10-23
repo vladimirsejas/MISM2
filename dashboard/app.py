@@ -355,7 +355,7 @@ def leitura(titulo, frases):
 def estilizar(fig, altura):
     fig.update_layout(
         height=altura,
-        font={"family": "DM Sans, sans-serif", "size": 13, "color": TINTA},
+        font={"family": "DM Sans, sans-serif", "size": 14, "color": TINTA},
         paper_bgcolor="#ffffff",
         plot_bgcolor="#ffffff",
         margin={"l": 10, "r": 30, "t": 16, "b": 10},
@@ -395,7 +395,7 @@ resumo = resumo_doencas(serie) if not serie.empty else pd.DataFrame()
 
 with col_titulo:
     st.markdown(f'<div class="mism-marca"><div class="escudo-marca">MISM2'
-                f'<span> · observatório da saúde da mulher</span></div></div>', unsafe_allow_html=True)
+                f'<span> · saúde da mulher</span></div></div>', unsafe_allow_html=True)
     st.markdown(f'<div class="escudo-titulo">Câncer em mulheres de <em>{html.escape(nome_cidade)}</em></div>',
                 unsafe_allow_html=True)
     if not resumo.empty:
@@ -725,14 +725,14 @@ def desenhar_lia():
     recolhida = bool(st.session_state.get("lia_recolhida")) and not boas_vindas_aberta
     if recolhida:  # faixa fina: a Lia continua à vista, mas os dados sobem
         c_rosto, c_fala, c_abrir = st.columns([0.5, 6, 1.6], vertical_alignment="center")
-        c_rosto.markdown(rosto(atual.expressao, 56), unsafe_allow_html=True)
+        c_rosto.markdown(rosto(atual.expressao, 68), unsafe_allow_html=True)
         c_fala.markdown('<div class="lia-nome">Lia <span>· pergunte ou escolha um caminho quando quiser</span></div>',
                         unsafe_allow_html=True)
         c_abrir.button("Abrir a Lia", key="caixa_lia_abrir", on_click=definir, args=("lia_recolhida", False), width="stretch")
         return
-    c_rosto, c_fala = st.columns([1, 4.6] if boas_vindas_aberta else [0.55, 6])
+    c_rosto, c_fala = st.columns([1.3, 4.6] if boas_vindas_aberta else [1.0, 6])
     with c_rosto:
-        st.markdown(rosto("acolhedora" if boas_vindas_aberta else atual.expressao, 150 if boas_vindas_aberta else 84),
+        st.markdown(rosto("acolhedora" if boas_vindas_aberta else atual.expressao, 210 if boas_vindas_aberta else 140),
                     unsafe_allow_html=True)
     with c_fala:
         with balao("centro"):

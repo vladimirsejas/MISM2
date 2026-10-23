@@ -9,7 +9,7 @@ import math
 def simbolo(tamanho=46):
     """O símbolo do MISM2: um anel de 12 pontos (os meses do ano) com 2 vazios (meses que o
     DATASUS não ofereceu) em volta de uma linha de tendência. É o mesmo desenho da régua de
-    cobertura: a limitação da fonte virou a marca do observatório."""
+    cobertura: a limitação da fonte virou a marca do painel."""
     pontos = []
     for m in range(12):
         ang = -math.pi / 2 + m * 2 * math.pi / 12

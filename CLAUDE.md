@@ -647,6 +647,12 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   recebe casos mais graves), e um número de óbito ao lado do nome do hospital seria lido como nota. A redundância que sobra na aba é a tabela "Quais hospitais de SP mais atendem..." (os 10 maiores),
   que é a tabela completa somada por hospital; deixada como está. Testes: `teste_hospital.py` (período) e o cenário H de `teste_painel.py`.
 
+- **Palavra extinta (autor, 23/10/2026: "nós combinamos que não existe observatório; essa palavra foi extinta").** O Escudo/MISM2 não se chama nem se descreve como "observatório" em texto
+  visível, documento ou comentário. O cabeçalho do painel agora diz "MISM2 · saúde da mulher". Se aparecer de novo (por exemplo em texto gerado), troque por "painel" ou "saúde da mulher".
+- **Telas grandes (autor, 23/10/2026: "as laterais estão vazias; o texto e a Lia poderiam ser maiores; ela é a estrela").** Só a partir de 900 px de largura (`@media (min-width: 900px)` no fim do CSS de
+  `dashboard/estilo.py`; o celular não muda): página até 1560 px, texto 10% maior (`html { font-size: 110% }`), Lia maior (rosto 210 px nas boas-vindas e 140 px nas respostas, com contorno claro e sombra),
+  nome e fala dela maiores. O mesmo CSS vale para o painel, o Apoio e as outras páginas. O gráfico do Plotly passou de fonte 13 para 14.
+
 ## Notas de contexto do domínio
 
 - Banco de dados: `banco/escudo_feminino.db` (SQLite). O caminho é

@@ -134,7 +134,7 @@ div[data-testid="stRadio"]:has(input[value="Panorama"]) label:has(input:checked)
 [class*="st-key-botao_inicio"] button:hover { background: #2a78d6; color: #ffffff; }
 [class*="st-key-botao_inicio"] button p { font-weight: 700; }
 
-/* ---- Identidade do observatório (só aparência; widgets e chaves não mudam) ---- */
+/* ---- Identidade do painel (só aparência; widgets e chaves não mudam) ---- */
 .stApp { background: #faf6f2; }
 h1, h2, h3, .escudo-pergunta { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; color: #2a1730; letter-spacing: -.01em; }
 .escudo-pergunta { font-size: 1.5rem; border-bottom: 1px solid #2a1730; padding-bottom: 6px; }
@@ -213,6 +213,19 @@ section[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], [da
     [class*="st-key-botao_apoio"][data-testid="stVerticalBlock"] > div { flex: 1 1 42%; min-width: 42%; }
     [class*="st-key-botao_apoio"] a { padding: 6px 8px; }
     [class*="st-key-botao_apoio"] a p { font-size: .9rem !important; }
+}
+
+/* ---- Telas grandes (autor, 23/10/2026: "as laterais estão vazias, o texto e a Lia poderiam ser maiores; ela é a estrela") ----
+   Só a partir de 900 px: o celular segue como está. Página mais larga, texto 10% maior e a Lia com mais presença. */
+@media (min-width: 900px) {
+    html { font-size: 110%; }
+    .block-container { max-width: 1560px; padding-top: 4rem; padding-left: 2.5rem; padding-right: 2.5rem; }
+    .lia-nome { font-size: 1.55rem; }
+    .lia-nome span { font-size: 1.05rem; }
+    .lia-fala-grande { font-size: 1.3rem; line-height: 1.5; }
+    [class*="st-key-lia_balao"] p { font-size: 1.1rem; }
+    [class*="st-key-lia_balao"] .stButton button p { font-size: 1.02rem; }
+    .lia-rosto img { border: 4px solid #ffffff; box-shadow: 0 10px 28px rgba(91, 42, 85, 0.28); }
 }
 </style>
 """
