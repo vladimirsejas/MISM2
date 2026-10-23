@@ -751,8 +751,8 @@ def desenhar_resposta_da_lia(atual):
         if getattr(atual, "selo", None):
             st.caption(atual.selo)
         if atual.numeros:
-            with st.expander("Onde a Lia conferiu"):
-                st.markdown("\n".join(f"- {n}" for n in atual.numeros))
+            st.caption("Onde a Lia conferiu:")
+            st.markdown("\n".join(f"- {n}" for n in atual.numeros))
         proximos = [(r, a) for r, a in atual.botoes if a is not INICIO and a.get("tipo") != "inicio"]
         colunas = st.columns(3)
         for n, (rotulo, acao) in enumerate(proximos):
@@ -770,45 +770,47 @@ def desenhar_lia_apoio():
     if boas_vindas_aberta:
         desenhar_boas_vindas()
     mostrar_resposta = getattr(atual, "da_caixa", False) and not boas_vindas_aberta
-    c_rosto, c_caixa = st.columns([0.9, 8], vertical_alignment="top")
-    with c_rosto:   # a figura da Lia, pequena, num cantinho
-        st.markdown(rosto(atual.expressao if mostrar_resposta else "acolhedora", 72), unsafe_allow_html=True)
-    with c_caixa:
-        st.markdown('<div class="lia-nome">Pergunte à Lia <span>· pesquisadora do MISM2</span></div>', unsafe_allow_html=True)
-        with st.form("caixa_ap_form", clear_on_submit=True):
-            f1, f2 = st.columns([5, 1.2])
-            f1.text_input("Pergunte à Lia", key="caixa_ap_texto", max_chars=300, label_visibility="collapsed",
-                          placeholder="Ex.: onde faço mamografia pelo SUS?")
-            f2.form_submit_button("Perguntar", key="caixa_ap_enviar", on_click=enviar_pergunta, width="stretch")
-        st.caption("Não sabe o que perguntar? Escreva: **o que você sabe responder?**")
-        if mostrar_resposta:
-            desenhar_resposta_da_lia(atual)
-        gemini_disponivel = apoio_busca.obter_classificador()
-        if gemini_disponivel:
-            st.toggle("Permitir que o Google Gemini ajude a identificar o assunto", key="caixa_ap_gemini_ativo",
-                      help="Opcional e desligado por padrão. A resposta continua sendo escrita pelo guia oficial.")
-            if st.session_state.get("caixa_ap_ia", 0) >= LIMITE_PERGUNTAS_COM_IA:
-                st.info("Limite de 40 classificações Gemini nesta sessão atingido. A busca local no guia continua disponível.")
+    # Recolhida por padrão (autor, 23/10/2026): a Lia só abre quando a pessoa abre, ou quando há uma resposta a mostrar.
+    with st.expander("💬 Pergunte à Lia", expanded=mostrar_resposta):
+        c_rosto, c_caixa = st.columns([0.9, 8], vertical_alignment="top")
+        with c_rosto:   # a figura da Lia, pequena, num cantinho
+            st.markdown(rosto(atual.expressao if mostrar_resposta else "acolhedora", 72), unsafe_allow_html=True)
+        with c_caixa:
+            st.markdown('<div class="lia-nome">Pergunte à Lia <span>· pesquisadora do MISM2</span></div>', unsafe_allow_html=True)
+            with st.form("caixa_ap_form", clear_on_submit=True):
+                f1, f2 = st.columns([5, 1.2])
+                f1.text_input("Pergunte à Lia", key="caixa_ap_texto", max_chars=300, label_visibility="collapsed",
+                              placeholder="Ex.: onde faço mamografia pelo SUS?")
+                f2.form_submit_button("Perguntar", key="caixa_ap_enviar", on_click=enviar_pergunta, width="stretch")
+            st.caption("Não sabe o que perguntar? Escreva: **o que você sabe responder?**")
+            if mostrar_resposta:
+                desenhar_resposta_da_lia(atual)
+            gemini_disponivel = apoio_busca.obter_classificador()
+            if gemini_disponivel:
+                st.toggle("Permitir que o Google Gemini ajude a identificar o assunto", key="caixa_ap_gemini_ativo",
+                          help="Opcional e desligado por padrão. A resposta continua sendo escrita pelo guia oficial.")
+                if st.session_state.get("caixa_ap_ia", 0) >= LIMITE_PERGUNTAS_COM_IA:
+                    st.info("Limite de 40 classificações Gemini nesta sessão atingido. A busca local no guia continua disponível.")
+                else:
+                    st.caption("Se ligado e a busca local precisar de ajuda, o texto da pergunta vai ao Google Gemini "
+                               "somente para escolher o assunto. A IA não escreve a resposta. Não envie nomes, telefones "
+                               "ou outros dados pessoais.")
             else:
-                st.caption("Se ligado e a busca local precisar de ajuda, o texto da pergunta vai ao Google Gemini "
-                           "somente para escolher o assunto. A IA não escreve a resposta. Não envie nomes, telefones "
-                           "ou outros dados pessoais.")
-        else:
-            st.caption("Busca no guia; o Gemini está indisponível nesta sessão. A resposta vem do catálogo conferido.")
-        with st.expander("Assuntos: ver todos"):
-            for titulo, assuntos in assuntos_do_guia():
-                st.markdown(f"**{titulo}**")
-                for assunto in assuntos:
-                    st.button(assunto["rotulo"], key=f"assunto_{assunto['tipo']}_{assunto['id']}",
-                              on_click=mostrar_assunto, args=(assunto["pergunta"], assunto["acao"]), width="stretch")
-                if titulo == "Proteção":
-                    st.button("Estou em perigo agora", key="assunto_urgencia_agora", on_click=mostrar_assunto,
-                              args=("meu marido me bate", None), width="stretch")
-        st.caption("Não escreva dados pessoais. Esta página não guarda as perguntas. "
-                   + ("Com o Gemini desligado, a busca é feita localmente no guia."
-                      if not st.session_state.get("caixa_ap_gemini_ativo", False)
-                      else "Com o Gemini ligado, se a busca local precisar de ajuda, a pergunta vai ao Google "
-                           "apenas para classificar o assunto."))
+                st.caption("Busca no guia; o Gemini está indisponível nesta sessão. A resposta vem do catálogo conferido.")
+            with st.popover("Assuntos: ver todos"):   # popover: o Streamlit não aceita expander dentro de expander
+                for titulo, assuntos in assuntos_do_guia():
+                    st.markdown(f"**{titulo}**")
+                    for assunto in assuntos:
+                        st.button(assunto["rotulo"], key=f"assunto_{assunto['tipo']}_{assunto['id']}",
+                                  on_click=mostrar_assunto, args=(assunto["pergunta"], assunto["acao"]), width="stretch")
+                    if titulo == "Proteção":
+                        st.button("Estou em perigo agora", key="assunto_urgencia_agora", on_click=mostrar_assunto,
+                                  args=("meu marido me bate", None), width="stretch")
+            st.caption("Não escreva dados pessoais. Esta página não guarda as perguntas. "
+                       + ("Com o Gemini desligado, a busca é feita localmente no guia."
+                          if not st.session_state.get("caixa_ap_gemini_ativo", False)
+                          else "Com o Gemini ligado, se a busca local precisar de ajuda, a pergunta vai ao Google "
+                               "apenas para classificar o assunto."))
 
 
 desenhar_lia_apoio()
