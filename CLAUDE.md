@@ -662,5 +662,18 @@ Fluxo: pergunta -> `entendimento.py` (qual assunto, qual câncer) -> `assistente
   scripts de `etl/` calculam o mesmo caminho. O banco e a pasta `dados\`
   não vão para o GitHub: ao mudar o projeto de pasta, levar `banco\` e
   `dados\` junto (ou rodar a carga de novo).
+- **Dados em Parquet / site único (27/10/2026, autor e grupo):** o MISM2 roda também dentro do site único
+  (`MISM-Saude-da-Mulher/MISM`: abas MAPA do MISM 1 e CENTRAL DE INFORMAÇÕES deste painel). `algoritimos/fonte_parquet.py`
+  monta o SQLite a partir de `<site>/dados_parquet/mism2` num cache (`.cache_mism/`) e `configuracao_geografica.BANCO` aponta para ele
+  (`ESCUDO_BANCO_SQLITE` força um `.db`); **sem a pasta `dados_parquet`, nada muda: vale `banco\escudo_feminino.db`** (quem usa só `C:\MISM2`
+  continua como sempre). O banco legado **nunca é lido nem alterado** pelo caminho do Parquet. `unidades_saude.py` lê o CNES do CSV ou,
+  se só houver o Parquet, de `dados_parquet/cnes` (`_ler_csv`, `_existe`). Na hospedagem, `garantir_dados()` baixa os arquivos de um
+  dataset privado do Hugging Face (`MISM_DATASET`, `HF_TOKEN`). **Depois de qualquer carga nova no banco, rodar
+  `py etl\exportar_banco_parquet.py`** (perguntas_usuarios sai só com o esquema), senão o site lê o Parquet antigo. Os testes que montam
+  CNES sintético usam `ESCUDO_PARQUET_PASTA` apontando para uma pasta inexistente. **Memória:** `inteligencia._compactar_tratamento`
+  (categorias no pandas >= 3, inteiros menores, nunca altera valores) e a leitura em pedaços de `carregar_tratamento` reduziram o painel de
+  ~790 para ~295 MB em repouso; `resumo_tratamento` foi conferido (328 combinações idênticas). `teste_painel.py` completo precisa de
+  >2 GB de RAM livre; no notebook do autor (7,4 GB) rodar com poucos programas abertos ou por cenário. As falhas dos cenários F (números dos dados
+  reais) e I (o `.env` tem GEMINI_API_KEY) do teste são do ambiente, não do código.
 - `pysus` só funciona no Python 3.12 do autor (`py -3.12`); o `py`
   padrão dele é 3.14.

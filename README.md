@@ -48,6 +48,26 @@ No PowerShell, arquivo com espaço no nome se chama assim:
 
 ---
 
+## Dados em Parquet e site unificado (27/10/2026)
+
+O MISM2 também roda dentro do **site único do grupo** (repositório `MISM-Saude-da-Mulher/MISM`, com as abas MAPA, do MISM 1, e
+CENTRAL DE INFORMAÇÕES, que é este painel). Nesse site os dados vêm do Parquet, sem guardar o banco no projeto:
+
+- **Banco:** as tabelas do painel ficam em `dados_parquet/mism2/` (uma por arquivo, mais `esquema.sql`), na pasta do site, ao lado do `MISM2`.
+  Quando essa pasta existe, `algoritimos/fonte_parquet.py` monta o SQLite num cache local (`.cache_mism/`, uns 10 s, refeito sozinho se o Parquet
+  mudar) e `configuracao_geografica.BANCO` aponta para ele. As consultas SQL do painel não mudaram.
+  **Sem a pasta `dados_parquet`, tudo funciona como sempre: lê `banco\escudo_feminino.db`** (é o caso de quem usa só a pasta do MISM2).
+  `ESCUDO_BANCO_SQLITE=<caminho>` força um `.db` específico.
+- **CNES (Onde ser atendida):** `unidades_saude.py` usa o CSV de `banco\cnes` se ele existir; senão, as tabelas em `dados_parquet/cnes/`. O resultado é o mesmo.
+- **Hospedagem:** sem `dados_parquet` no servidor, `fonte_parquet.garantir_dados()` baixa os arquivos de um dataset privado do Hugging Face
+  (variáveis `MISM_DATASET` e `HF_TOKEN`). Passo a passo no `HOSPEDAR.md` do repositório do site.
+- **Atualizar o Parquet:** depois de uma carga nova no banco (`etl\carga_todas_bases.py` etc.), rode `py etl\exportar_banco_parquet.py`.
+  Sem isso, o site continua lendo o Parquet antigo. A tabela `perguntas_usuarios` é exportada só com o esquema (sem linhas).
+- **Memória:** `inteligencia.carregar_tratamento` lê `oncologia_ambulatorial` em pedaços e compacta os tipos (`_compactar_tratamento`; resultados idênticos,
+  painel de ~790 para ~295 MB em repouso).
+
+---
+
 ## Como montar o banco do zero
 
 O painel lê direto a tabela `internacoes`; não há mais cadeia de
@@ -242,7 +262,8 @@ dados_geograficos/ → catálogo conferido de serviços de Rio Claro e a lista d
                  habilitados em oncologia (Ministério da Saúde); o arquivo com as posições
                  (hospitais_oncologia_br_geo.csv) é gerado no computador de quem usa
 docs/          → LIA.md, IA_DO_ESCUDO.md, FONTE_DOS_DADOS.md, INTEGRACAO_GEOGRAFICA.md, INVENTARIO_DO_CODIGO.md
-banco/         → escudo_feminino.db (não versionado)
+banco/         → escudo_feminino.db (não versionado; no site único, o painel monta o seu banco do Parquet)
+etl/exportar_banco_parquet.py e algoritimos/fonte_parquet.py → ponte entre o banco e o Parquet (ver "Dados em Parquet")
 ```
 
 O que saiu na limpeza de 09/2026 (cadeia das 13 tabelas, chat de
