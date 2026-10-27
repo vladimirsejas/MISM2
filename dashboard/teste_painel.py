@@ -241,7 +241,7 @@ def main():
     try:
         at.run()  # banco não mudou: continua o cache (os 7)
         igual = list(next(r for r in at.radio if r.label == "Câncer em foco").options) == antes
-        banco_app = os.path.join(RAIZ, "banco", "escudo_feminino.db")
+        banco_app = configuracao_geografica.BANCO  # o banco que o painel de fato abre (o do Parquet ou o legado)
         if os.path.exists(banco_app):
             os.utime(banco_app, (time.time() + 60, time.time() + 60))  # "nova carga"
         at.run()

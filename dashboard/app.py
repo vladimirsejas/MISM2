@@ -520,11 +520,12 @@ if st.session_state.get("doenca") not in codigos:
 doenca = st.session_state["doenca"]
 nome = nome_doenca(doenca)
 
+tratamento_sia, obitos_sim = tabelas_ambulatorial_e_sim()  # uma leitura só do cache (cada uma cria uma cópia de ~200 MB)
 ctx_lia = Contexto(serie=serie, cidade=nome_cidade, faixas=faixas_municipio(ORIGEM),
                    duplicados=tuple(duplicados_municipio(ORIGEM)),
                    fluxo=fluxo_geral(), fluxo_cidade=fluxo_cidade(ORIGEM, cidade["codigo_ibge"]),
                    codigo_ibge=cidade["codigo_ibge"], ranking=rankings_por_100_mil(),
-                   tratamento=tabelas_ambulatorial_e_sim()[0], obitos_sim=tabelas_ambulatorial_e_sim()[1],
+                   tratamento=tratamento_sia, obitos_sim=obitos_sim,
                    localizacao=localizacao_dos_municipios(), atendimento=polos_de_tratamento(),
                    alcance=alcance_do_banco())
 st.session_state.setdefault("lia", {"cidade": None, "atual": None, "pilha": []})

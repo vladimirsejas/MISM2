@@ -2555,11 +2555,27 @@ def _sem_tabela(colunas):
     return pd.DataFrame(columns=colunas)
 
 
+def _compactar_tratamento(dados):
+    """Mesmos valores em menos memória (2 mi de linhas: ~193 MB -> ~27 MB). Os resultados de resumo_tratamento não mudam
+    (conferido contra a tabela inteira). Categorias só no pandas 3+: nas versões antigas o groupby de categoria devolve grupos vazios."""
+    try:
+        compacto = dados.astype({"ano": "int16", "mes": "int8", "apacs": "int32"})
+        if not all((compacto[c] == dados[c]).all() for c in ("ano", "mes", "apacs")):  # o numpy troca em silêncio o que não cabe
+            return dados
+        if int(pd.__version__.split(".")[0]) >= 3:
+            compacto = compacto.astype({c: "category" for c in ("modalidade", "codigo6", "tipo_cancer", "faixa", "estadiamento", "raca_cor")})
+        return compacto
+    except (ValueError, TypeError, OverflowError):  # valor que não cabe (ou nulo): fica a tabela como veio, nunca vazia
+        return dados
+
+
 def carregar_tratamento(conexao):
     """APACs de quimio e radio já agregadas (sem identificador). Vazio se o banco ainda não tem a tabela."""
     try:
-        return pd.read_sql("SELECT modalidade, ano, mes, substr(codigo_residencia, 1, 6) AS codigo6, tipo_cancer, faixa, estadiamento, "
-                           "raca_cor, apacs FROM oncologia_ambulatorial", conexao)
+        # Em pedaços: ler as 2 mi de linhas de uma vez passa de 1,2 GB de memória só para montar a tabela.
+        pedacos = pd.read_sql("SELECT modalidade, ano, mes, substr(codigo_residencia, 1, 6) AS codigo6, tipo_cancer, faixa, estadiamento, "
+                              "raca_cor, apacs FROM oncologia_ambulatorial", conexao, chunksize=200_000)
+        return _compactar_tratamento(pd.concat(pedacos, ignore_index=True))
     except Exception:
         return _sem_tabela(["modalidade", "ano", "mes", "codigo6", "tipo_cancer", "faixa", "estadiamento", "raca_cor", "apacs"])
 

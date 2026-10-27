@@ -6,6 +6,11 @@ from urllib.parse import quote_plus
 
 import pandas as pd
 
+try:
+    import fonte_parquet as _pq  # tabelas do CNES em dados_parquet/cnes, quando o CSV não está no computador
+except ImportError:
+    _pq = None
+
 # ============================================================
 # UNIDADES DE SAÚDE DA CIDADE (CNES) -- "Onde ser atendida" (10/2026)
 #
@@ -241,23 +246,46 @@ def classificar_natureza(codigo):
 
 # ---------- leitura do arquivo ----------
 
+def _so_parquet(caminho):
+    """True quando o CSV não existe aqui mas a tabela existe em Parquet."""
+    return _pq is not None and not os.path.isfile(caminho) and _pq.parquet_do_csv(caminho) is not None
+
+
+def _existe(caminho):
+    return os.path.isfile(caminho) or (_pq is not None and _pq.parquet_do_csv(caminho) is not None)
+
+
+def _ler_csv(caminho, **opcoes):
+    """pandas.read_csv; se só houver o Parquet da tabela, lê dele (mesmas opções usadas aqui)."""
+    if _so_parquet(caminho):
+        return _pq.ler(caminho, **opcoes)
+    return pd.read_csv(caminho, **opcoes)
+
+
 def achar_arquivo(pasta=PASTA_CNES):
     """tbEstabelecimento*.csv mais recente (o nome traz o ano e mês), ou None. Procura na pasta e,
     se não achar ali, nas subpastas (o pacote do CNES costuma abrir numa pasta como
     BASE_DE_DADOS_CNES_AAAAMM)."""
-    if not os.path.isdir(pasta):
-        return None
     achados = []
-    for raiz, subpastas, nomes in os.walk(pasta):
-        achados += [(n.lower(), os.path.join(raiz, n)) for n in nomes
-                    if n.lower().startswith("tbestabelecimento") and n.lower().endswith(".csv")]
-        if achados:  # o que está na própria pasta vale mais que o de subpastas
-            break
-    return sorted(achados)[-1][1] if achados else None
+    if os.path.isdir(pasta):
+        for raiz, subpastas, nomes in os.walk(pasta):
+            achados += [(n.lower(), os.path.join(raiz, n)) for n in nomes
+                        if n.lower().startswith("tbestabelecimento") and n.lower().endswith(".csv")]
+            if achados:  # o que está na própria pasta vale mais que o de subpastas
+                break
+    if achados:
+        return sorted(achados)[-1][1]
+    if _pq is not None and _pq.competencia_cnes():  # sem o CSV: o Parquet, com o nome que o CSV teria
+        virtual = os.path.join(pasta, f"tbEstabelecimento{_pq.competencia_cnes()}.csv")
+        if _pq.parquet_do_csv(virtual):
+            return virtual
+    return None
 
 
 def _codificacao(caminho):
     """utf-8 se a amostra for válida, senão latin-1 (o CNES costuma vir em latin-1)."""
+    if _so_parquet(caminho):
+        return "utf-8-sig"
     with open(caminho, "rb") as f:
         amostra = f.read(200_000)
     for corte in range(0, 4):  # a amostra pode cortar um caractere no meio
@@ -270,6 +298,8 @@ def _codificacao(caminho):
 
 
 def _separador(caminho, codificacao):
+    if _so_parquet(caminho):
+        return ";"
     with open(caminho, "r", encoding=codificacao, errors="replace", newline="") as f:
         amostra = f.read(20_000)
     primeira = amostra.splitlines()[0] if amostra else ""
@@ -301,7 +331,7 @@ def _colunas_por_nome(caminho):
     """Lê apenas o cabeçalho e devolve nomes de coluna comparáveis do arquivo CNES."""
     cod = _codificacao(caminho)
     sep = _separador(caminho, cod)
-    colunas = list(pd.read_csv(caminho, sep=sep, encoding=cod, dtype=str, nrows=0).columns)
+    colunas = list(_ler_csv(caminho, sep=sep, encoding=cod, dtype=str, nrows=0).columns)
     return sep, cod, {_chave(c): c for c in colunas}
 
 
@@ -324,7 +354,7 @@ def _servicos_cnes(caminho_estabelecimento, unidades, tamanho_pedaco=TAMANHO_PED
     relacao = os.path.join(pasta, f"rlEstabServClass{mes.group(1)}.csv")
     classificacoes = os.path.join(pasta, f"tbClassificacaoServico{mes.group(1)}.csv")
     servicos = os.path.join(pasta, f"tbServicoEspecializado{mes.group(1)}.csv")
-    if not all(os.path.isfile(p) for p in (relacao, classificacoes, servicos)):
+    if not all(_existe(p) for p in (relacao, classificacoes, servicos)):
         return {}, "Os arquivos de serviços do CNES do mesmo mês não estão disponíveis."
 
     try:
@@ -339,20 +369,20 @@ def _servicos_cnes(caminho_estabelecimento, unidades, tamanho_pedaco=TAMANHO_PED
         relation_cols = [cols_r[_chave(k)] for k in ("CO_UNIDADE", "CO_SERVICO", "CO_CLASSIFICACAO")]
         col_caracteristica = cols_r.get(_chave("TP_CARACTERISTICA"))  # arquivos antigos podem não ter: tudo conta como próprio
         usar_relacao = relation_cols + ([col_caracteristica] if col_caracteristica else [])
-        classes = pd.read_csv(classificacoes, sep=sep_c, encoding=cod_c, dtype=str, usecols=class_cols,
+        classes = _ler_csv(classificacoes, sep=sep_c, encoding=cod_c, dtype=str, usecols=class_cols,
                               keep_default_na=False, low_memory=False)
         nomes_classes = {
             (so_digitos(r[class_cols[0]]), so_digitos(r[class_cols[1]])): str(r[class_cols[2]]).strip()
             for _, r in classes.iterrows() if str(r[class_cols[2]]).strip()
         }
-        tabela_servicos = pd.read_csv(servicos, sep=sep_s, encoding=cod_s, dtype=str, usecols=service_cols,
+        tabela_servicos = _ler_csv(servicos, sep=sep_s, encoding=cod_s, dtype=str, usecols=service_cols,
                                       keep_default_na=False, low_memory=False)
         nomes_servicos = {
             so_digitos(r[service_cols[0]]): str(r[service_cols[1]]).strip()
             for _, r in tabela_servicos.iterrows() if str(r[service_cols[1]]).strip()
         }
         proprios, terceiros = {}, {}
-        for pedaco in pd.read_csv(relacao, sep=sep_r, encoding=cod_r, dtype=str, usecols=usar_relacao,
+        for pedaco in _ler_csv(relacao, sep=sep_r, encoding=cod_r, dtype=str, usecols=usar_relacao,
                                   chunksize=tamanho_pedaco, keep_default_na=False, low_memory=False):
             ids = pedaco[relation_cols[0]].map(so_digitos)
             pedaco = pedaco.loc[ids.isin(unidades)]
@@ -402,12 +432,12 @@ def _medicos_cnes(caminho_estabelecimento, unidades, tamanho_pedaco=TAMANHO_PEDA
     pasta = os.path.dirname(caminho_estabelecimento)
     carga = os.path.join(pasta, f"tbCargaHorariaSus{mes.group(1)}.csv")
     ocupacoes = os.path.join(pasta, f"tbAtividadeProfissional{mes.group(1)}.csv")
-    if not all(os.path.isfile(p) for p in (carga, ocupacoes)):
+    if not all(_existe(p) for p in (carga, ocupacoes)):
         return {}, "Os arquivos de profissionais do CNES do mesmo mês não estão disponíveis; só serviços e exames são buscados."
     try:
         sep_o, cod_o, cols_o = _colunas_por_nome(ocupacoes)
         col_cbo, col_nome = cols_o[_chave("CO_CBO")], cols_o[_chave("DS_ATIVIDADE_PROFISSIONAL")]
-        tabela = pd.read_csv(ocupacoes, sep=sep_o, encoding=cod_o, dtype=str, usecols=[col_cbo, col_nome],
+        tabela = _ler_csv(ocupacoes, sep=sep_o, encoding=cod_o, dtype=str, usecols=[col_cbo, col_nome],
                              keep_default_na=False)
         medicas = {str(r[col_cbo]).strip(): str(r[col_nome]).strip() for _, r in tabela.iterrows()
                    if _profissao_buscavel(r[col_nome])}
@@ -415,12 +445,12 @@ def _medicos_cnes(caminho_estabelecimento, unidades, tamanho_pedaco=TAMANHO_PEDA
         # a amostra de _codificacao (200 KB) não os vê. Só lemos códigos, então latin-1 (nunca falha) é seguro.
         cod_c = "latin-1"
         sep_c = _separador(carga, cod_c)
-        cols_c = {_chave(c): c for c in pd.read_csv(carga, sep=sep_c, encoding=cod_c, dtype=str, nrows=0).columns}
+        cols_c = {_chave(c): c for c in _ler_csv(carga, sep=sep_c, encoding=cod_c, dtype=str, nrows=0).columns}
         c_unidade, c_pessoa, c_cbo, c_horas = (cols_c[_chave(k)] for k in (
             "CO_UNIDADE", "CO_PROFISSIONAL_SUS", "CO_CBO", "QT_CARGA_HORARIA_AMBULATORIAL"))
         pessoas = {}      # (unidade, cbo) -> profissionais cadastrados; só na memória
         ambulatorio = {}  # (unidade, cbo) -> os que têm carga horária ambulatorial
-        for pedaco in pd.read_csv(carga, sep=sep_c, encoding=cod_c, dtype=str, usecols=[c_unidade, c_pessoa, c_cbo, c_horas],
+        for pedaco in _ler_csv(carga, sep=sep_c, encoding=cod_c, dtype=str, usecols=[c_unidade, c_pessoa, c_cbo, c_horas],
                                   chunksize=tamanho_pedaco, keep_default_na=False, low_memory=False):
             pedaco = pedaco.loc[pedaco[c_unidade].map(so_digitos).isin(unidades) & pedaco[c_cbo].str.strip().isin(medicas)]
             horas = pd.to_numeric(pedaco[c_horas].str.replace(",", ".", regex=False), errors="coerce").fillna(0)
@@ -451,7 +481,7 @@ def diagnosticar(pasta=PASTA_CNES):
     if caminho is None:
         return {"arquivo": None, "reconhecidas": {}, "ausentes": [], "colunas": []}
     cod = _codificacao(caminho)
-    colunas = list(pd.read_csv(caminho, sep=_separador(caminho, cod), encoding=cod, dtype=str, nrows=0).columns)
+    colunas = list(_ler_csv(caminho, sep=_separador(caminho, cod), encoding=cod, dtype=str, nrows=0).columns)
     achados = _mapear_colunas(colunas)
     return {"arquivo": os.path.basename(caminho), "reconhecidas": achados,
             "ausentes": [ROTULO_CAMPO[c] for c in ROTULO_CAMPO if c not in achados], "colunas": colunas}
@@ -469,7 +499,7 @@ def carregar_unidades(pasta=PASTA_CNES, codigo_ibge=CODIGO_IBGE_PADRAO, nome_cid
     cod = _codificacao(caminho)
     sep = _separador(caminho, cod)
     try:
-        colunas = list(pd.read_csv(caminho, sep=sep, encoding=cod, dtype=str, nrows=0).columns)
+        colunas = list(_ler_csv(caminho, sep=sep, encoding=cod, dtype=str, nrows=0).columns)
     except Exception as erro:
         return _vazio(f"Não consegui ler o cabeçalho de {os.path.basename(caminho)}: {erro}")
     achados = _mapear_colunas(colunas)
@@ -490,7 +520,7 @@ def carregar_unidades(pasta=PASTA_CNES, codigo_ibge=CODIGO_IBGE_PADRAO, nome_cid
     usar = list(dict.fromkeys(achados.values()))
     pedacos = []
     try:
-        for pedaco in pd.read_csv(caminho, sep=sep, encoding=cod, dtype=str, usecols=usar,
+        for pedaco in _ler_csv(caminho, sep=sep, encoding=cod, dtype=str, usecols=usar,
                                   chunksize=tamanho_pedaco, keep_default_na=False, low_memory=False):
             codigos = pedaco[achados[campo_municipio]].map(so_digitos).str[:6]
             pedacos.append(pedaco.loc[codigos == alvo])

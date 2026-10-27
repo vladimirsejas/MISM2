@@ -2,6 +2,9 @@ import os
 import sys
 import tempfile
 
+# O teste monta o próprio CNES sintético: sem o Parquet real (dados_parquet/cnes) para "sem arquivo" continuar valendo.
+os.environ["ESCUDO_PARQUET_PASTA"] = os.path.join(tempfile.gettempdir(), "sem_parquet_escudo")
+
 # =====================================
 # TESTE DE ACEITAÇÃO DA PÁGINA "ONDE SER ATENDIDA" (dashboard/pages/onde_ser_atendida.py)
 #
