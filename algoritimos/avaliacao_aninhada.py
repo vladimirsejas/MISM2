@@ -127,23 +127,43 @@ def analises_complementares(real: pd.DataFrame, saida: Path) -> None:
         nome = f"janela_{janela}"
         print(f"\nANÁLISES COMPLEMENTARES — {janela} ANOS")
 
-        # Bootstrap por série: cada reamostragem sorteia 7 séries com reposição.
+        # Bootstrap por série: a unidade reamostrada é cada tipo de câncer.
         for grupo, sub in serie.groupby("grupo"):
-            razoes = []
+            razoes_bootstrap = []
             for _ in range(10000):
                 amostra = sub.iloc[rng.integers(0, len(sub), len(sub))]
                 den = amostra["mae_ingenuo"].mean()
                 if den > 0:
-                    razoes.append(amostra["mae_escolhido"].mean() / den)
-            med = float(np.median(razoes))
-            li, ls = np.quantile(razoes, [0.025, 0.975])
-            print(f"Bootstrap {grupo} (7 séries): mediana={med:.4f}; IC95%=[{li:.4f}, {ls:.4f}]")
-        
+                    razoes_bootstrap.append(amostra["mae_escolhido"].mean() / den)
+            med_boot = float(np.median(razoes_bootstrap))
+            li, ls = np.quantile(razoes_bootstrap, [0.025, 0.975])
+            razoes_individuais = sub.assign(
+                razao_individual=sub["mae_escolhido"] /
+                sub["mae_ingenuo"].replace(0, np.nan)
+            )[["cancer", "razao_individual"]]
+            lista_razoes = [
+                f"{row.cancer}={row.razao_individual:.6g}"
+                for row in razoes_individuais.itertuples()
+            ]
+            mediana_individual = float(razoes_individuais["razao_individual"].median())
+            print(f"Bootstrap {grupo} ({len(sub)} séries): mediana razão das médias={med_boot:.4f}; "
+                  f"IC95%=[{li:.4f}, {ls:.4f}]")
+            print(f"Mediana das razões individuais={mediana_individual:.4f}; "
+                  f"razões por série: {', '.join(lista_razoes)}")
+
         # Subperíodos e porte da série, com resultados agregados e contagens.
-        r = r.merge(serie[["grupo", "cancer", "mae_escolhido"]].rename(
-            columns={"mae_escolhido": "media_serie"}), on=["grupo", "cancer"], how="left")
+        medias_anuais = (real.groupby(["grupo", "tipo_cancer"], as_index=False)
+                         ["internacoes"].mean()
+                         .rename(columns={"tipo_cancer": "cancer",
+                                          "internacoes": "media_anual_internacoes"}))
+        r = r.merge(medias_anuais, on=["grupo", "cancer"], how="left")
         r["subperiodo"] = np.where(r["ano_alvo"].between(2021, 2022), "2021-2022", "2023-2025")
-        r["porte_serie"] = np.where(r["media_serie"] < 20, "média abaixo de 20", "média igual/acima de 20")
+        r["porte_serie"] = np.select(
+            [r["media_anual_internacoes"] < 20,
+             r["media_anual_internacoes"] > 20],
+            ["média abaixo de 20", "média acima de 20"],
+            default="média exatamente 20"
+        )
         for dimensao in ("subperiodo", "porte_serie"):
             tab = r.groupby(["grupo", dimensao], as_index=False).agg(
                 n=("ano_alvo", "count"), mae_escolhido=("erro_escolhido", "mean"),
@@ -196,13 +216,22 @@ def analises_complementares(real: pd.DataFrame, saida: Path) -> None:
             x = sub.mae_ingenuo.clip(lower=eps)
             yv = sub.mae_escolhido.clip(lower=eps)
             limite = max(float(x.max()), float(yv.max()), eps) * 1.15
-            ax.scatter(x, yv)
+            marcadores = {"vitoria": "o", "empate": "s", "derrota": "^"}
+            rotulos = {"MUNICIPIO": "Rio Claro", "SP": "Estado de São Paulo (base em revisão)"}
+            for idx, row in sub.reset_index(drop=True).iterrows():
+                xv = max(float(row.mae_ingenuo), eps)
+                yplot = max(float(row.mae_escolhido), eps)
+                ax.scatter([xv], [yplot], marker=marcadores[row.resultado],
+                           label=row.resultado if row.resultado not in
+                           sub.iloc[:idx].resultado.values else None)
+                ax.annotate(str(row.cancer), (xv, yplot), xytext=(4, 4),
+                            textcoords="offset points", fontsize=8)
             ax.plot([eps, limite], [eps, limite], linestyle="--", label="Diagonal de igualdade")
             ax.set_xscale("log"); ax.set_yscale("log")
             ax.set_xlim(left=eps); ax.set_ylim(bottom=eps)
             ax.set_xlabel("MAE do método ingênuo")
             ax.set_ylabel("MAE do modelo escolhido")
-            ax.set_title(f"Erros por série — {grupo} — janela {janela} anos")
+            ax.set_title(f"Erros por série — {rotulos[grupo]} — janela {janela} anos")
             ax.legend()
             fig.tight_layout()
             base = figdir / f"{nome}_{grupo}_dispersao"
@@ -216,7 +245,7 @@ def analises_complementares(real: pd.DataFrame, saida: Path) -> None:
             ax.axhline(1, linestyle="--", label="Igualdade")
             ax.set_ylabel("Razão MAE escolhido / MAE ingênuo")
             ax.set_xlabel("Tipo de câncer")
-            ax.set_title(f"Razão dos erros por série — {grupo} — janela {janela} anos")
+            ax.set_title(f"Razão dos erros por série — {rotulos[grupo]} — janela {janela} anos")
             ax.tick_params(axis="x", rotation=35)
             ax.legend()
             fig.tight_layout()
@@ -224,6 +253,49 @@ def analises_complementares(real: pd.DataFrame, saida: Path) -> None:
             fig.savefig(base.with_suffix(".png"), dpi=300)
             fig.savefig(base.with_suffix(".svg"))
             plt.close(fig)
+
+
+
+def _markdown_tabela(tabela: pd.DataFrame) -> str:
+    if tabela.empty:
+        return "_Sem observações neste recorte._"
+    colunas = [str(c) for c in tabela.columns]
+    linhas = ["| " + " | ".join(colunas) + " |",
+              "| " + " | ".join(["---"] * len(colunas)) + " |"]
+    for _, row in tabela.iterrows():
+        valores = []
+        for valor in row.tolist():
+            if pd.isna(valor):
+                valores.append("")
+            elif isinstance(valor, (float, np.floating)):
+                valores.append(f"{valor:.4f}")
+            else:
+                valores.append(str(valor))
+        linhas.append("| " + " | ".join(valores) + " |")
+    return "\n".join(linhas)
+
+
+def gerar_documentacao_tabelas(saida: Path) -> Path:
+    partes = ["# Tabelas da avaliação aninhada", "",
+              "Gerado automaticamente por `algoritimos/avaliacao_aninhada.py`. "
+              "Os números são lidos dos CSVs produzidos na mesma execução.", ""]
+    for janela in (8, 10):
+        prefixo = f"janela_{janela}"
+        partes.extend([f"## Janela de {janela} anos", ""])
+        for sufixo, titulo in (
+            ("por_serie", "Resumo por série"),
+            ("subperiodo", "Resultados por subperíodo"),
+            ("porte_serie", "Estratos pela média anual de internações"),
+            ("modelos_fixos", "Frequência de seleção e erro dos modelos fixos"),
+        ):
+            arquivo = saida / f"{prefixo}_{sufixo}.csv"
+            if arquivo.exists():
+                partes.extend([f"### {titulo}", "",
+                               _markdown_tabela(pd.read_csv(arquivo)), ""])
+    destino = RAIZ / "docs" / "AVALIACAO_ANINHADA_TABELAS.md"
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    destino.write_text("\n".join(partes), encoding="utf-8")
+    return destino
 
 
 def executar(saida: Path | None = None) -> dict:
@@ -276,6 +348,7 @@ def executar(saida: Path | None = None) -> dict:
         }
 
     analises_complementares(real, saida)
+    arquivo_tabelas = gerar_documentacao_tabelas(saida)
 
     metadados = {
         "commit": commit_atual(),
@@ -300,6 +373,7 @@ def executar(saida: Path | None = None) -> dict:
             print(f"  {grupo}: MAE escolhido={g['mae_escolhido']:.2f}; "
                   f"ingênuo={g['mae_ingenuo']:.2f}; "
                   f"vitórias/empates/derrotas={g['vitorias']}/{g['empates']}/{g['derrotas']}")
+    print(f"Tabelas Markdown gravadas em: {arquivo_tabelas}")
     print(f"Arquivos gravados em: {saida}")
     return relatorio
 
