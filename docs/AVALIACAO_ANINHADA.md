@@ -29,10 +29,11 @@ python algoritimos\avaliacao_aninhada.py
 python -m pytest algoritimos\teste_avaliacao_aninhada.py -q
 ```
 
-O programa grava duas tabelas de projeções exploratórias de internações, duas tabelas resumidas por série e
-`metadados.json` em `analises/avaliacao_aninhada/`. Os metadados incluem o
-SHA-256 do CSV de entrada e o SHA do commit do checkout, quando executado em
-um clone Git.
+O programa grava os resultados CSV, as figuras e `metadados.json` em
+`analises/avaliacao_aninhada/`. Também gera `docs/AVALIACAO_ANINHADA_TABELAS.md`
+com as tabelas Markdown construídas a partir dos CSVs da execução. Os metadados
+incluem o SHA-256 do CSV de entrada e o SHA do commit do checkout, quando
+executado em um clone Git.
 
 ## Interpretação
 
@@ -80,3 +81,8 @@ O script gera, em `analises/avaliacao_aninhada/figuras/`, versões PNG
 erro por série. Valores nulos são representados por um pequeno limite positivo
 apenas para permitir a visualização em escala logarítmica; os valores originais
 permanecem nas tabelas.
+
+
+As tabelas calculadas na execução mais recente devem ser consultadas em
+[AVALIACAO_ANINHADA_TABELAS.md](AVALIACAO_ANINHADA_TABELAS.md). Esse arquivo é
+gerado pelo próprio script, não deve receber números digitados manualmente.
