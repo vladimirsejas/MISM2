@@ -93,7 +93,7 @@ jobs:
         run: python dashboard/teste_apoio_tela.py
       - name: Página Onde ser atendida (clica em tudo)
         run: python dashboard/teste_onde_atendida_tela.py
-      - name: Onde ser atendida (lógica: CNES + catálogo conferido)
+      - name: "Onde ser atendida (lógica: CNES + catálogo conferido)"
         working-directory: algoritimos
         run: python teste_onde_atendida.py
       - name: Caixa de busca de Onde ser atendida (frases reais, erro de digitação, exame x médico)
