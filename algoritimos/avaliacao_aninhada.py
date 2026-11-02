@@ -119,7 +119,7 @@ def analises_complementares(real: pd.DataFrame, saida: Path) -> None:
     figdir = saida / "figuras"
     figdir.mkdir(parents=True, exist_ok=True)
     rng = np.random.default_rng(20261102)
-    tabelas = []
+    bootstrap_linhas = []
 
     for janela in (8, 10):
         r = avaliar_janela(real, janela)
@@ -150,6 +150,16 @@ def analises_complementares(real: pd.DataFrame, saida: Path) -> None:
                   f"IC95%=[{li:.4f}, {ls:.4f}]")
             print(f"Mediana das razões individuais={mediana_individual:.4f}; "
                   f"razões por série: {', '.join(lista_razoes)}")
+            bootstrap_linhas.append({
+                "grupo": grupo, "n_series": len(sub),
+                "mediana_razao_das_medias": med_boot,
+                "ic95_inferior": float(li), "ic95_superior": float(ls),
+                "mediana_razoes_individuais": mediana_individual,
+                "razoes_individuais": "; ".join(lista_razoes),
+            })
+        pd.DataFrame(bootstrap_linhas).to_csv(
+            saida / f"{nome}_bootstrap.csv", index=False, float_format="%.10g"
+        )
 
         # Subperíodos e porte da série, com resultados agregados e contagens.
         medias_anuais = (real.groupby(["grupo", "tipo_cancer"], as_index=False)
@@ -284,6 +294,7 @@ def gerar_documentacao_tabelas(saida: Path) -> Path:
         partes.extend([f"## Janela de {janela} anos", ""])
         for sufixo, titulo in (
             ("por_serie", "Resumo por série"),
+            ("bootstrap", "Bootstrap e razões individuais por série"),
             ("subperiodo", "Resultados por subperíodo"),
             ("porte_serie", "Estratos pela média anual de internações"),
             ("modelos_fixos", "Frequência de seleção e erro dos modelos fixos"),
