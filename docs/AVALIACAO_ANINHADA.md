@@ -1,4 +1,4 @@
-# Protocolo de avaliação aninhada das previsões
+# Protocolo de avaliação aninhada das projeções exploratórias de internações
 
 ## Objetivo
 
@@ -15,7 +15,7 @@ Comparar, em avaliação temporal de um ano à frente, o modelo selecionado por
 - Métrica primária: erro absoluto; MAE é resumido por território e série.
 - Rio Claro (`MUNICIPIO`) e Estado de São Paulo (`SP`) são apresentados
   separadamente.
-- Empates por previsão: diferença absoluta de erro até 1e-9.
+- Empates por projeção exploratória de internações: diferença absoluta de erro até 1e-9.
 - Na análise pareada por série, os erros anuais são primeiro resumidos por
   série. O teste exato de sinais exclui séries empatadas e informa quantos
   pares efetivamente entraram no teste.
@@ -29,7 +29,7 @@ python algoritimos\avaliacao_aninhada.py
 python -m pytest algoritimos\teste_avaliacao_aninhada.py -q
 ```
 
-O programa grava duas tabelas de previsões, duas tabelas resumidas por série e
+O programa grava duas tabelas de projeções exploratórias de internações, duas tabelas resumidas por série e
 `metadados.json` em `analises/avaliacao_aninhada/`. Os metadados incluem o
 SHA-256 do CSV de entrada e o SHA do commit do checkout, quando executado em
 um clone Git.
@@ -41,7 +41,7 @@ de treinamento declarado no código do projeto. A janela de dez anos é uma
 análise de sensibilidade. Como ambas foram examinadas antes da formalização
 deste protocolo, essa escolha deve ser relatada no artigo.
 
-As previsões de anos consecutivos dentro de uma mesma série são dependentes.
+As projeções exploratórias de internações de anos consecutivos dentro de uma mesma série são dependentes.
 Por isso, os anos não são tratados como unidades independentes no teste de
 sinais: primeiro se calcula uma diferença média por série. O teste é
 exploratório, pois há apenas 14 séries (sete cânceres em dois territórios).
@@ -56,7 +56,27 @@ valida a correção dessa hipótese.
 ## Limites
 
 O teste de invariância ao futuro verifica que modificar os valores do ano-alvo
-e dos anos seguintes não altera seleção ou previsão, para os cortes cobertos
+e dos anos seguintes não altera seleção ou projeção exploratória de internações, para os cortes cobertos
 pela base. Ele não comprova que a base histórica esteja correta, que o ajuste
 de meses seja não enviesado, nem que o modelo generalize para outros períodos,
 territórios ou populações.
+
+## Resultados gerados
+
+A execução do script produz as tabelas em CSV no diretório
+`analises/avaliacao_aninhada/`: erros por corte, resumo por série,
+resultados por subperíodo, estratos por média anual e comparação dos modelos
+fixos. Os valores devem ser transcritos para as tabelas do manuscrito a partir
+dos arquivos gerados pela mesma execução, preservando os metadados e o hash da
+base. Não se incluem aqui números não verificados por uma execução reproduzível.
+
+Os resultados referentes ao Estado de São Paulo são provisórios, pois a base
+estadual utilizada está em revisão.
+
+## Figuras
+
+O script gera, em `analises/avaliacao_aninhada/figuras/`, versões PNG
+(300 dpi) e SVG das dispersões logarítmicas por território e das razões de
+erro por série. Valores nulos são representados por um pequeno limite positivo
+apenas para permitir a visualização em escala logarítmica; os valores originais
+permanecem nas tabelas.
