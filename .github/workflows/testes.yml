@@ -51,6 +51,11 @@ jobs:
       - name: Previsão com validação (backtest, comparação com repetir o último ano)
         working-directory: algoritimos
         run: python teste_previsao.py
+      - name: Avaliação aninhada e teste de vazamento temporal
+        working-directory: algoritimos
+        run: |
+          pip install pytest
+          python -m pytest teste_avaliacao_aninhada.py -q
       - name: Entendimento da pergunta (gabarito em 3 conjuntos x caixa antiga)
         working-directory: algoritimos
         run: python teste_entendimento.py
