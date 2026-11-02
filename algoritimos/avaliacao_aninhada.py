@@ -109,6 +109,123 @@ def teste_sinais_pareado(serie: pd.DataFrame) -> dict:
             "p_bilateral_exato": p}
 
 
+
+def analises_complementares(real: pd.DataFrame, saida: Path) -> None:
+    """Gera tabelas descritivas, bootstrap por série e figuras solicitadas."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    figdir = saida / "figuras"
+    figdir.mkdir(parents=True, exist_ok=True)
+    rng = np.random.default_rng(20261102)
+    tabelas = []
+
+    for janela in (8, 10):
+        r = avaliar_janela(real, janela)
+        serie = resumo_por_serie(r)
+        nome = f"janela_{janela}"
+        print(f"\\nANÁLISES COMPLEMENTARES — {janela} ANOS")
+
+        # Bootstrap por série: cada reamostragem sorteia 7 séries com reposição.
+        for grupo, sub in serie.groupby("grupo"):
+            razoes = []
+            for _ in range(10000):
+                amostra = sub.iloc[rng.integers(0, len(sub), len(sub))]
+                den = amostra["mae_ingenuo"].mean()
+                if den > 0:
+                    razoes.append(amostra["mae_escolhido"].mean() / den)
+            med = float(np.median(razoes))
+            li, ls = np.quantile(razoes, [0.025, 0.975])
+            print(f"Bootstrap {grupo} (7 séries): mediana={med:.4f}; IC95%=[{li:.4f}, {ls:.4f}]")
+        
+        # Subperíodos e porte da série, com resultados agregados e contagens.
+        r = r.merge(serie[["grupo", "cancer", "mae_escolhido"]].rename(
+            columns={"mae_escolhido": "media_serie"}), on=["grupo", "cancer"], how="left")
+        r["subperiodo"] = np.where(r["ano_alvo"].between(2021, 2022), "2021-2022", "2023-2025")
+        r["porte_serie"] = np.where(r["media_serie"] < 20, "média abaixo de 20", "média igual/acima de 20")
+        for dimensao in ("subperiodo", "porte_serie"):
+            tab = r.groupby(["grupo", dimensao], as_index=False).agg(
+                n=("ano_alvo", "count"), mae_escolhido=("erro_escolhido", "mean"),
+                mae_ingenuo=("erro_ingenuo", "mean"))
+            print(f"\\n{dimensao}:")
+            print(tab.to_string(index=False))
+            tab.insert(0, "janela", janela)
+            tab.to_csv(saida / f"{nome}_{dimensao}.csv", index=False)
+
+        # Frequência de seleção e erro de cada modelo fixo nas mesmas origens.
+        fixas = []
+        for grupo in sorted(real.grupo.dropna().unique()):
+            for cancer in sorted(real.tipo_cancer.dropna().unique()):
+                d = real[(real.grupo == grupo) & (real.tipo_cancer == cancer)].sort_values("ano")
+                anos = d.ano.astype(int).to_numpy()
+                y = d.internacoes.to_numpy(float)
+                for corte in range(janela, len(y)):
+                    passado_anos, passado_y = anos[:corte], y[:corte]
+                    escolhido = ti.prever_com_validacao(
+                        pd.DataFrame({"ano": passado_anos, "internacoes": passado_y}), horizonte=1)
+                    if escolhido is None:
+                        continue
+                    alvo = float(y[corte])
+                    linha = {"grupo": grupo, "cancer": cancer, "ano_alvo": int(anos[corte]),
+                             "modelo_escolhido": escolhido["modelo"]}
+                    for modelo, func in ti._PREVISORES.items():
+                        previsto = float(np.clip(func(passado_anos, passado_y, 1)[0], 0, None))
+                        linha[f"erro_{modelo}"] = abs(alvo - previsto)
+                    fixas.append(linha)
+        fd = pd.DataFrame(fixas)
+        linhas = []
+        for grupo, sub in fd.groupby("grupo"):
+            for modelo in ti.MODELOS_PREVISAO:
+                linhas.append({"grupo": grupo, "modelo": modelo,
+                               "vezes_escolhido": int((sub.modelo_escolhido == modelo).sum()),
+                               "mae_modelo_fixo": float(sub[f"erro_{modelo}"].mean()),
+                               "n": len(sub)})
+        fm = pd.DataFrame(linhas)
+        print("\\nModelos escolhidos e erros dos modelos fixos:")
+        print(fm.to_string(index=False))
+        fm.to_csv(saida / f"{nome}_modelos_fixos.csv", index=False)
+
+        # Gráficos por território: dispersão log-log e razão por série.
+        ss = resumo_por_serie(avaliar_janela(real, janela))
+        for grupo, sub in ss.groupby("grupo"):
+            fig, ax = plt.subplots(figsize=(7, 6))
+            positivos = np.r_[sub.mae_escolhido[sub.mae_escolhido > 0],
+                              sub.mae_ingenuo[sub.mae_ingenuo > 0]]
+            eps = max(float(positivos.min()) * 0.5, 1e-6) if len(positivos) else 1e-6
+            x = sub.mae_ingenuo.clip(lower=eps)
+            yv = sub.mae_escolhido.clip(lower=eps)
+            limite = max(float(x.max()), float(yv.max()), eps) * 1.15
+            ax.scatter(x, yv)
+            ax.plot([eps, limite], [eps, limite], linestyle="--", label="Diagonal de igualdade")
+            ax.set_xscale("log"); ax.set_yscale("log")
+            ax.set_xlim(left=eps); ax.set_ylim(bottom=eps)
+            ax.set_xlabel("MAE do método ingênuo")
+            ax.set_ylabel("MAE do modelo escolhido")
+            ax.set_title(f"Erros por série — {grupo} — janela {janela} anos")
+            ax.legend()
+            fig.tight_layout()
+            base = figdir / f"{nome}_{grupo}_dispersao"
+            fig.savefig(base.with_suffix(".png"), dpi=300)
+            fig.savefig(base.with_suffix(".svg"))
+            plt.close(fig)
+
+            ordem = sub.assign(razao=sub.mae_escolhido / sub.mae_ingenuo.replace(0, np.nan)).sort_values("razao")
+            fig, ax = plt.subplots(figsize=(8, 5))
+            ax.bar(ordem.cancer, ordem.razao)
+            ax.axhline(1, linestyle="--", label="Igualdade")
+            ax.set_ylabel("Razão MAE escolhido / MAE ingênuo")
+            ax.set_xlabel("Tipo de câncer")
+            ax.set_title(f"Razão dos erros por série — {grupo} — janela {janela} anos")
+            ax.tick_params(axis="x", rotation=35)
+            ax.legend()
+            fig.tight_layout()
+            base = figdir / f"{nome}_{grupo}_razao"
+            fig.savefig(base.with_suffix(".png"), dpi=300)
+            fig.savefig(base.with_suffix(".svg"))
+            plt.close(fig)
+
+
 def executar(saida: Path | None = None) -> dict:
     saida = saida or (RAIZ / "analises" / "avaliacao_aninhada")
     saida.mkdir(parents=True, exist_ok=True)
@@ -158,7 +275,7 @@ def executar(saida: Path | None = None) -> dict:
             "teste_sinais_por_serie": teste_sinais_pareado(serie),
         }
 
-    metadados = {
+    analises_complementares(real, saida)\n\n    metadados = {
         "commit": commit_atual(),
         "sha256_base_csv": sha256_arquivo(base),
         "arquivo_base": str(base.relative_to(RAIZ)),
