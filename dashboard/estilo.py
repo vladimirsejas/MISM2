@@ -205,8 +205,11 @@ section[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], [da
 
 /* celular: abas numa linha que rola de lado, Lia com rosto menor, faixas mais baixas */
 @media (max-width: 640px) {
-    [class*="st-key-abas_painel"] [data-testid="stRadioGroup"] { flex-wrap: nowrap; overflow-x: auto; }
-    [class*="st-key-abas_painel"] [data-testid="stRadioOption"] { padding: 8px 14px; white-space: nowrap; }
+    /* o Streamlit reserva menos altura que a caixa 'você está aqui' ocupa (57 px contra 41 px): sem isto ela invade o botão de baixo */
+    .nav-aqui { margin-bottom: 16px; }
+    /* abas em linhas que quebram (antes: uma linha de 660 px que rolava de lado numa tela de 343 px, e Investigar, Planejamento e Método ficavam fora de vista sem aviso) */
+    [class*="st-key-abas_painel"] [data-testid="stRadioGroup"] { flex-wrap: wrap; overflow-x: visible; gap: 6px; }
+    [class*="st-key-abas_painel"] [data-testid="stRadioOption"] { padding: 8px 14px; white-space: nowrap; flex: 1 1 auto; justify-content: center; }
     [class*="st-key-abas_painel"] [data-testid="stRadioOption"] p { font-size: .98rem; white-space: nowrap; }
     .lia-rosto img, .lia-rosto svg { width: 84px !important; height: 84px !important; }
     .escudo-voce-esta { font-size: .98rem; padding: 8px 12px; }
