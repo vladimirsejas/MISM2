@@ -125,7 +125,7 @@ def analises_complementares(real: pd.DataFrame, saida: Path) -> None:
         r = avaliar_janela(real, janela)
         serie = resumo_por_serie(r)
         nome = f"janela_{janela}"
-        print(f"\\nANÁLISES COMPLEMENTARES — {janela} ANOS")
+        print(f"\nANÁLISES COMPLEMENTARES — {janela} ANOS")
 
         # Bootstrap por série: cada reamostragem sorteia 7 séries com reposição.
         for grupo, sub in serie.groupby("grupo"):
@@ -148,7 +148,7 @@ def analises_complementares(real: pd.DataFrame, saida: Path) -> None:
             tab = r.groupby(["grupo", dimensao], as_index=False).agg(
                 n=("ano_alvo", "count"), mae_escolhido=("erro_escolhido", "mean"),
                 mae_ingenuo=("erro_ingenuo", "mean"))
-            print(f"\\n{dimensao}:")
+            print(f"\n{dimensao}:")
             print(tab.to_string(index=False))
             tab.insert(0, "janela", janela)
             tab.to_csv(saida / f"{nome}_{dimensao}.csv", index=False)
@@ -182,7 +182,7 @@ def analises_complementares(real: pd.DataFrame, saida: Path) -> None:
                                "mae_modelo_fixo": float(sub[f"erro_{modelo}"].mean()),
                                "n": len(sub)})
         fm = pd.DataFrame(linhas)
-        print("\\nModelos escolhidos e erros dos modelos fixos:")
+        print("\nModelos escolhidos e erros dos modelos fixos:")
         print(fm.to_string(index=False))
         fm.to_csv(saida / f"{nome}_modelos_fixos.csv", index=False)
 
@@ -275,7 +275,9 @@ def executar(saida: Path | None = None) -> dict:
             "teste_sinais_por_serie": teste_sinais_pareado(serie),
         }
 
-    analises_complementares(real, saida)\n\n    metadados = {
+    analises_complementares(real, saida)
+
+    metadados = {
         "commit": commit_atual(),
         "sha256_base_csv": sha256_arquivo(base),
         "arquivo_base": str(base.relative_to(RAIZ)),
