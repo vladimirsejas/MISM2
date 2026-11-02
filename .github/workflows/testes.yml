@@ -54,7 +54,7 @@ jobs:
       - name: Avaliação aninhada e teste de vazamento temporal
         working-directory: algoritimos
         run: |
-          pip install pytest
+          pip install pytest matplotlib
           python -m pytest teste_avaliacao_aninhada.py -q
       - name: Entendimento da pergunta (gabarito em 3 conjuntos x caixa antiga)
         working-directory: algoritimos
