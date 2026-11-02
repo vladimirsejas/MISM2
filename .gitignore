@@ -15,6 +15,10 @@ env/
 
 .env
 *.csv
+!analises/avaliacao_aninhada/
+analises/avaliacao_aninhada/*.csv
+!analises/avaliacao_aninhada/*.csv
+!analises/avaliacao_aninhada/metadados.json
 # exceção: lista oficial de hospitais habilitados em oncologia (dado público de estabelecimento, sem paciente)
 !dados_geograficos/hospitais_oncologia_sp.csv
 !dados_geograficos/hospitais_oncologia_br.csv
