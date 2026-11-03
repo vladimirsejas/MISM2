@@ -440,7 +440,12 @@ def cita_o_foco(pergunta):
 
 RISCOS = [
     ("suicidio", r"quero morrer|vou me matar|me matar|queria sumir|dormir e nao acordar|nao vale a pena viver|nao quero estar aqui|tirar (a )?minha vida|tirar a propria vida|acabar com (a )?minha vida|"
-                 r"nao quero mais viver|nao aguento mais viver|melhor morrer|suicid\w+"),
+                 r"nao quero mais viver|nao aguento mais viver|melhor morrer|suicid\w+|"
+                 # 03/11/2026: o teste com 330 perguntas mostrou que o padrão acima não pega o jeito comum de escrever
+                 # ("quero desistir de tudo, vale a pena continuar?"); só desistir de VIVER, não de fila ou consulta
+                 r"desistir de (tudo|viver|da vida)|vale a pena (continuar|viver|lutar|seguir)|"
+                 r"nao aguento mais (viver|tudo|essa vida|sofrer|isso tudo)|nao (quero|consigo) mais continuar|"
+                 r"nao tenho (mais )?(motivo|razao) (pra|para) viver|nao vejo (mais )?saida|acabar com tudo|morrer sozinha"),
     ("violencia", r"(marido|companheiro|namorado|ex|pai|padrasto|meu parceiro|ele) (me )?(bate|bateu|agride|agrediu|ameaca|ameacou|"
                   r"machuca|machucou|estuprou|abusa|abusou|persegue|esgana|enforcou|espancou)|"
                   r"me bate|me bateu|apanho|apanhei|apanhando|estou sofrendo violencia|sofro violencia|sofri violencia|"
@@ -453,7 +458,10 @@ RISCOS = [
                   r"violencia domestica|tenho medo d(ele|o meu \w+)|me sinto em perigo em casa"),
     ("emergencia", r"passando mal|desmai\w+|convuls\w+|inconsciente|parou de respirar|sangramento (muito |bem )?(forte|intenso)|"
                    r"nao consigo respirar|falta de ar (forte|agora)|dor forte no peito|\binfarto\b|\bavc\b|(estou|esta|ta) sangrando (muito|bastante)|"
-                   r"sangrando muito|engasgou|engasgad\w+|overdose"),
+                   r"sangrando muito|engasgou|engasgad\w+|overdose|"
+                   # 03/11/2026: sangue no vômito, falta de ar em qualquer forma e dor que remédio nenhum resolve
+                   r"(vomit|tossind|cuspind)\w+ sangue|(muita|sentindo|com|tanta) falta de ar|sem conseguir respirar|"
+                   r"dificuldade (pra|para) respirar|gemendo de dor|dor( \w+){0,2} (insuportavel|terrivel)|nenhum remedio (resolve|adianta|passa)"),
 ]
 
 SOCIAL = set("oi oii oie ola opa bom boa dia tarde noite tudo bem td blz e ai obrigad obrigado obrigada valeu vlw tchau ate logo "
