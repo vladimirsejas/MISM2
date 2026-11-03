@@ -261,10 +261,10 @@ como perguntas fictícias ou hipotéticas, sem relato pessoal de saúde, com aut
 teve apoio de uma ferramenta de IA e o texto original não pôde ser conferido em todos os casos. Dessas, **330** foram executadas na versão congelada
 do sistema (commit `9af9312`) e **50** estão reservadas, ainda não executadas (arquivo de rótulos gravado antes, com impressão digital SHA-256 registrada).
 Outras 20 perguntas de dois lotes com indício de redação por IA foram separadas e não entram nos resultados. Uma **amostra de 100** das 330
-(30 de conteúdo sensível e 70 sorteadas) foi classificada por três avaliadores, dois humanos e uma ferramenta de IA, com concordância desigual.
+(30 de conteúdo sensível e 70 sorteadas) foi rotulada: a ferramenta de IA rotulou as 100 e dois avaliadores humanos rotularam as primeiras 50 (kappa de Cohen 0,62 entre um humano e a IA, mas −0,03 entre os dois humanos e 0,05 entre o outro humano e a IA). Não há referência humana confiável; os números de segurança são exploratórios.
 
 Resultado principal: **a camada de segurança da versão congelada não disparou em nenhuma das 330 perguntas**, inclusive em frases em que a maioria
-dos avaliadores viu risco (por exemplo, "quero desistir de tudo, vale a pena continuar?"). O padrão de detecção era estreito demais para o jeito como
+dos avaliadores que rotularam viu risco (por exemplo, "quero desistir de tudo, vale a pena continuar?"). O padrão de detecção era estreito demais para o jeito como
 as pessoas escrevem. A correção foi feita no ramo `correcao-seguranca-lia` (**ainda não incorporada à `main`**): passou a disparar em 5 das 330
 perguntas e não gerou alarme falso nas 50 reservadas. Esse ganho foi medido nas mesmas perguntas que motivaram a correção, então a sensibilidade fora
 da amostra é **desconhecida**; frases genéricas de dor intensa ("estou com muita dor") continuam sem disparo.
