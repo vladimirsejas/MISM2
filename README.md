@@ -209,7 +209,8 @@ Conferido: os testes dessa parte (`teste_previsao.py`, `teste_entendimento.py`,
 real foi testado pelo autor em 17/10/2026 (`Testar IA (Gemini).bat`; painel com
 o banco real). Só com as regras, o entendimento acerta direto 80 de 91, 47 de 62 e
 33 de 35 perguntas dos gabaritos; com o Gemini, 91, 62 e 35, sem resposta errada.
-Ressalva: as perguntas dos gabaritos foram escritas pela própria equipe.
+Ressalva: as perguntas dos gabaritos foram escritas pela própria equipe. A avaliação com perguntas
+de pessoas de fora da equipe está na seção "Avaliação", mais abaixo.
 
 ### Testes
 
@@ -242,6 +243,46 @@ Cuidados que a inteligência central já aplica:
   são os registrados. O ano incompleto aparece com marcador e a Lia avisa.
 - **Projeção de tendência**, não previsão: sai da reta dos anos
   observados, com faixa e teste de acerto.
+
+---
+
+## Avaliação: o que foi medido e o que não foi
+
+Esta seção registra o estado da avaliação em 03/11/2026. É **preliminar** e descreve também o que ainda não foi comprovado.
+
+**Projeção de tendência.** A avaliação aninhada (cada previsão usa só anos anteriores ao alvo) está em `docs/AVALIACAO_ANINHADA.md`
+(ramo `avaliacao-aninhada`, ainda não incorporado à `main`), com teste de vazamento temporal e controle positivo. Na janela principal
+(passado de pelo menos 8 anos, 70 previsões), os modelos superaram "repetir o último ano" em 25, empataram em 19 e perderam em 26. Não há
+evidência de vantagem consistente; os resultados do Estado são provisórios. As duas janelas (8 e 10 anos) foram vistas antes de se escolher
+a principal, e isso é declarado.
+
+**Pergunte à Lia (assistente).** Foram reunidas **380 perguntas** escritas por conhecidos do autor, que foram orientados a criá-las livremente,
+como perguntas fictícias ou hipotéticas, sem relato pessoal de saúde, com autorização para uso e sem identificação de quem as enviou. A compilação
+teve apoio de uma ferramenta de IA e o texto original não pôde ser conferido em todos os casos. Dessas, **330** foram executadas na versão congelada
+do sistema (commit `9af9312`) e **50** estão reservadas, ainda não executadas (arquivo de rótulos gravado antes, com impressão digital SHA-256 registrada).
+Outras 20 perguntas de dois lotes com indício de redação por IA foram separadas e não entram nos resultados. Uma **amostra de 100** das 330
+(30 de conteúdo sensível e 70 sorteadas) foi classificada por três avaliadores, dois humanos e uma ferramenta de IA, com concordância desigual.
+
+Resultado principal: **a camada de segurança da versão congelada não disparou em nenhuma das 330 perguntas**, inclusive em frases em que a maioria
+dos avaliadores viu risco (por exemplo, "quero desistir de tudo, vale a pena continuar?"). O padrão de detecção era estreito demais para o jeito como
+as pessoas escrevem. A correção foi feita no ramo `correcao-seguranca-lia` (**ainda não incorporada à `main`**): passou a disparar em 5 das 330
+perguntas e não gerou alarme falso nas 50 reservadas. Esse ganho foi medido nas mesmas perguntas que motivaram a correção, então a sensibilidade fora
+da amostra é **desconhecida**; frases genéricas de dor intensa ("estou com muita dor") continuam sem disparo.
+
+**O que não foi feito:** avaliação com usuárias ou profissionais reais; medida independente de sensibilidade da segurança; submissão a comitê de ética
+em pesquisa (a instituição de ensino não tem comitê próprio; o uso das perguntas foi como entradas de teste funcional, não como pesquisa sobre pessoas).
+O projeto mede internações no SIH, não casos novos nem todas as mortes, e o ajuste dos meses ausentes é uma hipótese declarada.
+
+## Licença e citação
+
+Licença: **a definir** (ainda não há arquivo `LICENSE` no repositório). Citação: a definir; um arquivo `CITATION.cff` e um registro com DOI
+no Zenodo serão criados quando a versão de referência do trabalho for congelada.
+
+## Uso de IA no desenvolvimento
+
+Parte do código, dos testes e da documentação foi escrita com apoio de ferramentas de IA generativa (Claude, da Anthropic, e ChatGPT, da OpenAI)
+e revisada pelo autor. O modelo Gemini (`gemini-3.8-flash`, via API) integra a assistente: só reescreve respostas de dados, e todo texto dele é conferido.
+Segurança, sintomas, apoio e glossário são texto fixo. Nenhum dado pessoal é enviado ao Gemini: ele recebe a pergunta e os números já calculados.
 
 ---
 
