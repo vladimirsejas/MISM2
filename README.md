@@ -1,11 +1,13 @@
 # MISM2 — módulo de inteligência do MISM (Monitoramento Inteligente da Saúde da Mulher)
 
 > **Lugar do MISM2:** o **MISM** (*Monitoramento Inteligente da Saúde da
-> Mulher*) é o projeto principal. O **MISM2** é o seu **módulo de inteligência**
-> (central de informações, projeção de tendência e assistente Lia), e não um
-> projeto separado. O mapa do MISM tem origem no trabalho de Kauê F. Lima
-> (https://github.com/KaueFLima/MISM). A arquitetura e a relação entre os
-> componentes estão em [`docs/ARQUITETURA_MISM.md`](docs/ARQUITETURA_MISM.md).
+> Mulher*) é o projeto completo:
+> https://github.com/MISM-Saude-da-Mulher/MISM. O **MISM2** é um dos seus
+> componentes: o módulo de inteligência (central de informações, projeção de
+> tendência e assistente Lia). O trabalho de Kauê F. Lima
+> (https://github.com/KaueFLima/MISM) é outro componente do MISM. Nenhum dos
+> dois é um projeto separado. A arquitetura está em
+> [`docs/ARQUITETURA_MISM.md`](docs/ARQUITETURA_MISM.md).
 >
 > O projeto, antes chamado **Escudo Feminino**, passou a se chamar **MISM2**.
 > "Escudo Feminino" continua aparecendo neste README e no código como o nome do

@@ -10,6 +10,20 @@
   "description": "<p>O MISM2 é o módulo de inteligência do MISM (Monitoramento Inteligente da Saúde da Mulher). Reúne o painel de apoio à decisão sobre internações hospitalares do SUS por câncer feminino (município de Rio Claro, SP, comparado ao Estado de São Paulo), a projeção de tendência com validação por avaliação aninhada e o assistente de perguntas e respostas (Lia), com camada de segurança.</p><p>Esta é a versão de referência do módulo, avaliada no informe técnico correspondente. Usa apenas dados públicos e agregados; não contém dados pessoais nem os textos das perguntas de teste. A arquitetura do MISM e a relação entre seus componentes estão descritas em docs/ARQUITETURA_MISM.md.</p>",
   "license": "mit",
   "language": "por",
-  "keywords": ["saúde da mulher", "câncer", "SIH/SUS", "informática em saúde", "MISM"],
-  "access_right": "open"
+  "keywords": [
+    "saúde da mulher",
+    "câncer",
+    "SIH/SUS",
+    "informática em saúde",
+    "MISM"
+  ],
+  "access_right": "open",
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/MISM-Saude-da-Mulher/MISM",
+      "relation": "isPartOf",
+      "scheme": "url",
+      "resource_type": "software"
+    }
+  ]
 }
