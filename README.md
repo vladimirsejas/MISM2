@@ -13,6 +13,10 @@
 > "Escudo Feminino" continua aparecendo neste README e no código como o nome do
 > painel/sistema (arquivos, pastas e o atalho `Abrir Escudo Feminino.bat`).
 
+> **Como citar:** MISM2 v1.0.0, DOI [10.5281/zenodo.23936290](https://doi.org/10.5281/zenodo.23936290).
+> Para citar o MISM2 em geral (todas as versões), use o DOI conceitual
+> [10.5281/zenodo.23936289](https://doi.org/10.5281/zenodo.23936289).
+
 > **Aviso: este README é informativo, não é diretriz.** Ele é o
 > último passo do nosso trabalho: só recebe o registro do que já foi
 > decidido e feito, para quem chega ao projeto. Não é guia nem regra

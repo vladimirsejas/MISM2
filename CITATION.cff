@@ -2,6 +2,12 @@ cff-version: 1.2.0
 message: "Se você usar este software, cite-o como abaixo."
 title: "MISM2: módulo de inteligência do MISM (painel de dados públicos e assistente de perguntas sobre câncer feminino)"
 type: software
+version: "v1.0.0"
+doi: "10.5281/zenodo.23936289"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.23936290"
+    description: "DOI da versão v1.0.0 (o campo doi acima é o DOI conceitual, que representa todas as versões)"
 authors:
   - family-names: "Queiroz Sejas"
     given-names: "Vladimir"
