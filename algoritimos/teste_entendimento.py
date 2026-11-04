@@ -129,13 +129,23 @@ def main():
                         # teste humano de 17/10/2026: "meu marido tá me agredindo, me ajuda" virava pedido de ajuda genérico, sem 190/180
                         ("meu marido tá me agredindo, me ajuda", "violencia"), ("estou sendo agredida", "violencia"),
                         ("ele me xingou e me ameaçou", "violencia"), ("fui espancada ontem", "violencia"),
-                        ("meu namorado está me perseguindo", "violencia"), ("tenho medo dele", "violencia")):
+                        ("meu namorado está me perseguindo", "violencia"), ("tenho medo dele", "violencia"),
+                        # 03/11/2026: avaliação com 330 perguntas escritas por conhecidos do autor; nenhuma disparava a segurança
+                        ("quero desistir de tudo, vale a pena continuar?", "suicidio"), ("não aguento mais viver assim", "suicidio"),
+                        ("acho que vou morrer sozinha nessa cama", "suicidio"), ("estou vomitando sangue depois da quimio", "emergencia"),
+                        ("estou com muita falta de ar", "emergencia"), ("minha mãe geme de dor, está gemendo de dor a noite toda", "emergencia"),
+                        ("a dor é insuportável", "emergencia"), ("nenhum remédio resolve essa dor", "emergencia")):
         checar(f"2. segurança: '{frase}' -> {tipo}, antes de qualquer outra coisa", entender(frase).risco == tipo)
     checar("2. segurança: pergunta de dados sobre violência (sem relato pessoal) não dispara",
            entender("qual a taxa de internação por câncer na cidade").tipo != "risco" and
            entender("meu marido me levou ao médico").tipo != "risco" and
            entender("atendimento hospitalar para violência sexual").tipo != "risco" and
-           entender("meu marido agendou minha mamografia").tipo != "risco")
+           entender("meu marido agendou minha mamografia").tipo != "risco" and
+           # frases comuns que NÃO são pedido de socorro: desistir de fila ou de consulta, dor leve, falta de ar não citada
+           entender("quero desistir da fila do SUS").tipo != "risco" and
+           entender("não aguento mais esperar o resultado da mamografia").tipo != "risco" and
+           entender("sinto uma dor leve no peito quando aperto").tipo != "risco" and
+           entender("vale a pena fazer mamografia aos 40?").tipo != "risco")
     checar("2. saudação e agradecimento", all(entender(s).tipo == "saudacao" for s in ("oi", "Bom dia, Lia!", "obrigada", "valeu")))
     checar("2. vazio e só pontuação não quebram", entender("").tipo == "vazio" and entender("   ").tipo == "vazio"
            and entender("???").tipo in ("fora", "palpites"))
