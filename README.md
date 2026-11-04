@@ -1,13 +1,15 @@
-# MISM2 — Monitoramento Inteligente da Saúde da Mulher
+# MISM2 — módulo de inteligência do MISM (Monitoramento Inteligente da Saúde da Mulher)
 
-> **Novo nome do projeto:** o projeto, antes chamado **Escudo Feminino**,
-> passou a se chamar **MISM2** — *Monitoramento Inteligente da Saúde da
-> Mulher*. Ele é o **complemento do projeto MISM**:
-> https://github.com/KaueFLima/MISM
+> **Lugar do MISM2:** o **MISM** (*Monitoramento Inteligente da Saúde da
+> Mulher*) é o projeto principal. O **MISM2** é o seu **módulo de inteligência**
+> (central de informações, projeção de tendência e assistente Lia), e não um
+> projeto separado. O mapa do MISM tem origem no trabalho de Kauê F. Lima
+> (https://github.com/KaueFLima/MISM). A arquitetura e a relação entre os
+> componentes estão em [`docs/ARQUITETURA_MISM.md`](docs/ARQUITETURA_MISM.md).
 >
-> "Escudo Feminino" continua aparecendo neste README e no código como o
-> nome do painel/sistema (arquivos, pastas e o atalho `Abrir Escudo
-> Feminino.bat`); só o nome do projeto mudou.
+> O projeto, antes chamado **Escudo Feminino**, passou a se chamar **MISM2**.
+> "Escudo Feminino" continua aparecendo neste README e no código como o nome do
+> painel/sistema (arquivos, pastas e o atalho `Abrir Escudo Feminino.bat`).
 
 > **Aviso: este README é informativo, não é diretriz.** Ele é o
 > último passo do nosso trabalho: só recebe o registro do que já foi

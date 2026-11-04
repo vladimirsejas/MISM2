@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "Se você usar este software, cite-o como abaixo."
-title: "MISM2: painel de dados públicos e assistente de perguntas sobre câncer feminino"
+title: "MISM2: módulo de inteligência do MISM (painel de dados públicos e assistente de perguntas sobre câncer feminino)"
 type: software
 authors:
   - family-names: "Queiroz Sejas"
