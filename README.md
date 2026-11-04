@@ -251,7 +251,7 @@ Cuidados que a inteligência central já aplica:
 Esta seção registra o estado da avaliação em 03/11/2026. É **preliminar** e descreve também o que ainda não foi comprovado.
 
 **Projeção de tendência.** A avaliação aninhada (cada previsão usa só anos anteriores ao alvo) está em `docs/AVALIACAO_ANINHADA.md`
-(ramo `avaliacao-aninhada`, ainda não incorporado à `main`), com teste de vazamento temporal e controle positivo. Na janela principal
+(incorporada à `main` em 03/11/2026), com teste de vazamento temporal e controle positivo. Na janela principal
 (passado de pelo menos 8 anos, 70 previsões), os modelos superaram "repetir o último ano" em 25, empataram em 19 e perderam em 26. Não há
 evidência de vantagem consistente; os resultados do Estado são provisórios. As duas janelas (8 e 10 anos) foram vistas antes de se escolher
 a principal, e isso é declarado.
@@ -265,7 +265,7 @@ Outras 20 perguntas de dois lotes com indício de redação por IA foram separad
 
 Resultado principal: **a camada de segurança da versão congelada não disparou em nenhuma das 330 perguntas**, inclusive em frases em que a maioria
 dos avaliadores que rotularam viu risco (por exemplo, "quero desistir de tudo, vale a pena continuar?"). O padrão de detecção era estreito demais para o jeito como
-as pessoas escrevem. A correção foi feita no ramo `correcao-seguranca-lia` (**ainda não incorporada à `main`**): passou a disparar em 5 das 330
+as pessoas escrevem. A correção foi feita no ramo `correcao-seguranca-lia` (incorporada à `main` em 03/11/2026; a versão congelada que gerou os resultados é o commit `9af9312`): passou a disparar em 5 das 330
 perguntas e não gerou alarme falso nas 50 reservadas. Esse ganho foi medido nas mesmas perguntas que motivaram a correção, então a sensibilidade fora
 da amostra é **desconhecida**; frases genéricas de dor intensa ("estou com muita dor") continuam sem disparo.
 
@@ -275,16 +275,8 @@ O projeto mede internações no SIH, não casos novos nem todas as mortes, e o a
 
 ## Licença e citação
 
-Licença: **a definir** (ainda não há arquivo `LICENSE` no repositório). Citação: a definir; um arquivo `CITATION.cff` e um registro com DOI
-no Zenodo serão criados quando a versão de referência do trabalho for congelada.
-
-## Uso de IA no desenvolvimento
-
-Parte do código, dos testes e da documentação foi escrita com apoio de ferramentas de IA generativa (Claude, da Anthropic, e ChatGPT, da OpenAI)
-e revisada pelo autor. O modelo Gemini (`gemini-3.8-flash`, via API) integra a assistente: só reescreve respostas de dados, e todo texto dele é conferido.
-Segurança, sintomas, apoio e glossário são texto fixo. Nenhum dado pessoal é enviado ao Gemini: ele recebe a pergunta e os números já calculados.
-
----
+Código: licença **MIT** (arquivo `LICENSE`). Textos e documentação: **CC BY 4.0**, exceto onde indicado. Os dados brutos do DATASUS e do IBGE não fazem parte deste repositório; cada fonte tem seus próprios termos de uso.
+Citação: veja o arquivo `CITATION.cff`. O DOI será registrado no Zenodo quando a versão de referência for lançada.
 
 ## Estrutura do projeto
 
