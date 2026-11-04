@@ -34,3 +34,6 @@ dashboard/versao_no_ar.txt
 
 carga_resultado.txt
 
+
+# banco local (SQLite, CNES e arquivos grandes): nunca vai para o GitHub nem para o Zenodo
+banco/
